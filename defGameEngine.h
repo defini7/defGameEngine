@@ -33,8 +33,6 @@
 * Example:
 	#include "defGameEngine.h"
 
-	#include <list>
-
 	class Lerp : public def::GameEngine
 	{
 	public:
