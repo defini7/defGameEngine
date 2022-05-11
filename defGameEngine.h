@@ -250,6 +250,9 @@ namespace def
 	Pixel WHITE = Pixel(255, 255, 255, 255);
 	Pixel BLACK = Pixel(0, 0, 0, 0);
 
+#define RANDOM_PIXEL def::Pixel(rand() % 256, rand() % 256, rand() % 256, 255)
+#define RANDOM_PIXEL_ALPHA def::Pixel(rand() % 256, rand() % 256, rand() % 256, rand() % 256)
+
 	class Sprite
 	{
 	public:
@@ -456,57 +459,6 @@ namespace def
 					sprintf_s(s, 256, "github.com/defini7 - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / fDeltaTime);
 					SDL_SetWindowTitle(m_sdlWindow, s);
 
-					m_nKeyNewState = (uint8_t*)SDL_GetKeyboardState(NULL);
-
-					uint32_t mouse_mask = SDL_GetMouseState(&m_nMouseX, &m_nMouseY);
-
-					m_nMouseX /= m_nPixelWidth;
-					m_nMouseY /= m_nPixelHeight;
-
-					for (int i = 0; i < 512; i++)
-					{
-						m_sKeys[i].bPressed = false;
-						m_sKeys[i].bReleased = false;
-
-						if (m_nKeyNewState[i] != m_nKeyOldState[i])
-						{
-							if (m_nKeyNewState[i])
-							{
-								m_sKeys[i].bPressed = !m_sKeys[i].bHeld;
-								m_sKeys[i].bHeld = true;
-							}
-							else
-							{
-								m_sKeys[i].bReleased = true;
-								m_sKeys[i].bHeld = false;
-							}
-						}
-
-						m_nKeyOldState[i] = m_nKeyNewState[i];
-					}
-
-					for (int m = 0; m < 5; m++)
-					{
-						m_sMouse[m].bPressed = false;
-						m_sMouse[m].bReleased = false;
-
-						if (m_nMouseNewState[m] != m_nMouseOldState[m])
-						{
-							if (m_nMouseNewState[m])
-							{
-								m_sMouse[m].bPressed = true;
-								m_sMouse[m].bHeld = true;
-							}
-							else
-							{
-								m_sMouse[m].bReleased = true;
-								m_sMouse[m].bHeld = false;
-							}
-						}
-
-						m_nMouseOldState[m] = m_nMouseNewState[m];
-					}
-
 					while (SDL_PollEvent(&evt))
 					{
 						switch (evt.type)
@@ -535,6 +487,28 @@ namespace def
 								m_nMouseNewState[4] = 1;
 								break;
 							}
+
+							for (int m = 0; m < 5; m++)
+							{
+								m_sMouse[m].bPressed = false;
+								m_sMouse[m].bReleased = false;
+
+								if (m_nMouseNewState[m] != m_nMouseOldState[m])
+								{
+									if (m_nMouseNewState[m])
+									{
+										m_sMouse[m].bPressed = true;
+										m_sMouse[m].bHeld = true;
+									}
+									else
+									{
+										m_sMouse[m].bReleased = true;
+										m_sMouse[m].bHeld = false;
+									}
+								}
+
+								m_nMouseOldState[m] = m_nMouseNewState[m];
+							}
 						}
 						break;
 
@@ -558,8 +532,68 @@ namespace def
 								m_nMouseNewState[4] = 0;
 								break;
 							}
+
+							for (int m = 0; m < 5; m++)
+							{
+								m_sMouse[m].bPressed = false;
+								m_sMouse[m].bReleased = false;
+
+								if (m_nMouseNewState[m] != m_nMouseOldState[m])
+								{
+									if (m_nMouseNewState[m])
+									{
+										m_sMouse[m].bPressed = true;
+										m_sMouse[m].bHeld = true;
+									}
+									else
+									{
+										m_sMouse[m].bReleased = true;
+										m_sMouse[m].bHeld = false;
+									}
+								}
+
+								m_nMouseOldState[m] = m_nMouseNewState[m];
+							}
 						}
 						break;
+
+						case SDL_MOUSEMOTION:
+						{
+							uint32_t mouse_mask = SDL_GetMouseState(&m_nMouseX, &m_nMouseY);
+
+							m_nMouseX /= m_nPixelWidth;
+							m_nMouseY /= m_nPixelHeight;
+						}
+						break;
+
+						case SDL_KEYDOWN: case SDL_KEYUP:
+						{
+							m_nKeyNewState = (uint8_t*)SDL_GetKeyboardState(NULL);
+
+							for (int i = 0; i < 512; i++)
+							{
+								m_sKeys[i].bPressed = false;
+								m_sKeys[i].bReleased = false;
+
+								if (m_nKeyNewState[i] != m_nKeyOldState[i])
+								{
+									if (m_nKeyNewState[i])
+									{
+										m_sKeys[i].bPressed = !m_sKeys[i].bHeld;
+										m_sKeys[i].bHeld = true;
+									}
+									else
+									{
+										m_sKeys[i].bReleased = true;
+										m_sKeys[i].bHeld = false;
+									}
+								}
+
+								m_nKeyOldState[i] = m_nKeyNewState[i];
+							}
+						}
+						break;
+
 						}
 					}
 
