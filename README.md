@@ -1,5 +1,5 @@
 # defGameEngine
-defGameEngine - это кроссплатформенный игровой движок. Доступно на Windows, Linux, MacOS
+defGameEngine - это кроссплатформенный игровой движок, доступный на Windows, Linux, MacOS
 
 # Установка
 
