@@ -33,6 +33,8 @@
 * Example:
 	#include "defGameEngine.h"
 
+	#include <list>
+
 	class Lerp : public def::GameEngine
 	{
 	public:
@@ -600,10 +602,10 @@ namespace def
 			SDL_RenderClear(m_sdlRenderer);
 		}
 
-		void FillRect(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
+		void FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p)
 		{
-			for (int i = x; i < x1; i++)
-				for (int j = y; j < y1; j++)
+			for (int i = x; i < x + sx; i++)
+				for (int j = y; j < y + sy; j++)
 					Draw(i, j, p);
 		}
 
@@ -668,7 +670,7 @@ namespace def
 			}
 		}
 
-		void DrawRect(int32_t x, int32_t y, int32_t width, int32_t height, Pixel p)
+		void DrawRectangle(int32_t x, int32_t y, int32_t width, int32_t height, Pixel p)
 		{
 			DrawLine(x, y, x + width, y, p);
 			DrawLine(x + width, y, x + width, y + height, p);
