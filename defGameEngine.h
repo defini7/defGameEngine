@@ -33,14 +33,12 @@
 * Example:
 	#include "defGameEngine.h"
 
-	#include <list>
-
-	class Lerp : public def::GameEngine
+	class Sample : public def::GameEngine
 	{
 	public:
-		Lerp()
+		Sample()
 		{
-			SetTitle("Lerp");
+			SetTitle("Sample");
 		}
 
 	protected:
@@ -60,9 +58,9 @@
 
 	};
 
-	int SDL_main(int argc, char* argv[])
+	int main(int argc, char* argv[]) // argc and argv are necessary
 	{
-		Lerp demo;
+		Sample demo;
 		def::rcode err = demo.Construct(256, 240, 4, 4);
 
 		if (err.ok)
@@ -78,6 +76,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -250,8 +249,8 @@ namespace def
 	Pixel WHITE = Pixel(255, 255, 255, 255);
 	Pixel BLACK = Pixel(0, 0, 0, 0);
 
-#define RANDOM_PIXEL def::Pixel(rand() % 256, rand() % 256, rand() % 256, 255)
-#define RANDOM_PIXEL_ALPHA def::Pixel(rand() % 256, rand() % 256, rand() % 256, rand() % 256)
+#define RANDOM_PIXEL def::Pixel(rand() % 255, rand() % 255, rand() % 255, 255)
+#define RANDOM_PIXEL_ALPHA def::Pixel(rand() % 255, rand() % 255, rand() % 255, rand() % 255)
 
 	class Sprite
 	{
@@ -266,6 +265,8 @@ namespace def
 			
 			if (!rc.ok)
 				std::cerr << rc.info << "\n";
+			
+			m_sFilename = filename;
 		}
 
 		~Sprite()
@@ -283,6 +284,8 @@ namespace def
 		uint32_t m_nHeight;
 
 		uint32_t m_nTexId;
+
+		std::string m_sFilename;
 
 	public:
 		rcode LoadTexture(std::string filename)
@@ -312,19 +315,24 @@ namespace def
 			m_nTexId = id;
 		}
 
-		uint32_t GetTexId()
+		uint32_t GetTexId() const
 		{
 			return m_nTexId;
 		}
 
-		uint32_t GetWidth()
+		uint32_t GetWidth() const
 		{
 			return m_nWidth;
 		}
 
-		uint32_t GetHeight()
+		uint32_t GetHeight() const
 		{
 			return m_nHeight;
+		}
+
+		std::string GetFilename() const
+		{
+			return m_sFilename;
 		}
 	};
 
@@ -371,6 +379,8 @@ namespace def
 		int32_t m_nMouseY;
 
 		std::vector<SDL_Texture*> m_vecTextures;
+
+		SDL_Rect* m_sdlRect;
 
 	public:
 		virtual bool OnUserCreate() = 0;
@@ -437,7 +447,7 @@ namespace def
 			if (m_bAppThreadActive)
 			{
 				auto tp1 = std::chrono::system_clock::now();
-				auto tp2 = std::chrono::system_clock::now();
+				auto tp2 = tp1;
 
 				for (int i = 0; i < 512; i++)
 					m_sKeys[i] = { false, false, false };
@@ -453,6 +463,7 @@ namespace def
 
 					std::chrono::duration<float> elapsedTime = tp2 - tp1;
 					tp1 = tp2;
+					
 					float fDeltaTime = elapsedTime.count();
 
 					char s[256];
@@ -597,21 +608,23 @@ namespace def
 						}
 					}
 
+					SDL_RenderSetScale(m_sdlRenderer, m_nPixelWidth, m_nPixelHeight);
+
 					if (!OnUserUpdate(fDeltaTime))
 						m_bAppThreadActive = false;
-
+					
 					SDL_RenderPresent(m_sdlRenderer);
 				}
 			}
 		}
 
-		SDL_Rect GetPixelRect(int32_t x, int32_t y)
+		SDL_Rect* GetPixelRect(int32_t x, int32_t y)
 		{
-			SDL_Rect rct;
-			rct.x = x * m_nPixelWidth;
-			rct.y = y * m_nPixelHeight;
-			rct.w = m_nPixelWidth;
-			rct.h = m_nPixelHeight;
+			SDL_Rect* rct;
+			rct->x = x * m_nPixelWidth;
+			rct->y = y * m_nPixelHeight;
+			rct->w = m_nPixelWidth;
+			rct->h = m_nPixelHeight;
 
 			return rct;
 		}
@@ -624,10 +637,8 @@ namespace def
 
 		void Draw(int32_t x, int32_t y, Pixel p)
 		{
-			SDL_Rect rct = GetPixelRect(x, y);
-
 			SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
-			SDL_RenderFillRect(m_sdlRenderer, &rct);
+			SDL_RenderDrawPoint(m_sdlRenderer, x, y);
 		}
 
 		void Clear(Pixel p)
@@ -638,70 +649,14 @@ namespace def
 
 		void FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p)
 		{
-			for (int i = x; i < x + sx; i++)
-				for (int j = y; j < y + sy; j++)
-					Draw(i, j, p);
+			m_sdlRect = GetPixelRect(x, y);
+			SDL_RenderFillRect(m_sdlRenderer, m_sdlRect);
 		}
 
 		void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p)
 		{
-			int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
-			dx = x2 - x1; dy = y2 - y1;
-			dx1 = abs(dx); dy1 = abs(dy);
-			px = 2 * dy1 - dx1;	py = 2 * dx1 - dy1;
-			if (dy1 <= dx1)
-			{
-				if (dx >= 0)
-				{
-					x = x1; y = y1; xe = x2;
-				}
-				else
-				{
-					x = x2; y = y2; xe = x1;
-				}
-
-				Draw(x, y, p);
-
-				for (i = 0; x < xe; i++)
-				{
-					x = x + 1;
-					if (px < 0)
-						px = px + 2 * dy1;
-					else
-					{
-						if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) y = y + 1; else y = y - 1;
-						px = px + 2 * (dy1 - dx1);
-					}
-					Draw(x, y, p);
-				}
-			}
-			else
-			{
-				if (dy >= 0)
-				{
-					x = x1; y = y1; ye = y2;
-				}
-				else
-				{
-					x = x2; y = y2; ye = y1;
-				}
-
-				Draw(x, y, p);
-
-				for (i = 0; y < ye; i++)
-				{
-					y = y + 1;
-					if (py <= 0)
-						py = py + 2 * dx1;
-					else
-					{
-						if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) x = x + 1; else x = x - 1;
-						py = py + 2 * (dx1 - dy1);
-					}
-					
-					Draw(x, y, p);
-				}
-			}
+			SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
+			SDL_RenderDrawLine(m_sdlRenderer, x1, y1, x2, y2);
 		}
 
 		void DrawRectangle(int32_t x, int32_t y, int32_t width, int32_t height, Pixel p)
@@ -1069,6 +1024,17 @@ namespace def
 			return spr;
 		}
 
+		Sprite* RecreateSprite(Sprite* spr)
+		{
+			m_vecTextures.erase(m_vecTextures.begin() + spr->GetTexId());
+			
+			delete spr;
+
+			spr = CreateSprite(spr->GetFilename());
+			
+			return spr;
+		}
+
 		void DrawSprite(int32_t x, int32_t y, Sprite* spr)
 		{
 			spr->m_sdlCoordRect.x = x * m_nPixelWidth;
@@ -1077,32 +1043,32 @@ namespace def
 			SDL_RenderCopy(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect);
 		}
 
-		KeyState GetKey(SDL_Scancode keyCode)
+		KeyState GetKey(SDL_Scancode keyCode) const
 		{
 			return m_sKeys[keyCode];
 		}
 
-		KeyState GetMouse(uint8_t btnCode)
+		KeyState GetMouse(uint8_t btnCode) const
 		{
 			return m_sMouse[btnCode];
 		}
 
-		uint32_t GetMouseX()
+		uint32_t GetMouseX() const
 		{
 			return m_nMouseX;
 		}
 
-		uint32_t GetMouseY()
+		uint32_t GetMouseY() const
 		{
 			return m_nMouseY;
 		}
 
-		uint32_t GetScreenWidth()
+		uint32_t GetScreenWidth() const
 		{
 			return m_nScreenWidth;
 		}
 
-		uint32_t GetScreenHeight()
+		uint32_t GetScreenHeight() const
 		{
 			return m_nScreenHeight;
 		}
