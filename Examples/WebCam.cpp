@@ -86,7 +86,14 @@ protected:
 
 				def::Pixel p = def::Pixel(col.c[2], col.c[1], col.c[0], 255);
 
-				ApplyGreyscale(p);
+				if (GetKey(SDL_SCANCODE_G).bHeld)
+					ApplyGreyscale(p);
+
+				if (GetKey(SDL_SCANCODE_S).bHeld)
+					ApplySepia(p);
+
+				if (GetKey(SDL_SCANCODE_T).bHeld)
+					ApplyThreshold(p);
 
 				Draw(x, y, p);
 			}
