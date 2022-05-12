@@ -620,7 +620,7 @@ namespace def
 
 		SDL_Rect* GetPixelRect(int32_t x, int32_t y)
 		{
-			SDL_Rect* rct;
+			SDL_Rect* rct = new SDL_Rect;
 			rct->x = x * m_nPixelWidth;
 			rct->y = y * m_nPixelHeight;
 			rct->w = m_nPixelWidth;
@@ -630,447 +630,471 @@ namespace def
 		}
 
 	public:
-		void SetTitle(std::string title)
+		void SetTitle(std::string title);
+		void Draw(int32_t x, int32_t y, Pixel p = def::WHITE);
+		void Clear(Pixel p = def::WHITE);
+		void FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p = def::WHITE);
+		void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p = def::WHITE);
+		void DrawRectangle(int32_t x, int32_t y, int32_t width, int32_t height, Pixel p = def::WHITE);
+		void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
+		void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
+		void DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
+		void FillCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
+		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, uint32_t r, float s, Pixel p = def::WHITE);
+		void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, SDL_RendererFlip flip = SDL_FLIP_NONE);
+
+		Sprite* CreateSprite(std::string filename);
+		Sprite* RecreateSprite(Sprite* spr);
+
+		KeyState GetKey(SDL_Scancode keyCode) const;
+		KeyState GetMouse(uint8_t btnCode) const;
+		uint32_t GetMouseX() const;
+		uint32_t GetMouseY() const;
+		uint32_t GetScreenWidth() const;
+		uint32_t GetScreenHeight() const;
+		
+	};
+
+	void GameEngine::SetTitle(std::string title)
+	{
+		m_sAppName = title;
+	}
+
+	void GameEngine::Draw(int32_t x, int32_t y, Pixel p)
+	{
+		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
+		SDL_RenderDrawPoint(m_sdlRenderer, x, y);
+	}
+
+	void GameEngine::Clear(Pixel p)
+	{
+		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
+		SDL_RenderClear(m_sdlRenderer);
+	}
+
+	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p)
+	{
+		m_sdlRect = GetPixelRect(x, y);
+		SDL_RenderFillRect(m_sdlRenderer, m_sdlRect);
+	}
+
+	void GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p)
+	{
+		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
+		SDL_RenderDrawLine(m_sdlRenderer, x1, y1, x2, y2);
+	}
+
+	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t width, int32_t height, Pixel p)
+	{
+		DrawLine(x, y, x + width, y, p);
+		DrawLine(x + width, y, x + width, y + height, p);
+		DrawLine(x + width, y + height, x, y + height, p);
+		DrawLine(x, y + height, x, y, p);
+	}
+
+	void GameEngine::DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p)
+	{
+		DrawLine(x1, y1, x2, y2, p);
+		DrawLine(x2, y2, x3, y3, p);
+		DrawLine(x3, y3, x1, y1, p);
+	}
+
+	// https://www.avrfreaks.net/sites/default/files/triangles.c
+	void GameEngine::FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p)
+	{
+		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny) { for (int32_t i = sx; i <= ex; i++) Draw(i, ny, p); };
+
+		int32_t t1x, t2x, y, minx, maxx, t1xp, t2xp;
+		bool changed1 = false;
+		bool changed2 = false;
+		int32_t signx1, signx2, dx1, dy1, dx2, dy2;
+		int32_t e1, e2;
+
+		// Sort vertices
+		if (y1 > y2) { std::swap(y1, y2); std::swap(x1, x2); }
+		if (y1 > y3) { std::swap(y1, y3); std::swap(x1, x3); }
+		if (y2 > y3) { std::swap(y2, y3); std::swap(x2, x3); }
+
+		t1x = t2x = x1;
+		y = y1;   // Starting points
+		dx1 = (int32_t)(x2 - x1);
+
+		if (dx1 < 0)
 		{
-			m_sAppName = title;
+			dx1 = -dx1;
+			signx1 = -1;
+		}
+		else
+			signx1 = 1;
+
+		dy1 = (int32_t)(y2 - y1);
+		dx2 = (int32_t)(x3 - x1);
+
+		if (dx2 < 0)
+		{
+			dx2 = -dx2;
+			signx2 = -1;
+		}
+		else
+			signx2 = 1;
+
+		dy2 = (int32_t)(y3 - y1);
+
+		if (dy1 > dx1)
+		{
+			std::swap(dx1, dy1);
+			changed1 = true;
+		}
+		if (dy2 > dx2)
+		{
+			std::swap(dy2, dx2);
+			changed2 = true;
 		}
 
-		void Draw(int32_t x, int32_t y, Pixel p)
+		e2 = (int32_t)(dx2 >> 1);
+
+		// Flat top, just process the second half
+		if (y1 == y2)
+			goto next;
+
+		e1 = (int32_t)(dx1 >> 1);
+
+		for (int32_t i = 0; i < dx1;)
 		{
-			SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
-			SDL_RenderDrawPoint(m_sdlRenderer, x, y);
-		}
+			t1xp = 0;
+			t2xp = 0;
 
-		void Clear(Pixel p)
-		{
-			SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
-			SDL_RenderClear(m_sdlRenderer);
-		}
-
-		void FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p)
-		{
-			m_sdlRect = GetPixelRect(x, y);
-			SDL_RenderFillRect(m_sdlRenderer, m_sdlRect);
-		}
-
-		void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p)
-		{
-			SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
-			SDL_RenderDrawLine(m_sdlRenderer, x1, y1, x2, y2);
-		}
-
-		void DrawRectangle(int32_t x, int32_t y, int32_t width, int32_t height, Pixel p)
-		{
-			DrawLine(x, y, x + width, y, p);
-			DrawLine(x + width, y, x + width, y + height, p);
-			DrawLine(x + width, y + height, x, y + height, p);
-			DrawLine(x, y + height, x, y, p);
-		}
-
-		void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p)
-		{
-			DrawLine(x1, y1, x2, y2, p);
-			DrawLine(x2, y2, x3, y3, p);
-			DrawLine(x3, y3, x1, y1, p);
-		}
-
-		// https://www.avrfreaks.net/sites/default/files/triangles.c
-		void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p)
-		{
-			auto drawline = [&](int32_t sx, int32_t ex, int32_t ny) { for (int32_t i = sx; i <= ex; i++) Draw(i, ny, p); };
-
-			int32_t t1x, t2x, y, minx, maxx, t1xp, t2xp;
-			bool changed1 = false;
-			bool changed2 = false;
-			int32_t signx1, signx2, dx1, dy1, dx2, dy2;
-			int32_t e1, e2;
-			
-			// Sort vertices
-			if (y1 > y2) { std::swap(y1, y2); std::swap(x1, x2); }
-			if (y1 > y3) { std::swap(y1, y3); std::swap(x1, x3); }
-			if (y2 > y3) { std::swap(y2, y3); std::swap(x2, x3); }
-
-			t1x = t2x = x1;
-			y = y1;   // Starting points
-			dx1 = (int32_t)(x2 - x1);
-
-			if (dx1 < 0) 
+			if (t1x < t2x)
 			{
-				dx1 = -dx1; 
-				signx1 = -1; 
+				minx = t1x;
+				maxx = t2x;
 			}
-			else 
-				signx1 = 1;
-
-			dy1 = (int32_t)(y2 - y1);
-			dx2 = (int32_t)(x3 - x1);
-
-			if (dx2 < 0) 
-			{ 
-				dx2 = -dx2; 
-				signx2 = -1; 
-			}
-			else 
-				signx2 = 1;
-			
-			dy2 = (int32_t)(y3 - y1);
-
-			if (dy1 > dx1) 
+			else
 			{
-				std::swap(dx1, dy1);
-				changed1 = true;
-			}
-			if (dy2 > dx2) 
-			{
-				std::swap(dy2, dx2);
-				changed2 = true;
+				minx = t2x;
+				maxx = t1x;
 			}
 
-			e2 = (int32_t)(dx2 >> 1);
-
-			// Flat top, just process the second half
-			if (y1 == y2) 
-				goto next;
-
-			e1 = (int32_t)(dx1 >> 1);
-
-			for (int32_t i = 0; i < dx1;)
+			// process first line until y value is about to change
+			while (i < dx1)
 			{
-				t1xp = 0; 
-				t2xp = 0;
-				
-				if (t1x < t2x) 
-				{ 
-					minx = t1x; 
-					maxx = t2x; 
-				}
-				else 
-				{ 
-					minx = t2x; 
-					maxx = t1x; 
-				}
-				
-				// process first line until y value is about to change
-				while (i < dx1) 
+				i++;
+				e1 += dy1;
+				while (e1 >= dx1)
 				{
-					i++;
-					e1 += dy1;
-					while (e1 >= dx1) 
-					{
-						e1 -= dx1;
-						if (changed1) 
-							t1xp = signx1;
-						else 
-							goto next1;
-					}
-					if (changed1) break;
-					else t1x += signx1;
+					e1 -= dx1;
+					if (changed1)
+						t1xp = signx1;
+					else
+						goto next1;
 				}
-				// Move line
-			next1:
-				// process second line until y value is about to change
-				while (1) 
+				if (changed1) break;
+				else t1x += signx1;
+			}
+			// Move line
+		next1:
+			// process second line until y value is about to change
+			while (1)
+			{
+				e2 += dy2;
+
+				while (e2 >= dx2)
 				{
-					e2 += dy2;
-					
-					while (e2 >= dx2) 
+					e2 -= dx2;
+
+					if (changed2)
+						t2xp = signx2;//t2x += signx2;
+					else
+						goto next2;
+				}
+
+				if (changed2)
+					break;
+				else
+					t2x += signx2;
+			}
+		next2:
+			if (minx > t1x) minx = t1x; if (minx > t2x) minx = t2x;
+			if (maxx < t1x) maxx = t1x; if (maxx < t2x) maxx = t2x;
+			drawline(minx, maxx, y);    // Draw line from min to max points found on the y
+											// Now increase y
+			if (!changed1) t1x += signx1;
+			t1x += t1xp;
+			if (!changed2) t2x += signx2;
+			t2x += t2xp;
+			y += 1;
+			if (y == y2) break;
+
+		}
+	next:
+		// Second half
+		dx1 = (int32_t)(x3 - x2);
+
+		if (dx1 < 0)
+		{
+			dx1 = -dx1;
+			signx1 = -1;
+		}
+		else
+			signx1 = 1;
+
+		dy1 = (int32_t)(y3 - y2);
+		t1x = x2;
+
+		if (dy1 > dx1)
+		{   // swap values
+			std::swap(dy1, dx1);
+			changed1 = true;
+		}
+		else
+			changed1 = false;
+
+		e1 = (int32_t)(dx1 >> 1);
+
+		for (int32_t i = 0; i <= dx1; i++)
+		{
+			t1xp = 0; t2xp = 0;
+			if (t1x < t2x)
+			{
+				minx = t1x;
+				maxx = t2x;
+			}
+			else
+			{
+				minx = t2x;
+				maxx = t1x;
+			}
+
+			// process first line until y value is about to change
+			while (i < dx1)
+			{
+				e1 += dy1;
+				while (e1 >= dx1)
+				{
+					e1 -= dx1;
+
+					if (changed1)
 					{
-						e2 -= dx2;
-
-						if (changed2) 
-							t2xp = signx2;//t2x += signx2;
-						else          
-							goto next2;
-					}
-
-					if (changed2)     
+						t1xp = signx1;
 						break;
-					else              
-						t2x += signx2;
-				}
-			next2:
-				if (minx > t1x) minx = t1x; if (minx > t2x) minx = t2x;
-				if (maxx < t1x) maxx = t1x; if (maxx < t2x) maxx = t2x;
-				drawline(minx, maxx, y);    // Draw line from min to max points found on the y
-												// Now increase y
-				if (!changed1) t1x += signx1;
-				t1x += t1xp;
-				if (!changed2) t2x += signx2;
-				t2x += t2xp;
-				y += 1;
-				if (y == y2) break;
-
-			}
-		next:
-			// Second half
-			dx1 = (int32_t)(x3 - x2);
-
-			if (dx1 < 0) 
-			{ 
-				dx1 = -dx1; 
-				signx1 = -1;
-			}
-			else 
-				signx1 = 1;
-
-			dy1 = (int32_t)(y3 - y2);
-			t1x = x2;
-
-			if (dy1 > dx1) 
-			{   // swap values
-				std::swap(dy1, dx1);
-				changed1 = true;
-			}
-			else 
-				changed1 = false;
-
-			e1 = (int32_t)(dx1 >> 1);
-
-			for (int32_t i = 0; i <= dx1; i++)
-			{
-				t1xp = 0; t2xp = 0;
-				if (t1x < t2x) 
-				{ 
-					minx = t1x; 
-					maxx = t2x; 
-				}
-				else 
-				{ 
-					minx = t2x;
-					maxx = t1x;
-				}
-
-				// process first line until y value is about to change
-				while (i < dx1) 
-				{
-					e1 += dy1;
-					while (e1 >= dx1) 
-					{
-						e1 -= dx1;
-
-						if (changed1) 
-						{ 
-							t1xp = signx1; 
-							break; 
-						}
-						else          
-							goto next3;
 					}
-					
-					if (changed1) 
-						break;
-					else   	   	  
-						t1x += signx1;
-					
-					if (i < dx1) 
-						i++;
+					else
+						goto next3;
 				}
 
-			next3:
-				// process second line until y value is about to change
-				while (t2x != x3) 
-				{
-					e2 += dy2;
-
-					while (e2 >= dx2) 
-					{
-						e2 -= dx2;
-
-						if (changed2) 
-							t2xp = signx2;
-						else          
-							goto next4;
-					}
-
-					if (changed2)     
-						break;
-					else              
-						t2x += signx2;
-				}
-				
-			next4:
-				if (minx > t1x)
-					minx = t1x;
-
-				if (minx > t2x)
-					minx = t2x;
-
-				if (maxx < t1x)
-					maxx = t1x;
-
-				if (maxx < t2x)
-					maxx = t2x;
-
-				drawline(minx, maxx, y);
-
-				if (!changed1) 
+				if (changed1)
+					break;
+				else
 					t1x += signx1;
 
-				t1x += t1xp;
+				if (i < dx1)
+					i++;
+			}
 
-				if (!changed2) 
+		next3:
+			// process second line until y value is about to change
+			while (t2x != x3)
+			{
+				e2 += dy2;
+
+				while (e2 >= dx2)
+				{
+					e2 -= dx2;
+
+					if (changed2)
+						t2xp = signx2;
+					else
+						goto next4;
+				}
+
+				if (changed2)
+					break;
+				else
 					t2x += signx2;
-
-				t2x += t2xp;
-				y += 1;
-				
-				if (y > y3) 
-					return;
-			}
-		}
-
-		void DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p)
-		{
-			if (!r) return;
-
-			int32_t x1 = 0;
-			int32_t y1 = r;
-			int32_t p1 = 3 - 2 * r;
-
-			while (y1 >= x1)
-			{
-				Draw(x - x1, y - y1, p);	// upper left left
-				Draw(x - y1, y - x1, p);	// upper upper left
-				Draw(x + y1, y - x1, p);	// upper upper right
-				Draw(x + x1, y - y1, p);	// upper right right
-				Draw(x - x1, y + y1, p);	// lower left left
-				Draw(x - y1, y + x1, p);	// lower lower left
-				Draw(x + y1, y + x1, p);	// lower lower right
-				Draw(x + x1, y + y1, p);	// lower right right
-
-				if (p1 < 0)
-					p1 += 4 * x1++ + 6;
-				else
-					p1 += 4 * (x1++ - y1--) + 10;
-			}
-		}
-		
-		void FillCircle(int32_t x, int32_t y, uint32_t r, Pixel p)
-		{
-			if (!r) return;
-
-			int32_t x1 = 0;
-			int32_t y1 = r;
-			int32_t p1 = 3 - 2 * r;
-
-			auto drawline = [&](int32_t sx, int32_t ex, int32_t ny)
-			{
-				for (int i = sx; i <= ex; i++)
-					Draw(i, ny, p);
-			};
-
-			while (y1 >= x1)
-			{
-				drawline(x - x1, x + x1, y - y1);
-				drawline(x - y1, x + y1, y - x1);
-				drawline(x - x1, x + x1, y + y1);
-				drawline(x - y1, x + y1, y + x1);
-				
-				if (p1 < 0)
-					p1 += 4 * x1++ + 6;
-				else
-					p1 += 4 * (x1++ - y1--) + 10;
-			}
-		}
-
-		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, uint32_t r, float s, Pixel p)
-		{
-			std::vector<std::pair<float, float>> vecTransformedCoordinates;
-			int verts = vecModelCoordinates.size();
-			vecTransformedCoordinates.resize(verts);
-
-			// Rotate
-			for (int i = 0; i < verts; i++)
-			{
-				vecTransformedCoordinates[i].first = vecModelCoordinates[i].first * cosf(r) - vecModelCoordinates[i].second * sinf(r);
-				vecTransformedCoordinates[i].second = vecModelCoordinates[i].first * sinf(r) + vecModelCoordinates[i].second * cosf(r);
 			}
 
-			// Scale
-			for (int i = 0; i < verts; i++)
-			{
-				vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first * s;
-				vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second * s;
-			}
+		next4:
+			if (minx > t1x)
+				minx = t1x;
 
-			// Translate
-			for (int i = 0; i < verts; i++)
-			{
-				vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first + x;
-				vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second + y;
-			}
+			if (minx > t2x)
+				minx = t2x;
 
-			for (int i = 0; i < verts + 1; i++)
-			{
-				int j = (i + 1);
-				DrawLine((int)vecTransformedCoordinates[i % verts].first, (int)vecTransformedCoordinates[i % verts].second,
-					(int)vecTransformedCoordinates[j % verts].first, (int)vecTransformedCoordinates[j % verts].second, p);
-			}
+			if (maxx < t1x)
+				maxx = t1x;
+
+			if (maxx < t2x)
+				maxx = t2x;
+
+			drawline(minx, maxx, y);
+
+			if (!changed1)
+				t1x += signx1;
+
+			t1x += t1xp;
+
+			if (!changed2)
+				t2x += signx2;
+
+			t2x += t2xp;
+			y += 1;
+
+			if (y > y3)
+				return;
 		}
+	}
 
-		Sprite* CreateSprite(std::string filename)
+	void GameEngine::DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p)
+	{
+		if (!r) return;
+
+		int32_t x1 = 0;
+		int32_t y1 = r;
+		int32_t p1 = 3 - 2 * r;
+
+		while (y1 >= x1)
 		{
-			Sprite* spr = new Sprite(filename);
+			Draw(x - x1, y - y1, p);	// upper left left
+			Draw(x - y1, y - x1, p);	// upper upper left
+			Draw(x + y1, y - x1, p);	// upper upper right
+			Draw(x + x1, y - y1, p);	// upper right right
+			Draw(x - x1, y + y1, p);	// lower left left
+			Draw(x - y1, y + x1, p);	// lower lower left
+			Draw(x + y1, y + x1, p);	// lower lower right
+			Draw(x + x1, y + y1, p);	// lower right right
 
-			spr->SetTexId(m_vecTextures.size());
-
-			m_vecTextures.push_back(SDL_CreateTextureFromSurface(m_sdlRenderer, spr->m_sdlSurface));
-
-			spr->m_sdlCoordRect.w = m_nPixelWidth * spr->GetWidth();
-			spr->m_sdlCoordRect.h = m_nPixelHeight * spr->GetHeight();
-
-			spr->m_sdlFileRect = spr->m_sdlCoordRect;
-
-			return spr;
+			if (p1 < 0)
+				p1 += 4 * x1++ + 6;
+			else
+				p1 += 4 * (x1++ - y1--) + 10;
 		}
+	}
 
-		Sprite* RecreateSprite(Sprite* spr)
+	void GameEngine::FillCircle(int32_t x, int32_t y, uint32_t r, Pixel p)
+	{
+		if (!r) return;
+
+		int32_t x1 = 0;
+		int32_t y1 = r;
+		int32_t p1 = 3 - 2 * r;
+
+		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny)
 		{
-			m_vecTextures.erase(m_vecTextures.begin() + spr->GetTexId());
-			
-			delete spr;
+			for (int i = sx; i <= ex; i++)
+				Draw(i, ny, p);
+		};
 
-			spr = CreateSprite(spr->GetFilename());
-			
-			return spr;
-		}
-
-		void DrawSprite(int32_t x, int32_t y, Sprite* spr)
+		while (y1 >= x1)
 		{
-			spr->m_sdlCoordRect.x = x * m_nPixelWidth;
-			spr->m_sdlCoordRect.y = y * m_nPixelHeight;
+			drawline(x - x1, x + x1, y - y1);
+			drawline(x - y1, x + y1, y - x1);
+			drawline(x - x1, x + x1, y + y1);
+			drawline(x - y1, x + y1, y + x1);
 
-			SDL_RenderCopy(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect);
+			if (p1 < 0)
+				p1 += 4 * x1++ + 6;
+			else
+				p1 += 4 * (x1++ - y1--) + 10;
 		}
+	}
 
-		KeyState GetKey(SDL_Scancode keyCode) const
+	void GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, uint32_t r, float s, Pixel p)
+	{
+		std::vector<std::pair<float, float>> vecTransformedCoordinates;
+		int verts = vecModelCoordinates.size();
+		vecTransformedCoordinates.resize(verts);
+
+		// Rotate
+		for (int i = 0; i < verts; i++)
 		{
-			return m_sKeys[keyCode];
+			vecTransformedCoordinates[i].first = vecModelCoordinates[i].first * cosf(r) - vecModelCoordinates[i].second * sinf(r);
+			vecTransformedCoordinates[i].second = vecModelCoordinates[i].first * sinf(r) + vecModelCoordinates[i].second * cosf(r);
 		}
 
-		KeyState GetMouse(uint8_t btnCode) const
+		// Scale
+		for (int i = 0; i < verts; i++)
 		{
-			return m_sMouse[btnCode];
+			vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first * s;
+			vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second * s;
 		}
 
-		uint32_t GetMouseX() const
+		// Translate
+		for (int i = 0; i < verts; i++)
 		{
-			return m_nMouseX;
+			vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first + x;
+			vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second + y;
 		}
 
-		uint32_t GetMouseY() const
+		for (int i = 0; i < verts + 1; i++)
 		{
-			return m_nMouseY;
+			int j = i + 1;
+			DrawLine((int)vecTransformedCoordinates[i % verts].first, (int)vecTransformedCoordinates[i % verts].second,
+				(int)vecTransformedCoordinates[j % verts].first, (int)vecTransformedCoordinates[j % verts].second, p);
 		}
+	}
 
-		uint32_t GetScreenWidth() const
-		{
-			return m_nScreenWidth;
-		}
+	Sprite* GameEngine::CreateSprite(std::string filename)
+	{
+		Sprite* spr = new Sprite(filename);
 
-		uint32_t GetScreenHeight() const
-		{
-			return m_nScreenHeight;
-		}
-	};
+		spr->SetTexId(m_vecTextures.size());
+
+		m_vecTextures.push_back(SDL_CreateTextureFromSurface(m_sdlRenderer, spr->m_sdlSurface));
+
+		spr->m_sdlCoordRect.w = m_nPixelWidth * spr->GetWidth();
+		spr->m_sdlCoordRect.h = m_nPixelHeight * spr->GetHeight();
+
+		spr->m_sdlFileRect = spr->m_sdlCoordRect;
+
+		return spr;
+	}
+
+	Sprite* GameEngine::RecreateSprite(Sprite* spr)
+	{
+		m_vecTextures.erase(m_vecTextures.begin() + spr->GetTexId());
+
+		delete spr;
+
+		spr = CreateSprite(spr->GetFilename());
+
+		return spr;
+	}
+
+	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, SDL_RendererFlip flip)
+	{
+		spr->m_sdlCoordRect.x = x * m_nPixelWidth;
+		spr->m_sdlCoordRect.y = y * m_nPixelHeight;
+
+		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, flip);
+	}
+
+	KeyState GameEngine::GetKey(SDL_Scancode keyCode) const
+	{
+		return m_sKeys[keyCode];
+	}
+
+	KeyState GameEngine::GetMouse(uint8_t btnCode) const
+	{
+		return m_sMouse[btnCode];
+	}
+
+	uint32_t GameEngine::GetMouseX() const
+	{
+		return m_nMouseX;
+	}
+
+	uint32_t GameEngine::GetMouseY() const
+	{
+		return m_nMouseY;
+	}
+
+	uint32_t GameEngine::GetScreenWidth() const
+	{
+		return m_nScreenWidth;
+	}
+
+	uint32_t GameEngine::GetScreenHeight() const
+	{
+		return m_nScreenHeight;
+	}
 }
