@@ -7,7 +7,8 @@ defGameEngine - это кроссплатформенный игровой дв�
 - Скачать [SDL_Image 2.0](https://www.libsdl.org/projects/SDL_image/). Нам нужно Development Libraries.
 - Скачать файл [defGameEngine.h](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.h).
 
-# Скоро!
-- Возможность выбирать между OpenGL и SDL2.
+# Важно!
+- Класс Sprite бесполезен в версии OpenGL... пока что.
+- Версия OpenGL поддерживается только на Windows.
 
 На этом все!
