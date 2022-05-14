@@ -889,13 +889,7 @@ namespace def
 		Sprite* CreateSprite(std::string filename);
 		Sprite* RecreateSprite(Sprite* spr);
 #endif
-
-#ifdef PLATFORM_SDL2
-		KeyState GetKey(SDL_Scancode keyCode) const; // sdl key codes (SDL_SCANCODE)
-#endif
-#ifdef PLATFORM_OPENGL
-		KeyState GetKey(short keyCode) const; // virtual key codes (VK_)
-#endif
+		KeyState GetKey(short keyCode) const;
 		KeyState GetMouse(short btnCode) const;
 		uint32_t GetMouseX() const;
 		uint32_t GetMouseY() const;
@@ -1392,18 +1386,10 @@ namespace def
 	}
 #endif
 
-#ifdef PLATFORM_SDL2
-	KeyState GameEngine::GetKey(SDL_Scancode keyCode) const
-	{
-		return m_sKeys[keyCode];
-	}
-#endif
-#ifdef PLATFORM_OPENGL
 	KeyState GameEngine::GetKey(short keyCode) const
 	{
 		return m_sKeys[keyCode];
 	}
-#endif
 
 	KeyState GameEngine::GetMouse(short btnCode) const
 	{
