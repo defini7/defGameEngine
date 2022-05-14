@@ -73,13 +73,34 @@
 **/
 #pragma endregion
 
+#ifdef PLATFORM_OPENGL
+#ifdef PLATFORM_SDL2
+#undef PLATFORM_SDL2
+#endif
+#endif
+
+#ifdef PLATFORM_SDL2
+#ifdef PLATFORM_OPENGL
+#undef PLATFORM_OPENGL
+#endif
+#endif
+
 #include <iostream>
 #include <string>
 #include <thread>
 #include <vector>
 
-#include <SDL.h>
-#include <SDL_image.h>
+#ifdef PLATFORM_OPENGL
+	#include <Windows.h>
+	#include <gl/GL.h>
+	#if defined(_WIN32) && !defined(__MINGW32__)
+		#pragma comment(lib, "opengl32.lib")
+	#endif
+#else
+	#define PLATFORM_SDL2
+	#include <SDL.h>
+	#include <SDL_image.h>
+#endif
 
 namespace def
 {
@@ -271,13 +292,17 @@ namespace def
 
 		~Sprite()
 		{
+#ifdef PLATFORM_SDL2
 			delete m_sdlSurface;
+#endif
 		}
 
+#ifdef PLATFORM_SDL2
 		SDL_Surface* m_sdlSurface;
 
 		SDL_Rect m_sdlFileRect;
 		SDL_Rect m_sdlCoordRect;
+#endif
 
 	private:
 		uint32_t m_nWidth;
@@ -294,6 +319,7 @@ namespace def
 			rc.ok = false;
 			rc.info = "Ok";
 
+#ifdef PLATFORM_SDL2
 			m_sdlSurface = IMG_Load(filename.c_str());
 
 			if (!m_sdlSurface)
@@ -305,6 +331,7 @@ namespace def
 
 			m_nWidth = m_sdlSurface->w;
 			m_nHeight = m_sdlSurface->h;
+#endif
 
 			rc.ok = true;
 			return rc;
@@ -342,14 +369,22 @@ namespace def
 		GameEngine()
 		{
 			m_sAppName = "Undefined";
+			
+#ifdef PLATFORM_OPENGL
+			m_nKeyNewState = new uint8_t[256];
+#endif
 		}
 
 		virtual ~GameEngine()
 		{
+#ifdef PLATFORM_SDL2
 			SDL_DestroyRenderer(m_sdlRenderer);
 			SDL_DestroyWindow(m_sdlWindow);
-
 			SDL_Quit();
+#endif
+#ifdef PLATFORM_OPENGL
+			DisableOpenGL(m_hWnd, m_hDC, m_hRC);
+#endif
 		}
 
 	private:
@@ -360,10 +395,20 @@ namespace def
 
 		int32_t m_nPixelWidth;
 		int32_t m_nPixelHeight;
-
+		
+#ifdef PLATFORM_SDL2
 		SDL_Window* m_sdlWindow = nullptr;
 		SDL_Renderer* m_sdlRenderer = nullptr;
+#endif
 
+#ifdef PLATFORM_OPENGL
+		HWND m_hWnd;
+		HDC m_hDC;
+		HGLRC m_hRC;
+
+		std::vector<uint32_t> m_vecTextures;
+#endif
+		
 		bool m_bAppThreadActive;
 
 		KeyState m_sKeys[512];
@@ -375,29 +420,83 @@ namespace def
 		uint8_t m_nMouseOldState[5];
 		uint8_t m_nMouseNewState[5];
 		
-		int32_t m_nMouseX;
-		int32_t m_nMouseY;
+		int32_t m_nMouseX = -1;
+		int32_t m_nMouseY = -1;
 
+#ifdef PLATFORM_SDL2
 		std::vector<SDL_Texture*> m_vecTextures;
-
 		SDL_Rect* m_sdlRect;
+#endif
 
 	public:
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 		virtual void OnUserDestroy() { return; }
 
+#ifdef PLATFORM_OPENGL
+		void EnableOpenGL(HWND hwnd, HDC* hDC, HGLRC* hRC)
+		{
+			PIXELFORMATDESCRIPTOR pfd;
+
+			/* get the device context (DC) */
+			*hDC = GetDC(hwnd);
+
+			/* set the pixel format for the DC */
+			ZeroMemory(&pfd, sizeof(pfd));
+
+			pfd.nSize = sizeof(pfd);
+			pfd.nVersion = 1;
+			pfd.dwFlags = PFD_DRAW_TO_WINDOW |
+				PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+			pfd.iPixelType = PFD_TYPE_RGBA;
+			pfd.cColorBits = 24;
+			pfd.cDepthBits = 16;
+			pfd.iLayerType = PFD_MAIN_PLANE;
+
+			SetPixelFormat(*hDC, ChoosePixelFormat(*hDC, &pfd), &pfd);
+
+			/* create and enable the render context (RC) */
+			*hRC = wglCreateContext(*hDC);
+
+			wglMakeCurrent(*hDC, *hRC);
+		}
+
+		void DisableOpenGL(HWND hwnd, HDC hDC, HGLRC hRC)
+		{
+			wglMakeCurrent(NULL, NULL);
+			wglDeleteContext(hRC);
+			ReleaseDC(hwnd, hDC);
+		}
+
+		static LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+		{
+			POINT cursor;
+			switch (msg)
+			{
+			case WM_DESTROY:
+				PostQuitMessage(0);
+				DestroyWindow(hWnd);
+				return 0;
+				
+			}
+
+			return DefWindowProc(hWnd, msg, wParam, lParam);
+		}
+#endif
+
 		rcode Construct(int nWidth, int nHeight, int nPixelWidth, int nPixelHeight, bool bFullScreen = false)
 		{
 			rcode rc;
 			rc.ok = false;
 
+#ifdef PLATFORM_SDL2
 			auto get_sdl_err = [&]()
 			{
 				rc.info += "SDL: ";
 				rc.info += SDL_GetError();
 				return rc;
 			};
+#endif
 
 			auto set_err = [&](std::string text)
 			{
@@ -414,6 +513,7 @@ namespace def
 			m_nPixelWidth = nPixelWidth;
 			m_nPixelHeight = nPixelHeight;
 
+#ifdef PLATFORM_SDL2
 			if (SDL_Init(SDL_INIT_VIDEO) > 0)
 				return get_sdl_err();
 
@@ -425,6 +525,58 @@ namespace def
 			SDL_SetWindowFullscreen(m_sdlWindow, bFullScreen);
 
 			m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, -1, SDL_RENDERER_ACCELERATED);
+#endif
+
+#ifdef PLATFORM_OPENGL
+			WNDCLASS wc;
+			wc.style = CS_HREDRAW | CS_VREDRAW;
+			wc.cbClsExtra = 0;
+			wc.cbWndExtra = 0;
+
+			wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+			wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+
+			wc.hIcon = LoadIcon(GetModuleHandle(nullptr), nullptr);
+			
+			wc.lpszClassName = (LPCWSTR)m_sAppName.c_str();
+			wc.lpszMenuName = nullptr;
+			
+			wc.hInstance = GetModuleHandle(nullptr);
+
+			wc.lpfnWndProc = WinProc;
+
+			RegisterClass(&wc);
+
+			DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+			DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_THICKFRAME;
+
+			int nTopLeftX = CW_USEDEFAULT;
+			int nTopLeftY = CW_USEDEFAULT;
+
+			if (bFullScreen)
+			{
+				dwExStyle = 0;
+				dwStyle = WS_VISIBLE | WS_POPUP;
+
+				HMONITOR hmon = MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
+				MONITORINFO mi = { sizeof(mi) };
+
+				if (!GetMonitorInfo(hmon, &mi))
+					return set_err("Can't get info about monitor, try to disable full screen mode or fix it somehow");
+
+				m_nScreenWidth = mi.rcMonitor.right;
+				m_nScreenHeight = mi.rcMonitor.bottom;
+
+				nTopLeftX = 0;
+				nTopLeftY = 0;
+			}
+
+			m_hWnd = CreateWindowEx(dwExStyle, (LPCWSTR)m_sAppName.c_str(), (LPCWSTR)m_sAppName.c_str(), dwStyle,
+				nTopLeftX, nTopLeftY, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight, nullptr, nullptr, GetModuleHandle(nullptr), nullptr);
+
+			if (!m_hWnd)
+				return set_err("Can't create window");
+#endif
 
 			rc.ok = true;
 			rc.info = "Ok";
@@ -441,6 +593,16 @@ namespace def
 	private:
 		void AppThread()
 		{
+#ifdef PLATFORM_OPENGL
+			ShowWindow(m_hWnd, SW_SHOW);
+			ShowWindow(GetConsoleWindow(), SW_SHOW);
+			
+			EnableOpenGL(m_hWnd, &m_hDC, &m_hRC);
+			
+			glOrtho(0, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight, 0, -1.0f, 1.0f);
+			glViewport(0, 0, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight);
+#endif
+
 			if (!OnUserCreate())
 				m_bAppThreadActive = false;
 
@@ -455,21 +617,29 @@ namespace def
 				for (int i = 0; i < 512; i++)
 					m_nKeyOldState[i] = 0;
 
-				SDL_Event evt;
+				for (int i = 0; i < 5; i++)
+					m_nMouseOldState[i] = 0;
 
 				while (m_bAppThreadActive)
 				{
 					tp2 = std::chrono::system_clock::now();
-
 					std::chrono::duration<float> elapsedTime = tp2 - tp1;
 					tp1 = tp2;
 					
 					float fDeltaTime = elapsedTime.count();
-
+					
 					char s[256];
 					sprintf_s(s, 256, "github.com/defini7 - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / fDeltaTime);
-					SDL_SetWindowTitle(m_sdlWindow, s);
 
+#ifdef PLATFORM_SDL2
+					SDL_SetWindowTitle(m_sdlWindow, s);
+#endif
+#ifdef PLATFORM_OPENGL
+					SetWindowTextA(m_hWnd, s);
+#endif
+
+#ifdef PLATFORM_SDL2
+					SDL_Event evt;
 					while (SDL_PollEvent(&evt))
 					{
 						switch (evt.type)
@@ -498,28 +668,6 @@ namespace def
 								m_nMouseNewState[4] = 1;
 								break;
 							}
-
-							for (int m = 0; m < 5; m++)
-							{
-								m_sMouse[m].bPressed = false;
-								m_sMouse[m].bReleased = false;
-
-								if (m_nMouseNewState[m] != m_nMouseOldState[m])
-								{
-									if (m_nMouseNewState[m])
-									{
-										m_sMouse[m].bPressed = true;
-										m_sMouse[m].bHeld = true;
-									}
-									else
-									{
-										m_sMouse[m].bReleased = true;
-										m_sMouse[m].bHeld = false;
-									}
-								}
-
-								m_nMouseOldState[m] = m_nMouseNewState[m];
-							}
 						}
 						break;
 
@@ -542,28 +690,6 @@ namespace def
 							case SDL_BUTTON_X2:
 								m_nMouseNewState[4] = 0;
 								break;
-							}
-
-							for (int m = 0; m < 5; m++)
-							{
-								m_sMouse[m].bPressed = false;
-								m_sMouse[m].bReleased = false;
-
-								if (m_nMouseNewState[m] != m_nMouseOldState[m])
-								{
-									if (m_nMouseNewState[m])
-									{
-										m_sMouse[m].bPressed = true;
-										m_sMouse[m].bHeld = true;
-									}
-									else
-									{
-										m_sMouse[m].bReleased = true;
-										m_sMouse[m].bHeld = false;
-									}
-								}
-
-								m_nMouseOldState[m] = m_nMouseNewState[m];
 							}
 						}
 						break;
@@ -608,16 +734,138 @@ namespace def
 						}
 					}
 
+					for (int m = 0; m < 5; m++)
+					{
+						m_sMouse[m].bPressed = false;
+						m_sMouse[m].bReleased = false;
+
+						if (m_nMouseNewState[m] != m_nMouseOldState[m])
+						{
+							if (m_nMouseNewState[m])
+							{
+								m_sMouse[m].bPressed = true;
+								m_sMouse[m].bHeld = true;
+							}
+							else
+							{
+								m_sMouse[m].bReleased = true;
+								m_sMouse[m].bHeld = false;
+							}
+						}
+
+						m_nMouseOldState[m] = m_nMouseNewState[m];
+					}
+
 					SDL_RenderSetScale(m_sdlRenderer, m_nPixelWidth, m_nPixelHeight);
 
 					if (!OnUserUpdate(fDeltaTime))
 						m_bAppThreadActive = false;
 					
 					SDL_RenderPresent(m_sdlRenderer);
+#endif
+#ifdef PLATFORM_OPENGL
+					MSG msg = { 0 };
+
+					if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+					{
+						auto update_pos = [&]()
+						{
+							RECT rctWin;
+							RECT rctCli;
+
+							GetWindowRect(m_hWnd, &rctWin);
+							GetClientRect(m_hWnd, &rctCli);
+
+							int oy = (rctWin.bottom - rctCli.bottom) - (rctWin.top - rctCli.top);
+							
+							m_nMouseX = LOWORD(msg.lParam) / m_nPixelWidth;
+							m_nMouseY = (HIWORD(msg.lParam) + oy) / m_nPixelHeight;
+						};
+
+						switch (msg.message)
+						{
+						case WM_QUIT:			m_bAppThreadActive = false;												break;
+						case WM_MOUSEMOVE:		update_pos();															break;
+						case WM_LBUTTONDOWN:	update_pos(); m_nMouseNewState[0] = 1;									break;
+						case WM_LBUTTONUP:		update_pos(); m_nMouseNewState[0] = 0;									break;
+						case WM_RBUTTONDOWN:	update_pos(); m_nMouseNewState[1] = 1;									break;
+						case WM_RBUTTONUP:		update_pos(); m_nMouseNewState[1] = 0;									break;
+						case WM_MBUTTONDOWN:	update_pos(); m_nMouseNewState[2] = 1;									break;
+						case WM_MBUTTONUP:		update_pos(); m_nMouseNewState[2] = 0;									break;
+						case WM_XBUTTONDOWN:	update_pos(); m_nMouseNewState[(HIWORD(msg.wParam) == 2) ? 4 : 3] = 1;  break;
+						case WM_XBUTTONUP:		update_pos(); m_nMouseNewState[(HIWORD(msg.wParam) == 2) ? 4 : 3] = 0;  break;
+
+						default:
+						{
+							TranslateMessage(&msg);
+							DispatchMessage(&msg);
+						}
+
+						}
+					}
+					else
+					{
+						for (int i = 0; i < 256; i++)
+						{
+							m_nKeyNewState[i] = GetAsyncKeyState(i);
+
+							m_sKeys[i].bPressed = false;
+							m_sKeys[i].bReleased = false;
+
+							if (m_nKeyNewState[i] != m_nKeyOldState[i])
+							{
+								if (m_nKeyNewState[i] & 0x8000)
+								{
+									m_sKeys[i].bPressed = !m_sKeys[i].bHeld;
+									m_sKeys[i].bHeld = true;
+								}
+								else
+								{
+									m_sKeys[i].bReleased = true;
+									m_sKeys[i].bHeld = false;
+								}
+							}
+
+							m_nKeyOldState[i] = m_nKeyNewState[i];
+						}
+
+						for (int m = 0; m < 5; m++)
+						{
+							m_sMouse[m].bPressed = false;
+							m_sMouse[m].bReleased = false;
+
+							if (m_nMouseNewState[m] != m_nMouseOldState[m])
+							{
+								if (m_nMouseNewState[m])
+								{
+									m_sMouse[m].bPressed = true;
+									m_sMouse[m].bHeld = true;
+								}
+								else
+								{
+									m_sMouse[m].bReleased = true;
+									m_sMouse[m].bHeld = false;
+								}
+							}
+
+							m_nMouseOldState[m] = m_nMouseNewState[m];
+						}
+
+						glPushMatrix();
+
+						if (!OnUserUpdate(fDeltaTime))
+							m_bAppThreadActive = false;
+
+						glPopMatrix();
+
+						SwapBuffers(m_hDC);
+					}
+#endif
 				}
 			}
 		}
 
+#ifdef PLATFORM_SDL2
 		SDL_Rect* GetPixelRect(int32_t x, int32_t y)
 		{
 			SDL_Rect* rct = new SDL_Rect;
@@ -628,6 +876,7 @@ namespace def
 
 			return rct;
 		}
+#endif
 
 	public:
 		void SetTitle(std::string title);
@@ -641,13 +890,21 @@ namespace def
 		void DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
 		void FillCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
 		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, uint32_t r, float s, Pixel p = def::WHITE);
+
+#ifdef PLATFORM_SDL2
 		void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
 		Sprite* CreateSprite(std::string filename);
 		Sprite* RecreateSprite(Sprite* spr);
+#endif
 
-		KeyState GetKey(SDL_Scancode keyCode) const;
-		KeyState GetMouse(uint8_t btnCode) const;
+#ifdef PLATFORM_SDL2
+		KeyState GetKey(SDL_Scancode keyCode) const; // sdl key codes (SDL_SCANCODE)
+#endif
+#ifdef PLATFORM_OPENGL
+		KeyState GetKey(short keyCode) const; // virtual key codes (VK_)
+#endif
+		KeyState GetMouse(short btnCode) const;
 		uint32_t GetMouseX() const;
 		uint32_t GetMouseY() const;
 		uint32_t GetScreenWidth() const;
@@ -662,30 +919,103 @@ namespace def
 
 	void GameEngine::Draw(int32_t x, int32_t y, Pixel p)
 	{
+#ifdef PLATFORM_SDL2
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderDrawPoint(m_sdlRenderer, x, y);
+#endif
+#ifdef PLATFORM_OPENGL
+		glColor4ub(p.r, p.g, p.b, p.a);
+		glRecti(x * m_nPixelWidth, y * m_nPixelHeight, x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
+#endif
 	}
 
 	void GameEngine::Clear(Pixel p)
 	{
+#ifdef PLATFORM_SDL2
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderClear(m_sdlRenderer);
+#endif
+#ifdef PLATFORM_OPENGL
+		glClearColor((float)p.r / 255.0f, (float)p.g / 255.0f, (float)p.b / 255.0f, (float)p.a / 255.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#endif
 	}
 
-	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p)
+	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
 	{
-		m_sdlRect = GetPixelRect(x, y);
-		SDL_RenderFillRect(m_sdlRenderer, m_sdlRect);
+		for (int i = x; i < x1; i++)
+			for (int j = y; j < y1; j++)
+				Draw(i, j, p);
 	}
 
 	void GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p)
 	{
+#ifdef PLATFORM_SDL2
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderDrawLine(m_sdlRenderer, x1, y1, x2, y2);
+#endif
+#ifdef PLATFORM_OPENGL
+		int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
+		dx = x2 - x1; dy = y2 - y1;
+		dx1 = abs(dx); dy1 = abs(dy);
+		px = 2 * dy1 - dx1;	py = 2 * dx1 - dy1;
+		if (dy1 <= dx1)
+		{
+			if (dx >= 0)
+			{
+				x = x1; y = y1; xe = x2;
+			}
+			else
+			{
+				x = x2; y = y2; xe = x1;
+			}
+
+			Draw(x, y, p);
+
+			for (i = 0; x < xe; i++)
+			{
+				x = x + 1;
+				if (px < 0)
+					px = px + 2 * dy1;
+				else
+				{
+					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) y = y + 1; else y = y - 1;
+					px = px + 2 * (dy1 - dx1);
+				}
+				Draw(x, y, p);
+			}
+		}
+		else
+		{
+			if (dy >= 0)
+			{
+				x = x1; y = y1; ye = y2;
+			}
+			else
+			{
+				x = x2; y = y2; ye = y1;
+			}
+
+			Draw(x, y, p);
+
+			for (i = 0; y < ye; i++)
+			{
+				y = y + 1;
+				if (py <= 0)
+					py = py + 2 * dx1;
+				else
+				{
+					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) x = x + 1; else x = x - 1;
+					py = py + 2 * (dx1 - dy1);
+				}
+				Draw(x, y, p);
+			}
+		}
+#endif
 	}
 
 	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t width, int32_t height, Pixel p)
-	{
+	{	
 		DrawLine(x, y, x + width, y, p);
 		DrawLine(x + width, y, x + width, y + height, p);
 		DrawLine(x + width, y + height, x, y + height, p);
@@ -1033,6 +1363,7 @@ namespace def
 		}
 	}
 
+#ifdef PLATFORM_SDL2
 	Sprite* GameEngine::CreateSprite(std::string filename)
 	{
 		Sprite* spr = new Sprite(filename);
@@ -1049,6 +1380,14 @@ namespace def
 		return spr;
 	}
 
+	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, SDL_RendererFlip flip)
+	{
+		spr->m_sdlCoordRect.x = x * m_nPixelWidth;
+		spr->m_sdlCoordRect.y = y * m_nPixelHeight;
+
+		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, flip);
+	}
+
 	Sprite* GameEngine::RecreateSprite(Sprite* spr)
 	{
 		m_vecTextures.erase(m_vecTextures.begin() + spr->GetTexId());
@@ -1059,21 +1398,22 @@ namespace def
 
 		return spr;
 	}
+#endif
 
-	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, SDL_RendererFlip flip)
-	{
-		spr->m_sdlCoordRect.x = x * m_nPixelWidth;
-		spr->m_sdlCoordRect.y = y * m_nPixelHeight;
-
-		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, flip);
-	}
-
+#ifdef PLATFORM_SDL2
 	KeyState GameEngine::GetKey(SDL_Scancode keyCode) const
 	{
 		return m_sKeys[keyCode];
 	}
+#endif
+#ifdef PLATFORM_OPENGL
+	KeyState GameEngine::GetKey(short keyCode) const
+	{
+		return m_sKeys[keyCode];
+	}
+#endif
 
-	KeyState GameEngine::GetMouse(uint8_t btnCode) const
+	KeyState GameEngine::GetMouse(short btnCode) const
 	{
 		return m_sMouse[btnCode];
 	}
