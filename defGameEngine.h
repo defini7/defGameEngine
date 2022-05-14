@@ -73,16 +73,8 @@
 **/
 #pragma endregion
 
-#ifdef PLATFORM_OPENGL
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_OPENGL) && defined(PLATFORM_SDL2)
 #undef PLATFORM_SDL2
-#endif
-#endif
-
-#ifdef PLATFORM_SDL2
-#ifdef PLATFORM_OPENGL
-#undef PLATFORM_OPENGL
-#endif
 #endif
 
 #include <iostream>
