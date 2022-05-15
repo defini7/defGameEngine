@@ -362,8 +362,11 @@ namespace def
 		{
 			m_sAppName = "Undefined";
 			
-#ifdef PLATFORM_OPENGL
+#ifdef PLATFORM_SDL2
 			m_nKeyNewState = new uint8_t[256];
+#endif
+#ifdef PLATFORM_OPENGL
+			m_nKeyNewState = new short[256];
 #endif
 		}
 
@@ -377,6 +380,7 @@ namespace def
 #ifdef PLATFORM_OPENGL
 			DisableOpenGL(m_hWnd, m_hDC, m_hRC);
 #endif
+			delete m_nKeyNewState;
 		}
 
 	private:
@@ -406,8 +410,14 @@ namespace def
 		KeyState m_sKeys[512];
 		KeyState m_sMouse[5];
 		
+#ifdef PLATFORM_SDL2
 		uint8_t m_nKeyOldState[512];
 		uint8_t* m_nKeyNewState;
+#endif
+#ifdef PLATFORM_OPENGL
+		short m_nKeyOldState[512];
+		short* m_nKeyNewState;
+#endif
 
 		uint8_t m_nMouseOldState[5];
 		uint8_t m_nMouseNewState[5];
@@ -430,10 +440,8 @@ namespace def
 		{
 			PIXELFORMATDESCRIPTOR pfd;
 
-			/* get the device context (DC) */
 			*hDC = GetDC(hwnd);
 
-			/* set the pixel format for the DC */
 			ZeroMemory(&pfd, sizeof(pfd));
 
 			pfd.nSize = sizeof(pfd);
@@ -447,7 +455,6 @@ namespace def
 
 			SetPixelFormat(*hDC, ChoosePixelFormat(*hDC, &pfd), &pfd);
 
-			/* create and enable the render context (RC) */
 			*hRC = wglCreateContext(*hDC);
 
 			wglMakeCurrent(*hDC, *hRC);
@@ -797,30 +804,6 @@ namespace def
 					}
 					else
 					{
-						for (int i = 0; i < 256; i++)
-						{
-							m_nKeyNewState[i] = GetAsyncKeyState(i);
-
-							m_sKeys[i].bPressed = false;
-							m_sKeys[i].bReleased = false;
-
-							if (m_nKeyNewState[i] != m_nKeyOldState[i])
-							{
-								if (m_nKeyNewState[i] & 0x8000)
-								{
-									m_sKeys[i].bPressed = !m_sKeys[i].bHeld;
-									m_sKeys[i].bHeld = true;
-								}
-								else
-								{
-									m_sKeys[i].bReleased = true;
-									m_sKeys[i].bHeld = false;
-								}
-							}
-
-							m_nKeyOldState[i] = m_nKeyNewState[i];
-						}
-
 						for (int m = 0; m < 5; m++)
 						{
 							m_sMouse[m].bPressed = false;
@@ -851,6 +834,30 @@ namespace def
 						glPopMatrix();
 
 						SwapBuffers(m_hDC);
+					}
+
+					for (int i = 0; i < 256; i++)
+					{
+						m_nKeyNewState[i] = GetAsyncKeyState(i);
+
+						m_sKeys[i].bPressed = false;
+						m_sKeys[i].bReleased = false;
+
+						if (m_nKeyNewState[i] != m_nKeyOldState[i])
+						{
+							if (m_nKeyNewState[i] & 0x8000)
+							{
+								m_sKeys[i].bPressed = !m_sKeys[i].bHeld;
+								m_sKeys[i].bHeld = true;
+							}
+							else
+							{
+								m_sKeys[i].bReleased = true;
+								m_sKeys[i].bHeld = false;
+							}
+						}
+
+						m_nKeyOldState[i] = m_nKeyNewState[i];
 					}
 #endif
 				}
