@@ -77,6 +77,11 @@
 #undef PLATFORM_SDL2
 #endif
 
+#if !defined(PLATFORM_OPENGL) && !defined(PLATFORM_SDL2)
+#define PLATFORM_OPENGL
+#pragma message You have not specified platform, game engine uses OpenGL by default
+#endif
+
 #include <iostream>
 #include <string>
 #include <thread>
@@ -96,6 +101,11 @@
 
 namespace def
 {
+	enum MODE
+	{
+		ALPHA
+	};
+
 	template <class T>
 	class vec2d_basic
 	{
@@ -268,8 +278,11 @@ namespace def
 	class Sprite
 	{
 	public:
-		Sprite()
+		Sprite(int32_t w, int32_t h)
 		{
+#ifdef PLATFORM_SDL2
+			Create(w, h);
+#endif
 		}
 
 		Sprite(std::string filename)
@@ -305,6 +318,17 @@ namespace def
 		std::string m_sFilename;
 
 	public:
+		void Create(int32_t w, int32_t h)
+		{
+			m_sdlSurface = new SDL_Surface;
+
+			m_nWidth = w;
+			m_nHeight = h;
+
+			m_sdlSurface->pixels = new unsigned char[w * h * 4];
+			memset(m_sdlSurface->pixels, 0, sizeof(m_sdlSurface) * sizeof(unsigned char));
+		}
+
 		rcode LoadTexture(std::string filename)
 		{
 			rcode rc;
@@ -353,6 +377,30 @@ namespace def
 		{
 			return m_sFilename;
 		}
+
+		void SetPixel(int32_t x, int32_t y, Pixel p)
+		{
+			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
+			
+			pixels[4 * (y * m_nWidth + x) + 0] = p.r;
+			pixels[4 * (y * m_nWidth + x) + 1] = p.g;
+			pixels[4 * (y * m_nWidth + x) + 2] = p.b;
+			pixels[4 * (y * m_nWidth + x) + 3] = p.a;
+		}
+
+		Pixel GetPixel(int32_t x, int32_t y)
+		{
+			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
+
+			Pixel p;
+
+			p.r = pixels[4 * (y * m_nWidth + x) + 0];
+			p.g = pixels[4 * (y * m_nWidth + x) + 1];
+			p.b = pixels[4 * (y * m_nWidth + x) + 2];
+			p.a = pixels[4 * (y * m_nWidth + x) + 3];
+
+			return p;
+		}
 	};
 
 	class GameEngine
@@ -380,7 +428,6 @@ namespace def
 #ifdef PLATFORM_OPENGL
 			DisableOpenGL(m_hWnd, m_hDC, m_hRC);
 #endif
-			delete m_nKeyNewState;
 		}
 
 	private:
@@ -429,6 +476,8 @@ namespace def
 		std::vector<SDL_Texture*> m_vecTextures;
 		SDL_Rect* m_sdlRect;
 #endif
+
+		Sprite* sprFont;
 
 	public:
 		virtual bool OnUserCreate() = 0;
@@ -524,6 +573,8 @@ namespace def
 			SDL_SetWindowFullscreen(m_sdlWindow, bFullScreen);
 
 			m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, -1, SDL_RENDERER_ACCELERATED);
+
+			ConstructFontSprite();
 #endif
 
 #ifdef PLATFORM_OPENGL
@@ -876,19 +927,59 @@ namespace def
 			return rct;
 		}
 #endif
+		
+		void ConstructFontSprite()
+		{
+			std::string data;
+			data += "?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000";
+			data += "O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400";
+			data += "Of80001oOg<7O7moBGT7O7lABET024@aBEd714AiOdl717a_=TH013Q>00000000";
+			data += "720D000V?V5oB3Q_HdUoE7a9@DdDE4A9@DmoE4A;Hg]oM4Aj8S4D84@`00000000";
+			data += "OaPT1000Oa`^13P1@AI[?g`1@A=[OdAoHgljA4Ao?WlBA7l1710007l100000000";
+			data += "ObM6000oOfMV?3QoBDD`O7a0BDDH@5A0BDD<@5A0BGeVO5ao@CQR?5Po00000000";
+			data += "Oc``000?Ogij70PO2D]??0Ph2DUM@7i`2DTg@7lh2GUj?0TO0C1870T?00000000";
+			data += "70<4001o?P<7?1QoHg43O;`h@GT0@:@LB@d0>:@hN@L0@?aoN@<0O7ao0000?000";
+			data += "OcH0001SOglLA7mg24TnK7ln24US>0PL24U140PnOgl0>7QgOcH0K71S0000A000";
+			data += "00H00000@Dm1S007@DUSg00?OdTnH7YhOfTL<7Yh@Cl0700?@Ah0300700000000";
+			data += "<008001QL00ZA41a@6HnI<1i@FHLM81M@@0LG81?O`0nC?Y7?`0ZA7Y300080000";
+			data += "O`082000Oh0827mo6>Hn?Wmo?6HnMb11MP08@C11H`08@FP0@@0004@000000000";
+			data += "00P00001Oab00003OcKP0006@6=PMgl<@440MglH@000000`@000001P00000000";
+			data += "Ob@8@@00Ob@8@Ga13R@8Mga172@8?PAo3R@827QoOb@820@0O`0007`0000007P0";
+			data += "O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000";
+			data += "?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
+
+			sprFont = new Sprite(128, 48);
+			int px = 0, py = 0;
+			for (size_t b = 0; b < 1024; b += 4)
+			{
+				uint32_t sym1 = (uint32_t)data[b + 0] - 48;
+				uint32_t sym2 = (uint32_t)data[b + 1] - 48;
+				uint32_t sym3 = (uint32_t)data[b + 2] - 48;
+				uint32_t sym4 = (uint32_t)data[b + 3] - 48;
+				uint32_t r = sym1 << 18 | sym2 << 12 | sym3 << 6 | sym4;
+
+				for (int i = 0; i < 24; i++)
+				{
+					int k = r & (1 << i) ? 255 : 0;
+					sprFont->SetPixel(px, py, Pixel(k, k, k, k));
+					if (++py == 48) { px++; py = 0; }
+				}
+			}
+		}
 
 	public:
 		void SetTitle(std::string title);
 		void Draw(int32_t x, int32_t y, Pixel p = def::WHITE);
 		void Clear(Pixel p = def::WHITE);
-		void FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p = def::WHITE);
+		void FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = def::WHITE);
 		void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p = def::WHITE);
-		void DrawRectangle(int32_t x, int32_t y, int32_t width, int32_t height, Pixel p = def::WHITE);
+		void DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = def::WHITE);
 		void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
 		void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
 		void DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
 		void FillCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
 		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, uint32_t r, float s, Pixel p = def::WHITE);
+		void DrawString(int32_t x, int32_t y, std::string s, Pixel p = def::WHITE, float scale = 1.0f);
 
 #ifdef PLATFORM_SDL2
 		void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, SDL_RendererFlip flip = SDL_FLIP_NONE);
@@ -896,6 +987,8 @@ namespace def
 		Sprite* CreateSprite(std::string filename);
 		Sprite* RecreateSprite(Sprite* spr);
 #endif
+		void SetMode(MODE m);
+		void DisableMode(MODE m);
 		KeyState GetKey(short keyCode) const;
 		KeyState GetMouse(short btnCode) const;
 		uint32_t GetMouseX() const;
@@ -933,11 +1026,11 @@ namespace def
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #endif
 	}
-
+	
 	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
 	{
-		for (int i = x; i < x1; i++)
-			for (int j = y; j < y1; j++)
+		for (int i = x; i <= x1; i++)
+			for (int j = y; j <= y1; j++)
 				Draw(i, j, p);
 	}
 
@@ -948,71 +1041,22 @@ namespace def
 		SDL_RenderDrawLine(m_sdlRenderer, x1, y1, x2, y2);
 #endif
 #ifdef PLATFORM_OPENGL
-		int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
-		dx = x2 - x1; dy = y2 - y1;
-		dx1 = abs(dx); dy1 = abs(dy);
-		px = 2 * dy1 - dx1;	py = 2 * dx1 - dy1;
-		if (dy1 <= dx1)
-		{
-			if (dx >= 0)
-			{
-				x = x1; y = y1; xe = x2;
-			}
-			else
-			{
-				x = x2; y = y2; xe = x1;
-			}
+		glScalef(m_nPixelWidth, m_nPixelHeight, 1.0f);
 
-			Draw(x, y, p);
-
-			for (i = 0; x < xe; i++)
-			{
-				x = x + 1;
-				if (px < 0)
-					px = px + 2 * dy1;
-				else
-				{
-					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) y = y + 1; else y = y - 1;
-					px = px + 2 * (dy1 - dx1);
-				}
-				Draw(x, y, p);
-			}
-		}
-		else
-		{
-			if (dy >= 0)
-			{
-				x = x1; y = y1; ye = y2;
-			}
-			else
-			{
-				x = x2; y = y2; ye = y1;
-			}
-
-			Draw(x, y, p);
-
-			for (i = 0; y < ye; i++)
-			{
-				y = y + 1;
-				if (py <= 0)
-					py = py + 2 * dx1;
-				else
-				{
-					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) x = x + 1; else x = x - 1;
-					py = py + 2 * (dx1 - dy1);
-				}
-				Draw(x, y, p);
-			}
-		}
+		glColor4ub(p.r, p.g, p.b, p.a);
+		glBegin(GL_LINES);
+			glVertex2i(x1, y1);
+			glVertex2i(x2, y2);
+		glEnd();
 #endif
 	}
 
-	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t width, int32_t height, Pixel p)
+	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
 	{	
-		DrawLine(x, y, x + width, y, p);
-		DrawLine(x + width, y, x + width, y + height, p);
-		DrawLine(x + width, y + height, x, y + height, p);
-		DrawLine(x, y + height, x, y, p);
+		DrawLine(x, y, x1, y, p);
+		DrawLine(x1, y, x1, y1, p);
+		DrawLine(x1, y1, x, y1, p);
+		DrawLine(x, y1, x, y, p);
 	}
 
 	void GameEngine::DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p)
@@ -1356,6 +1400,47 @@ namespace def
 		}
 	}
 
+	void GameEngine::DrawString(int32_t x, int32_t y, std::string s, Pixel p, float scale)
+	{
+		int32_t sx = 0;
+		int32_t sy = 0;
+
+		for (auto c : s)
+		{
+			if (c == '\n')
+			{
+				sx = 0; sy += 8 * scale;
+			}
+			else if (c == '\t')
+			{
+				sx += 32 * scale;
+			}
+			else
+			{
+				int32_t ox = (c - 32) % 16;
+				int32_t oy = (c - 32) / 16;
+
+				if (scale > 1)
+				{
+					for (uint32_t i = 0; i < 8; i++)
+						for (uint32_t j = 0; j < 8; j++)
+							if (sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
+								for (uint32_t is = 0; is < scale; is++)
+									for (uint32_t js = 0; js < scale; js++)
+										Draw(x + sx + (i * scale) + is, y + sy + (j * scale) + js, p);
+				}
+				else
+				{
+					for (uint32_t i = 0; i < 8; i++)
+						for (uint32_t j = 0; j < 8; j++)
+							if (sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
+								Draw(x + sx + i, y + sy + j, p);
+				}
+				sx += 8 * scale;
+			}
+		}
+	}
+
 #ifdef PLATFORM_SDL2
 	Sprite* GameEngine::CreateSprite(std::string filename)
 	{
@@ -1392,6 +1477,33 @@ namespace def
 		return spr;
 	}
 #endif
+
+	void GameEngine::SetMode(MODE m)
+	{
+		switch (m)
+		{
+		case MODE::ALPHA:
+		{
+#ifdef PLATFORM_OPENGL
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#endif
+		}
+		}
+	}
+
+	void GameEngine::DisableMode(MODE m)
+	{
+		switch (m)
+		{
+		case MODE::ALPHA:
+		{
+#ifdef PLATFORM_OPENGL
+			glDisable(GL_BLEND);
+#endif
+		}
+		}
+	}
 
 	KeyState GameEngine::GetKey(short keyCode) const
 	{
