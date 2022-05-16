@@ -87,11 +87,28 @@
 #include <thread>
 #include <vector>
 
-#ifdef PLATFORM_OPENGL
+#if defined(PLATFORM_OPENGL)
 	#include <Windows.h>
 	#include <gl/GL.h>
+
 	#if defined(_WIN32) && !defined(__MINGW32__)
 		#pragma comment(lib, "opengl32.lib")
+	#endif
+
+	#if defined(STB_IMAGE_IMPLEMENTATION)
+		#include "stb_image.h"
+	#else
+		#include <gdiplus.h>
+
+		#if defined(__MINGW32__)
+			#include <gdiplus/gdiplusinit.h>
+		#else
+			#include <gdiplusinit.h>
+		#endif
+
+		#if !defined(__MINGW32__)
+			#pragma comment(lib, "gdiplus.lib")
+		#endif
 	#endif
 #else
 	#define PLATFORM_SDL2
@@ -278,16 +295,20 @@ namespace def
 	class Sprite
 	{
 	public:
+		Sprite()
+		{
+			Create(8, 8);
+		}
+
 		Sprite(int32_t w, int32_t h)
 		{
-#ifdef PLATFORM_SDL2
-			Create(w, h);
-#endif
+			if (w > 0 && h > 0)
+				Create(w, h);
 		}
 
 		Sprite(std::string filename)
 		{
-			rcode rc = LoadTexture(filename);
+			rcode rc = LoadSprite(filename);
 			
 			if (!rc.ok)
 				std::cerr << rc.info << "\n";
@@ -297,29 +318,29 @@ namespace def
 
 		~Sprite()
 		{
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 			delete m_sdlSurface;
 #endif
 		}
 
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 		SDL_Surface* m_sdlSurface;
 
 		SDL_Rect m_sdlFileRect;
 		SDL_Rect m_sdlCoordRect;
+		uint32_t m_nTexId;
 #endif
 
 	private:
 		uint32_t m_nWidth;
 		uint32_t m_nHeight;
 
-		uint32_t m_nTexId;
-
 		std::string m_sFilename;
 
 	public:
 		void Create(int32_t w, int32_t h)
 		{
+#if defined(PLATFORM_SDL2)
 			m_sdlSurface = new SDL_Surface;
 
 			m_nWidth = w;
@@ -327,15 +348,22 @@ namespace def
 
 			m_sdlSurface->pixels = new unsigned char[w * h * 4];
 			memset(m_sdlSurface->pixels, 0, sizeof(m_sdlSurface) * sizeof(unsigned char));
+#elif defined(PLATFORM_OPENGL)
+			m_vecPixels.resize(w * h);
+
+			for (int x = 0; x < w; x++)
+				for (int y = 0; y < h; y++)
+					m_vecPixels[y * w + x] = Pixel(255, 255, 255, 255);
+#endif
 		}
 
-		rcode LoadTexture(std::string filename)
+		rcode LoadSprite(std::string filename)
 		{
 			rcode rc;
 			rc.ok = false;
 			rc.info = "Ok";
 
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 			m_sdlSurface = IMG_Load(filename.c_str());
 
 			if (!m_sdlSurface)
@@ -347,12 +375,95 @@ namespace def
 
 			m_nWidth = m_sdlSurface->w;
 			m_nHeight = m_sdlSurface->h;
+
+#elif defined(PLATFORM_OPENGL)
+			
+			if (!LoadImageResource(filename))
+			{
+				rc.info = "Can't load image!";
+				return rc;
+			}
 #endif
 
 			rc.ok = true;
 			return rc;
 		}
+
+#if defined(PLATFORM_OPENGL)
+		std::wstring ConvertS2W(std::string s)
+		{
+#ifdef __MINGW32__
+			wchar_t* buffer = new wchar_t[s.length() + 1];
+			mbstowcs(buffer, s.c_str(), s.length());
+			buffer[s.length()] = L'\0';
+#else
+			int count = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, NULL, 0);
+			wchar_t* buffer = new wchar_t[count];
+			MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, buffer, count);
+#endif
+			std::wstring w(buffer);
+			delete[] buffer;
+			return w;
+		}
+
+		bool LoadImageResource(std::string filename)
+		{
+			m_vecPixels.clear();
+
+#if defined(STB_IMAGE_IMPLEMENTATION)
+			int nChannels;
+			std::string fn(filename.begin(), filename.end());
+
+			unsigned char* bmp = stbi_load(fn.c_str(), &nWidth, &nHeight, &nChannels, 0);
+
+			if (!bmp)
+				return false;
+
+			m_vecPixels.resize(nWidth * nHeight);
+
+			for (int x = 0; x < nWidth; x++)
+				for (int y = 0; y < nHeight; y++)
+				{
+					unsigned char* pPixelOffset = bmp + (y * nWidth + x) * nChannels;
+					SetPixel(x, y, Pixel(pPixelOffset[0], pPixelOffset[1], pPixelOffset[2], nChannels >= 4 ? pPixelOffset[3] : 0xff));
+				}
+
+			stbi_image_free(bmp);
+#else
+			Gdiplus::Bitmap* bmp = Gdiplus::Bitmap::FromFile(ConvertS2W(filename).c_str());
+
+			if (!bmp)
+				return false;
+
+			if (bmp->GetLastStatus() != Gdiplus::Ok)
+				return false;
+
+			m_nWidth = bmp->GetWidth();
+			m_nHeight = bmp->GetHeight();
+
+			m_vecPixels.resize(m_nWidth * m_nHeight);
+
+			for (int x = 0; x < m_nWidth; x++)
+				for (int y = 0; y < m_nHeight; y++)
+				{
+					Gdiplus::Color c;
+					bmp->GetPixel(x, y, &c);
+					SetPixel(x, y, Pixel(c.GetRed(), c.GetGreen(), c.GetBlue(), c.GetAlpha()));
+				}
+			delete bmp;
+#endif
+			return true;
+		}
+
+		std::vector<Pixel> m_vecPixels;
+
+		Pixel* GetData()
+		{
+			return m_vecPixels.data();
+		}
+#endif
 		
+#if defined(PLATFORM_SDL2)
 		void SetTexId(uint32_t id)
 		{
 			m_nTexId = id;
@@ -362,6 +473,7 @@ namespace def
 		{
 			return m_nTexId;
 		}
+#endif
 
 		uint32_t GetWidth() const
 		{
@@ -380,16 +492,21 @@ namespace def
 
 		void SetPixel(int32_t x, int32_t y, Pixel p)
 		{
+#if defined(PLATFORM_SDL2)
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
 			
 			pixels[4 * (y * m_nWidth + x) + 0] = p.r;
 			pixels[4 * (y * m_nWidth + x) + 1] = p.g;
 			pixels[4 * (y * m_nWidth + x) + 2] = p.b;
 			pixels[4 * (y * m_nWidth + x) + 3] = p.a;
+#elif defined(PLATFORM_OPENGL)
+			m_vecPixels[y * m_nWidth + x] = p;
+#endif
 		}
 
 		Pixel GetPixel(int32_t x, int32_t y)
 		{
+#if defined(PLATFORM_SDL2)
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
 
 			Pixel p;
@@ -400,6 +517,9 @@ namespace def
 			p.a = pixels[4 * (y * m_nWidth + x) + 3];
 
 			return p;
+#elif defined(PLATFORM_OPENGL)
+			return m_vecPixels[y * m_nWidth + x];
+#endif
 		}
 	};
 
@@ -410,22 +530,30 @@ namespace def
 		{
 			m_sAppName = "Undefined";
 			
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 			m_nKeyNewState = new uint8_t[256];
-#endif
-#ifdef PLATFORM_OPENGL
+#elif defined(PLATFORM_OPENGL)
 			m_nKeyNewState = new short[256];
 #endif
+			
+#if defined(PLATFORM_OPENGL)
+	#if !defined(STB_IMAGE_IMPLEMENTATION)
+			Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+			GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, nullptr);
+	#endif
+#endif
+
 		}
 
 		virtual ~GameEngine()
 		{
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 			SDL_DestroyRenderer(m_sdlRenderer);
 			SDL_DestroyWindow(m_sdlWindow);
 			SDL_Quit();
 #endif
-#ifdef PLATFORM_OPENGL
+#if defined(PLATFORM_OPENGL)
+			Gdiplus::GdiplusShutdown(m_gdiplusToken);
 			DisableOpenGL(m_hWnd, m_hDC, m_hRC);
 #endif
 		}
@@ -439,17 +567,19 @@ namespace def
 		int32_t m_nPixelWidth;
 		int32_t m_nPixelHeight;
 		
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 		SDL_Window* m_sdlWindow = nullptr;
 		SDL_Renderer* m_sdlRenderer = nullptr;
 #endif
 
-#ifdef PLATFORM_OPENGL
+#if defined(PLATFORM_OPENGL)
 		HWND m_hWnd;
 		HDC m_hDC;
 		HGLRC m_hRC;
 
 		std::vector<uint32_t> m_vecTextures;
+
+		ULONG_PTR m_gdiplusToken;
 #endif
 		
 		bool m_bAppThreadActive;
@@ -457,11 +587,11 @@ namespace def
 		KeyState m_sKeys[512];
 		KeyState m_sMouse[5];
 		
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 		uint8_t m_nKeyOldState[512];
 		uint8_t* m_nKeyNewState;
 #endif
-#ifdef PLATFORM_OPENGL
+#if defined(PLATFORM_OPENGL)
 		short m_nKeyOldState[512];
 		short* m_nKeyNewState;
 #endif
@@ -472,7 +602,7 @@ namespace def
 		int32_t m_nMouseX = -1;
 		int32_t m_nMouseY = -1;
 
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 		std::vector<SDL_Texture*> m_vecTextures;
 		SDL_Rect* m_sdlRect;
 #endif
@@ -484,7 +614,7 @@ namespace def
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 		virtual void OnUserDestroy() { return; }
 
-#ifdef PLATFORM_OPENGL
+#if defined(PLATFORM_OPENGL)
 		void EnableOpenGL(HWND hwnd, HDC* hDC, HGLRC* hRC)
 		{
 			PIXELFORMATDESCRIPTOR pfd;
@@ -537,7 +667,7 @@ namespace def
 			rcode rc;
 			rc.ok = false;
 
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 			auto get_sdl_err = [&]()
 			{
 				rc.info += "SDL: ";
@@ -545,7 +675,6 @@ namespace def
 				return rc;
 			};
 #endif
-
 			auto set_err = [&](std::string text)
 			{
 				rc.info = text;
@@ -561,7 +690,7 @@ namespace def
 			m_nPixelWidth = nPixelWidth;
 			m_nPixelHeight = nPixelHeight;
 
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 			if (SDL_Init(SDL_INIT_VIDEO) > 0)
 				return get_sdl_err();
 
@@ -574,10 +703,8 @@ namespace def
 
 			m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, -1, SDL_RENDERER_ACCELERATED);
 
-			ConstructFontSprite();
-#endif
+#elif defined(PLATFORM_OPENGL)
 
-#ifdef PLATFORM_OPENGL
 			WNDCLASS wc;
 			wc.style = CS_HREDRAW | CS_VREDRAW;
 			wc.cbClsExtra = 0;
@@ -628,6 +755,8 @@ namespace def
 				return set_err("Can't create window");
 #endif
 
+			ConstructFontSprite();
+
 			rc.ok = true;
 			rc.info = "Ok";
 			
@@ -643,7 +772,7 @@ namespace def
 	private:
 		void AppThread()
 		{
-#ifdef PLATFORM_OPENGL
+#if defined(PLATFORM_OPENGL)
 			ShowWindow(m_hWnd, SW_SHOW);
 			ShowWindow(GetConsoleWindow(), SW_SHOW);
 			
@@ -681,14 +810,13 @@ namespace def
 					char s[256];
 					sprintf_s(s, 256, "github.com/defini7 - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / fDeltaTime);
 
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 					SDL_SetWindowTitle(m_sdlWindow, s);
-#endif
-#ifdef PLATFORM_OPENGL
+#elif defined(PLATFORM_OPENGL)
 					SetWindowTextA(m_hWnd, s);
 #endif
 
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 					SDL_Event evt;
 					while (SDL_PollEvent(&evt))
 					{
@@ -812,8 +940,9 @@ namespace def
 						m_bAppThreadActive = false;
 					
 					SDL_RenderPresent(m_sdlRenderer);
-#endif
-#ifdef PLATFORM_OPENGL
+
+#elif defined(PLATFORM_OPENGL)
+
 					MSG msg = { 0 };
 
 					if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -915,7 +1044,7 @@ namespace def
 			}
 		}
 
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 		SDL_Rect* GetPixelRect(int32_t x, int32_t y)
 		{
 			SDL_Rect* rct = new SDL_Rect;
@@ -981,12 +1110,14 @@ namespace def
 		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, uint32_t r, float s, Pixel p = def::WHITE);
 		void DrawString(int32_t x, int32_t y, std::string s, Pixel p = def::WHITE, float scale = 1.0f);
 
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 		void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, SDL_RendererFlip flip = SDL_FLIP_NONE);
-
-		Sprite* CreateSprite(std::string filename);
-		Sprite* RecreateSprite(Sprite* spr);
+		
+#elif defined(PLATFORM_OPENGL)
+		void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f);
 #endif
+		Sprite* CreateSprite(std::string filename);
+
 		void SetMode(MODE m);
 		void DisableMode(MODE m);
 		KeyState GetKey(short keyCode) const;
@@ -1005,11 +1136,10 @@ namespace def
 
 	void GameEngine::Draw(int32_t x, int32_t y, Pixel p)
 	{
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderDrawPoint(m_sdlRenderer, x, y);
-#endif
-#ifdef PLATFORM_OPENGL
+#elif defined(PLATFORM_OPENGL)
 		glColor4ub(p.r, p.g, p.b, p.a);
 		glRecti(x * m_nPixelWidth, y * m_nPixelHeight, x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
 #endif
@@ -1017,11 +1147,10 @@ namespace def
 
 	void GameEngine::Clear(Pixel p)
 	{
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderClear(m_sdlRenderer);
-#endif
-#ifdef PLATFORM_OPENGL
+#elif defined(PLATFORM_OPENGL)
 		glClearColor((float)p.r / 255.0f, (float)p.g / 255.0f, (float)p.b / 255.0f, (float)p.a / 255.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #endif
@@ -1036,11 +1165,10 @@ namespace def
 
 	void GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p)
 	{
-#ifdef PLATFORM_SDL2
+#if defined(PLATFORM_SDL2)
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderDrawLine(m_sdlRenderer, x1, y1, x2, y2);
-#endif
-#ifdef PLATFORM_OPENGL
+#elif defined(PLATFORM_OPENGL)
 		glScalef(m_nPixelWidth, m_nPixelHeight, 1.0f);
 
 		glColor4ub(p.r, p.g, p.b, p.a);
@@ -1441,9 +1569,9 @@ namespace def
 		}
 	}
 
-#ifdef PLATFORM_SDL2
 	Sprite* GameEngine::CreateSprite(std::string filename)
 	{
+#if defined(PLATFORM_SDL2)
 		Sprite* spr = new Sprite(filename);
 
 		spr->SetTexId(m_vecTextures.size());
@@ -1456,7 +1584,11 @@ namespace def
 		spr->m_sdlFileRect = spr->m_sdlCoordRect;
 
 		return spr;
+#endif
+		return new def::Sprite(filename);
 	}
+
+#if defined(PLATFORM_SDL2)
 
 	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, SDL_RendererFlip flip)
 	{
@@ -1466,15 +1598,25 @@ namespace def
 		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, flip);
 	}
 
-	Sprite* GameEngine::RecreateSprite(Sprite* spr)
+#elif defined(PLATFORM_OPENGL)
+	
+	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle)
 	{
-		m_vecTextures.erase(m_vecTextures.begin() + spr->GetTexId());
+		glPushMatrix();
 
-		delete spr;
+		glRotatef(angle, 1.0f, 0.0f, 0.0f);
 
-		spr = CreateSprite(spr->GetFilename());
-
-		return spr;
+		glBegin(GL_POINTS);
+		for (int32_t i = 0; i < spr->GetWidth(); i++)
+			for (int32_t j = 0; j < spr->GetHeight(); j++)
+			{
+				const Pixel p = spr->GetPixel(i, j);
+				glColor4ub(p.r, p.g, p.b, p.a);
+				glVertex2f(x + i, y + j);
+			}
+		glEnd();
+		
+		glPopMatrix();
 	}
 #endif
 
@@ -1484,7 +1626,7 @@ namespace def
 		{
 		case MODE::ALPHA:
 		{
-#ifdef PLATFORM_OPENGL
+#if defined(PLATFORM_OPENGL)
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 #endif
@@ -1498,7 +1640,7 @@ namespace def
 		{
 		case MODE::ALPHA:
 		{
-#ifdef PLATFORM_OPENGL
+#if defined(PLATFORM_OPENGL)
 			glDisable(GL_BLEND);
 #endif
 		}
