@@ -594,6 +594,8 @@ namespace def
 #if defined(PLATFORM_OPENGL)
 		short m_nKeyOldState[512];
 		short* m_nKeyNewState;
+		
+		int32_t m_nPaddingTop;
 #endif
 
 		uint8_t m_nMouseOldState[5];
@@ -955,10 +957,10 @@ namespace def
 							GetWindowRect(m_hWnd, &rctWin);
 							GetClientRect(m_hWnd, &rctCli);
 
-							int oy = (rctWin.bottom - rctCli.bottom) - (rctWin.top - rctCli.top);
+							m_nPaddingTop = (rctWin.bottom - rctCli.bottom) - (rctWin.top - rctCli.top);
 							
 							m_nMouseX = LOWORD(msg.lParam) / m_nPixelWidth;
-							m_nMouseY = (HIWORD(msg.lParam) + oy) / m_nPixelHeight;
+							m_nMouseY = HIWORD(msg.lParam) / m_nPixelHeight;
 						};
 
 						switch (msg.message)
@@ -1141,7 +1143,7 @@ namespace def
 		SDL_RenderDrawPoint(m_sdlRenderer, x, y);
 #elif defined(PLATFORM_OPENGL)
 		glColor4ub(p.r, p.g, p.b, p.a);
-		glRecti(x * m_nPixelWidth, y * m_nPixelHeight, x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
+		glRecti(x * m_nPixelWidth, y * m_nPixelHeight + m_nPaddingTop, x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight + m_nPaddingTop);
 #endif
 	}
 
@@ -1173,8 +1175,8 @@ namespace def
 
 		glColor4ub(p.r, p.g, p.b, p.a);
 		glBegin(GL_LINES);
-			glVertex2i(x1, y1);
-			glVertex2i(x2, y2);
+			glVertex2i(x1, y1 + m_nPaddingTop);
+			glVertex2i(x2, y2 + m_nPaddingTop);
 		glEnd();
 #endif
 	}
@@ -1606,15 +1608,9 @@ namespace def
 
 		glRotatef(angle, 1.0f, 0.0f, 0.0f);
 
-		glBegin(GL_POINTS);
 		for (int32_t i = 0; i < spr->GetWidth(); i++)
 			for (int32_t j = 0; j < spr->GetHeight(); j++)
-			{
-				const Pixel p = spr->GetPixel(i, j);
-				glColor4ub(p.r, p.g, p.b, p.a);
-				glVertex2f(x + i, y + j);
-			}
-		glEnd();
+				Draw(x + i, y + j, spr->GetPixel(i, j));
 		
 		glPopMatrix();
 	}
@@ -1622,29 +1618,30 @@ namespace def
 
 	void GameEngine::SetMode(MODE m)
 	{
+#if defined(PLATFORM_OPENGL)
 		switch (m)
 		{
 		case MODE::ALPHA:
 		{
-#if defined(PLATFORM_OPENGL)
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+		break;
+		
+		}
 #endif
-		}
-		}
 	}
 
 	void GameEngine::DisableMode(MODE m)
 	{
+#if defined(PLATFORM_OPENGL)
 		switch (m)
 		{
-		case MODE::ALPHA:
-		{
-#if defined(PLATFORM_OPENGL)
-			glDisable(GL_BLEND);
+		case MODE::ALPHA: 
+			glDisable(GL_BLEND); 
+			break;
+		}
 #endif
-		}
-		}
 	}
 
 	KeyState GameEngine::GetKey(short keyCode) const
