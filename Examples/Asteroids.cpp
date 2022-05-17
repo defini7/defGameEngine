@@ -150,7 +150,7 @@ protected:
 
 		// DRAW SCORE
 
-		DrawString(10, 10, "Score: " + std::to_string(nScore));
+		DrawString(10, 10, "Score: " + std::to_string(nScore), def::WHITE, 1.0f);
 
 		return true;
 	}
