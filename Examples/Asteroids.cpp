@@ -105,7 +105,7 @@ protected:
 					
 					vecAsteroids.erase(vecAsteroids.begin() + i);
 
-					if (o.size != 0)
+					if (o.size > 1)
 					{
 						vecAsteroids.push_back({
 								o.x, o.y, 8.0f, -6.0f, o.size / 2, 0.0f
@@ -118,7 +118,7 @@ protected:
 					else
 					{
 						vecAsteroids.push_back({
-								   float(rand() % 100 + 30), float(rand() % 100 + 30), -8.0f, 6.0f, 16, 0.0f
+								   float(rand() % 100 + 30), float(rand() % 100 + 30), -8.0f, 6.0f, rand() % 10, 0.0f
 							});
 					}
 					
