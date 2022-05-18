@@ -17,9 +17,9 @@ OBJS = main.cpp
 CC = g++
 CC_VERSION = c++17
 LINKER_FLAGS = -L
-LINKER_TARGET = C:\repos\Test\SDL2\lib
+LINKER_TARGET = полный путь к lib
 INCLUDE_FLAGS = -I
-INCLUDE_TARGET = C:\repos\Test\SDL2\include
+INCLUDE_TARGET = полный путь к include
 OBJ_NAME = out
 
 all: $(OBJS)
@@ -36,6 +36,9 @@ all: $(OBJS)
 - В поле ``Дополнительные каталоги библиотек`` вы должны вписать полный путь до папки ``x86`` или до ``x64``, эти папки находятся в папке ``lib`` SDL2.
 - Далее в той же самой вкладке выбрать пункт ``Ввод``.
 - В поле ``Дополнительные зависимости`` вписать ```SDL2.lib; SDL2_image.lib; SDL2main.lib;``` к уже существующему там тексту.
+
+3. Linux G++:
+- В командной строке написать: ```g++ -o main main.cpp -lSDL2main -lSDL2 -lSDL2_image```
 
 # Важно!
 - Класс Sprite не доработан в версии OpenGL... пока что.
