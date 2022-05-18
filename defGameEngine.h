@@ -91,43 +91,52 @@
 
 #if defined(PLATFORM_OPENGL)
 
-#include <Windows.h>
-#include <gl/GL.h>
+	#include <Windows.h>
+	#include <gl/GL.h>
 
-#if defined(_WIN32) && !defined(__MINGW32__)
-	#pragma comment(lib, "opengl32.lib")
-#endif
+	#if defined(_WIN32) && !defined(__MINGW32__)
+		#pragma comment(lib, "opengl32.lib")
+	#endif
 
-#if defined(STB_IMAGE_IMPLEMENTATION)
-	#include "stb_image.h"
-#else
-	#include <gdiplus.h>
-
-	#if defined(__MINGW32__)
-		#include <gdiplus/gdiplusinit.h>
+	#if defined(STB_IMAGE_IMPLEMENTATION)
+		#include "stb_image.h"
 	#else
-		#include <gdiplusinit.h>
-	#endif
+		#include <gdiplus.h>
 
-	#if !defined(__MINGW32__)
-		#pragma comment(lib, "gdiplus.lib")
+		#if defined(__MINGW32__)
+			#include <gdiplus/gdiplusinit.h>
+		#else
+			#include <gdiplusinit.h>
+		#endif
+
+		#if !defined(__MINGW32__)
+			#pragma comment(lib, "gdiplus.lib")
+		#endif
 	#endif
-#endif
 
 #else
 
 	#define PLATFORM_SDL2
 
-	#include <SDL.h>
-	#include <SDL_image.h>
+	#if defined(__linux__)
+		#include <SDL2/SDL.h>
+		#include <SDL2/SDL_image.h>
+	#else
+		#include <SDL.h>
+		#include <SDL_image.h>
+	#endif
 
 	#if defined(SDL_MAIN_NEEDED) || !defined(SDL_MAIN_AVAILABLE)
-		#define main SDL_main(int argc, char* argv)
+		#if defined(__linux__)
+			#define main() main(int argc, char** argv)
+		#else
+			#define main() SDL_main(int argc, char** argv)
+		#endif
 	#elif defined(__MINGW32__)
 		#undef main
 		#define main() __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 	#else
-		#define main() SDL_main(int argc, char* argv[])
+		#define main() SDL_main(int argc, char** argv)
 	#endif
 
 	#if defined(WIN32) || defined(_WIN32)
