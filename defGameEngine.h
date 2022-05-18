@@ -88,32 +88,32 @@
 #include <vector>
 
 #if defined(PLATFORM_OPENGL)
-	#include <Windows.h>
-	#include <gl/GL.h>
+#include <Windows.h>
+#include <gl/GL.h>
 
-	#if defined(_WIN32) && !defined(__MINGW32__)
-		#pragma comment(lib, "opengl32.lib")
-	#endif
+#if defined(_WIN32) && !defined(__MINGW32__)
+#pragma comment(lib, "opengl32.lib")
+#endif
 
-	#if defined(STB_IMAGE_IMPLEMENTATION)
-		#include "stb_image.h"
-	#else
-		#include <gdiplus.h>
-
-		#if defined(__MINGW32__)
-			#include <gdiplus/gdiplusinit.h>
-		#else
-			#include <gdiplusinit.h>
-		#endif
-
-		#if !defined(__MINGW32__)
-			#pragma comment(lib, "gdiplus.lib")
-		#endif
-	#endif
+#if defined(STB_IMAGE_IMPLEMENTATION)
+#include "stb_image.h"
 #else
-	#define PLATFORM_SDL2
-	#include <SDL.h>
-	#include <SDL_image.h>
+#include <gdiplus.h>
+
+#if defined(__MINGW32__)
+#include <gdiplus/gdiplusinit.h>
+#else
+#include <gdiplusinit.h>
+#endif
+
+#if !defined(__MINGW32__)
+#pragma comment(lib, "gdiplus.lib")
+#endif
+#endif
+#else
+#define PLATFORM_SDL2
+#include <SDL.h>
+#include <SDL_image.h>
 #endif
 
 namespace def
@@ -243,7 +243,7 @@ namespace def
 
 		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca) : r(cr), g(cg), b(cb), a(ca)
 		{
-			
+
 		}
 
 		uint8_t r;
@@ -309,10 +309,10 @@ namespace def
 		Sprite(std::string filename)
 		{
 			rcode rc = LoadSprite(filename);
-			
+
 			if (!rc.ok)
 				std::cerr << rc.info << "\n";
-			
+
 			m_sFilename = filename;
 		}
 
@@ -377,7 +377,7 @@ namespace def
 			m_nHeight = m_sdlSurface->h;
 
 #elif defined(PLATFORM_OPENGL)
-			
+
 			if (!LoadImageResource(filename))
 			{
 				rc.info = "Can't load image!";
@@ -462,7 +462,7 @@ namespace def
 			return m_vecPixels.data();
 		}
 #endif
-		
+
 #if defined(PLATFORM_SDL2)
 		void SetTexId(uint32_t id)
 		{
@@ -494,7 +494,7 @@ namespace def
 		{
 #if defined(PLATFORM_SDL2)
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
-			
+
 			pixels[4 * (y * m_nWidth + x) + 0] = p.r;
 			pixels[4 * (y * m_nWidth + x) + 1] = p.g;
 			pixels[4 * (y * m_nWidth + x) + 2] = p.b;
@@ -529,18 +529,18 @@ namespace def
 		GameEngine()
 		{
 			m_sAppName = "Undefined";
-			
+
 #if defined(PLATFORM_SDL2)
 			m_nKeyNewState = new uint8_t[256];
 #elif defined(PLATFORM_OPENGL)
 			m_nKeyNewState = new short[256];
 #endif
-			
+
 #if defined(PLATFORM_OPENGL)
-	#if !defined(STB_IMAGE_IMPLEMENTATION)
+#if !defined(STB_IMAGE_IMPLEMENTATION)
 			Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 			GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, nullptr);
-	#endif
+#endif
 #endif
 
 		}
@@ -560,13 +560,13 @@ namespace def
 
 	private:
 		std::string m_sAppName;
-		
+
 		int32_t m_nScreenWidth;
 		int32_t m_nScreenHeight;
 
 		int32_t m_nPixelWidth;
 		int32_t m_nPixelHeight;
-		
+
 #if defined(PLATFORM_SDL2)
 		SDL_Window* m_sdlWindow = nullptr;
 		SDL_Renderer* m_sdlRenderer = nullptr;
@@ -581,12 +581,12 @@ namespace def
 
 		ULONG_PTR m_gdiplusToken;
 #endif
-		
+
 		bool m_bAppThreadActive;
 
 		KeyState m_sKeys[512];
 		KeyState m_sMouse[5];
-		
+
 #if defined(PLATFORM_SDL2)
 		uint8_t m_nKeyOldState[512];
 		uint8_t* m_nKeyNewState;
@@ -594,13 +594,13 @@ namespace def
 #if defined(PLATFORM_OPENGL)
 		short m_nKeyOldState[512];
 		short* m_nKeyNewState;
-		
+
 		int32_t m_nPaddingTop;
 #endif
 
 		uint8_t m_nMouseOldState[5];
 		uint8_t m_nMouseNewState[5];
-		
+
 		int32_t m_nMouseX = -1;
 		int32_t m_nMouseY = -1;
 
@@ -657,7 +657,7 @@ namespace def
 				PostQuitMessage(0);
 				DestroyWindow(hWnd);
 				return 0;
-				
+
 			}
 
 			return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -716,10 +716,10 @@ namespace def
 			wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
 
 			wc.hIcon = LoadIcon(GetModuleHandle(nullptr), nullptr);
-			
+
 			wc.lpszClassName = (LPCWSTR)m_sAppName.c_str();
 			wc.lpszMenuName = nullptr;
-			
+
 			wc.hInstance = GetModuleHandle(nullptr);
 
 			wc.lpfnWndProc = WinProc;
@@ -761,7 +761,7 @@ namespace def
 
 			rc.ok = true;
 			rc.info = "Ok";
-			
+
 			return rc;
 		}
 
@@ -777,9 +777,9 @@ namespace def
 #if defined(PLATFORM_OPENGL)
 			ShowWindow(m_hWnd, SW_SHOW);
 			ShowWindow(GetConsoleWindow(), SW_SHOW);
-			
+
 			EnableOpenGL(m_hWnd, &m_hDC, &m_hRC);
-			
+
 			glOrtho(0, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight, 0, -1.0f, 1.0f);
 			glViewport(0, 0, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight);
 #endif
@@ -806,9 +806,9 @@ namespace def
 					tp2 = std::chrono::system_clock::now();
 					std::chrono::duration<float> elapsedTime = tp2 - tp1;
 					tp1 = tp2;
-					
+
 					float fDeltaTime = elapsedTime.count();
-					
+
 					char s[256];
 					sprintf_s(s, 256, "github.com/defini7 - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / fDeltaTime);
 
@@ -940,7 +940,7 @@ namespace def
 
 					if (!OnUserUpdate(fDeltaTime))
 						m_bAppThreadActive = false;
-					
+
 					SDL_RenderPresent(m_sdlRenderer);
 
 #elif defined(PLATFORM_OPENGL)
@@ -958,7 +958,7 @@ namespace def
 							GetClientRect(m_hWnd, &rctCli);
 
 							m_nPaddingTop = (rctWin.bottom - rctCli.bottom) - (rctWin.top - rctCli.top);
-							
+
 							m_nMouseX = LOWORD(msg.lParam) / m_nPixelWidth;
 							m_nMouseY = HIWORD(msg.lParam) / m_nPixelHeight;
 						};
@@ -1058,7 +1058,7 @@ namespace def
 			return rct;
 		}
 #endif
-		
+
 		void ConstructFontSprite()
 		{
 			std::string data;
@@ -1100,21 +1100,21 @@ namespace def
 
 	public:
 		void SetTitle(std::string title);
-		void Draw(int32_t x, int32_t y, Pixel p = def::WHITE);
-		void Clear(Pixel p = def::WHITE);
-		void FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = def::WHITE);
-		void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p = def::WHITE);
-		void DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = def::WHITE);
-		void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
-		void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
-		void DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
-		void FillCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
-		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, uint32_t r, float s, Pixel p = def::WHITE);
-		void DrawString(int32_t x, int32_t y, std::string s, Pixel p = def::WHITE, float scale = 1.0f);
+		virtual void Draw(int32_t x, int32_t y, Pixel p = def::WHITE);
+		virtual void Clear(Pixel p = def::WHITE);
+		virtual void FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = def::WHITE);
+		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p = def::WHITE);
+		virtual void DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = def::WHITE);
+		virtual void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
+		virtual void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
+		virtual void DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
+		virtual void FillCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
+		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, float r, float s, Pixel p = def::WHITE);
+		virtual void DrawString(int32_t x, int32_t y, std::string s, Pixel p = def::WHITE, float scale = 1.0f);
 
 #if defined(PLATFORM_SDL2)
-		void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, SDL_RendererFlip flip = SDL_FLIP_NONE);
-		
+		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, SDL_RendererFlip flip = SDL_FLIP_NONE);
+
 #elif defined(PLATFORM_OPENGL)
 		void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f);
 #endif
@@ -1128,7 +1128,7 @@ namespace def
 		uint32_t GetMouseY() const;
 		uint32_t GetScreenWidth() const;
 		uint32_t GetScreenHeight() const;
-		
+
 	};
 
 	void GameEngine::SetTitle(std::string title)
@@ -1157,7 +1157,7 @@ namespace def
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #endif
 	}
-	
+
 	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
 	{
 		for (int i = x; i <= x1; i++)
@@ -1175,14 +1175,14 @@ namespace def
 
 		glColor4ub(p.r, p.g, p.b, p.a);
 		glBegin(GL_LINES);
-			glVertex2i(x1, y1 + m_nPaddingTop);
-			glVertex2i(x2, y2 + m_nPaddingTop);
+		glVertex2i(x1, y1 + m_nPaddingTop);
+		glVertex2i(x2, y2 + m_nPaddingTop);
 		glEnd();
 #endif
 	}
 
 	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
-	{	
+	{
 		DrawLine(x, y, x1, y, p);
 		DrawLine(x1, y, x1, y1, p);
 		DrawLine(x1, y1, x, y1, p);
@@ -1495,7 +1495,7 @@ namespace def
 		}
 	}
 
-	void GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, uint32_t r, float s, Pixel p)
+	void GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, float r, float s, Pixel p)
 	{
 		std::vector<std::pair<float, float>> vecTransformedCoordinates;
 		int verts = vecModelCoordinates.size();
@@ -1601,7 +1601,7 @@ namespace def
 	}
 
 #elif defined(PLATFORM_OPENGL)
-	
+
 	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle)
 	{
 		glPushMatrix();
@@ -1611,7 +1611,7 @@ namespace def
 		for (int32_t i = 0; i < spr->GetWidth(); i++)
 			for (int32_t j = 0; j < spr->GetHeight(); j++)
 				Draw(x + i, y + j, spr->GetPixel(i, j));
-		
+
 		glPopMatrix();
 	}
 #endif
@@ -1627,7 +1627,7 @@ namespace def
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		}
 		break;
-		
+
 		}
 #endif
 	}
@@ -1637,8 +1637,8 @@ namespace def
 #if defined(PLATFORM_OPENGL)
 		switch (m)
 		{
-		case MODE::ALPHA: 
-			glDisable(GL_BLEND); 
+		case MODE::ALPHA:
+			glDisable(GL_BLEND);
 			break;
 		}
 #endif
