@@ -40,10 +40,10 @@ all: $(OBJS)
 3. Linux G++:
 - Открыть терминал
 - В командной строке написать: 
-- 1) ```sudo apt-get install g++```,
-- 2) ```sudo apt-get install libsdl2-dev```,
-- 3) ```sudo apt-get install libsdl2-image-dev```,
-- 4) ```g++ -o main main.cpp -lSDL2main -lSDL2 -lSDL2_image```.
+1) ```sudo apt-get install g++```,
+2) ```sudo apt-get install libsdl2-dev```,
+3) ```sudo apt-get install libsdl2-image-dev```,
+4) ```g++ -o main main.cpp -lSDL2main -lSDL2 -lSDL2_image```.
 
 # Важно!
 - Класс Sprite не доработан в версии OpenGL... пока что.
