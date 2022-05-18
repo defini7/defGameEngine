@@ -38,7 +38,12 @@ all: $(OBJS)
 - В поле ``Дополнительные зависимости`` вписать ```SDL2.lib; SDL2_image.lib; SDL2main.lib;``` к уже существующему там тексту.
 
 3. Linux G++:
-- В командной строке написать: ```g++ -o main main.cpp -lSDL2main -lSDL2 -lSDL2_image```
+- Открыть терминал
+- В командной строке написать: 
+- 1) ```sudo apt-get install g++```,
+- 2) ```sudo apt-get install libsdl2-dev```,
+- 3) ```sudo apt-get install libsdl2-image-dev```,
+- 4) ```g++ -o main main.cpp -lSDL2main -lSDL2 -lSDL2_image```.
 
 # Важно!
 - Класс Sprite не доработан в версии OpenGL... пока что.
