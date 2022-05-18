@@ -83,37 +83,57 @@
 #endif
 
 #include <iostream>
+#include <cstdio>
 #include <string>
 #include <thread>
 #include <vector>
+#include <cmath>
 
 #if defined(PLATFORM_OPENGL)
+
 #include <Windows.h>
 #include <gl/GL.h>
 
 #if defined(_WIN32) && !defined(__MINGW32__)
-#pragma comment(lib, "opengl32.lib")
+	#pragma comment(lib, "opengl32.lib")
 #endif
 
 #if defined(STB_IMAGE_IMPLEMENTATION)
-#include "stb_image.h"
+	#include "stb_image.h"
 #else
-#include <gdiplus.h>
+	#include <gdiplus.h>
 
-#if defined(__MINGW32__)
-#include <gdiplus/gdiplusinit.h>
-#else
-#include <gdiplusinit.h>
+	#if defined(__MINGW32__)
+		#include <gdiplus/gdiplusinit.h>
+	#else
+		#include <gdiplusinit.h>
+	#endif
+
+	#if !defined(__MINGW32__)
+		#pragma comment(lib, "gdiplus.lib")
+	#endif
 #endif
 
-#if !defined(__MINGW32__)
-#pragma comment(lib, "gdiplus.lib")
-#endif
-#endif
 #else
-#define PLATFORM_SDL2
-#include <SDL.h>
-#include <SDL_image.h>
+
+	#define PLATFORM_SDL2
+
+	#include <SDL.h>
+	#include <SDL_image.h>
+
+	#if defined(SDL_MAIN_NEEDED) || !defined(SDL_MAIN_AVAILABLE)
+		#define main SDL_main(int argc, char* argv)
+	#elif defined(__MINGW32__)
+		#undef main
+		#define main() __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+	#else
+		#define main() SDL_main(int argc, char* argv[])
+	#endif
+
+	#if defined(WIN32) || defined(_WIN32)
+		#include <windows.h>
+	#endif
+
 #endif
 
 namespace def
@@ -347,7 +367,12 @@ namespace def
 			m_nHeight = h;
 
 			m_sdlSurface->pixels = new unsigned char[w * h * 4];
-			memset(m_sdlSurface->pixels, 0, sizeof(m_sdlSurface) * sizeof(unsigned char));
+
+			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
+
+			for (int i = 0; i < w * h * 4; i++)
+				pixels[i] = 0;
+
 #elif defined(PLATFORM_OPENGL)
 			m_vecPixels.resize(w * h);
 
@@ -810,7 +835,7 @@ namespace def
 					float fDeltaTime = elapsedTime.count();
 
 					char s[256];
-					sprintf_s(s, 256, "github.com/defini7 - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / fDeltaTime);
+					snprintf(s, 256, "github.com/defini7 - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / fDeltaTime);
 
 #if defined(PLATFORM_SDL2)
 					SDL_SetWindowTitle(m_sdlWindow, s);
@@ -1116,7 +1141,7 @@ namespace def
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
 #elif defined(PLATFORM_OPENGL)
-		void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f);
+		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f);
 #endif
 		Sprite* CreateSprite(std::string filename);
 
