@@ -1,6 +1,9 @@
 #define PLATFORM_SDL2
 #include "defGameEngine.h"
 
+#undef max
+#undef min
+
 struct sSpaceObject
 {
 	float x;
@@ -8,7 +11,7 @@ struct sSpaceObject
 
 	float dx;
 	float dy;
-	
+
 	int size;
 
 	float angle;
@@ -51,7 +54,7 @@ protected:
 			a.y += a.dy * 5.0f * fDeltaTime;
 
 			WrapCoords(a.x, a.y, a.x, a.y);
-			
+
 			DrawCircle(a.x, a.y, a.size, def::YELLOW);
 		}
 
@@ -60,10 +63,36 @@ protected:
 		DrawWireFrameModel(vecPlayerVerticies, player.x, player.y, player.angle, 2.0f);
 
 		// CHECK FOR CRASH
+
+		float fContactPointX = 0.0f;
+		float fContactPointY = 0.0f;
 		
+		float fContactNormalX = 0.0f;
+		float fContactNormalY = 0.0f;
+
+		float fRayOriginX = 0.0f;
+		float fRayOriginY = 0.0f;
+
 		for (auto& a : vecAsteroids)
 		{
-			if (IsPointInsideCircle(a.x, a.y, a.size, player.x, player.y))
+			float t = 0.0f;
+
+			fRayOriginX = player.x + vecPlayerVerticies[0].first;
+			fRayOriginY = player.y + vecPlayerVerticies[0].second;
+
+			bool bFirst = RayVsCircle(fRayOriginX, fRayOriginY, player.x + vecPlayerVerticies[1].first, player.y + vecPlayerVerticies[1].second, &a, fContactPointX, fContactPointY, fContactNormalX, fContactNormalY, t) && t < 0.15f;
+
+			fRayOriginX = player.x + vecPlayerVerticies[1].first;
+			fRayOriginY = player.y + vecPlayerVerticies[1].second;
+
+			bool bSecond = RayVsCircle(fRayOriginX, fRayOriginY, player.x + vecPlayerVerticies[2].first, player.y + vecPlayerVerticies[2].second, &a, fContactPointX, fContactPointY, fContactNormalX, fContactNormalY, t) && t < 0.15f;
+
+			fRayOriginX = player.x + vecPlayerVerticies[2].first;
+			fRayOriginY = player.y + vecPlayerVerticies[2].second;
+
+			bool bThird = RayVsCircle(fRayOriginX, fRayOriginY, player.x + vecPlayerVerticies[0].first, player.y + vecPlayerVerticies[0].second, &a, fContactPointX, fContactPointY, fContactNormalX, fContactNormalY, t) && t < 0.15f;
+
+			if (bFirst || bSecond || bThird)
 				bDead = true;
 		}
 
@@ -92,17 +121,17 @@ protected:
 		{
 			vecBullets[j].x += vecBullets[j].dx * 6.0f * fDeltaTime;
 			vecBullets[j].y += vecBullets[j].dy * 6.0f * fDeltaTime;
-			
+
 			WrapCoords(vecBullets[j].x, vecBullets[j].y, vecBullets[j].x, vecBullets[j].y);
 
 			Draw(vecBullets[j].x, vecBullets[j].y);
 
 			for (int i = 0; i < vecAsteroids.size(); i++)
 			{
-				if (IsPointInsideCircle(vecAsteroids[i].x, vecAsteroids[i].y, vecAsteroids[i].size, vecBullets[j].x, vecBullets[j].y))
+				if (PointVsCircle(vecAsteroids[i].x, vecAsteroids[i].y, vecAsteroids[i].size, vecBullets[j].x, vecBullets[j].y))
 				{
 					sSpaceObject o = vecAsteroids[i];
-					
+
 					vecAsteroids.erase(vecAsteroids.begin() + i);
 
 					if (o.size > 1)
@@ -121,7 +150,7 @@ protected:
 								   float(rand() % 100 + 30), float(rand() % 100 + 30), -8.0f, 6.0f, rand() % 10, 0.0f
 							});
 					}
-					
+
 					vecBullets.erase(vecBullets.begin() + j);
 
 					nScore++;
@@ -138,12 +167,12 @@ protected:
 
 		if (vecBullets.size() > 0)
 		{
-			auto it = std::remove_if(vecBullets.begin(), vecBullets.end(), 
+			auto it = std::remove_if(vecBullets.begin(), vecBullets.end(),
 				[&](sSpaceObject& o)
 				{
 					return o.x < 1 || o.y < 1 || o.x > GetScreenWidth() || o.y > GetScreenHeight();
 				});
-				
+
 			if (it != vecBullets.end())
 				vecBullets.erase(it);
 		}
@@ -174,7 +203,7 @@ protected:
 		nScore = 0;
 	}
 
-	void WrapCoords(float ix, float iy, float &ox, float &oy)
+	void WrapCoords(float ix, float iy, float& ox, float& oy)
 	{
 		ox = ix;
 		oy = iy;
@@ -192,9 +221,70 @@ protected:
 			oy = iy - (float)GetScreenHeight();
 	}
 
-	bool IsPointInsideCircle(float cx, float cy, float r, float x, float y)
+	bool PointVsCircle(float cx, float cy, float r, float x, float y)
 	{
-		return sqrtf((x - cx)*(x - cx) + (y - cy)*(y - cy)) < r;
+		return sqrtf((x - cx) * (x - cx) + (y - cy) * (y - cy)) < r;
+	}
+
+	bool RayVsCircle(float& fRayOriginX, float& fRayOriginY, float fRayDirX, float fRayDirY, const sSpaceObject* target, float fContactX, float fContactY, float fContactNormalX, float fContactNormalY, float& fTHitNear)
+	{
+		fContactNormalX = 0;
+		fContactNormalY = 0;
+
+		fContactX = 0;
+		fContactY = 0;
+
+		float fInvDirX = 1.0f / fRayDirX;
+		float fInvDirY = 1.0f / fRayDirY;
+
+		float fTNearX = (target->x - fRayOriginX) * fInvDirX;
+		float fTNearY = (target->y - fRayOriginY) * fInvDirY;
+
+		float fTFarX = (target->x + target->size - fRayOriginX) * fInvDirX;
+		float fTFarY = (target->y + target->size - fRayOriginY) * fInvDirY;
+		
+		if (std::isnan(fTFarY) || std::isnan(fTFarX)) return false;
+		if (std::isnan(fTNearY) || std::isnan(fTNearX)) return false;
+
+		if (fTNearX > fTFarX) std::swap(fTNearX, fTFarX);
+		if (fTNearY > fTFarY) std::swap(fTNearY, fTFarY);
+	
+		if (fTNearX > fTFarY || fTNearY > fTFarX) return false;
+
+		fTHitNear = std::max(fTNearX, fTNearY);
+
+		float fTHitFar = std::min(fTFarX, fTFarY);
+
+		if (fTHitFar < 0.0f)
+			return false;
+
+		fContactX = fRayOriginX + fTHitNear * fRayDirX;
+		fContactY = fRayOriginY + fTHitNear * fRayDirY;
+
+		if (fTNearX > fTNearY)
+			if (fInvDirX < 0.0f)
+			{
+				fContactNormalX = 1.0f;
+				fContactNormalY = 0.0f;
+			}
+			else
+			{
+				fContactNormalX = -1.0f;
+				fContactNormalY = 0.0f;
+			}
+		else if (fTNearX < fTNearY)
+			if (fInvDirY < 0.0f)
+			{
+				fContactNormalX = 0.0f;
+				fContactNormalY = 1.0f;
+			}
+			else
+			{
+				fContactNormalX = 0.0f;
+				fContactNormalY = -1.0f;
+			}
+
+		return true;
 	}
 
 	virtual void Draw(int32_t x, int32_t y, def::Pixel p = def::WHITE) override
@@ -217,7 +307,7 @@ private:
 
 };
 
-int main(int argc, char* argv[])
+int main()
 {
 	Asteroids demo;
 	def::rcode err = demo.Construct(160, 100, 8, 8);
