@@ -591,6 +591,9 @@ namespace def
 				for (int i = 0; i < 5; i++)
 					m_nMouseOldState[i] = 0;
 
+				for (int i = 0; i < 512; i++)
+					m_nKeyNewState[i] = 0;
+
 				while (m_bAppThreadActive)
 				{
 					tp2 = std::chrono::system_clock::now();
@@ -673,9 +676,7 @@ namespace def
 						break;
 
 						case SDL_KEYDOWN: case SDL_KEYUP:
-						{
 							m_nKeyNewState = (uint8_t*)SDL_GetKeyboardState(NULL);
-						}
 						break;
 
 						}
