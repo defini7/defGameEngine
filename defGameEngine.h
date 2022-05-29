@@ -73,81 +73,43 @@
 **/
 #pragma endregion
 
-#if defined(PLATFORM_OPENGL) && defined(PLATFORM_SDL2)
-#undef PLATFORM_OPENGL
-#endif
-
-#if !defined(PLATFORM_OPENGL) && !defined(PLATFORM_SDL2)
-#define PLATFORM_SDL2
-#pragma message You have not specified platform, game engine uses SDL2 by default
-#endif
-
 #include <iostream>
 #include <cstdio>
 #include <string>
-#include <thread>
+#include <chrono>
 #include <vector>
 #include <cmath>
+#include <list>
 
-#if defined(PLATFORM_OPENGL)
-
-	#include <Windows.h>
-	#include <gl/GL.h>
-
-	#if defined(_WIN32) && !defined(__MINGW32__)
-		#pragma comment(lib, "opengl32.lib")
-	#endif
-
-	#if defined(STB_IMAGE_IMPLEMENTATION)
-		#include "stb_image.h"
-	#else
-		#include <gdiplus.h>
-
-		#if defined(__MINGW32__)
-			#include <gdiplus/gdiplusinit.h>
-		#else
-			#include <gdiplusinit.h>
-		#endif
-
-		#if !defined(__MINGW32__)
-			#pragma comment(lib, "gdiplus.lib")
-		#endif
-	#endif
-
+#if defined(__linux__)
+	#include <SDL2/SDL.h>
+	#include <SDL2/SDL_image.h>
 #else
+	#include <SDL.h>
+	#include <SDL_image.h>
+#endif
 
-	#define PLATFORM_SDL2
-	#define USE_GPU
-
+#if defined(SDL_MAIN_NEEDED) || !defined(SDL_MAIN_AVAILABLE)
 	#if defined(__linux__)
-		#include <SDL2/SDL.h>
-		#include <SDL2/SDL_image.h>
-	#else
-		#include <SDL.h>
-		#include <SDL_image.h>
-	#endif
-
-	#if defined(SDL_MAIN_NEEDED) || !defined(SDL_MAIN_AVAILABLE)
-		#if defined(__linux__)
-			#define main() main(int argc, char** argv)
-		#else
-			#define main() SDL_main(int argc, char** argv)
-		#endif
-	#elif defined(__MINGW32__)
-		#undef main
-		#include <Windows.h>
-		#define main() __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+		#define main() main(int argc, char** argv)
 	#else
 		#define main() SDL_main(int argc, char** argv)
 	#endif
-
+#elif defined(__MINGW32__)
+	#undef main
+	#include <Windows.h>
+	#define main() __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+#else
+	#define main() SDL_main(int argc, char** argv)
 #endif
 
 namespace def
 {
-	enum MODE
+	enum FLIP_MODE : uint8_t
 	{
-		ALPHA
+		FM_NONE,
+		FM_HORIZONTAL,
+		FM_VERTICAL
 	};
 
 	template <class T>
@@ -268,7 +230,7 @@ namespace def
 			a = 255;
 		}
 
-		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca) : r(cr), g(cg), b(cb), a(ca)
+		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca = 255U) : r(cr), g(cg), b(cb), a(ca)
 		{
 
 		}
@@ -297,6 +259,34 @@ namespace def
 		{
 			return Pixel(lhs.r / rhs, lhs.g / rhs, lhs.b / rhs, lhs.a);
 		}
+
+		friend Pixel operator+=(Pixel& lhs, float& rhs)
+		{
+			lhs.r += rhs;
+			lhs.g += rhs;
+			lhs.b += rhs;
+		}
+
+		friend Pixel operator-=(Pixel& lhs, float& rhs)
+		{
+			lhs.r -= rhs;
+			lhs.g -= rhs;
+			lhs.b -= rhs;
+		}
+
+		friend Pixel operator*=(Pixel& lhs, float& rhs)
+		{
+			lhs.r *= rhs;
+			lhs.g *= rhs;
+			lhs.b *= rhs;
+		}
+
+		friend Pixel operator/=(Pixel& lhs, float& rhs)
+		{
+			lhs.r /= rhs;
+			lhs.g /= rhs;
+			lhs.b /= rhs;
+		}
 	};
 
 	Pixel DARK_BLUE = Pixel(0, 55, 218, 255);
@@ -318,6 +308,9 @@ namespace def
 
 #define RANDOM_PIXEL def::Pixel(rand() % 255, rand() % 255, rand() % 255, 255)
 #define RANDOM_PIXEL_ALPHA def::Pixel(rand() % 255, rand() % 255, rand() % 255, rand() % 255)
+
+	
+	// SPRITE CLASS
 
 	class Sprite
 	{
@@ -345,18 +338,14 @@ namespace def
 
 		~Sprite()
 		{
-#if defined(PLATFORM_SDL2)
-			delete m_sdlSurface;
-#endif
+			SDL_FreeSurface(m_sdlSurface);
 		}
 
-#if defined(PLATFORM_SDL2)
 		SDL_Surface* m_sdlSurface;
 
 		SDL_Rect m_sdlFileRect;
 		SDL_Rect m_sdlCoordRect;
 		uint32_t m_nTexId;
-#endif
 
 	private:
 		uint32_t m_nWidth;
@@ -367,7 +356,6 @@ namespace def
 	public:
 		void Create(int32_t w, int32_t h)
 		{
-#if defined(PLATFORM_SDL2)
 			m_sdlSurface = new SDL_Surface;
 
 			m_nWidth = w;
@@ -379,14 +367,6 @@ namespace def
 
 			for (int i = 0; i < w * h * 4; i++)
 				pixels[i] = 0;
-
-#elif defined(PLATFORM_OPENGL)
-			m_vecPixels.resize(w * h);
-
-			for (int x = 0; x < w; x++)
-				for (int y = 0; y < h; y++)
-					m_vecPixels[y * w + x] = Pixel(255, 255, 255, 255);
-#endif
 		}
 
 		rcode LoadSprite(std::string filename)
@@ -395,7 +375,6 @@ namespace def
 			rc.ok = false;
 			rc.info = "Ok";
 
-#if defined(PLATFORM_SDL2)
 			m_sdlSurface = IMG_Load(filename.c_str());
 
 			if (!m_sdlSurface)
@@ -408,94 +387,10 @@ namespace def
 			m_nWidth = m_sdlSurface->w;
 			m_nHeight = m_sdlSurface->h;
 
-#elif defined(PLATFORM_OPENGL)
-
-			if (!LoadImageResource(filename))
-			{
-				rc.info = "Can't load image!";
-				return rc;
-			}
-#endif
-
 			rc.ok = true;
 			return rc;
 		}
 
-#if defined(PLATFORM_OPENGL)
-		std::wstring ConvertS2W(std::string s)
-		{
-#ifdef __MINGW32__
-			wchar_t* buffer = new wchar_t[s.length() + 1];
-			mbstowcs(buffer, s.c_str(), s.length());
-			buffer[s.length()] = L'\0';
-#else
-			int count = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, NULL, 0);
-			wchar_t* buffer = new wchar_t[count];
-			MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, buffer, count);
-#endif
-			std::wstring w(buffer);
-			delete[] buffer;
-			return w;
-		}
-
-		bool LoadImageResource(std::string filename)
-		{
-			m_vecPixels.clear();
-
-#if defined(STB_IMAGE_IMPLEMENTATION)
-			int nChannels;
-			std::string fn(filename.begin(), filename.end());
-
-			unsigned char* bmp = stbi_load(fn.c_str(), &nWidth, &nHeight, &nChannels, 0);
-
-			if (!bmp)
-				return false;
-
-			m_vecPixels.resize(nWidth * nHeight);
-
-			for (int x = 0; x < nWidth; x++)
-				for (int y = 0; y < nHeight; y++)
-				{
-					unsigned char* pPixelOffset = bmp + (y * nWidth + x) * nChannels;
-					SetPixel(x, y, Pixel(pPixelOffset[0], pPixelOffset[1], pPixelOffset[2], nChannels >= 4 ? pPixelOffset[3] : 0xff));
-				}
-
-			stbi_image_free(bmp);
-#else
-			Gdiplus::Bitmap* bmp = Gdiplus::Bitmap::FromFile(ConvertS2W(filename).c_str());
-
-			if (!bmp)
-				return false;
-
-			if (bmp->GetLastStatus() != Gdiplus::Ok)
-				return false;
-
-			m_nWidth = bmp->GetWidth();
-			m_nHeight = bmp->GetHeight();
-
-			m_vecPixels.resize(m_nWidth * m_nHeight);
-
-			for (int x = 0; x < m_nWidth; x++)
-				for (int y = 0; y < m_nHeight; y++)
-				{
-					Gdiplus::Color c;
-					bmp->GetPixel(x, y, &c);
-					SetPixel(x, y, Pixel(c.GetRed(), c.GetGreen(), c.GetBlue(), c.GetAlpha()));
-				}
-			delete bmp;
-#endif
-			return true;
-		}
-
-		std::vector<Pixel> m_vecPixels;
-
-		Pixel* GetData()
-		{
-			return m_vecPixels.data();
-		}
-#endif
-
-#if defined(PLATFORM_SDL2)
 		void SetTexId(uint32_t id)
 		{
 			m_nTexId = id;
@@ -505,7 +400,6 @@ namespace def
 		{
 			return m_nTexId;
 		}
-#endif
 
 		uint32_t GetWidth() const
 		{
@@ -524,21 +418,16 @@ namespace def
 
 		void SetPixel(int32_t x, int32_t y, Pixel p)
 		{
-#if defined(PLATFORM_SDL2)
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
 
 			pixels[4 * (y * m_nWidth + x) + 0] = p.r;
 			pixels[4 * (y * m_nWidth + x) + 1] = p.g;
 			pixels[4 * (y * m_nWidth + x) + 2] = p.b;
 			pixels[4 * (y * m_nWidth + x) + 3] = p.a;
-#elif defined(PLATFORM_OPENGL)
-			m_vecPixels[y * m_nWidth + x] = p;
-#endif
 		}
 
 		Pixel GetPixel(int32_t x, int32_t y)
 		{
-#if defined(PLATFORM_SDL2)
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
 
 			Pixel p;
@@ -549,11 +438,11 @@ namespace def
 			p.a = pixels[4 * (y * m_nWidth + x) + 3];
 
 			return p;
-#elif defined(PLATFORM_OPENGL)
-			return m_vecPixels[y * m_nWidth + x];
-#endif
 		}
 	};
+
+
+	// MAIN CLASS
 
 	class GameEngine
 	{
@@ -562,32 +451,20 @@ namespace def
 		{
 			m_sAppName = "Undefined";
 
-#if defined(PLATFORM_SDL2)
 			m_nKeyNewState = new uint8_t[256];
-#elif defined(PLATFORM_OPENGL)
-			m_nKeyNewState = new short[256];
-#endif
-
-#if defined(PLATFORM_OPENGL)
-#if !defined(STB_IMAGE_IMPLEMENTATION)
-			Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-			GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, nullptr);
-#endif
-#endif
-
 		}
 
 		virtual ~GameEngine()
 		{
-#if defined(PLATFORM_SDL2)
+			delete m_sprFont;
+
+			for (auto& t : m_vecTextures)
+				SDL_DestroyTexture(t);
+
+			SDL_CloseAudioDevice(m_sdlAudioDeviceID);
 			SDL_DestroyRenderer(m_sdlRenderer);
 			SDL_DestroyWindow(m_sdlWindow);
 			SDL_Quit();
-#endif
-#if defined(PLATFORM_OPENGL)
-			Gdiplus::GdiplusShutdown(m_gdiplusToken);
-			DisableOpenGL(m_hWnd, m_hDC, m_hRC);
-#endif
 		}
 
 	private:
@@ -599,36 +476,16 @@ namespace def
 		int32_t m_nPixelWidth;
 		int32_t m_nPixelHeight;
 
-#if defined(PLATFORM_SDL2)
 		SDL_Window* m_sdlWindow = nullptr;
 		SDL_Renderer* m_sdlRenderer = nullptr;
-#endif
-
-#if defined(PLATFORM_OPENGL)
-		HWND m_hWnd;
-		HDC m_hDC;
-		HGLRC m_hRC;
-
-		std::vector<uint32_t> m_vecTextures;
-
-		ULONG_PTR m_gdiplusToken;
-#endif
 
 		bool m_bAppThreadActive;
 
 		KeyState m_sKeys[512];
 		KeyState m_sMouse[5];
 
-#if defined(PLATFORM_SDL2)
 		uint8_t m_nKeyOldState[512];
 		uint8_t* m_nKeyNewState;
-#endif
-#if defined(PLATFORM_OPENGL)
-		short m_nKeyOldState[512];
-		short* m_nKeyNewState;
-
-		int32_t m_nPaddingTop;
-#endif
 
 		float m_fWheelDelta = 0.0f;
 
@@ -640,79 +497,30 @@ namespace def
 
 		float m_fDeltaTime;
 
-#if defined(PLATFORM_SDL2)
 		std::vector<SDL_Texture*> m_vecTextures;
 		SDL_Rect* m_sdlRect;
-#endif
 
-		Sprite* sprFont;
+		Sprite* m_sprFont;
+
+		bool m_bEnableSound = false;
 
 	public:
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 		virtual void OnUserDestroy() { return; }
 
-#if defined(PLATFORM_OPENGL)
-		void EnableOpenGL(HWND hwnd, HDC* hDC, HGLRC* hRC)
-		{
-			PIXELFORMATDESCRIPTOR pfd;
-
-			*hDC = GetDC(hwnd);
-
-			ZeroMemory(&pfd, sizeof(pfd));
-
-			pfd.nSize = sizeof(pfd);
-			pfd.nVersion = 1;
-			pfd.dwFlags = PFD_DRAW_TO_WINDOW |
-				PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-			pfd.iPixelType = PFD_TYPE_RGBA;
-			pfd.cColorBits = 24;
-			pfd.cDepthBits = 16;
-			pfd.iLayerType = PFD_MAIN_PLANE;
-
-			SetPixelFormat(*hDC, ChoosePixelFormat(*hDC, &pfd), &pfd);
-
-			*hRC = wglCreateContext(*hDC);
-
-			wglMakeCurrent(*hDC, *hRC);
-		}
-
-		void DisableOpenGL(HWND hwnd, HDC hDC, HGLRC hRC)
-		{
-			wglMakeCurrent(NULL, NULL);
-			wglDeleteContext(hRC);
-			ReleaseDC(hwnd, hDC);
-		}
-
-		static LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-		{
-			POINT cursor;
-			switch (msg)
-			{
-			case WM_DESTROY:
-				PostQuitMessage(0);
-				DestroyWindow(hWnd);
-				return 0;
-
-			}
-
-			return DefWindowProc(hWnd, msg, wParam, lParam);
-		}
-#endif
-
 		rcode Construct(int nWidth, int nHeight, int nPixelWidth, int nPixelHeight, bool bFullScreen = false)
 		{
 			rcode rc;
 			rc.ok = false;
 
-#if defined(PLATFORM_SDL2)
 			auto get_sdl_err = [&]()
 			{
 				rc.info += "SDL: ";
 				rc.info += SDL_GetError();
 				return rc;
 			};
-#endif
+
 			auto set_err = [&](std::string text)
 			{
 				rc.info = text;
@@ -728,8 +536,7 @@ namespace def
 			m_nPixelWidth = nPixelWidth;
 			m_nPixelHeight = nPixelHeight;
 
-#if defined(PLATFORM_SDL2)
-			if (SDL_Init(SDL_INIT_VIDEO) > 0)
+			if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO) < 0)
 				return get_sdl_err();
 
 			m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -740,58 +547,6 @@ namespace def
 			SDL_SetWindowFullscreen(m_sdlWindow, bFullScreen);
 
 			m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, -1, SDL_RENDERER_ACCELERATED);
-
-#elif defined(PLATFORM_OPENGL)
-
-			WNDCLASS wc;
-			wc.style = CS_HREDRAW | CS_VREDRAW;
-			wc.cbClsExtra = 0;
-			wc.cbWndExtra = 0;
-
-			wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-			wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
-
-			wc.hIcon = LoadIcon(GetModuleHandle(nullptr), nullptr);
-
-			wc.lpszClassName = (LPCWSTR)m_sAppName.c_str();
-			wc.lpszMenuName = nullptr;
-
-			wc.hInstance = GetModuleHandle(nullptr);
-
-			wc.lpfnWndProc = WinProc;
-
-			RegisterClass(&wc);
-
-			DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-			DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_THICKFRAME;
-
-			int nTopLeftX = CW_USEDEFAULT;
-			int nTopLeftY = CW_USEDEFAULT;
-
-			if (bFullScreen)
-			{
-				dwExStyle = 0;
-				dwStyle = WS_VISIBLE | WS_POPUP;
-
-				HMONITOR hmon = MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
-				MONITORINFO mi = { sizeof(mi) };
-
-				if (!GetMonitorInfo(hmon, &mi))
-					return set_err("Can't get info about monitor, try to disable full screen mode or fix it somehow");
-
-				m_nScreenWidth = mi.rcMonitor.right;
-				m_nScreenHeight = mi.rcMonitor.bottom;
-
-				nTopLeftX = 0;
-				nTopLeftY = 0;
-			}
-
-			m_hWnd = CreateWindowEx(dwExStyle, (LPCWSTR)m_sAppName.c_str(), (LPCWSTR)m_sAppName.c_str(), dwStyle,
-				nTopLeftX, nTopLeftY, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight, nullptr, nullptr, GetModuleHandle(nullptr), nullptr);
-
-			if (!m_hWnd)
-				return set_err("Can't create window");
-#endif
 
 			ConstructFontSprite();
 
@@ -810,15 +565,14 @@ namespace def
 	private:
 		void AppThread()
 		{
-#if defined(PLATFORM_OPENGL)
-			ShowWindow(m_hWnd, SW_SHOW);
-			ShowWindow(GetConsoleWindow(), SW_SHOW);
-
-			EnableOpenGL(m_hWnd, &m_hDC, &m_hRC);
-
-			glOrtho(0, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight, 0, -1.0f, 1.0f);
-			glViewport(0, 0, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight);
-#endif
+			if (m_bEnableSound)
+			{
+				if (!EnableAudio())
+				{
+					m_bAppThreadActive = false;
+					m_bEnableSound = false;
+				}
+			}
 
 			if (!OnUserCreate())
 				m_bAppThreadActive = false;
@@ -842,19 +596,14 @@ namespace def
 					tp2 = std::chrono::system_clock::now();
 					std::chrono::duration<float> deltaTime = tp2 - tp1;
 					tp1 = tp2;
-					
+
 					m_fDeltaTime = deltaTime.count();
-					
+
 					char s[256];
 					snprintf(s, 256, "github.com/defini7 - defGameEngine - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / m_fDeltaTime);
 
-#if defined(PLATFORM_SDL2)
 					SDL_SetWindowTitle(m_sdlWindow, s);
-#elif defined(PLATFORM_OPENGL)
-					SetWindowTextA(m_hWnd, s);
-#endif
 
-#if defined(PLATFORM_SDL2)
 					SDL_Event evt;
 					while (SDL_PollEvent(&evt))
 					{
@@ -912,10 +661,8 @@ namespace def
 
 						case SDL_MOUSEMOTION:
 						{
-							uint32_t mouse_mask = SDL_GetMouseState(&m_nMouseX, &m_nMouseY);
-
-							m_nMouseX /= m_nPixelWidth;
-							m_nMouseY /= m_nPixelHeight;
+							m_nMouseX = evt.motion.x / m_nPixelWidth;
+							m_nMouseY = evt.motion.y / m_nPixelHeight;
 						}
 						break;
 
@@ -928,32 +675,32 @@ namespace def
 						case SDL_KEYDOWN: case SDL_KEYUP:
 						{
 							m_nKeyNewState = (uint8_t*)SDL_GetKeyboardState(NULL);
-
-							for (int i = 0; i < 512; i++)
-							{
-								m_sKeys[i].bPressed = false;
-								m_sKeys[i].bReleased = false;
-
-								if (m_nKeyNewState[i] != m_nKeyOldState[i])
-								{
-									if (m_nKeyNewState[i])
-									{
-										m_sKeys[i].bPressed = !m_sKeys[i].bHeld;
-										m_sKeys[i].bHeld = true;
-									}
-									else
-									{
-										m_sKeys[i].bReleased = true;
-										m_sKeys[i].bHeld = false;
-									}
-								}
-
-								m_nKeyOldState[i] = m_nKeyNewState[i];
-							}
 						}
 						break;
 
 						}
+					}
+
+					for (int i = 0; i < 512; i++)
+					{
+						m_sKeys[i].bPressed = false;
+						m_sKeys[i].bReleased = false;
+
+						if (m_nKeyNewState[i] != m_nKeyOldState[i])
+						{
+							if (m_nKeyNewState[i])
+							{
+								m_sKeys[i].bPressed = !m_sKeys[i].bHeld;
+								m_sKeys[i].bHeld = true;
+							}
+							else
+							{
+								m_sKeys[i].bReleased = true;
+								m_sKeys[i].bHeld = false;
+							}
+						}
+
+						m_nKeyOldState[i] = m_nKeyNewState[i];
 					}
 
 					for (int m = 0; m < 5; m++)
@@ -984,111 +731,10 @@ namespace def
 						m_bAppThreadActive = false;
 
 					SDL_RenderPresent(m_sdlRenderer);
-
-#elif defined(PLATFORM_OPENGL)
-
-					MSG msg = { 0 };
-
-					if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-					{
-						auto update_pos = [&]()
-						{
-							RECT rctWin;
-							RECT rctCli;
-
-							GetWindowRect(m_hWnd, &rctWin);
-							GetClientRect(m_hWnd, &rctCli);
-
-							m_nPaddingTop = (rctWin.bottom - rctCli.bottom) - (rctWin.top - rctCli.top);
-
-							m_nMouseX = LOWORD(msg.lParam) / m_nPixelWidth;
-							m_nMouseY = HIWORD(msg.lParam) / m_nPixelHeight;
-						};
-
-						switch (msg.message)
-						{
-						case WM_QUIT:			m_bAppThreadActive = false;												break;
-						case WM_MOUSEMOVE:		update_pos();															break;
-						case WM_LBUTTONDOWN:	update_pos(); m_nMouseNewState[0] = 1;									break;
-						case WM_LBUTTONUP:		update_pos(); m_nMouseNewState[0] = 0;									break;
-						case WM_RBUTTONDOWN:	update_pos(); m_nMouseNewState[1] = 1;									break;
-						case WM_RBUTTONUP:		update_pos(); m_nMouseNewState[1] = 0;									break;
-						case WM_MBUTTONDOWN:	update_pos(); m_nMouseNewState[2] = 1;									break;
-						case WM_MBUTTONUP:		update_pos(); m_nMouseNewState[2] = 0;									break;
-						case WM_XBUTTONDOWN:	update_pos(); m_nMouseNewState[(HIWORD(msg.wParam) == 2) ? 4 : 3] = 1;  break;
-						case WM_XBUTTONUP:		update_pos(); m_nMouseNewState[(HIWORD(msg.wParam) == 2) ? 4 : 3] = 0;  break;
-
-						default:
-						{
-							TranslateMessage(&msg);
-							DispatchMessage(&msg);
-						}
-
-						}
-					}
-					else
-					{
-						for (int m = 0; m < 5; m++)
-						{
-							m_sMouse[m].bPressed = false;
-							m_sMouse[m].bReleased = false;
-
-							if (m_nMouseNewState[m] != m_nMouseOldState[m])
-							{
-								if (m_nMouseNewState[m])
-								{
-									m_sMouse[m].bPressed = true;
-									m_sMouse[m].bHeld = true;
-								}
-								else
-								{
-									m_sMouse[m].bReleased = true;
-									m_sMouse[m].bHeld = false;
-								}
-							}
-
-							m_nMouseOldState[m] = m_nMouseNewState[m];
-						}
-
-						glPushMatrix();
-
-						if (!OnUserUpdate(m_fDeltaTime))
-							m_bAppThreadActive = false;
-
-						glPopMatrix();
-
-						SwapBuffers(m_hDC);
-					}
-
-					for (int i = 0; i < 256; i++)
-					{
-						m_nKeyNewState[i] = GetAsyncKeyState(i);
-
-						m_sKeys[i].bPressed = false;
-						m_sKeys[i].bReleased = false;
-
-						if (m_nKeyNewState[i] != m_nKeyOldState[i])
-						{
-							if (m_nKeyNewState[i] & 0x8000)
-							{
-								m_sKeys[i].bPressed = !m_sKeys[i].bHeld;
-								m_sKeys[i].bHeld = true;
-							}
-							else
-							{
-								m_sKeys[i].bReleased = true;
-								m_sKeys[i].bHeld = false;
-							}
-						}
-
-						m_nKeyOldState[i] = m_nKeyNewState[i];
-					}
-#endif
 				}
 			}
 		}
 
-#if defined(PLATFORM_SDL2)
 		SDL_Rect* GetPixelRect(int32_t x, int32_t y)
 		{
 			SDL_Rect* rct = new SDL_Rect;
@@ -1099,7 +745,6 @@ namespace def
 
 			return rct;
 		}
-#endif
 
 		void ConstructFontSprite()
 		{
@@ -1121,7 +766,7 @@ namespace def
 			data += "O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000";
 			data += "?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
 
-			sprFont = new Sprite(128, 48);
+			m_sprFont = new Sprite(128, 48);
 			int px = 0, py = 0;
 			for (size_t b = 0; b < 1024; b += 4)
 			{
@@ -1134,7 +779,7 @@ namespace def
 				for (int i = 0; i < 24; i++)
 				{
 					int k = r & (1 << i) ? 255 : 0;
-					sprFont->SetPixel(px, py, Pixel(k, k, k, k));
+					m_sprFont->SetPixel(px, py, Pixel(k, k, k, k));
 					if (++py == 48) { px++; py = 0; }
 				}
 			}
@@ -1142,28 +787,21 @@ namespace def
 
 	public:
 		bool SetTitle(std::string title);
-		virtual void Draw(int32_t x, int32_t y, Pixel p = def::WHITE);
-		virtual void Clear(Pixel p = def::WHITE);
-		virtual void FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = def::WHITE);
-		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p = def::WHITE);
-		virtual void DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = def::WHITE);
-		virtual void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
-		virtual void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = def::WHITE);
-		virtual void DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
-		virtual void FillCircle(int32_t x, int32_t y, uint32_t r, Pixel p = def::WHITE);
-		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, float r, float s, Pixel p = def::WHITE);
-		virtual void DrawString(int32_t x, int32_t y, std::string s, Pixel p = def::WHITE, float scale = 1.0f);
+		virtual void Draw(int32_t x, int32_t y, Pixel p = WHITE);
+		virtual void Clear(Pixel p = WHITE);
+		virtual void FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = WHITE);
+		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p = WHITE);
+		virtual void DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = WHITE);
+		virtual void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = WHITE);
+		virtual void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = WHITE);
+		virtual void DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p = WHITE);
+		virtual void FillCircle(int32_t x, int32_t y, uint32_t r, Pixel p = WHITE);
+		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, float r, float s, Pixel p = WHITE);
+		virtual void DrawString(int32_t x, int32_t y, std::string s, Pixel p = WHITE, float scale = 1.0f);
 
-#if defined(PLATFORM_SDL2)
-		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, SDL_RendererFlip flip = SDL_FLIP_NONE);
-
-#elif defined(PLATFORM_OPENGL)
-		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f);
-#endif
+		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FLIP_MODE fm = FM_NONE);
 		Sprite* CreateSprite(std::string filename);
-
-		void SetMode(MODE m);
-		void DisableMode(MODE m);
+		
 		KeyState GetKey(short keyCode) const;
 		KeyState GetMouse(short btnCode) const;
 		uint32_t GetMouseX() const;
@@ -1172,6 +810,234 @@ namespace def
 		uint32_t GetScreenHeight() const;
 		float GetDeltaTime() const;
 		float GetWheelDelta() const;
+
+	protected:
+		// AUDIO ENGINE CLASS
+
+		void EnableSound() 
+		{
+			m_bEnableSound = true;
+		}
+
+		struct sAudioSample
+		{
+			sAudioSample()
+			{
+
+			}
+
+			sAudioSample(const char* sWavFile, GameEngine& ge)
+			{
+				uint8_t* wavData;
+				SDL_AudioSpec fileSpec;
+				uint32_t streamLen = 0;
+
+				if (!SDL_LoadWAV(sWavFile, &fileSpec, (uint8_t**)&wavData, &streamLen))
+				{
+					std::cerr << "SDL: couldn't load audio file: " << SDL_GetError() << '\n';
+					bSampleValid = false;
+					return;
+				}
+
+				SDL_AudioCVT cvt;
+				if (SDL_BuildAudioCVT(&cvt, fileSpec.format, fileSpec.channels, fileSpec.freq, ge.m_sdlSampleSpec.format, ge.m_sdlSampleSpec.channels, ge.m_sdlSampleSpec.freq) < 0)
+				{
+					std::cerr << "SDL: failed to build cvt: " << SDL_GetError() << '\n';
+					bSampleValid = false;
+					SDL_FreeWAV(wavData);
+					return;
+				}
+
+				cvt.buf = (uint8_t*)malloc(streamLen * cvt.len_mult);
+				cvt.len = streamLen;
+
+				memcpy(cvt.buf, wavData, streamLen);
+
+				SDL_FreeWAV(wavData);
+
+				if (SDL_ConvertAudio(&cvt) < 0)
+				{
+					std::cerr << "SDL: failed to convert audio!: " << SDL_GetError() << '\n';
+					bSampleValid = false;
+					SDL_free(cvt.buf);
+					return;
+				}
+
+				fSample = (float*)cvt.buf;
+				nSamples = cvt.len_cvt / sizeof(float) / ge.m_sdlSpec.channels;
+				bSampleValid = true;
+
+				SDL_free(cvt.buf);
+			}
+
+			~sAudioSample() 
+			{
+				SDL_FreeWAV((uint8_t*)fSample);
+			}
+
+			float* fSample = nullptr;
+			uint32_t nSamples = 0;
+			bool bSampleValid = false;
+		};
+
+		std::vector<sAudioSample> vecAudioSamples;
+
+		struct sCurrentlyPlayingSample
+		{
+			int nAudioSampleID = 0;
+			long nSamplePosition = 0;
+			bool bFinished = false;
+			bool bLoop = false;
+		};
+
+		std::list<sCurrentlyPlayingSample> listActiveSamples;
+
+		// 16-bit WAVE file @ 44100Hz
+		int32_t LoadAudioSample(const char* sWavFile)
+		{
+			if (!m_bEnableSound)
+				return -1;
+
+			sAudioSample a(sWavFile, *this);
+			if (a.bSampleValid)
+			{
+				vecAudioSamples.push_back(a);
+				return vecAudioSamples.size();
+			}
+			else
+				return -1;
+		}
+
+		void PlaySample(int id, bool bLoop = false)
+		{
+			sCurrentlyPlayingSample a;
+
+			a.nAudioSampleID = id;
+			a.nSamplePosition = 0;
+			a.bFinished = false;
+			a.bLoop = bLoop;
+
+			listActiveSamples.push_back(a);
+		}
+
+		void StopSample(int id)
+		{
+
+		}
+
+		bool EnableAudio(uint32_t nSampleRate = 44100, uint32_t nChannels = 1, uint32_t nBlocks = 8, uint32_t nBlockSamples = 512)
+		{
+			SDL_AudioSpec wanted;
+
+			SDL_zero(wanted);
+
+			wanted.channels = nChannels;
+			wanted.format = AUDIO_S16;
+			wanted.freq = nSampleRate;
+			wanted.samples = nBlockSamples;
+			wanted.userdata = this;
+			wanted.callback = forwardCallback;
+
+			SDL_zero(m_sdlSampleSpec);
+
+			m_sdlSampleSpec.channels = nChannels;
+			m_sdlSampleSpec.format = AUDIO_F32;
+			m_sdlSampleSpec.freq = nSampleRate;
+			m_sdlSampleSpec.userdata = this;
+
+			m_sdlAudioDeviceID = SDL_OpenAudioDevice(0, 0, &wanted, &m_sdlSpec, 0);
+
+			if (!m_sdlAudioDeviceID)
+			{
+				std::cout << "Failed to open audio device!\n" << SDL_GetError() << '\n';
+				return false;
+			}
+
+			SDL_PauseAudioDevice(m_sdlAudioDeviceID, 0);
+
+			return true;
+		}
+
+		void DisableAudio()
+		{
+			SDL_CloseAudioDevice(m_sdlAudioDeviceID);
+		}
+
+		static void forwardCallback(void* userdata, uint8_t* byteStream, int len) 
+		{
+			static_cast<GameEngine*>(userdata)->AudioThread(userdata, byteStream, len);
+		}
+
+		void AudioThread(void* userdata, uint8_t* byteStream, int len)
+		{
+			m_fGlobalTime = 0.0f;
+
+			float fTimeStep = 1.0f / (float)m_sdlSpec.freq;
+			float fMaxSample = float(std::pow(2, (sizeof(short) * 8) - 1) - 1);
+			short nPreviousSample = 0;
+
+			memset(byteStream, 0, len);
+
+			int16_t* buf = (int16_t*)byteStream;
+
+			auto clip = [](float fSample, float fMax)
+			{
+				if (fSample >= 0.0f)
+					return std::fmin(fSample, fMax);
+				else
+					return std::fmax(fSample, -fMax);
+			};
+
+			uint32_t i = 0;
+			for (unsigned int n = 0; n < len / sizeof(int16_t); n += m_sdlSpec.channels)
+			{
+				for (unsigned int c = 0; c < m_sdlSpec.channels; c++)
+				{
+					int16_t sample = (int16_t)(clip(GetMixerOutput(c, fTimeStep * i, fTimeStep), 1.0f) * fMaxSample);
+					buf[i] = sample;
+					i++;
+				}
+
+				m_fGlobalTime += fTimeStep;
+			}
+		}
+
+		virtual float OnUserSoundSample(int nChannel, float fGlobalTime, float fTimeStep)
+		{
+			return 0.0f;
+		}
+
+		virtual float OnUserSoundFilter(int nChannel, float fGlobalTime, float fSample)
+		{
+			return fSample;
+		}
+
+		float GetMixerOutput(int nChannel, float fGlobalTime, float fTimeStep)
+		{
+			float fMixerSample = 0.0f;
+
+			for (auto& s : listActiveSamples)
+			{
+				if (nChannel == 0)
+					s.nSamplePosition += (long)((float)m_sdlSpec.freq * fTimeStep);
+
+				if (s.nSamplePosition < vecAudioSamples[s.nAudioSampleID - 1].nSamples)
+					fMixerSample += vecAudioSamples[s.nAudioSampleID - 1].fSample[(s.nSamplePosition * m_sdlSpec.channels) + nChannel];
+				else
+					s.bFinished = true;
+			}
+
+			listActiveSamples.remove_if([](const sCurrentlyPlayingSample& s) { return s.bFinished; });
+
+			fMixerSample += OnUserSoundSample(nChannel, fGlobalTime, fTimeStep);
+
+			return OnUserSoundFilter(nChannel, fGlobalTime, fMixerSample);
+		}
+
+		SDL_AudioDeviceID m_sdlAudioDeviceID;
+		SDL_AudioSpec m_sdlSpec, m_sdlSampleSpec;
+
+		float m_fGlobalTime = 0.0f;
 
 	};
 
@@ -1190,24 +1056,14 @@ namespace def
 
 	void GameEngine::Draw(int32_t x, int32_t y, Pixel p)
 	{
-#if defined(PLATFORM_SDL2)
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderDrawPoint(m_sdlRenderer, x, y);
-#elif defined(PLATFORM_OPENGL)
-		glColor4ub(p.r, p.g, p.b, p.a);
-		glRecti(x * m_nPixelWidth, y * m_nPixelHeight + m_nPaddingTop, x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight + m_nPaddingTop);
-#endif
 	}
 
 	void GameEngine::Clear(Pixel p)
 	{
-#if defined(PLATFORM_SDL2)
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderClear(m_sdlRenderer);
-#elif defined(PLATFORM_OPENGL)
-		glClearColor((float)p.r / 255.0f, (float)p.g / 255.0f, (float)p.b / 255.0f, (float)p.a / 255.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-#endif
 	}
 
 	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
@@ -1219,18 +1075,8 @@ namespace def
 
 	void GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p)
 	{
-#if defined(PLATFORM_SDL2)
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderDrawLine(m_sdlRenderer, x1, y1, x2, y2);
-#elif defined(PLATFORM_OPENGL)
-		glScalef(m_nPixelWidth, m_nPixelHeight, 1.0f);
-
-		glColor4ub(p.r, p.g, p.b, p.a);
-		glBegin(GL_LINES);
-		glVertex2i(x1, y1 + m_nPaddingTop);
-		glVertex2i(x2, y2 + m_nPaddingTop);
-		glEnd();
-#endif
 	}
 
 	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
@@ -1606,7 +1452,7 @@ namespace def
 				{
 					for (uint32_t i = 0; i < 8; i++)
 						for (uint32_t j = 0; j < 8; j++)
-							if (sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
+							if (m_sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
 								for (uint32_t is = 0; is < scale; is++)
 									for (uint32_t js = 0; js < scale; js++)
 										Draw(x + sx + (i * scale) + is, y + sy + (j * scale) + js, p);
@@ -1615,7 +1461,7 @@ namespace def
 				{
 					for (uint32_t i = 0; i < 8; i++)
 						for (uint32_t j = 0; j < 8; j++)
-							if (sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
+							if (m_sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
 								Draw(x + sx + i, y + sy + j, p);
 				}
 				sx += 8 * scale;
@@ -1625,7 +1471,6 @@ namespace def
 
 	Sprite* GameEngine::CreateSprite(std::string filename)
 	{
-#if defined(PLATFORM_SDL2)
 		Sprite* spr = new Sprite(filename);
 
 		spr->SetTexId(m_vecTextures.size());
@@ -1638,73 +1483,72 @@ namespace def
 		spr->m_sdlFileRect = spr->m_sdlCoordRect;
 
 		return spr;
-#endif
-		return new def::Sprite(filename);
 	}
 
-#if defined(PLATFORM_SDL2)
-
-	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, float scale, SDL_RendererFlip flip)
+	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, float scale, FLIP_MODE fm)
 	{
-#if defined(USE_GPU)
 		spr->m_sdlCoordRect.x = x * m_nPixelWidth * scale;
 		spr->m_sdlCoordRect.y = y * m_nPixelHeight * scale;
 
-		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, flip);
-#else
-		for (int i = 0; i < spr->GetWidth(); i++)
-			for (int j = 0; j < spr->GetHeight(); j++)
-				Draw(x * scale + i, y * scale + j, spr->GetPixel(i, j));
-#endif
-	}
-
-#elif defined(PLATFORM_OPENGL)
-
-	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle)
-	{
-		glPushMatrix();
-
-		glRotatef(angle, 1.0f, 0.0f, 0.0f);
-
-		for (int32_t i = 0; i < spr->GetWidth(); i++)
-			for (int32_t j = 0; j < spr->GetHeight(); j++)
-				Draw(x + i, y + j, spr->GetPixel(i, j));
-
-		glPopMatrix();
-	}
-#endif
-
-	void GameEngine::SetMode(MODE m)
-	{
-#if defined(PLATFORM_OPENGL)
-		switch (m)
-		{
-		case MODE::ALPHA:
-		{
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		}
-		break;
-
-		}
-#endif
-	}
-
-	void GameEngine::DisableMode(MODE m)
-	{
-#if defined(PLATFORM_OPENGL)
-		switch (m)
-		{
-		case MODE::ALPHA:
-			glDisable(GL_BLEND);
-			break;
-		}
-#endif
+		SDL_RenderSetScale(m_sdlRenderer, scale * m_nPixelWidth, scale * m_nPixelHeight);
+		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, (SDL_RendererFlip)fm);
+		SDL_RenderSetScale(m_sdlRenderer, m_nPixelWidth, m_nPixelHeight);
 	}
 
 	KeyState GameEngine::GetKey(short keyCode) const
 	{
-		return m_sKeys[keyCode];
+		short code = (SDL_Keycode)keyCode;
+
+		switch (keyCode)
+		{
+		case L'A': code = SDL_SCANCODE_A; break;
+		case L'B': code = SDL_SCANCODE_B; break;
+		case L'C': code = SDL_SCANCODE_C; break;
+		case L'D': code = SDL_SCANCODE_D; break;
+		case L'E': code = SDL_SCANCODE_E; break;
+		case L'F': code = SDL_SCANCODE_F; break;
+		case L'G': code = SDL_SCANCODE_G; break;
+		case L'H': code = SDL_SCANCODE_H; break;
+		case L'I': code = SDL_SCANCODE_I; break;
+		case L'J': code = SDL_SCANCODE_J; break;
+		case L'K': code = SDL_SCANCODE_K; break;
+		case L'L': code = SDL_SCANCODE_L; break;
+		case L'M': code = SDL_SCANCODE_M; break;
+		case L'N': code = SDL_SCANCODE_N; break;
+		case L'O': code = SDL_SCANCODE_O; break;
+		case L'P': code = SDL_SCANCODE_P; break;
+		case L'Q': code = SDL_SCANCODE_Q; break;
+		case L'R': code = SDL_SCANCODE_R; break;
+		case L'S': code = SDL_SCANCODE_S; break;
+		case L'T': code = SDL_SCANCODE_T; break;
+		case L'U': code = SDL_SCANCODE_U; break;
+		case L'V': code = SDL_SCANCODE_V; break;
+		case L'W': code = SDL_SCANCODE_W; break;
+		case L'X': code = SDL_SCANCODE_X; break;
+		case L'Y': code = SDL_SCANCODE_Y; break;
+		case L'Z': code = SDL_SCANCODE_Z; break;
+		case L'0': code = SDL_SCANCODE_0; break;
+		case L'1': code = SDL_SCANCODE_1; break;
+		case L'2': code = SDL_SCANCODE_2; break;
+		case L'3': code = SDL_SCANCODE_3; break;
+		case L'4': code = SDL_SCANCODE_4; break;
+		case L'5': code = SDL_SCANCODE_5; break;
+		case L'6': code = SDL_SCANCODE_6; break;
+		case L'7': code = SDL_SCANCODE_7; break;
+		case L'8': code = SDL_SCANCODE_8; break;
+		case L'9': code = SDL_SCANCODE_9; break;
+		case L'\\':code = SDL_SCANCODE_BACKSLASH; break;
+		case L',': code = SDL_SCANCODE_COMMA; break;
+		case L'=': code = SDL_SCANCODE_EQUALS; break;
+		case L'[': code = SDL_SCANCODE_LEFTBRACKET; break;
+		case L']': code = SDL_SCANCODE_RIGHTBRACKET; break;
+		case L'-': code = SDL_SCANCODE_MINUS; break;
+		case L'.': code = SDL_SCANCODE_PERIOD; break;
+		case L';': code = SDL_SCANCODE_SEMICOLON; break;
+		case L'/': code = SDL_SCANCODE_SLASH; break;
+		}
+
+		return m_sKeys[code];
 	}
 
 	KeyState GameEngine::GetMouse(short btnCode) const
