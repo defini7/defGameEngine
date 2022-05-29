@@ -1,5 +1,5 @@
 # defGameEngine
-defGameEngine - это кроссплатформенный игровой движок, доступный на Windows, Linux, MacOS
+defGameEngine - это кроссплатформенный игровой движок, доступный на Windows, Linux
 
 # Установка
 
@@ -44,9 +44,5 @@ all: $(OBJS)
 2) ```sudo apt-get install libsdl2-dev```,
 3) ```sudo apt-get install libsdl2-image-dev```,
 4) ```g++ -o main main.cpp -lSDL2main -lSDL2 -lSDL2_image```.
-
-# Важно!
-- Класс Sprite не доработан в версии OpenGL... пока что.
-- Версия OpenGL поддерживается только на Windows.
 
 На этом все!
