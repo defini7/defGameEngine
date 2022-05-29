@@ -103,6 +103,8 @@
 	#define main() SDL_main(int argc, char** argv)
 #endif
 
+#define DGE_MAIN(app_class, screen_width, screen_height, pixel_width, pixel_height, full_screen, vsync) int main() { app_class demo; def::rcode err = demo.Construct(screen_width, screen_height, pixel_width, pixel_height, full_screen, vsync); if (err.ok) demo.Run(); else std::cerr << err.info << "\n"; return 0; }
+
 namespace def
 {
 	// KEYBOARD SCANCODES
@@ -258,6 +260,62 @@ namespace def
 			return { v1.x / v, v1.y / v };
 		}
 
+		friend vec2d_basic<T> operator+=(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2)
+		{
+			v1.x += v2.x;
+			v1.y += v2.y;
+			return v1;
+		}
+
+		friend vec2d_basic<T> operator-=(const vec2d_basic<T> v1, const vec2d_basic<T>& v2)
+		{
+			v1.x -= v2.x;
+			v1.y -= v2.y;
+			return v1;
+		}
+
+		friend vec2d_basic<T> operator*=(const vec2d_basic<T> v1, const vec2d_basic<T>& v2)
+		{
+			v1.x *= v2.x;
+			v1.y *= v2.y;
+			return v1;
+		}
+
+		friend vec2d_basic<T> operator/=(const vec2d_basic<T> v1, const vec2d_basic<T>& v2)
+		{
+			v1.x /= v2.x;
+			v1.y /= v2.y;
+			return v1;
+		}
+
+		friend vec2d_basic<T> operator+=(const vec2d_basic<T> v1, const T v)
+		{
+			v1.x += v;
+			v1.y += v;
+			return v1;
+		}
+
+		friend vec2d_basic<T> operator-=(const vec2d_basic<T> v1, const T v)
+		{
+			v1.x -= v;
+			v1.y -= v;
+			return v1;
+		}
+
+		friend vec2d_basic<T> operator*=(const vec2d_basic<T> v1, const T v)
+		{
+			v1.x *= v;
+			v1.y *= v;
+			return v1;
+		}
+
+		friend vec2d_basic<T> operator/=(const vec2d_basic<T> v1, const T v)
+		{
+			v1.x /= v;
+			v1.y /= v;
+			return v1;
+		}
+
 		float mag()
 		{
 			return sqrtf(this->x * this->x + this->y * this->y);
@@ -268,7 +326,6 @@ namespace def
 			return { this->x / mag(), this->y / mag() };
 		}
 
-		// linear interpolation
 		vec2d_basic<T> lerp(float x, float y, float t)
 		{
 			return { this->x + t * (x - this->x), this->y + t * (y - this->y) };
@@ -282,11 +339,6 @@ namespace def
 		vec2d_basic<T> reflect()
 		{
 			return vec2d_basic<T>(-this->x, -this->y);
-		}
-
-		float distance()
-		{
-			return sqrtf(this->x * this->x + this->y * this->y);
 		}
 	};
 
@@ -598,7 +650,7 @@ namespace def
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 		virtual void OnUserDestroy() { return; }
 
-		rcode Construct(int nWidth, int nHeight, int nPixelWidth, int nPixelHeight, bool bFullScreen = false)
+		rcode Construct(int nWidth, int nHeight, int nPixelWidth, int nPixelHeight, bool bFullScreen = false, bool bVSync = false)
 		{
 			rcode rc;
 			rc.ok = false;
@@ -625,7 +677,12 @@ namespace def
 			m_nPixelWidth = nPixelWidth;
 			m_nPixelHeight = nPixelHeight;
 
-			if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO) < 0)
+			uint32_t f = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
+
+			if (m_bEnableSound)
+				f |= SDL_INIT_AUDIO;
+
+			if (SDL_Init(f) < 0)
 				return get_sdl_err();
 
 			m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -635,7 +692,12 @@ namespace def
 
 			SDL_SetWindowFullscreen(m_sdlWindow, bFullScreen);
 
-			m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, -1, SDL_RENDERER_ACCELERATED);
+			f = SDL_RENDERER_ACCELERATED;
+
+			if (bVSync)
+				f |= SDL_RENDERER_PRESENTVSYNC;
+
+			m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, -1, f);
 
 			ConstructFontSprite();
 
@@ -876,7 +938,7 @@ namespace def
 		}
 
 	public:
-		bool SetTitle(std::string title);
+		bool SetTitle(const char* title);
 		virtual void Draw(int32_t x, int32_t y, Pixel p = WHITE);
 		virtual void Clear(Pixel p = WHITE);
 		virtual void FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = WHITE);
@@ -1140,11 +1202,11 @@ namespace def
 
 	};
 
-	bool GameEngine::SetTitle(std::string title)
+	bool GameEngine::SetTitle(const char* title)
 	{
-		if (title.length() > 128)
+		if (sizeof(title) > 128)
 		{
-			std::cerr << "Max length of title is 128, but got " << title.length() << " characters.";
+			std::cerr << "Max length of title is 128, but got " << sizeof(title) << " characters.";
 			return false;
 		}
 
