@@ -105,6 +105,93 @@
 
 namespace def
 {
+	// KEYBOARD SCANCODES
+
+	typedef SDL_Scancode KeyCode;
+
+	namespace Key
+	{
+		constexpr KeyCode SPACE			 = SDL_SCANCODE_SPACE;
+		constexpr KeyCode BACK			 = SDL_SCANCODE_BACKSPACE;
+		constexpr KeyCode DELETE		 = SDL_SCANCODE_DELETE;
+		constexpr KeyCode HOME			 = SDL_SCANCODE_HOME;
+		constexpr KeyCode END			 = SDL_SCANCODE_END;
+		constexpr KeyCode RETURN		 = SDL_SCANCODE_RETURN;
+		constexpr KeyCode TAB			 = SDL_SCANCODE_TAB;
+		constexpr KeyCode INSERT		 = SDL_SCANCODE_INSERT;
+		constexpr KeyCode LSHIFT		 = SDL_SCANCODE_LSHIFT;
+		constexpr KeyCode RSHIFT		 = SDL_SCANCODE_RSHIFT;
+		constexpr KeyCode LCONTROL		 = SDL_SCANCODE_LCTRL;
+		constexpr KeyCode RCONTROL		 = SDL_SCANCODE_RCTRL;
+		constexpr KeyCode PRIOR			 = SDL_SCANCODE_PAGEUP;
+		constexpr KeyCode NEXT			 = SDL_SCANCODE_PAGEDOWN;
+		constexpr KeyCode ESCAPE		 = SDL_SCANCODE_ESCAPE;
+		constexpr KeyCode UP			 = SDL_SCANCODE_UP;
+		constexpr KeyCode DOWN			 = SDL_SCANCODE_DOWN;
+		constexpr KeyCode LEFT			 = SDL_SCANCODE_LEFT;
+		constexpr KeyCode RIGHT			 = SDL_SCANCODE_RIGHT;
+		constexpr KeyCode F1			 = SDL_SCANCODE_F1;
+		constexpr KeyCode F2			 = SDL_SCANCODE_F2;
+		constexpr KeyCode F3			 = SDL_SCANCODE_F3;
+		constexpr KeyCode F4			 = SDL_SCANCODE_F4;
+		constexpr KeyCode F5			 = SDL_SCANCODE_F5;
+		constexpr KeyCode F6			 = SDL_SCANCODE_F6;
+		constexpr KeyCode F7			 = SDL_SCANCODE_F7;
+		constexpr KeyCode F8			 = SDL_SCANCODE_F8;
+		constexpr KeyCode F9			 = SDL_SCANCODE_F9;
+		constexpr KeyCode F10			 = SDL_SCANCODE_F10;
+		constexpr KeyCode F11			 = SDL_SCANCODE_F11;
+		constexpr KeyCode F12			 = SDL_SCANCODE_F12;
+		constexpr KeyCode MENU			 = SDL_SCANCODE_MENU;
+		constexpr KeyCode A				 = SDL_SCANCODE_A;
+		constexpr KeyCode B				 = SDL_SCANCODE_B;
+		constexpr KeyCode C				 = SDL_SCANCODE_C;
+		constexpr KeyCode D				 = SDL_SCANCODE_D;
+		constexpr KeyCode E				 = SDL_SCANCODE_E;
+		constexpr KeyCode F				 = SDL_SCANCODE_F;
+		constexpr KeyCode G				 = SDL_SCANCODE_G;
+		constexpr KeyCode H				 = SDL_SCANCODE_H;
+		constexpr KeyCode I				 = SDL_SCANCODE_I;
+		constexpr KeyCode J				 = SDL_SCANCODE_J;
+		constexpr KeyCode K				 = SDL_SCANCODE_K;
+		constexpr KeyCode L				 = SDL_SCANCODE_L;
+		constexpr KeyCode M				 = SDL_SCANCODE_M;
+		constexpr KeyCode N				 = SDL_SCANCODE_N;
+		constexpr KeyCode O				 = SDL_SCANCODE_O;
+		constexpr KeyCode P				 = SDL_SCANCODE_P;
+		constexpr KeyCode Q				 = SDL_SCANCODE_Q;
+		constexpr KeyCode R				 = SDL_SCANCODE_R;
+		constexpr KeyCode S				 = SDL_SCANCODE_S;
+		constexpr KeyCode T				 = SDL_SCANCODE_T;
+		constexpr KeyCode U				 = SDL_SCANCODE_U;
+		constexpr KeyCode V				 = SDL_SCANCODE_V;
+		constexpr KeyCode W				 = SDL_SCANCODE_W;
+		constexpr KeyCode X				 = SDL_SCANCODE_X;
+		constexpr KeyCode Y				 = SDL_SCANCODE_Y;
+		constexpr KeyCode Z				 = SDL_SCANCODE_Z;
+		constexpr KeyCode K0			 = SDL_SCANCODE_0;
+		constexpr KeyCode K1			 = SDL_SCANCODE_1;
+		constexpr KeyCode K2			 = SDL_SCANCODE_2;
+		constexpr KeyCode K3			 = SDL_SCANCODE_3;
+		constexpr KeyCode K4			 = SDL_SCANCODE_4;
+		constexpr KeyCode K5			 = SDL_SCANCODE_5;
+		constexpr KeyCode K6			 = SDL_SCANCODE_6;
+		constexpr KeyCode K7			 = SDL_SCANCODE_7;
+		constexpr KeyCode K8			 = SDL_SCANCODE_8;
+		constexpr KeyCode K9			 = SDL_SCANCODE_9;
+		constexpr KeyCode BACKSLASH		 = SDL_SCANCODE_BACKSLASH;
+		constexpr KeyCode COMMA			 = SDL_SCANCODE_COMMA;
+		constexpr KeyCode EQUALS		 = SDL_SCANCODE_EQUALS;
+		constexpr KeyCode LEFT_BRACKET   = SDL_SCANCODE_LEFTBRACKET;
+		constexpr KeyCode RIGHT_BRACKET  = SDL_SCANCODE_RIGHTBRACKET;
+		constexpr KeyCode MINUS			 = SDL_SCANCODE_MINUS;
+		constexpr KeyCode PERIOD		 = SDL_SCANCODE_PERIOD;
+		constexpr KeyCode SEMICOLON		 = SDL_SCANCODE_SEMICOLON;
+		constexpr KeyCode SLASH			 = SDL_SCANCODE_SLASH;
+	}
+
+	// END KEYBOARD SCANCODES
+
 	enum FLIP_MODE : uint8_t
 	{
 		FM_NONE,
@@ -310,7 +397,9 @@ namespace def
 #define RANDOM_PIXEL_ALPHA def::Pixel(rand() % 255, rand() % 255, rand() % 255, rand() % 255)
 
 	
-	// SPRITE CLASS
+	/********************************
+	* @ SPRITE CLASS IMPLEMENTATION *
+	*********************************/
 
 	class Sprite
 	{
@@ -803,7 +892,7 @@ namespace def
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FLIP_MODE fm = FM_NONE);
 		Sprite* CreateSprite(std::string filename);
 		
-		KeyState GetKey(short keyCode) const;
+		KeyState GetKey(KeyCode keyCode) const;
 		KeyState GetMouse(short btnCode) const;
 		uint32_t GetMouseX() const;
 		uint32_t GetMouseY() const;
@@ -881,6 +970,8 @@ namespace def
 			bool bSampleValid = false;
 		};
 
+	private:
+
 		std::vector<sAudioSample> vecAudioSamples;
 
 		struct sCurrentlyPlayingSample
@@ -892,6 +983,8 @@ namespace def
 		};
 
 		std::list<sCurrentlyPlayingSample> listActiveSamples;
+
+	public:
 
 		// 16-bit WAVE file @ 44100Hz
 		int32_t LoadAudioSample(const char* sWavFile)
@@ -923,7 +1016,7 @@ namespace def
 
 		void StopSample(int id)
 		{
-
+			listActiveSamples.remove_if([id](const sCurrentlyPlayingSample& a) { return a.nAudioSampleID == id; });
 		}
 
 		bool EnableAudio(uint32_t nSampleRate = 44100, uint32_t nChannels = 1, uint32_t nBlocks = 8, uint32_t nBlockSamples = 512)
@@ -964,6 +1057,8 @@ namespace def
 			SDL_CloseAudioDevice(m_sdlAudioDeviceID);
 		}
 
+	private:
+
 		static void forwardCallback(void* userdata, uint8_t* byteStream, int len) 
 		{
 			static_cast<GameEngine*>(userdata)->AudioThread(userdata, byteStream, len);
@@ -1003,6 +1098,8 @@ namespace def
 			}
 		}
 
+	public:
+
 		virtual float OnUserSoundSample(int nChannel, float fGlobalTime, float fTimeStep)
 		{
 			return 0.0f;
@@ -1035,6 +1132,7 @@ namespace def
 			return OnUserSoundFilter(nChannel, fGlobalTime, fMixerSample);
 		}
 
+	public:
 		SDL_AudioDeviceID m_sdlAudioDeviceID;
 		SDL_AudioSpec m_sdlSpec, m_sdlSampleSpec;
 
@@ -1496,60 +1594,9 @@ namespace def
 		SDL_RenderSetScale(m_sdlRenderer, m_nPixelWidth, m_nPixelHeight);
 	}
 
-	KeyState GameEngine::GetKey(short keyCode) const
+	KeyState GameEngine::GetKey(KeyCode keyCode) const
 	{
-		short code = (SDL_Keycode)keyCode;
-
-		switch (keyCode)
-		{
-		case L'A': code = SDL_SCANCODE_A; break;
-		case L'B': code = SDL_SCANCODE_B; break;
-		case L'C': code = SDL_SCANCODE_C; break;
-		case L'D': code = SDL_SCANCODE_D; break;
-		case L'E': code = SDL_SCANCODE_E; break;
-		case L'F': code = SDL_SCANCODE_F; break;
-		case L'G': code = SDL_SCANCODE_G; break;
-		case L'H': code = SDL_SCANCODE_H; break;
-		case L'I': code = SDL_SCANCODE_I; break;
-		case L'J': code = SDL_SCANCODE_J; break;
-		case L'K': code = SDL_SCANCODE_K; break;
-		case L'L': code = SDL_SCANCODE_L; break;
-		case L'M': code = SDL_SCANCODE_M; break;
-		case L'N': code = SDL_SCANCODE_N; break;
-		case L'O': code = SDL_SCANCODE_O; break;
-		case L'P': code = SDL_SCANCODE_P; break;
-		case L'Q': code = SDL_SCANCODE_Q; break;
-		case L'R': code = SDL_SCANCODE_R; break;
-		case L'S': code = SDL_SCANCODE_S; break;
-		case L'T': code = SDL_SCANCODE_T; break;
-		case L'U': code = SDL_SCANCODE_U; break;
-		case L'V': code = SDL_SCANCODE_V; break;
-		case L'W': code = SDL_SCANCODE_W; break;
-		case L'X': code = SDL_SCANCODE_X; break;
-		case L'Y': code = SDL_SCANCODE_Y; break;
-		case L'Z': code = SDL_SCANCODE_Z; break;
-		case L'0': code = SDL_SCANCODE_0; break;
-		case L'1': code = SDL_SCANCODE_1; break;
-		case L'2': code = SDL_SCANCODE_2; break;
-		case L'3': code = SDL_SCANCODE_3; break;
-		case L'4': code = SDL_SCANCODE_4; break;
-		case L'5': code = SDL_SCANCODE_5; break;
-		case L'6': code = SDL_SCANCODE_6; break;
-		case L'7': code = SDL_SCANCODE_7; break;
-		case L'8': code = SDL_SCANCODE_8; break;
-		case L'9': code = SDL_SCANCODE_9; break;
-		case L'\\':code = SDL_SCANCODE_BACKSLASH; break;
-		case L',': code = SDL_SCANCODE_COMMA; break;
-		case L'=': code = SDL_SCANCODE_EQUALS; break;
-		case L'[': code = SDL_SCANCODE_LEFTBRACKET; break;
-		case L']': code = SDL_SCANCODE_RIGHTBRACKET; break;
-		case L'-': code = SDL_SCANCODE_MINUS; break;
-		case L'.': code = SDL_SCANCODE_PERIOD; break;
-		case L';': code = SDL_SCANCODE_SEMICOLON; break;
-		case L'/': code = SDL_SCANCODE_SLASH; break;
-		}
-
-		return m_sKeys[code];
+		return m_sKeys[keyCode];
 	}
 
 	KeyState GameEngine::GetMouse(short btnCode) const
