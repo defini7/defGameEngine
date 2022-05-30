@@ -42,7 +42,7 @@ protected:
 
 };
 
-int main(int argc, char* argv[])
+int main()
 {
 	Lerp demo;
 	def::rcode err = demo.Construct(256, 240, 4, 4);
