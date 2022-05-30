@@ -1,4 +1,3 @@
-#define PLATFORM_SDL2
 #include "defGameEngine.h"
 
 #undef max
@@ -98,13 +97,13 @@ protected:
 
 		// CONTROL PLAYER
 
-		if (GetKey(SDL_SCANCODE_LEFT).bHeld)
+		if (GetKey(def::Key::LEFT).bHeld)
 			player.angle -= 5.0f * fDeltaTime;
 
-		if (GetKey(SDL_SCANCODE_RIGHT).bHeld)
+		if (GetKey(def::Key::RIGHT).bHeld)
 			player.angle += 5.0f * fDeltaTime;
 
-		if (GetKey(SDL_SCANCODE_UP).bHeld)
+		if (GetKey(def::Key::UP).bHeld)
 		{
 			player.dx += sinf(player.angle) * 20.0f * fDeltaTime;
 			player.dy -= cosf(player.angle) * 20.0f * fDeltaTime;
