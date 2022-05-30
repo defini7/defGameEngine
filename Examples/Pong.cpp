@@ -34,8 +34,8 @@ public:
 private:
 	sBall ball;
 
-	int nPlayer1_Score = 0;
-	int nPlayer2_Score = 0;
+	int nPlayer1_Score;
+	int nPlayer2_Score;
 
 	sPlayer player1;
 	sPlayer player2;
@@ -108,7 +108,7 @@ protected:
 
 	void Ball_Draw()
 	{
-		DrawCircle((int)ball.x, (int)ball.y, ball.radius);
+		FillCircle((int)ball.x, (int)ball.y, ball.radius);
 	}
 
 	void Player_Move(sPlayer& p, const def::KeyCode upKey, const def::KeyCode downKey)
@@ -145,7 +145,7 @@ protected:
 		ball.x = float(GetScreenWidth() / 2);
 		ball.y = float(GetScreenHeight() / 2);
 
-		ball.radius = 10;
+		ball.radius = 3;
 
 		ball.speed = 20.0f;
 
@@ -167,6 +167,11 @@ protected:
 		player2.y = float(GetScreenHeight() / 2);
 
 		player2.speed = 50.0f;
+
+		// Initialize score
+
+		nPlayer1_Score = 0;
+		nPlayer2_Score = 0;
 	}
 
 	bool OnUserCreate() override
