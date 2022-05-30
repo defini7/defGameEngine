@@ -154,19 +154,19 @@ protected:
 			DrawLine(x, nDrawStart, x, nDrawEnd, nPixel);
 		}
 
-		if (GetKey(SDL_SCANCODE_UP).bHeld)
+		if (GetKey(def::Key::UP).bHeld)
 		{
 			if (map[int(fPlayerY) * nMapWidth + int(fPlayerX + fDirX * fDeltaTime)] == '.') fPlayerX += fDirX * fDeltaTime;
 			if (map[int(fPlayerY + fDirY * fDeltaTime) * nMapWidth + int(fPlayerX)] == '.') fPlayerY += fDirY * fDeltaTime;
 		}
 
-		if (GetKey(SDL_SCANCODE_DOWN).bHeld)
+		if (GetKey(def::Key::DOWN).bHeld)
 		{
 			if (map[int(fPlayerY) * nMapWidth + int(fPlayerX - fDirX * fDeltaTime)] == '.') fPlayerX -= fDirX * fDeltaTime;
 			if (map[int(fPlayerY - fDirY * fDeltaTime) * nMapWidth + int(fPlayerX)] == '.') fPlayerY -= fDirY * fDeltaTime;
 		}
 
-		if (GetKey(SDL_SCANCODE_RIGHT).bHeld)
+		if (GetKey(def::Key::RIGHT).bHeld)
 		{
 			float fOldDirX = fDirX;
 			float fOldPlaneX = fPlaneX;
@@ -178,7 +178,7 @@ protected:
 			fPlaneY = fOldPlaneX * sin(-fDeltaTime) + fPlaneY * cos(-fDeltaTime);
 		}
 
-		if (GetKey(SDL_SCANCODE_LEFT).bHeld)
+		if (GetKey(def::Key::LEFT).bHeld)
 		{
 			float fOldDirX = fDirX;
 			float fOldPlaneX = fPlaneX;
@@ -195,7 +195,7 @@ protected:
 
 };
 
-int main(int argc, char* argv[]) // argc and argv are necessary
+int main()
 {
 	RayCasting demo;
 	def::rcode err = demo.Construct(1280, 960, 1, 1);
