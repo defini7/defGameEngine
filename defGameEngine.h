@@ -73,6 +73,8 @@
 **/
 #pragma endregion
 
+#pragma region includes
+
 #include <iostream>
 #include <cstdio>
 #include <string>
@@ -89,6 +91,12 @@
 	#include <SDL_image.h>
 #endif
 
+#if defined(__MINGW32__)
+	#include <Windows.h>
+#endif
+
+#pragma endregion
+
 #if defined(SDL_MAIN_NEEDED) || !defined(SDL_MAIN_AVAILABLE)
 	#if defined(__linux__)
 		#define main() main(int argc, char** argv)
@@ -96,10 +104,11 @@
 		#define main() SDL_main(int argc, char** argv)
 	#endif
 #elif defined(__MINGW32__)
+	#define SDL_MAIN_HANDLED
 	#undef main
-	#include <Windows.h>
 	#define main() __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 #else
+	#undef main
 	#define main() SDL_main(int argc, char** argv)
 #endif
 
@@ -109,7 +118,7 @@ namespace def
 {
 	// KEYBOARD SCANCODES
 
-	typedef SDL_Scancode KeyCode;
+	using KeyCode = SDL_Scancode;
 
 	namespace Key
 	{
@@ -202,9 +211,8 @@ namespace def
 	};
 
 	template <class T>
-	class vec2d_basic
+	struct vec2d_basic
 	{
-	public:
 		vec2d_basic()
 		{
 			this->x = 0;
@@ -582,8 +590,14 @@ namespace def
 		}
 	};
 
+	/************************************
+	* @ END SPRITE CLASS IMPLEMENTATION *
+	*************************************/
 
-	// MAIN CLASS
+
+	/******************************
+	* @ MAIN CLASS IMPLEMENTATION *
+	******************************/
 
 	class GameEngine
 	{
@@ -1695,4 +1709,12 @@ namespace def
 	{
 		return m_fWheelDelta;
 	}
+
+	/**********************************
+	* @ END MAIN CLASS IMPLEMENTATION *
+	**********************************/
 }
+
+/***************************************
+* @ END DEF-GAME-ENGINE IMPLEMENTATION *
+***************************************/
