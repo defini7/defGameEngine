@@ -86,13 +86,13 @@ protected:
 
 				def::Pixel p = def::Pixel(col.c[2], col.c[1], col.c[0], 255);
 
-				if (GetKey(SDL_SCANCODE_G).bHeld)
+				if (GetKey(def::Key::G).bHeld)
 					ApplyGreyscale(p);
 
-				if (GetKey(SDL_SCANCODE_S).bHeld)
+				if (GetKey(def::Key::S).bHeld)
 					ApplySepia(p);
 
-				if (GetKey(SDL_SCANCODE_T).bHeld)
+				if (GetKey(def::Key::T).bHeld)
 					ApplyThreshold(p);
 
 				Draw(x, y, p);
@@ -103,7 +103,7 @@ protected:
 
 };
 
-int main(int argc, char* argv[]) // argc and argv are necessary
+int main()
 {
 	WebCam demo;
 	def::rcode err = demo.Construct(320, 240, 4, 4);
