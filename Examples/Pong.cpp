@@ -17,7 +17,8 @@ struct sPlayer
 {
 	float x;
 	float y;
-
+	
+	int width;
 	int height;
 
 	float speed;
@@ -130,12 +131,17 @@ protected:
 
 	void Player_Draw(sPlayer& p)
 	{
-		DrawRectangle((int)p.x, (int)p.y, (int)p.x + 1, (int)p.y + p.height);
+		FillRectangle((int)p.x, (int)p.y, (int)p.x + p.width, (int)p.y + p.height);
 	}
 
 	bool CheckCollision(sBall& b, sPlayer& p)
 	{
-		return b.x + (float)b.radius > p.x && b.x < p.x + 1.0f && b.y + (float)b.radius > p.y && b.y < p.y + (float)p.height;
+		float fBallX = b.x - float(b.radius / 2);
+		float fBallY = b.y - float(b.radius / 2);
+
+		float fSize = float(b.radius * 2);
+
+		return p.x < fBallX + fSize - 1 && p.x + (float)p.width + 1 > fBallX && p.y < fBallY + fSize - 1 && p.y + (float)p.height + 1 > fBallY;
 	}
 
 	void ResetGame()
@@ -157,13 +163,15 @@ protected:
 		player1.x = 50.0f;
 		player1.y = float(GetScreenHeight() / 2);
 
+		player1.width = 5;
 		player1.height = 50;
 
 		player1.speed = 50.0f;
 
+		player2.width = 5;
 		player2.height = 50;
 
-		player2.x = float(GetScreenWidth() - 1 - 50);
+		player2.x = float(GetScreenWidth() - player2.width - 50);
 		player2.y = float(GetScreenHeight() / 2);
 
 		player2.speed = 50.0f;
