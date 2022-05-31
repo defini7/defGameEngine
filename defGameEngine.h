@@ -106,7 +106,7 @@
 #elif defined(__MINGW32__)
 #define SDL_MAIN_HANDLED
 #undef main
-#define main() __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+#define main() __clrcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 #else
 #undef main
 #define main() SDL_main(int argc, char** argv)
@@ -1034,7 +1034,8 @@ namespace def
 		virtual void DrawString(int32_t x, int32_t y, std::string s, Pixel p = WHITE, float scale = 1.0f);
 
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FLIP_MODE fm = FM_NONE);
-		Sprite* CreateSprite(std::string filename, bool bFormatSpr);
+		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FLIP_MODE fm = FM_NONE);
+		Sprite* CreateSprite(std::string filename, bool bFormatSpr = false);
 
 		KeyState GetKey(KeyCode keyCode) const;
 		KeyState GetMouse(short btnCode) const;
@@ -1730,12 +1731,31 @@ namespace def
 
 	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, float scale, FLIP_MODE fm)
 	{
-		spr->m_sdlCoordRect.x = x * m_nPixelWidth * scale;
-		spr->m_sdlCoordRect.y = y * m_nPixelHeight * scale;
+		spr->m_sdlCoordRect.x = x * scale * m_nPixelWidth;
+		spr->m_sdlCoordRect.y = y * scale * m_nPixelHeight;
 
-		SDL_RenderSetScale(m_sdlRenderer, scale * m_nPixelWidth, scale * m_nPixelHeight);
+		SDL_RenderSetScale(m_sdlRenderer, scale, scale);
+
 		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, (SDL_RendererFlip)fm);
+
 		SDL_RenderSetScale(m_sdlRenderer, m_nPixelWidth, m_nPixelHeight);
+	}
+
+	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr, float angle, float scale, FLIP_MODE fm)
+	{
+		spr->m_sdlFileRect.x = fx1;
+		spr->m_sdlFileRect.y = fy1;
+
+		spr->m_sdlFileRect.w = fx2 - fx1;
+		spr->m_sdlFileRect.h = fy2 - fy1;
+
+		DrawSprite(x, y, spr, angle, scale, fm);
+
+		spr->m_sdlFileRect.x = 0;
+		spr->m_sdlFileRect.y = 0;
+
+		spr->m_sdlFileRect.w = spr->GetWidth();
+		spr->m_sdlFileRect.h = spr->GetHeight();
 	}
 
 	KeyState GameEngine::GetKey(KeyCode keyCode) const
