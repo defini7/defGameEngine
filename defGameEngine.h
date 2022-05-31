@@ -84,32 +84,32 @@
 #include <list>
 
 #if defined(__linux__)
-	#include <SDL2/SDL.h>
-	#include <SDL2/SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #else
-	#include <SDL.h>
-	#include <SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 #endif
 
 #if defined(__MINGW32__)
-	#include <Windows.h>
+#include <Windows.h>
 #endif
 
 #pragma endregion
 
 #if defined(SDL_MAIN_NEEDED) || !defined(SDL_MAIN_AVAILABLE)
-	#if defined(__linux__)
-		#define main() main(int argc, char** argv)
-	#else
-		#define main() SDL_main(int argc, char** argv)
-	#endif
-#elif defined(__MINGW32__)
-	#define SDL_MAIN_HANDLED
-	#undef main
-	#define main() __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+#if defined(__linux__)
+#define main() main(int argc, char** argv)
 #else
-	#undef main
-	#define main() SDL_main(int argc, char** argv)
+#define main() SDL_main(int argc, char** argv)
+#endif
+#elif defined(__MINGW32__)
+#define SDL_MAIN_HANDLED
+#undef main
+#define main() __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+#else
+#undef main
+#define main() SDL_main(int argc, char** argv)
 #endif
 
 #define DGE_MAIN(app_class, screen_width, screen_height, pixel_width, pixel_height, full_screen, vsync) int main() { app_class demo; def::rcode err = demo.Construct(screen_width, screen_height, pixel_width, pixel_height, full_screen, vsync); if (err.ok) demo.Run(); else std::cerr << err.info << "\n"; return 0; }
@@ -122,83 +122,83 @@ namespace def
 
 	namespace Key
 	{
-		constexpr KeyCode SPACE			 = SDL_SCANCODE_SPACE;
-		constexpr KeyCode BACK			 = SDL_SCANCODE_BACKSPACE;
-		constexpr KeyCode DELETE		 = SDL_SCANCODE_DELETE;
-		constexpr KeyCode HOME			 = SDL_SCANCODE_HOME;
-		constexpr KeyCode END			 = SDL_SCANCODE_END;
-		constexpr KeyCode RETURN		 = SDL_SCANCODE_RETURN;
-		constexpr KeyCode TAB			 = SDL_SCANCODE_TAB;
-		constexpr KeyCode INSERT		 = SDL_SCANCODE_INSERT;
-		constexpr KeyCode LSHIFT		 = SDL_SCANCODE_LSHIFT;
-		constexpr KeyCode RSHIFT		 = SDL_SCANCODE_RSHIFT;
-		constexpr KeyCode LCONTROL		 = SDL_SCANCODE_LCTRL;
-		constexpr KeyCode RCONTROL		 = SDL_SCANCODE_RCTRL;
-		constexpr KeyCode PRIOR			 = SDL_SCANCODE_PAGEUP;
-		constexpr KeyCode NEXT			 = SDL_SCANCODE_PAGEDOWN;
-		constexpr KeyCode ESCAPE		 = SDL_SCANCODE_ESCAPE;
-		constexpr KeyCode UP			 = SDL_SCANCODE_UP;
-		constexpr KeyCode DOWN			 = SDL_SCANCODE_DOWN;
-		constexpr KeyCode LEFT			 = SDL_SCANCODE_LEFT;
-		constexpr KeyCode RIGHT			 = SDL_SCANCODE_RIGHT;
-		constexpr KeyCode F1			 = SDL_SCANCODE_F1;
-		constexpr KeyCode F2			 = SDL_SCANCODE_F2;
-		constexpr KeyCode F3			 = SDL_SCANCODE_F3;
-		constexpr KeyCode F4			 = SDL_SCANCODE_F4;
-		constexpr KeyCode F5			 = SDL_SCANCODE_F5;
-		constexpr KeyCode F6			 = SDL_SCANCODE_F6;
-		constexpr KeyCode F7			 = SDL_SCANCODE_F7;
-		constexpr KeyCode F8			 = SDL_SCANCODE_F8;
-		constexpr KeyCode F9			 = SDL_SCANCODE_F9;
-		constexpr KeyCode F10			 = SDL_SCANCODE_F10;
-		constexpr KeyCode F11			 = SDL_SCANCODE_F11;
-		constexpr KeyCode F12			 = SDL_SCANCODE_F12;
-		constexpr KeyCode MENU			 = SDL_SCANCODE_MENU;
-		constexpr KeyCode A				 = SDL_SCANCODE_A;
-		constexpr KeyCode B				 = SDL_SCANCODE_B;
-		constexpr KeyCode C				 = SDL_SCANCODE_C;
-		constexpr KeyCode D				 = SDL_SCANCODE_D;
-		constexpr KeyCode E				 = SDL_SCANCODE_E;
-		constexpr KeyCode F				 = SDL_SCANCODE_F;
-		constexpr KeyCode G				 = SDL_SCANCODE_G;
-		constexpr KeyCode H				 = SDL_SCANCODE_H;
-		constexpr KeyCode I				 = SDL_SCANCODE_I;
-		constexpr KeyCode J				 = SDL_SCANCODE_J;
-		constexpr KeyCode K				 = SDL_SCANCODE_K;
-		constexpr KeyCode L				 = SDL_SCANCODE_L;
-		constexpr KeyCode M				 = SDL_SCANCODE_M;
-		constexpr KeyCode N				 = SDL_SCANCODE_N;
-		constexpr KeyCode O				 = SDL_SCANCODE_O;
-		constexpr KeyCode P				 = SDL_SCANCODE_P;
-		constexpr KeyCode Q				 = SDL_SCANCODE_Q;
-		constexpr KeyCode R				 = SDL_SCANCODE_R;
-		constexpr KeyCode S				 = SDL_SCANCODE_S;
-		constexpr KeyCode T				 = SDL_SCANCODE_T;
-		constexpr KeyCode U				 = SDL_SCANCODE_U;
-		constexpr KeyCode V				 = SDL_SCANCODE_V;
-		constexpr KeyCode W				 = SDL_SCANCODE_W;
-		constexpr KeyCode X				 = SDL_SCANCODE_X;
-		constexpr KeyCode Y				 = SDL_SCANCODE_Y;
-		constexpr KeyCode Z				 = SDL_SCANCODE_Z;
-		constexpr KeyCode K0			 = SDL_SCANCODE_0;
-		constexpr KeyCode K1			 = SDL_SCANCODE_1;
-		constexpr KeyCode K2			 = SDL_SCANCODE_2;
-		constexpr KeyCode K3			 = SDL_SCANCODE_3;
-		constexpr KeyCode K4			 = SDL_SCANCODE_4;
-		constexpr KeyCode K5			 = SDL_SCANCODE_5;
-		constexpr KeyCode K6			 = SDL_SCANCODE_6;
-		constexpr KeyCode K7			 = SDL_SCANCODE_7;
-		constexpr KeyCode K8			 = SDL_SCANCODE_8;
-		constexpr KeyCode K9			 = SDL_SCANCODE_9;
-		constexpr KeyCode BACKSLASH		 = SDL_SCANCODE_BACKSLASH;
-		constexpr KeyCode COMMA			 = SDL_SCANCODE_COMMA;
-		constexpr KeyCode EQUALS		 = SDL_SCANCODE_EQUALS;
-		constexpr KeyCode LEFT_BRACKET   = SDL_SCANCODE_LEFTBRACKET;
-		constexpr KeyCode RIGHT_BRACKET  = SDL_SCANCODE_RIGHTBRACKET;
-		constexpr KeyCode MINUS			 = SDL_SCANCODE_MINUS;
-		constexpr KeyCode PERIOD		 = SDL_SCANCODE_PERIOD;
-		constexpr KeyCode SEMICOLON		 = SDL_SCANCODE_SEMICOLON;
-		constexpr KeyCode SLASH			 = SDL_SCANCODE_SLASH;
+		constexpr KeyCode SPACE = SDL_SCANCODE_SPACE;
+		constexpr KeyCode BACK = SDL_SCANCODE_BACKSPACE;
+		constexpr KeyCode DELETE = SDL_SCANCODE_DELETE;
+		constexpr KeyCode HOME = SDL_SCANCODE_HOME;
+		constexpr KeyCode END = SDL_SCANCODE_END;
+		constexpr KeyCode RETURN = SDL_SCANCODE_RETURN;
+		constexpr KeyCode TAB = SDL_SCANCODE_TAB;
+		constexpr KeyCode INSERT = SDL_SCANCODE_INSERT;
+		constexpr KeyCode LSHIFT = SDL_SCANCODE_LSHIFT;
+		constexpr KeyCode RSHIFT = SDL_SCANCODE_RSHIFT;
+		constexpr KeyCode LCONTROL = SDL_SCANCODE_LCTRL;
+		constexpr KeyCode RCONTROL = SDL_SCANCODE_RCTRL;
+		constexpr KeyCode PRIOR = SDL_SCANCODE_PAGEUP;
+		constexpr KeyCode NEXT = SDL_SCANCODE_PAGEDOWN;
+		constexpr KeyCode ESCAPE = SDL_SCANCODE_ESCAPE;
+		constexpr KeyCode UP = SDL_SCANCODE_UP;
+		constexpr KeyCode DOWN = SDL_SCANCODE_DOWN;
+		constexpr KeyCode LEFT = SDL_SCANCODE_LEFT;
+		constexpr KeyCode RIGHT = SDL_SCANCODE_RIGHT;
+		constexpr KeyCode F1 = SDL_SCANCODE_F1;
+		constexpr KeyCode F2 = SDL_SCANCODE_F2;
+		constexpr KeyCode F3 = SDL_SCANCODE_F3;
+		constexpr KeyCode F4 = SDL_SCANCODE_F4;
+		constexpr KeyCode F5 = SDL_SCANCODE_F5;
+		constexpr KeyCode F6 = SDL_SCANCODE_F6;
+		constexpr KeyCode F7 = SDL_SCANCODE_F7;
+		constexpr KeyCode F8 = SDL_SCANCODE_F8;
+		constexpr KeyCode F9 = SDL_SCANCODE_F9;
+		constexpr KeyCode F10 = SDL_SCANCODE_F10;
+		constexpr KeyCode F11 = SDL_SCANCODE_F11;
+		constexpr KeyCode F12 = SDL_SCANCODE_F12;
+		constexpr KeyCode MENU = SDL_SCANCODE_MENU;
+		constexpr KeyCode A = SDL_SCANCODE_A;
+		constexpr KeyCode B = SDL_SCANCODE_B;
+		constexpr KeyCode C = SDL_SCANCODE_C;
+		constexpr KeyCode D = SDL_SCANCODE_D;
+		constexpr KeyCode E = SDL_SCANCODE_E;
+		constexpr KeyCode F = SDL_SCANCODE_F;
+		constexpr KeyCode G = SDL_SCANCODE_G;
+		constexpr KeyCode H = SDL_SCANCODE_H;
+		constexpr KeyCode I = SDL_SCANCODE_I;
+		constexpr KeyCode J = SDL_SCANCODE_J;
+		constexpr KeyCode K = SDL_SCANCODE_K;
+		constexpr KeyCode L = SDL_SCANCODE_L;
+		constexpr KeyCode M = SDL_SCANCODE_M;
+		constexpr KeyCode N = SDL_SCANCODE_N;
+		constexpr KeyCode O = SDL_SCANCODE_O;
+		constexpr KeyCode P = SDL_SCANCODE_P;
+		constexpr KeyCode Q = SDL_SCANCODE_Q;
+		constexpr KeyCode R = SDL_SCANCODE_R;
+		constexpr KeyCode S = SDL_SCANCODE_S;
+		constexpr KeyCode T = SDL_SCANCODE_T;
+		constexpr KeyCode U = SDL_SCANCODE_U;
+		constexpr KeyCode V = SDL_SCANCODE_V;
+		constexpr KeyCode W = SDL_SCANCODE_W;
+		constexpr KeyCode X = SDL_SCANCODE_X;
+		constexpr KeyCode Y = SDL_SCANCODE_Y;
+		constexpr KeyCode Z = SDL_SCANCODE_Z;
+		constexpr KeyCode K0 = SDL_SCANCODE_0;
+		constexpr KeyCode K1 = SDL_SCANCODE_1;
+		constexpr KeyCode K2 = SDL_SCANCODE_2;
+		constexpr KeyCode K3 = SDL_SCANCODE_3;
+		constexpr KeyCode K4 = SDL_SCANCODE_4;
+		constexpr KeyCode K5 = SDL_SCANCODE_5;
+		constexpr KeyCode K6 = SDL_SCANCODE_6;
+		constexpr KeyCode K7 = SDL_SCANCODE_7;
+		constexpr KeyCode K8 = SDL_SCANCODE_8;
+		constexpr KeyCode K9 = SDL_SCANCODE_9;
+		constexpr KeyCode BACKSLASH = SDL_SCANCODE_BACKSLASH;
+		constexpr KeyCode COMMA = SDL_SCANCODE_COMMA;
+		constexpr KeyCode EQUALS = SDL_SCANCODE_EQUALS;
+		constexpr KeyCode LEFT_BRACKET = SDL_SCANCODE_LEFTBRACKET;
+		constexpr KeyCode RIGHT_BRACKET = SDL_SCANCODE_RIGHTBRACKET;
+		constexpr KeyCode MINUS = SDL_SCANCODE_MINUS;
+		constexpr KeyCode PERIOD = SDL_SCANCODE_PERIOD;
+		constexpr KeyCode SEMICOLON = SDL_SCANCODE_SEMICOLON;
+		constexpr KeyCode SLASH = SDL_SCANCODE_SLASH;
 	}
 
 	// END KEYBOARD SCANCODES
@@ -436,6 +436,7 @@ namespace def
 		}
 	};
 
+	Pixel BLACK = Pixel(0, 0, 0, 0);
 	Pixel DARK_BLUE = Pixel(0, 55, 218, 255);
 	Pixel DARK_GREEN = Pixel(19, 161, 14, 255);
 	Pixel DARK_CYAN = Pixel(59, 120, 255, 255);
@@ -451,12 +452,11 @@ namespace def
 	Pixel MAGENTA = Pixel(180, 0, 158, 255);
 	Pixel YELLOW = Pixel(255, 255, 0, 255);
 	Pixel WHITE = Pixel(255, 255, 255, 255);
-	Pixel BLACK = Pixel(0, 0, 0, 0);
 
 #define RANDOM_PIXEL def::Pixel(rand() % 255, rand() % 255, rand() % 255, 255)
 #define RANDOM_PIXEL_ALPHA def::Pixel(rand() % 255, rand() % 255, rand() % 255, rand() % 255)
 
-	
+
 	/********************************
 	* @ SPRITE CLASS IMPLEMENTATION *
 	*********************************/
@@ -475,9 +475,14 @@ namespace def
 				Create(w, h);
 		}
 
-		Sprite(std::string filename)
+		Sprite(std::string filename, bool bFormatSpr = false)
 		{
-			rcode rc = LoadSprite(filename);
+			rcode rc;
+
+			if (bFormatSpr)
+				rc = LoadSprSprite(std::wstring(filename.begin(), filename.end()));
+			else
+				rc = LoadSprite(filename);
 
 			if (!rc.ok)
 				std::cerr << rc.info << "\n";
@@ -505,12 +510,10 @@ namespace def
 	public:
 		void Create(int32_t w, int32_t h)
 		{
-			m_sdlSurface = new SDL_Surface;
+			m_sdlSurface = SDL_CreateRGBSurface(0, w, h, 32, 0, 0, 0, 0);;
 
 			m_nWidth = w;
 			m_nHeight = h;
-
-			m_sdlSurface->pixels = new unsigned char[w * h * 4];
 
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
 
@@ -523,7 +526,7 @@ namespace def
 			rcode rc;
 			rc.ok = false;
 			rc.info = "Ok";
-
+			
 			m_sdlSurface = IMG_Load(filename.c_str());
 
 			if (!m_sdlSurface)
@@ -535,6 +538,64 @@ namespace def
 
 			m_nWidth = m_sdlSurface->w;
 			m_nHeight = m_sdlSurface->h;
+
+			rc.ok = true;
+			return rc;
+		}
+
+		rcode LoadSprSprite(std::wstring filename)
+		{
+			rcode rc;
+			rc.ok = false;
+			rc.info = "Ok";
+
+			FILE* f = nullptr;
+			_wfopen_s(&f, filename.c_str(), L"rb");
+			if (f == nullptr)
+			{
+				rc.info += "Can't load spr file!";
+				return rc;
+			}
+
+			std::fread(&m_nWidth, sizeof(int), 1, f);
+			std::fread(&m_nHeight, sizeof(int), 1, f);
+
+			short* colours = new short[m_nWidth * m_nHeight];
+			std::fread(colours, sizeof(short), m_nWidth * m_nHeight, f);
+
+			//short* glyphs = new short[m_nWidth * m_nHeight];
+			//std::fread(glyphs, sizeof(short), m_nWidth * m_nHeight, f);
+
+			std::fclose(f);
+
+			Create(m_nWidth, m_nHeight);
+
+			for (int i = 0; i < m_nWidth; i++)
+				for (int j = 0; j < m_nHeight; j++)
+				{
+					def::Pixel p = def::WHITE;
+					switch ((int)colours[j * m_nWidth + i])
+					{
+					case 0:  p = def::BLACK; break;
+					case 1:  p = def::DARK_BLUE; break;
+					case 2:  p = def::DARK_GREEN; break;
+					case 3:  p = def::DARK_CYAN; break;
+					case 4:  p = def::DARK_RED; break;
+					case 5:  p = def::DARK_MAGENTA; break;
+					case 6:  p = def::YELLOW; break; // It should be DARK_YELLOW, but for now it is how it is
+					case 7:	 p = def::GREY; break;
+					case 8:	 p = def::DARK_GREY; break;
+					case 9:	 p = def::BLUE; break;
+					case 10: p = def::GREEN; break;
+					case 11: p = def::CYAN; break;
+					case 12: p = def::RED; break;
+					case 13: p = def::MAGENTA; break;
+					case 14: p = def::YELLOW; break;
+					case 15: p = def::WHITE; break;
+					}
+
+					SetPixel(i, j, p);
+				}
 
 			rc.ok = true;
 			return rc;
@@ -842,7 +903,7 @@ namespace def
 
 						case SDL_KEYDOWN: case SDL_KEYUP:
 							m_nKeyNewState = (uint8_t*)SDL_GetKeyboardState(NULL);
-						break;
+							break;
 
 						}
 					}
@@ -966,8 +1027,8 @@ namespace def
 		virtual void DrawString(int32_t x, int32_t y, std::string s, Pixel p = WHITE, float scale = 1.0f);
 
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FLIP_MODE fm = FM_NONE);
-		Sprite* CreateSprite(std::string filename);
-		
+		Sprite* CreateSprite(std::string filename, bool bFormatSpr);
+
 		KeyState GetKey(KeyCode keyCode) const;
 		KeyState GetMouse(short btnCode) const;
 		uint32_t GetMouseX() const;
@@ -980,7 +1041,7 @@ namespace def
 	protected:
 		// AUDIO ENGINE CLASS
 
-		void EnableSound() 
+		void EnableSound()
 		{
 			m_bEnableSound = true;
 		}
@@ -1036,7 +1097,7 @@ namespace def
 				SDL_free(cvt.buf);
 			}
 
-			~sAudioSample() 
+			~sAudioSample()
 			{
 				SDL_FreeWAV((uint8_t*)fSample);
 			}
@@ -1135,7 +1196,7 @@ namespace def
 
 	private:
 
-		static void forwardCallback(void* userdata, uint8_t* byteStream, int len) 
+		static void forwardCallback(void* userdata, uint8_t* byteStream, int len)
 		{
 			static_cast<GameEngine*>(userdata)->AudioThread(userdata, byteStream, len);
 		}
@@ -1644,9 +1705,9 @@ namespace def
 		}
 	}
 
-	Sprite* GameEngine::CreateSprite(std::string filename)
+	Sprite* GameEngine::CreateSprite(std::string filename, bool bFormatSpr)
 	{
-		Sprite* spr = new Sprite(filename);
+		Sprite* spr = new Sprite(filename, bFormatSpr);
 
 		spr->SetTexId(m_vecTextures.size());
 
