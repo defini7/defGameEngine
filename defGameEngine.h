@@ -563,8 +563,8 @@ namespace def
 			short* colours = new short[m_nWidth * m_nHeight];
 			std::fread(colours, sizeof(short), m_nWidth * m_nHeight, f);
 
-			//short* glyphs = new short[m_nWidth * m_nHeight];
-			//std::fread(glyphs, sizeof(short), m_nWidth * m_nHeight, f);
+			short* glyphs = new short[m_nWidth * m_nHeight];
+			std::fread(glyphs, sizeof(short), m_nWidth * m_nHeight, f);
 
 			std::fclose(f);
 
@@ -573,29 +573,36 @@ namespace def
 			for (int i = 0; i < m_nWidth; i++)
 				for (int j = 0; j < m_nHeight; j++)
 				{
-					def::Pixel p = def::WHITE;
-					switch ((int)colours[j * m_nWidth + i])
+					if (glyphs[j * m_nWidth + i] != L' ')
 					{
-					case 0:  p = def::BLACK; break;
-					case 1:  p = def::DARK_BLUE; break;
-					case 2:  p = def::DARK_GREEN; break;
-					case 3:  p = def::DARK_CYAN; break;
-					case 4:  p = def::DARK_RED; break;
-					case 5:  p = def::DARK_MAGENTA; break;
-					case 6:  p = def::YELLOW; break; // It should be DARK_YELLOW, but for now it is how it is
-					case 7:	 p = def::GREY; break;
-					case 8:	 p = def::DARK_GREY; break;
-					case 9:	 p = def::BLUE; break;
-					case 10: p = def::GREEN; break;
-					case 11: p = def::CYAN; break;
-					case 12: p = def::RED; break;
-					case 13: p = def::MAGENTA; break;
-					case 14: p = def::YELLOW; break;
-					case 15: p = def::WHITE; break;
-					}
+						def::Pixel p = def::WHITE;
 
-					SetPixel(i, j, p);
+						switch ((int)colours[j * m_nWidth + i])
+						{
+						case 0:  p = def::BLACK; break;
+						case 1:  p = def::DARK_BLUE; break;
+						case 2:  p = def::DARK_GREEN; break;
+						case 3:  p = def::DARK_CYAN; break;
+						case 4:  p = def::DARK_RED; break;
+						case 5:  p = def::DARK_MAGENTA; break;
+						case 6:  p = def::YELLOW; break; // It should be DARK_YELLOW, but for now it is how it is
+						case 7:	 p = def::GREY; break;
+						case 8:	 p = def::DARK_GREY; break;
+						case 9:	 p = def::BLUE; break;
+						case 10: p = def::GREEN; break;
+						case 11: p = def::CYAN; break;
+						case 12: p = def::RED; break;
+						case 13: p = def::MAGENTA; break;
+						case 14: p = def::YELLOW; break;
+						case 15: p = def::WHITE; break;
+						}
+
+						SetPixel(i, j, p);
+					}
 				}
+
+			delete colours;
+			delete glyphs;
 
 			rc.ok = true;
 			return rc;
@@ -1775,7 +1782,6 @@ namespace def
 	* @ END MAIN CLASS IMPLEMENTATION *
 	**********************************/
 }
-
 
 /***************************************
 * @ END DEF-GAME-ENGINE IMPLEMENTATION *
