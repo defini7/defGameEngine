@@ -88,6 +88,8 @@ protected:
 
 	bool OnUserCreate() override
 	{
+		SetIcon("apple.png");
+
 		srand(time(0));
 
 		tetromino[0].append("..X...X...X...X.");
@@ -103,7 +105,6 @@ protected:
 		for (int x = 0; x < nAreaWidth; x++)
 			for (int y = 0; y < nAreaHeight; y++)
 				pArea[y * nAreaWidth + x] = (x == 0 || x == nAreaWidth - 1 || y == nAreaHeight - 1) ? 9 : 0;
-		
 
 		return true;
 	}
@@ -190,11 +191,11 @@ protected:
 			for (int i = 0; i < 4; i++)
 				for (int j = 0; j < 4; j++)
 					if (tetromino[nCurrentPiece][Rotate(i, j, nCurrentRotation)] != '.')
-						Draw(nCurrentX + i + 2, nCurrentY + j + 2, Lookup(nCurrentPiece));
+						Draw(nCurrentX + i + 2, nCurrentY + j + 2, Lookup(nCurrentPiece + 1));
 
 			// DISPLAY SCORE
 
-			DrawString(15, 1, "Score: " + std::to_string(nScore), def::WHITE, 0.9f);
+			DrawString(15, 1, "Score:" + std::to_string(nScore), def::WHITE, 0.9f);
 
 			// ANIMATE LINES
 
@@ -223,7 +224,7 @@ protected:
 int main()
 {
 	Tetris demo;
-	def::rcode err = demo.Construct(80, 30, 16, 16);
+	def::rcode err = demo.Construct(80, 30, 12, 12);
 
 	if (err.ok)
 		demo.Run();
