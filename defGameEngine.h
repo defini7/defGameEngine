@@ -51,7 +51,7 @@
 		{
 			for (int i = 0; i < GetScreenWidth(); i++)
 				for (int j = 0; j < GetScreenHeight(); j++)
-					Draw(i, j, def::Pixel(rand() % 255, rand() % 255, rand() % 255, 255));
+					Draw(i, j, def::Pixel(rand() % 255, rand() % 255, rand() % 255));
 
 			return true;
 		}
@@ -648,9 +648,9 @@ namespace def
 		{
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
 
-			pixels[4 * (y * m_nWidth + x) + 0] = p.r;
+			pixels[4 * (y * m_nWidth + x) + 0] = p.b;
 			pixels[4 * (y * m_nWidth + x) + 1] = p.g;
-			pixels[4 * (y * m_nWidth + x) + 2] = p.b;
+			pixels[4 * (y * m_nWidth + x) + 2] = p.r;
 			pixels[4 * (y * m_nWidth + x) + 3] = p.a;
 		}
 
@@ -660,9 +660,9 @@ namespace def
 
 			Pixel p;
 
-			p.r = pixels[4 * (y * m_nWidth + x) + 0];
+			p.b = pixels[4 * (y * m_nWidth + x) + 0];
 			p.g = pixels[4 * (y * m_nWidth + x) + 1];
-			p.b = pixels[4 * (y * m_nWidth + x) + 2];
+			p.r = pixels[4 * (y * m_nWidth + x) + 2];
 			p.a = pixels[4 * (y * m_nWidth + x) + 3];
 
 			return p;
