@@ -571,6 +571,12 @@ namespace def
 			std::fread(&m_nWidth, sizeof(int), 1, f);
 			std::fread(&m_nHeight, sizeof(int), 1, f);
 
+			if (m_nWidth < 1 || m_nHeight < 1)
+			{
+				rc.info += "Width or height of sprite less than 1 pixel";
+				return rc;
+			}
+
 			short* colours = new short[m_nWidth * m_nHeight];
 			std::fread(colours, sizeof(short), m_nWidth * m_nHeight, f);
 
@@ -612,8 +618,8 @@ namespace def
 					}
 				}
 
-			delete colours;
-			delete glyphs;
+			delete[] colours;
+			delete[] glyphs;
 
 			rc.ok = true;
 			return rc;
@@ -690,15 +696,6 @@ namespace def
 
 		virtual ~GameEngine()
 		{
-			delete m_sprFont;
-
-			for (auto& t : m_vecTextures)
-				SDL_DestroyTexture(t);
-
-			SDL_CloseAudioDevice(m_sdlAudioDeviceID);
-			SDL_DestroyRenderer(m_sdlRenderer);
-			SDL_DestroyWindow(m_sdlWindow);
-			SDL_Quit();
 		}
 
 	private:
@@ -978,6 +975,23 @@ namespace def
 					SDL_RenderPresent(m_sdlRenderer);
 				}
 			}
+
+			OnUserDestroy();
+
+			QuitApp();
+		}
+
+		void QuitApp()
+		{
+			delete m_sprFont;
+
+			for (auto& t : m_vecTextures)
+				SDL_DestroyTexture(t);
+
+			SDL_CloseAudioDevice(m_sdlAudioDeviceID);
+			SDL_DestroyRenderer(m_sdlRenderer);
+			SDL_DestroyWindow(m_sdlWindow);
+			SDL_Quit();
 		}
 
 		SDL_Rect* GetPixelRect(int32_t x, int32_t y)
@@ -1032,9 +1046,11 @@ namespace def
 
 	public:
 		bool SetTitle(const char* title);
+		void SetIcon(const char* filename);
 		void ShowCursor(bool bShow);
 		bool IsCursorHidden();
 		WindowState GetScreenState();
+
 		virtual void Draw(int32_t x, int32_t y, Pixel p = WHITE);
 		virtual void Clear(Pixel p = WHITE);
 		virtual void FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = WHITE);
@@ -1310,6 +1326,14 @@ namespace def
 		m_sAppName = title;
 
 		return true;
+	}
+
+	void GameEngine::SetIcon(const char* filename)
+	{
+		SDL_Surface* icon = IMG_Load(filename);
+
+		SDL_SetWindowIcon(m_sdlWindow, icon);
+		SDL_FreeSurface(icon);
 	}
 
 	void GameEngine::ShowCursor(bool bShow)
