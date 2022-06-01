@@ -203,11 +203,18 @@ namespace def
 
 	// END KEYBOARD SCANCODES
 
-	enum FLIP_MODE : uint8_t
+	enum FlipMode : uint8_t
 	{
 		FM_NONE,
 		FM_HORIZONTAL,
 		FM_VERTICAL
+	};
+
+	enum WindowState : uint16_t
+	{
+		WS_MINIMIZED = 64,
+		WS_FOCUS = 512,
+		WS_CURSOR_FOCUS = 1024
 	};
 
 	template <class T>
@@ -217,6 +224,10 @@ namespace def
 		{
 			this->x = 0;
 			this->y = 0;
+
+			SDL_WINDOW_MINIMIZED;
+			SDL_WINDOW_INPUT_FOCUS;
+			SDL_WINDOW_MOUSE_FOCUS;
 		}
 
 		vec2d_basic(T x, T y)
@@ -475,11 +486,11 @@ namespace def
 				Create(w, h);
 		}
 
-		Sprite(std::string filename, bool bFormatSpr = false)
+		Sprite(std::string filename)
 		{
 			rcode rc;
 
-			if (bFormatSpr)
+			if (filename.ends_with(".spr"))
 				rc = LoadSprSprite(std::wstring(filename.begin(), filename.end()));
 			else
 				rc = LoadSprite(filename);
@@ -1021,6 +1032,9 @@ namespace def
 
 	public:
 		bool SetTitle(const char* title);
+		void ShowCursor(bool bShow);
+		bool IsCursorHidden();
+		WindowState GetScreenState();
 		virtual void Draw(int32_t x, int32_t y, Pixel p = WHITE);
 		virtual void Clear(Pixel p = WHITE);
 		virtual void FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = WHITE);
@@ -1033,9 +1047,9 @@ namespace def
 		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, int32_t x, int32_t y, float r, float s, Pixel p = WHITE);
 		virtual void DrawString(int32_t x, int32_t y, std::string s, Pixel p = WHITE, float scale = 1.0f);
 
-		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FLIP_MODE fm = FM_NONE);
-		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FLIP_MODE fm = FM_NONE);
-		Sprite* CreateSprite(std::string filename, bool bFormatSpr = false);
+		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
+		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
+		Sprite* CreateSprite(std::string filename);
 
 		KeyState GetKey(KeyCode keyCode) const;
 		KeyState GetMouse(short btnCode) const;
@@ -1296,6 +1310,21 @@ namespace def
 		m_sAppName = title;
 
 		return true;
+	}
+
+	void GameEngine::ShowCursor(bool bShow)
+	{
+		SDL_ShowCursor(bShow);
+	}
+
+	bool GameEngine::IsCursorHidden()
+	{
+		return SDL_ShowCursor(SDL_QUERY);
+	}
+
+	WindowState GameEngine::GetScreenState()
+	{
+		return (WindowState)SDL_GetWindowFlags(m_sdlWindow);
 	}
 
 	void GameEngine::Draw(int32_t x, int32_t y, Pixel p)
@@ -1713,9 +1742,9 @@ namespace def
 		}
 	}
 
-	Sprite* GameEngine::CreateSprite(std::string filename, bool bFormatSpr)
+	Sprite* GameEngine::CreateSprite(std::string filename)
 	{
-		Sprite* spr = new Sprite(filename, bFormatSpr);
+		Sprite* spr = new Sprite(filename);
 
 		spr->SetTexId(m_vecTextures.size());
 
@@ -1729,7 +1758,7 @@ namespace def
 		return spr;
 	}
 
-	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, float scale, FLIP_MODE fm)
+	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, float scale, FlipMode fm)
 	{
 		spr->m_sdlCoordRect.x = x * scale * m_nPixelWidth;
 		spr->m_sdlCoordRect.y = y * scale * m_nPixelHeight;
@@ -1741,7 +1770,7 @@ namespace def
 		SDL_RenderSetScale(m_sdlRenderer, m_nPixelWidth, m_nPixelHeight);
 	}
 
-	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr, float angle, float scale, FLIP_MODE fm)
+	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr, float angle, float scale, FlipMode fm)
 	{
 		spr->m_sdlFileRect.x = fx1;
 		spr->m_sdlFileRect.y = fy1;
