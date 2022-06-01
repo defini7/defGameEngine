@@ -1322,7 +1322,7 @@ namespace def
 		return SDL_ShowCursor(SDL_QUERY);
 	}
 
-	WindowState GameEngine::GetScreenState()
+	WindowState GameEngine::GetScreenState() // Example: GetScreenState() & def::WM_FOCUS
 	{
 		return (WindowState)SDL_GetWindowFlags(m_sdlWindow);
 	}
