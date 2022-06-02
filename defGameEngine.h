@@ -396,50 +396,58 @@ namespace def
 
 		friend Pixel operator+(Pixel& lhs, float& rhs)
 		{
-			return Pixel(lhs.r + rhs, lhs.g + rhs, lhs.b + rhs, lhs.a);
+			return Pixel(lhs.r + (uint8_t)rhs, lhs.g + (uint8_t)rhs, lhs.b + (uint8_t)rhs, lhs.a);
 		}
 
 		friend Pixel operator-(Pixel& lhs, float& rhs)
 		{
-			return Pixel(lhs.r - rhs, lhs.g - rhs, lhs.b - rhs, lhs.a);
+			return Pixel(lhs.r - (uint8_t)rhs, lhs.g - (uint8_t)rhs, lhs.b - (uint8_t)rhs, lhs.a);
 		}
 
 		friend Pixel operator*(Pixel& lhs, float& rhs)
 		{
-			return Pixel(lhs.r * rhs, lhs.g * rhs, lhs.b * rhs, lhs.a);
+			return Pixel(lhs.r * (uint8_t)rhs, lhs.g * (uint8_t)rhs, lhs.b * (uint8_t)rhs, lhs.a);
 		}
 
 		friend Pixel operator/(Pixel& lhs, float& rhs)
 		{
-			return Pixel(lhs.r / rhs, lhs.g / rhs, lhs.b / rhs, lhs.a);
+			return Pixel(lhs.r / (uint8_t)rhs, lhs.g / (uint8_t)rhs, lhs.b / (uint8_t)rhs, lhs.a);
 		}
 
 		friend Pixel operator+=(Pixel& lhs, float& rhs)
 		{
-			lhs.r += rhs;
-			lhs.g += rhs;
-			lhs.b += rhs;
+			lhs.r += (uint8_t)rhs;
+			lhs.g += (uint8_t)rhs;
+			lhs.b += (uint8_t)rhs;
+
+			return lhs;
 		}
 
 		friend Pixel operator-=(Pixel& lhs, float& rhs)
 		{
-			lhs.r -= rhs;
-			lhs.g -= rhs;
-			lhs.b -= rhs;
+			lhs.r -= (uint8_t)rhs;
+			lhs.g -= (uint8_t)rhs;
+			lhs.b -= (uint8_t)rhs;
+
+			return lhs;
 		}
 
 		friend Pixel operator*=(Pixel& lhs, float& rhs)
 		{
-			lhs.r *= rhs;
-			lhs.g *= rhs;
-			lhs.b *= rhs;
+			lhs.r *= (uint8_t)rhs;
+			lhs.g *= (uint8_t)rhs;
+			lhs.b *= (uint8_t)rhs;
+
+			return lhs;
 		}
 
 		friend Pixel operator/=(Pixel& lhs, float& rhs)
 		{
-			lhs.r /= rhs;
-			lhs.g /= rhs;
-			lhs.b /= rhs;
+			lhs.r /= (uint8_t)rhs;
+			lhs.g /= (uint8_t)rhs;
+			lhs.b /= (uint8_t)rhs;
+
+			return lhs;
 		}
 	};
 
@@ -583,8 +591,8 @@ namespace def
 
 			Create(m_nWidth, m_nHeight);
 
-			for (int i = 0; i < m_nWidth; i++)
-				for (int j = 0; j < m_nHeight; j++)
+			for (uint32_t i = 0; i < m_nWidth; i++)
+				for (uint32_t j = 0; j < m_nHeight; j++)
 				{
 					if (glyphs[j * m_nWidth + i] != L' ')
 					{
@@ -969,7 +977,7 @@ namespace def
 						m_nMouseOldState[m] = m_nMouseNewState[m];
 					}
 
-					SDL_RenderSetScale(m_sdlRenderer, m_nPixelWidth, m_nPixelHeight);
+					SDL_RenderSetScale(m_sdlRenderer, (float)m_nPixelWidth, (float)m_nPixelHeight);
 
 					if (!OnUserUpdate(m_fDeltaTime))
 						m_bAppThreadActive = false;
@@ -1296,7 +1304,7 @@ namespace def
 				if (nChannel == 0)
 					s.nSamplePosition += (long)((float)m_sdlSpec.freq * fTimeStep);
 
-				if (s.nSamplePosition < vecAudioSamples[s.nAudioSampleID - 1].nSamples)
+				if (s.nSamplePosition < (long)vecAudioSamples[s.nAudioSampleID - 1].nSamples)
 					fMixerSample += vecAudioSamples[s.nAudioSampleID - 1].fSample[(s.nSamplePosition * m_sdlSpec.channels) + nChannel];
 				else
 					s.bFinished = true;
@@ -1733,11 +1741,11 @@ namespace def
 		{
 			if (c == '\n')
 			{
-				sx = 0; sy += 8 * scale;
+				sx = 0; sy += int32_t(8.0f * scale);
 			}
 			else if (c == '\t')
 			{
-				sx += 32 * scale;
+				sx += int32_t(32.0f * scale);
 			}
 			else
 			{
@@ -1751,7 +1759,7 @@ namespace def
 							if (m_sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
 								for (uint32_t is = 0; is < scale; is++)
 									for (uint32_t js = 0; js < scale; js++)
-										Draw(x + sx + (i * scale) + is, y + sy + (j * scale) + js, p);
+										Draw(x + sx + int32_t(i * scale) + is, y + sy + int32_t(j * scale) + js, p);
 				}
 				else
 				{
@@ -1760,7 +1768,7 @@ namespace def
 							if (m_sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
 								Draw(x + sx + i, y + sy + j, p);
 				}
-				sx += 8 * scale;
+				sx += int32_t(8.0f * scale);
 			}
 		}
 	}
@@ -1783,14 +1791,14 @@ namespace def
 
 	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, float scale, FlipMode fm)
 	{
-		spr->m_sdlCoordRect.x = x * scale * m_nPixelWidth;
-		spr->m_sdlCoordRect.y = y * scale * m_nPixelHeight;
+		spr->m_sdlCoordRect.x = int32_t((float)x * scale * (float)m_nPixelWidth);
+		spr->m_sdlCoordRect.y = int32_t((float)y * scale * (float)m_nPixelHeight);
 
 		SDL_RenderSetScale(m_sdlRenderer, scale, scale);
 
 		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, (SDL_RendererFlip)fm);
 
-		SDL_RenderSetScale(m_sdlRenderer, m_nPixelWidth, m_nPixelHeight);
+		SDL_RenderSetScale(m_sdlRenderer, (float)m_nPixelWidth, (float)m_nPixelHeight);
 	}
 
 	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr, float angle, float scale, FlipMode fm)
