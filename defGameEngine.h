@@ -386,7 +386,7 @@ namespace def
 
 		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca = 255U) : r(cr), g(cg), b(cb), a(ca)
 		{
-
+			
 		}
 
 		uint8_t r;
@@ -451,25 +451,27 @@ namespace def
 		}
 	};
 
-	Pixel BLACK = Pixel(0, 0, 0, 0);
-	Pixel DARK_BLUE = Pixel(0, 55, 218, 255);
-	Pixel DARK_GREEN = Pixel(19, 161, 14, 255);
-	Pixel DARK_CYAN = Pixel(59, 120, 255, 255);
-	Pixel DARK_RED = Pixel(197, 15, 31, 255);
-	Pixel DARK_MAGENTA = Pixel(136, 32, 152, 255);
-	Pixel DARK_GREY = Pixel(118, 118, 118, 255);
-	Pixel ORANGE = Pixel(255, 165, 0, 255);
-	Pixel GREY = Pixel(204, 204, 204, 255);
-	Pixel BLUE = Pixel(0, 0, 255, 255);
-	Pixel GREEN = Pixel(0, 255, 0, 255);
-	Pixel CYAN = Pixel(58, 150, 221, 255);
-	Pixel RED = Pixel(255, 0, 0, 255);
-	Pixel MAGENTA = Pixel(180, 0, 158, 255);
-	Pixel YELLOW = Pixel(255, 255, 0, 255);
-	Pixel WHITE = Pixel(255, 255, 255, 255);
+	Pixel BLACK(0, 0, 0, 0),
+		DARK_BLUE(0, 55, 218, 255),
+		DARK_GREEN(19, 161, 14, 255),
+		DARK_CYAN(59, 120, 255, 255),
+		DARK_RED(197, 15, 31, 255),
+		DARK_MAGENTA(136, 32, 152, 255),
+		DARK_GREY(118, 118, 118, 255),
+		ORANGE(255, 165, 0, 255),
+		GREY(204, 204, 204, 255),
+		BLUE(0, 0, 255, 255),
+		GREEN(0, 255, 0, 255),
+		CYAN(58, 150, 221, 255),
+		RED(255, 0, 0, 255),
+		MAGENTA(180, 0, 158, 255),
+		YELLOW(255, 255, 0, 255),
+		WHITE(255, 255, 255, 255);
 
-#define RANDOM_PIXEL def::Pixel(rand() % 255, rand() % 255, rand() % 255, 255)
-#define RANDOM_PIXEL_ALPHA def::Pixel(rand() % 255, rand() % 255, rand() % 255, rand() % 255)
+	Pixel GetRandomPixel(bool bRandomAlpha = false)
+	{
+		return Pixel(rand() % 256, rand() % 256, rand() % 256, bRandomAlpha ? rand() % 256 : 255);
+	}
 
 
 	/********************************
@@ -706,11 +708,11 @@ namespace def
 		std::string m_sAppName;
 		std::string m_sIconFileName;
 
-		int32_t m_nScreenWidth;
-		int32_t m_nScreenHeight;
-
-		int32_t m_nPixelWidth;
-		int32_t m_nPixelHeight;
+		uint32_t m_nScreenWidth;
+		uint32_t m_nScreenHeight;
+		
+		uint32_t m_nPixelWidth;
+		uint32_t m_nPixelHeight;
 
 		SDL_Window* m_sdlWindow = nullptr;
 		SDL_Renderer* m_sdlRenderer = nullptr;
@@ -1360,8 +1362,11 @@ namespace def
 
 	void GameEngine::Draw(int32_t x, int32_t y, Pixel p)
 	{
-		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
-		SDL_RenderDrawPoint(m_sdlRenderer, x, y);
+		if (x >= 0 && y >= 0 && x < m_nScreenWidth && y < m_nScreenHeight)
+		{
+			SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
+			SDL_RenderDrawPoint(m_sdlRenderer, x, y);
+		}
 	}
 
 	void GameEngine::Clear(Pixel p)
