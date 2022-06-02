@@ -224,10 +224,6 @@ namespace def
 		{
 			this->x = 0;
 			this->y = 0;
-
-			SDL_WINDOW_MINIMIZED;
-			SDL_WINDOW_INPUT_FOCUS;
-			SDL_WINDOW_MOUSE_FOCUS;
 		}
 
 		vec2d_basic(T x, T y)
@@ -700,6 +696,7 @@ namespace def
 
 	private:
 		std::string m_sAppName;
+		std::string m_sIconFileName;
 
 		int32_t m_nScreenWidth;
 		int32_t m_nScreenHeight;
@@ -788,6 +785,11 @@ namespace def
 				f |= SDL_RENDERER_PRESENTVSYNC;
 
 			m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, -1, f);
+
+			SDL_Surface* icon = IMG_Load(m_sIconFileName.c_str());
+
+			SDL_SetWindowIcon(m_sdlWindow, icon);
+			SDL_FreeSurface(icon);
 
 			ConstructFontSprite();
 
@@ -1330,10 +1332,7 @@ namespace def
 
 	void GameEngine::SetIcon(const char* filename)
 	{
-		SDL_Surface* icon = IMG_Load(filename);
-
-		SDL_SetWindowIcon(m_sdlWindow, icon);
-		SDL_FreeSurface(icon);
+		m_sIconFileName = filename;
 	}
 
 	void GameEngine::ShowCursor(bool bShow)
