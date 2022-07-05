@@ -112,14 +112,12 @@
 #define main() SDL_main(int argc, char** argv)
 #endif
 
-#define DGE_MAIN(app_class, screen_width, screen_height, pixel_width, pixel_height, full_screen, vsync) int main() { app_class demo; def::rcode err = demo.Construct(screen_width, screen_height, pixel_width, pixel_height, full_screen, vsync); if (err.ok) demo.Run(); else std::cerr << err.info << "\n"; return 0; }
-
 namespace def
 {
 	// KEYBOARD SCANCODES
 
-	using KeyCode = SDL_Scancode;
-
+	typedef SDL_Scancode KeyCode;
+	
 	namespace Key
 	{
 		constexpr KeyCode SPACE = SDL_SCANCODE_SPACE;
@@ -220,12 +218,7 @@ namespace def
 	template <class T>
 	struct vec2d_basic
 	{
-		vec2d_basic()
-		{
-			this->x = 0;
-			this->y = 0;
-		}
-
+		vec2d_basic() = default;
 		vec2d_basic(T x, T y)
 		{
 			this->x = x;
@@ -270,68 +263,78 @@ namespace def
 			return { v1.x * v, v1.y * v };
 		}
 
-		friend vec2d_basic<T> operator/(const vec2d_basic<T> v1, const T v)
+		friend vec2d_basic<T> operator/(vec2d_basic<T> v1, const T v)
 		{
 			return { v1.x / v, v1.y / v };
 		}
 
-		friend vec2d_basic<T> operator+=(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2)
+		friend vec2d_basic<T> operator+=(vec2d_basic<T>& v1, const vec2d_basic<T>& v2)
 		{
 			v1.x += v2.x;
 			v1.y += v2.y;
 			return v1;
 		}
 
-		friend vec2d_basic<T> operator-=(const vec2d_basic<T> v1, const vec2d_basic<T>& v2)
+		friend vec2d_basic<T> operator-=(vec2d_basic<T> v1, const vec2d_basic<T>& v2)
 		{
 			v1.x -= v2.x;
 			v1.y -= v2.y;
 			return v1;
 		}
 
-		friend vec2d_basic<T> operator*=(const vec2d_basic<T> v1, const vec2d_basic<T>& v2)
+		friend vec2d_basic<T> operator*=(vec2d_basic<T> v1, const vec2d_basic<T>& v2)
 		{
 			v1.x *= v2.x;
 			v1.y *= v2.y;
 			return v1;
 		}
 
-		friend vec2d_basic<T> operator/=(const vec2d_basic<T> v1, const vec2d_basic<T>& v2)
+		friend vec2d_basic<T> operator/=(vec2d_basic<T> v1, const vec2d_basic<T>& v2)
 		{
 			v1.x /= v2.x;
 			v1.y /= v2.y;
 			return v1;
 		}
 
-		friend vec2d_basic<T> operator+=(const vec2d_basic<T> v1, const T v)
+		friend vec2d_basic<T> operator+=(vec2d_basic<T> v1, const T v)
 		{
 			v1.x += v;
 			v1.y += v;
 			return v1;
 		}
 
-		friend vec2d_basic<T> operator-=(const vec2d_basic<T> v1, const T v)
+		friend vec2d_basic<T> operator-=(vec2d_basic<T> v1, const T v)
 		{
 			v1.x -= v;
 			v1.y -= v;
 			return v1;
 		}
 
-		friend vec2d_basic<T> operator*=(const vec2d_basic<T> v1, const T v)
+		friend vec2d_basic<T> operator*=(vec2d_basic<T> v1, const T v)
 		{
 			v1.x *= v;
 			v1.y *= v;
 			return v1;
 		}
 
-		friend vec2d_basic<T> operator/=(const vec2d_basic<T> v1, const T v)
+		friend vec2d_basic<T> operator/=(vec2d_basic<T> v1, const T v)
 		{
 			v1.x /= v;
 			v1.y /= v;
 			return v1;
 		}
 
-		float mag()
+		friend bool operator<(const vec2d_basic<T> v1, const vec2d_basic<T> v)
+		{
+			return v1.x < v.x && v1.y < v.y;
+		}
+
+		friend bool operator>(const vec2d_basic<T> v1, const vec2d_basic<T> v)
+		{
+			return v1.x > v.x && v1.y > v.y;
+		}
+
+		T mag()
 		{
 			return sqrtf(this->x * this->x + this->y * this->y);
 		}
@@ -346,7 +349,7 @@ namespace def
 			return { this->x + t * (x - this->x), this->y + t * (y - this->y) };
 		}
 
-		float dot(vec2d_basic<T> v, float angle)
+		T dot(vec2d_basic<T> v)
 		{
 			return (this->x * v.x + this->y * v.y);
 		}
@@ -355,11 +358,26 @@ namespace def
 		{
 			return vec2d_basic<T>(-this->x, -this->y);
 		}
+
+		T mag() const 
+		{ 
+			return T(sqrt(this->x * this->x + this->y * this->y));
+		}
+
+		T mag2() const 
+		{ 
+			return this->x * this->x + this->y * this->y;
+		}
+
+		vec2d_basic<T> abs()
+		{
+			return vec2d_basic<T>(std::abs(this->x), std::abs(this->y));
+		}
 	};
 
-	using vf2d = vec2d_basic<float>;
-	using vi2d = vec2d_basic<int>;
-	using vd2d = vec2d_basic<double>;
+	typedef vec2d_basic<int> vi2d;
+	typedef vec2d_basic<float> vf2d;
+	typedef vec2d_basic<double> vd2d;
 
 	struct rcode
 	{
@@ -376,17 +394,13 @@ namespace def
 
 	struct Pixel
 	{
-		Pixel()
+		Pixel() = default;
+		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca = 255U)
 		{
-			r = 0;
-			g = 0;
-			b = 0;
-			a = 255;
-		}
-
-		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca = 255U) : r(cr), g(cg), b(cb), a(ca)
-		{
-			
+			r = cr;
+			g = cg;
+			b = cb;
+			a = ca;
 		}
 
 		uint8_t r;
@@ -449,6 +463,11 @@ namespace def
 
 			return lhs;
 		}
+
+		friend bool operator==(Pixel& lhs, Pixel& rhs)
+		{
+			return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
+		}
 	};
 
 	Pixel BLACK(0, 0, 0, 0),
@@ -466,9 +485,10 @@ namespace def
 		RED(255, 0, 0, 255),
 		MAGENTA(180, 0, 158, 255),
 		YELLOW(255, 255, 0, 255),
-		WHITE(255, 255, 255, 255);
+		WHITE(255, 255, 255, 255),
+		NONE(0, 0, 0, 0);
 
-	Pixel GetRandomPixel(bool bRandomAlpha = false)
+	Pixel RandomPixel(bool bRandomAlpha = false)
 	{
 		return Pixel(rand() % 256, rand() % 256, rand() % 256, bRandomAlpha ? rand() % 256 : 255);
 	}
@@ -481,11 +501,7 @@ namespace def
 	class Sprite
 	{
 	public:
-		Sprite()
-		{
-			Create(8, 8);
-		}
-
+		Sprite() = default;
 		Sprite(int32_t w, int32_t h)
 		{
 			if (w > 0 && h > 0)
@@ -548,7 +564,7 @@ namespace def
 
 			if (!m_sdlSurface)
 			{
-				rc.info += "SDL: ";
+				rc.info = "SDL: ";
 				rc.info += SDL_GetError();
 				return rc;
 			}
@@ -570,7 +586,7 @@ namespace def
 			_wfopen_s(&f, filename.c_str(), L"rb");
 			if (f == nullptr)
 			{
-				rc.info += "Can't load spr file!";
+				rc.info = "Can't load spr file!";
 				return rc;
 			}
 
@@ -579,7 +595,7 @@ namespace def
 
 			if (m_nWidth < 1 || m_nHeight < 1)
 			{
-				rc.info += "Width or height of sprite less than 1 pixel";
+				rc.info = "Width or height of sprite less than 1 pixel";
 				return rc;
 			}
 
@@ -596,32 +612,35 @@ namespace def
 			for (uint32_t i = 0; i < m_nWidth; i++)
 				for (uint32_t j = 0; j < m_nHeight; j++)
 				{
-					if (glyphs[j * m_nWidth + i] != L' ')
+					def::Pixel p;
+
+					if (glyphs[j * m_nWidth + i] == L' ')
 					{
-						def::Pixel p = def::WHITE;
-
-						switch ((int)colours[j * m_nWidth + i])
-						{
-						case 0:  p = def::BLACK; break;
-						case 1:  p = def::DARK_BLUE; break;
-						case 2:  p = def::DARK_GREEN; break;
-						case 3:  p = def::DARK_CYAN; break;
-						case 4:  p = def::DARK_RED; break;
-						case 5:  p = def::DARK_MAGENTA; break;
-						case 6:  p = def::YELLOW; break; // It should be DARK_YELLOW, but for now it is how it is
-						case 7:	 p = def::GREY; break;
-						case 8:	 p = def::DARK_GREY; break;
-						case 9:	 p = def::BLUE; break;
-						case 10: p = def::GREEN; break;
-						case 11: p = def::CYAN; break;
-						case 12: p = def::RED; break;
-						case 13: p = def::MAGENTA; break;
-						case 14: p = def::YELLOW; break;
-						case 15: p = def::WHITE; break;
-						}
-
-						SetPixel(i, j, p);
+						p = def::NONE;
+						continue;
 					}
+
+					switch ((int)colours[j * m_nWidth + i])
+					{
+					case 0:  p = def::BLACK; break;
+					case 1:  p = def::DARK_BLUE; break;
+					case 2:  p = def::DARK_GREEN; break;
+					case 3:  p = def::DARK_CYAN; break;
+					case 4:  p = def::DARK_RED; break;
+					case 5:  p = def::DARK_MAGENTA; break;
+					case 6:  p = def::YELLOW; break; // It should be DARK_YELLOW, but for now it is how it is
+					case 7:	 p = def::GREY; break;
+					case 8:	 p = def::DARK_GREY; break;
+					case 9:	 p = def::BLUE; break;
+					case 10: p = def::GREEN; break;
+					case 11: p = def::CYAN; break;
+					case 12: p = def::RED; break;
+					case 13: p = def::MAGENTA; break;
+					case 14: p = def::YELLOW; break;
+					case 15: p = def::WHITE; break;
+					}
+
+					SetPixel(i, j, p);
 				}
 
 			delete[] colours;
@@ -700,19 +719,12 @@ namespace def
 			m_nKeyNewState = new uint8_t[256];
 		}
 
-		virtual ~GameEngine()
-		{
-		}
-
 	private:
 		std::string m_sAppName;
 		std::string m_sIconFileName;
 
 		uint32_t m_nScreenWidth;
 		uint32_t m_nScreenHeight;
-		
-		uint32_t m_nPixelWidth;
-		uint32_t m_nPixelHeight;
 
 		SDL_Window* m_sdlWindow = nullptr;
 		SDL_Renderer* m_sdlRenderer = nullptr;
@@ -747,14 +759,14 @@ namespace def
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 		virtual void OnUserDestroy() { return; }
 
-		rcode Construct(int nWidth, int nHeight, int nPixelWidth, int nPixelHeight, bool bFullScreen = false, bool bVSync = false)
+		rcode Construct(int nWidth, int nHeight, bool bFullScreen = false, bool bVSync = false)
 		{
 			rcode rc;
 			rc.ok = false;
 
 			auto get_sdl_err = [&]()
 			{
-				rc.info += "SDL: ";
+				rc.info = "SDL: ";
 				rc.info += SDL_GetError();
 				return rc;
 			};
@@ -765,14 +777,11 @@ namespace def
 				return rc;
 			};
 
-			if (nWidth < 0 && nHeight < 0)
+			if (nWidth < 0 || nHeight < 0)
 				return set_err("Width or height less than zero");
 
 			m_nScreenWidth = nWidth;
 			m_nScreenHeight = nHeight;
-
-			m_nPixelWidth = nPixelWidth;
-			m_nPixelHeight = nPixelHeight;
 
 			uint32_t f = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
 
@@ -782,7 +791,7 @@ namespace def
 			if (SDL_Init(f) < 0)
 				return get_sdl_err();
 
-			m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_nScreenWidth * m_nPixelWidth, m_nScreenHeight * m_nPixelHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+			m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_nScreenWidth, m_nScreenHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
 			if (!m_sdlWindow)
 				return get_sdl_err();
@@ -847,18 +856,15 @@ namespace def
 				for (int i = 0; i < 512; i++)
 					m_nKeyNewState[i] = 0;
 
+				std::string title = "github.com/defini7 - defGameEngine - " + m_sAppName + " - FPS: ";
+
 				while (m_bAppThreadActive)
 				{
 					tp2 = std::chrono::system_clock::now();
-					std::chrono::duration<float> deltaTime = tp2 - tp1;
+					m_fDeltaTime = std::chrono::duration<float>(tp2 - tp1).count();
 					tp1 = tp2;
 
-					m_fDeltaTime = deltaTime.count();
-
-					char s[256];
-					snprintf(s, 256, "github.com/defini7 - defGameEngine - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / m_fDeltaTime);
-
-					SDL_SetWindowTitle(m_sdlWindow, s);
+					SDL_SetWindowTitle(m_sdlWindow, (title + std::to_string(int(1.0f / m_fDeltaTime))).c_str());
 
 					SDL_Event evt;
 					while (SDL_PollEvent(&evt))
@@ -917,8 +923,8 @@ namespace def
 
 						case SDL_MOUSEMOTION:
 						{
-							m_nMouseX = evt.motion.x / m_nPixelWidth;
-							m_nMouseY = evt.motion.y / m_nPixelHeight;
+							m_nMouseX = evt.motion.x;
+							m_nMouseY = evt.motion.y;
 						}
 						break;
 
@@ -979,8 +985,6 @@ namespace def
 						m_nMouseOldState[m] = m_nMouseNewState[m];
 					}
 
-					SDL_RenderSetScale(m_sdlRenderer, (float)m_nPixelWidth, (float)m_nPixelHeight);
-
 					if (!OnUserUpdate(m_fDeltaTime))
 						m_bAppThreadActive = false;
 
@@ -1004,17 +1008,6 @@ namespace def
 			SDL_DestroyRenderer(m_sdlRenderer);
 			SDL_DestroyWindow(m_sdlWindow);
 			SDL_Quit();
-		}
-
-		SDL_Rect* GetPixelRect(int32_t x, int32_t y)
-		{
-			SDL_Rect* rct = new SDL_Rect;
-			rct->x = x * m_nPixelWidth;
-			rct->y = y * m_nPixelHeight;
-			rct->w = m_nPixelWidth;
-			rct->h = m_nPixelHeight;
-
-			return rct;
 		}
 
 		void ConstructFontSprite()
@@ -1076,15 +1069,23 @@ namespace def
 		virtual void DrawString(int32_t x, int32_t y, std::string s, Pixel p = WHITE, float scale = 1.0f);
 
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
-		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
+		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr);
 		Sprite* CreateSprite(std::string filename);
 
 		KeyState GetKey(KeyCode keyCode) const;
 		KeyState GetMouse(short btnCode) const;
 		uint32_t GetMouseX() const;
 		uint32_t GetMouseY() const;
+
+		template<typename T>
+		vec2d_basic<T> GetMouse() const;
+
+		template<typename T>
+		vec2d_basic<T> GetScreenSize() const;
+
 		uint32_t GetScreenWidth() const;
 		uint32_t GetScreenHeight() const;
+		uint32_t GetFPS() const;
 		float GetDeltaTime() const;
 		float GetWheelDelta() const;
 
@@ -1098,11 +1099,7 @@ namespace def
 
 		struct sAudioSample
 		{
-			sAudioSample()
-			{
-
-			}
-
+			sAudioSample() = default;
 			sAudioSample(const char* sWavFile, GameEngine& ge)
 			{
 				uint8_t* wavData;
@@ -1325,7 +1322,7 @@ namespace def
 
 		float m_fGlobalTime = 0.0f;
 
-	};
+};
 
 	bool GameEngine::SetTitle(const char* title)
 	{
@@ -1786,8 +1783,8 @@ namespace def
 
 		m_vecTextures.push_back(SDL_CreateTextureFromSurface(m_sdlRenderer, spr->m_sdlSurface));
 
-		spr->m_sdlCoordRect.w = m_nPixelWidth * spr->GetWidth();
-		spr->m_sdlCoordRect.h = m_nPixelHeight * spr->GetHeight();
+		spr->m_sdlCoordRect.w = spr->GetWidth();
+		spr->m_sdlCoordRect.h = spr->GetHeight();
 
 		spr->m_sdlFileRect = spr->m_sdlCoordRect;
 
@@ -1796,31 +1793,26 @@ namespace def
 
 	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, float scale, FlipMode fm)
 	{
-		spr->m_sdlCoordRect.x = int32_t((float)x * scale * (float)m_nPixelWidth);
-		spr->m_sdlCoordRect.y = int32_t((float)y * scale * (float)m_nPixelHeight);
+		spr->m_sdlCoordRect.x = int32_t((float)x * scale);
+		spr->m_sdlCoordRect.y = int32_t((float)y * scale);
 
 		SDL_RenderSetScale(m_sdlRenderer, scale, scale);
 
 		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, (SDL_RendererFlip)fm);
 
-		SDL_RenderSetScale(m_sdlRenderer, (float)m_nPixelWidth, (float)m_nPixelHeight);
+		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
 	}
 
-	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr, float angle, float scale, FlipMode fm)
+	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr)
 	{
-		spr->m_sdlFileRect.x = fx1;
-		spr->m_sdlFileRect.y = fy1;
+		for (int i = fx1; i < fx2; i++)
+			for (int j = fy1; j < fy2; j++)
+			{
+				def::Pixel p = spr->GetPixel(i, j);
 
-		spr->m_sdlFileRect.w = fx2 - fx1;
-		spr->m_sdlFileRect.h = fy2 - fy1;
-
-		DrawSprite(x, y, spr, angle, scale, fm);
-
-		spr->m_sdlFileRect.x = 0;
-		spr->m_sdlFileRect.y = 0;
-
-		spr->m_sdlFileRect.w = spr->GetWidth();
-		spr->m_sdlFileRect.h = spr->GetHeight();
+				if (p != def::NONE)
+					Draw(x + (i - fx1), y + (j - fy1), p);
+			}
 	}
 
 	KeyState GameEngine::GetKey(KeyCode keyCode) const
@@ -1843,6 +1835,12 @@ namespace def
 		return m_nMouseY;
 	}
 
+	template <typename T>
+	vec2d_basic<T> GameEngine::GetMouse() const
+	{
+		return vec2d_basic<T>((T)m_nMouseX, (T)m_nMouseY);
+	}
+
 	uint32_t GameEngine::GetScreenWidth() const
 	{
 		return m_nScreenWidth;
@@ -1851,6 +1849,17 @@ namespace def
 	uint32_t GameEngine::GetScreenHeight() const
 	{
 		return m_nScreenHeight;
+	}
+
+	template <typename T>
+	vec2d_basic<T> GameEngine::GetScreenSize() const
+	{
+		return vec2d_basic<T>((T)m_nScreenWidth, (T)m_nScreenHeight);
+	}
+
+	uint32_t GameEngine::GetFPS() const
+	{
+		return 1.0f / m_fDeltaTime;
 	}
 
 	float GameEngine::GetDeltaTime() const
