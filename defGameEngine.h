@@ -61,7 +61,7 @@
 	int main()
 	{
 		Sample demo;
-		def::rcode err = demo.Construct(256, 240, 4, 4);
+		def::rcode err = demo.Construct(256, 240);
 
 		if (err.ok)
 			demo.Run();
@@ -82,6 +82,7 @@
 #include <vector>
 #include <cmath>
 #include <list>
+#include <functional>
 
 #if defined(__linux__)
 #include <SDL2/SDL.h>
@@ -228,45 +229,14 @@ namespace def
 		T x;
 		T y;
 
-		friend vec2d_basic<T> operator+(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2)
-		{
-			return { v1.x + v2.x, v1.y + v2.y };
-		}
-
-		friend vec2d_basic<T> operator-(const vec2d_basic<T> v1, const vec2d_basic<T>& v2)
-		{
-			return { v1.x - v2.x, v1.y - v2.y };
-		}
-
-		friend vec2d_basic<T> operator*(const vec2d_basic<T> v1, const vec2d_basic<T>& v2)
-		{
-			return { v1.x * v2.x, v1.y * v2.y };
-		}
-
-		friend vec2d_basic<T> operator/(const vec2d_basic<T> v1, const vec2d_basic<T>& v2)
-		{
-			return { v1.x / v2.x, v1.y / v2.y };
-		}
-
-		friend vec2d_basic<T> operator+(const vec2d_basic<T> v1, const T v)
-		{
-			return { v1.x + v, v1.y + v };
-		}
-
-		friend vec2d_basic<T> operator-(const vec2d_basic<T> v1, const T v)
-		{
-			return { v1.x - v, v1.y - v };
-		}
-
-		friend vec2d_basic<T> operator*(const vec2d_basic<T> v1, const T v)
-		{
-			return { v1.x * v, v1.y * v };
-		}
-
-		friend vec2d_basic<T> operator/(vec2d_basic<T> v1, const T v)
-		{
-			return { v1.x / v, v1.y / v };
-		}
+		friend vec2d_basic<T> operator+(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return { v1.x + v2.x, v1.y + v2.y }; }
+		friend vec2d_basic<T> operator-(const vec2d_basic<T> v1, const vec2d_basic<T>& v2) { return { v1.x - v2.x, v1.y - v2.y }; }
+		friend vec2d_basic<T> operator*(const vec2d_basic<T> v1, const vec2d_basic<T>& v2) { return { v1.x * v2.x, v1.y * v2.y }; }
+		friend vec2d_basic<T> operator/(const vec2d_basic<T> v1, const vec2d_basic<T>& v2) { return { v1.x / v2.x, v1.y / v2.y }; }
+		friend vec2d_basic<T> operator+(const vec2d_basic<T> v1, const T v) { return { v1.x + v, v1.y + v }; }
+		friend vec2d_basic<T> operator-(const vec2d_basic<T> v1, const T v) { return { v1.x - v, v1.y - v }; }
+		friend vec2d_basic<T> operator*(const vec2d_basic<T> v1, const T v) { return { v1.x * v, v1.y * v }; }
+		friend vec2d_basic<T> operator/(vec2d_basic<T> v1, const T v) { return { v1.x / v,	v1.y / v }; }
 
 		friend vec2d_basic<T> operator+=(vec2d_basic<T>& v1, const vec2d_basic<T>& v2)
 		{
@@ -324,63 +294,51 @@ namespace def
 			return v1;
 		}
 
-		friend bool operator<(const vec2d_basic<T> v1, const vec2d_basic<T> v)
+		friend bool operator<(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x < v.x&& v1.y < v.y; }
+		friend bool operator>(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x > v.x && v1.y > v.y; }
+		friend bool operator<=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x <= v.x && v1.y <= v.y; }
+		friend bool operator>=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x >= v.x && v1.y >= v.y; }
+		friend bool operator!=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x != v.x || v1.y != v.y; }
+
+		float dot(vec2d_basic<T> v)
 		{
-			return v1.x < v.x && v1.y < v.y;
+			return this->x * v.x + this->y * v.y;
 		}
 
-		friend bool operator>(const vec2d_basic<T> v1, const vec2d_basic<T> v)
+		float length()
 		{
-			return v1.x > v.x && v1.y > v.y;
-		}
-
-		T mag()
-		{
-			return sqrtf(this->x * this->x + this->y * this->y);
+			return sqrtf(dot(this));
 		}
 
 		vec2d_basic<T> norm()
 		{
-			return { this->x / mag(), this->y / mag() };
+			float l = length();
+			return vec2d_basic<T>(this->x / l, this->y / l);
 		}
 
-		vec2d_basic<T> lerp(float x, float y, float t)
-		{
-			return { this->x + t * (x - this->x), this->y + t * (y - this->y) };
-		}
+		T mag() { return T(sqrtf(this->x * this->x + this->y * this->y)); }
+		T mag2() { return T(this->x * this->x + this->y * this->y); }
 
-		T dot(vec2d_basic<T> v)
-		{
-			return (this->x * v.x + this->y * v.y);
-		}
-
-		vec2d_basic<T> reflect()
-		{
-			return vec2d_basic<T>(-this->x, -this->y);
-		}
-
-		T mag() const 
-		{ 
-			return T(sqrt(this->x * this->x + this->y * this->y));
-		}
-
-		T mag2() const 
-		{ 
-			return this->x * this->x + this->y * this->y;
-		}
-
-		vec2d_basic<T> abs()
-		{
-			return vec2d_basic<T>(std::abs(this->x), std::abs(this->y));
-		}
+		vec2d_basic<T> abs() { return vec2d_basic<T>(abs(this->x), abs(this->y)); }
+		vec2d_basic<T> perp() { return vec2d_basic<T>(-this->y, this->x); }
+		vec2d_basic<T> floor() { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
+		vec2d_basic<T> ceil() { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
+		vec2d_basic<T> cart() { return vec2d_basic<T>(cos(this->y) * x, sin(this->y) * this->x); }
+		vec2d_basic<T> polar() { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
 	};
 
 	typedef vec2d_basic<int> vi2d;
 	typedef vec2d_basic<float> vf2d;
-	typedef vec2d_basic<double> vd2d;
 
 	struct rcode
 	{
+		rcode() = default;
+		rcode(bool bOk, bool bInfo)
+		{
+			ok = bOk;
+			info = bInfo;
+		}
+
 		bool ok;
 		std::string info;
 	};
@@ -647,6 +605,7 @@ namespace def
 			delete[] glyphs;
 
 			rc.ok = true;
+
 			return rc;
 		}
 
@@ -716,7 +675,13 @@ namespace def
 		{
 			m_sAppName = "Undefined";
 
-			m_nKeyNewState = new uint8_t[256];
+			m_nKeyNewState = new uint8_t[512];
+		}
+
+		virtual ~GameEngine()
+		{
+			delete[] m_nKeyNewState;
+			QuitApp();
 		}
 
 	private:
@@ -761,24 +726,8 @@ namespace def
 
 		rcode Construct(int nWidth, int nHeight, bool bFullScreen = false, bool bVSync = false)
 		{
-			rcode rc;
-			rc.ok = false;
-
-			auto get_sdl_err = [&]()
-			{
-				rc.info = "SDL: ";
-				rc.info += SDL_GetError();
-				return rc;
-			};
-
-			auto set_err = [&](std::string text)
-			{
-				rc.info = text;
-				return rc;
-			};
-
 			if (nWidth < 0 || nHeight < 0)
-				return set_err("Width or height less than zero");
+				return rcode(false, "Width or height less than zero");
 
 			m_nScreenWidth = nWidth;
 			m_nScreenHeight = nHeight;
@@ -789,12 +738,12 @@ namespace def
 				f |= SDL_INIT_AUDIO;
 
 			if (SDL_Init(f) < 0)
-				return get_sdl_err();
+				return rcode(false, SDL_GetError());
 
 			m_sdlWindow = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_nScreenWidth, m_nScreenHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
 			if (!m_sdlWindow)
-				return get_sdl_err();
+				return rcode(false, SDL_GetError());
 
 			SDL_SetWindowFullscreen(m_sdlWindow, bFullScreen);
 
@@ -805,17 +754,17 @@ namespace def
 
 			m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, -1, f);
 
-			SDL_Surface* icon = IMG_Load(m_sIconFileName.c_str());
+			if (m_sIconFileName.length() > 0)
+			{
+				SDL_Surface* icon = IMG_Load(m_sIconFileName.c_str());
 
-			SDL_SetWindowIcon(m_sdlWindow, icon);
-			SDL_FreeSurface(icon);
+				SDL_SetWindowIcon(m_sdlWindow, icon);
+				SDL_FreeSurface(icon);
+			}
 
 			ConstructFontSprite();
 
-			rc.ok = true;
-			rc.info = "Ok";
-
-			return rc;
+			return rcode(true, "Ok");
 		}
 
 		void Run()
@@ -856,15 +805,15 @@ namespace def
 				for (int i = 0; i < 512; i++)
 					m_nKeyNewState[i] = 0;
 
-				std::string title = "github.com/defini7 - defGameEngine - " + m_sAppName + " - FPS: ";
+				std::string title = "github.com/defini7 - defGameEngine - " + m_sAppName;
+
+				SDL_SetWindowTitle(m_sdlWindow, title.c_str());
 
 				while (m_bAppThreadActive)
 				{
 					tp2 = std::chrono::system_clock::now();
 					m_fDeltaTime = std::chrono::duration<float>(tp2 - tp1).count();
 					tp1 = tp2;
-
-					SDL_SetWindowTitle(m_sdlWindow, (title + std::to_string(int(1.0f / m_fDeltaTime))).c_str());
 
 					SDL_Event evt;
 					while (SDL_PollEvent(&evt))
@@ -873,7 +822,7 @@ namespace def
 						{
 						case SDL_QUIT:
 							m_bAppThreadActive = false;
-							break;
+						break;
 
 						case SDL_MOUSEBUTTONDOWN:
 						{
@@ -881,19 +830,23 @@ namespace def
 							{
 							case SDL_BUTTON_LEFT:
 								m_nMouseNewState[0] = 1;
-								break;
+							break;
+
 							case SDL_BUTTON_RIGHT:
 								m_nMouseNewState[1] = 1;
-								break;
+							break;
+
 							case SDL_BUTTON_MIDDLE:
 								m_nMouseNewState[2] = 1;
-								break;
+							break;
+
 							case SDL_BUTTON_X1:
 								m_nMouseNewState[3] = 1;
-								break;
+							break;
+
 							case SDL_BUTTON_X2:
 								m_nMouseNewState[4] = 1;
-								break;
+							break;
 							}
 						}
 						break;
@@ -904,19 +857,23 @@ namespace def
 							{
 							case SDL_BUTTON_LEFT:
 								m_nMouseNewState[0] = 0;
-								break;
+							break;
+
 							case SDL_BUTTON_RIGHT:
 								m_nMouseNewState[1] = 0;
-								break;
+							break;
+
 							case SDL_BUTTON_MIDDLE:
 								m_nMouseNewState[2] = 0;
-								break;
+							break;
+
 							case SDL_BUTTON_X1:
 								m_nMouseNewState[3] = 0;
-								break;
+							break;
+
 							case SDL_BUTTON_X2:
 								m_nMouseNewState[4] = 0;
-								break;
+							break;
 							}
 						}
 						break;
@@ -929,14 +886,12 @@ namespace def
 						break;
 
 						case SDL_MOUSEWHEEL:
-						{
 							m_fWheelDelta += evt.wheel.y;
-						}
 						break;
 
 						case SDL_KEYDOWN: case SDL_KEYUP:
 							m_nKeyNewState = (uint8_t*)SDL_GetKeyboardState(NULL);
-							break;
+						break;
 
 						}
 					}
@@ -993,8 +948,6 @@ namespace def
 			}
 
 			OnUserDestroy();
-
-			QuitApp();
 		}
 
 		void QuitApp()
@@ -1012,26 +965,27 @@ namespace def
 
 		void ConstructFontSprite()
 		{
-			std::string data;
-			data += "?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000";
-			data += "O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400";
-			data += "Of80001oOg<7O7moBGT7O7lABET024@aBEd714AiOdl717a_=TH013Q>00000000";
-			data += "720D000V?V5oB3Q_HdUoE7a9@DdDE4A9@DmoE4A;Hg]oM4Aj8S4D84@`00000000";
-			data += "OaPT1000Oa`^13P1@AI[?g`1@A=[OdAoHgljA4Ao?WlBA7l1710007l100000000";
-			data += "ObM6000oOfMV?3QoBDD`O7a0BDDH@5A0BDD<@5A0BGeVO5ao@CQR?5Po00000000";
-			data += "Oc``000?Ogij70PO2D]??0Ph2DUM@7i`2DTg@7lh2GUj?0TO0C1870T?00000000";
-			data += "70<4001o?P<7?1QoHg43O;`h@GT0@:@LB@d0>:@hN@L0@?aoN@<0O7ao0000?000";
-			data += "OcH0001SOglLA7mg24TnK7ln24US>0PL24U140PnOgl0>7QgOcH0K71S0000A000";
-			data += "00H00000@Dm1S007@DUSg00?OdTnH7YhOfTL<7Yh@Cl0700?@Ah0300700000000";
-			data += "<008001QL00ZA41a@6HnI<1i@FHLM81M@@0LG81?O`0nC?Y7?`0ZA7Y300080000";
-			data += "O`082000Oh0827mo6>Hn?Wmo?6HnMb11MP08@C11H`08@FP0@@0004@000000000";
-			data += "00P00001Oab00003OcKP0006@6=PMgl<@440MglH@000000`@000001P00000000";
-			data += "Ob@8@@00Ob@8@Ga13R@8Mga172@8?PAo3R@827QoOb@820@0O`0007`0000007P0";
-			data += "O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000";
-			data += "?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
+			std::string data =
+				"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
+				"O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400"
+				"Of80001oOg<7O7moBGT7O7lABET024@aBEd714AiOdl717a_=TH013Q>00000000"
+				"720D000V?V5oB3Q_HdUoE7a9@DdDE4A9@DmoE4A;Hg]oM4Aj8S4D84@`00000000"
+				"OaPT1000Oa`^13P1@AI[?g`1@A=[OdAoHgljA4Ao?WlBA7l1710007l100000000"
+				"ObM6000oOfMV?3QoBDD`O7a0BDDH@5A0BDD<@5A0BGeVO5ao@CQR?5Po00000000"
+				"Oc``000?Ogij70PO2D]??0Ph2DUM@7i`2DTg@7lh2GUj?0TO0C1870T?00000000"
+				"70<4001o?P<7?1QoHg43O;`h@GT0@:@LB@d0>:@hN@L0@?aoN@<0O7ao0000?000"
+				"OcH0001SOglLA7mg24TnK7ln24US>0PL24U140PnOgl0>7QgOcH0K71S0000A000"
+				"00H00000@Dm1S007@DUSg00?OdTnH7YhOfTL<7Yh@Cl0700?@Ah0300700000000"
+				"<008001QL00ZA41a@6HnI<1i@FHLM81M@@0LG81?O`0nC?Y7?`0ZA7Y300080000"
+				"O`082000Oh0827mo6>Hn?Wmo?6HnMb11MP08@C11H`08@FP0@@0004@000000000"
+				"00P00001Oab00003OcKP0006@6=PMgl<@440MglH@000000`@000001P00000000"
+				"Ob@8@@00Ob@8@Ga13R@8Mga172@8?PAo3R@827QoOb@820@0O`0007`0000007P0"
+				"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
+				"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
 
 			m_sprFont = new Sprite(128, 48);
 			int px = 0, py = 0;
+
 			for (size_t b = 0; b < 1024; b += 4)
 			{
 				uint32_t sym1 = (uint32_t)data[b + 0] - 48;
@@ -1262,10 +1216,7 @@ namespace def
 
 			auto clip = [](float fSample, float fMax)
 			{
-				if (fSample >= 0.0f)
-					return std::fmin(fSample, fMax);
-				else
-					return std::fmax(fSample, -fMax);
+				return (fSample >= 0.0f) ?  std::fmin(fSample, fMax) : std::fmax(fSample, -fMax);
 			};
 
 			uint32_t i = 0;
@@ -1354,7 +1305,7 @@ namespace def
 
 	WindowState GameEngine::GetScreenState() // Example: GetScreenState() & def::WM_FOCUS
 	{
-		return (WindowState)SDL_GetWindowFlags(m_sdlWindow);
+		return static_cast<WindowState>(SDL_GetWindowFlags(m_sdlWindow));
 	}
 
 	void GameEngine::Draw(int32_t x, int32_t y, Pixel p)
@@ -1374,9 +1325,17 @@ namespace def
 
 	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
 	{
-		for (int i = x; i <= x1; i++)
-			for (int j = y; j <= y1; j++)
-				Draw(i, j, p);
+		SDL_Rect* r = new SDL_Rect;
+
+		r->x = x;
+		r->y = y;
+		r->w = x1 - x;
+		r->h = y1 - y;
+
+		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
+		SDL_RenderFillRect(m_sdlRenderer, r);
+
+		delete r;
 	}
 
 	void GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p)
@@ -1387,10 +1346,17 @@ namespace def
 
 	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
 	{
-		DrawLine(x, y, x1, y, p);
-		DrawLine(x1, y, x1, y1, p);
-		DrawLine(x1, y1, x, y1, p);
-		DrawLine(x, y1, x, y, p);
+		SDL_Rect* r = new SDL_Rect;
+
+		r->x = x;
+		r->y = y;
+		r->w = x1 - x;
+		r->h = y1 - y;
+
+		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
+		SDL_RenderDrawRect(m_sdlRenderer, r);
+
+		delete r;
 	}
 
 	void GameEngine::DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p)
@@ -1859,7 +1825,7 @@ namespace def
 
 	uint32_t GameEngine::GetFPS() const
 	{
-		return 1.0f / m_fDeltaTime;
+		return uint32_t(1.0f / m_fDeltaTime);
 	}
 
 	float GameEngine::GetDeltaTime() const
