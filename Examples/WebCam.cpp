@@ -106,7 +106,7 @@ protected:
 int main()
 {
 	WebCam demo;
-	def::rcode err = demo.Construct(320, 240, 4, 4);
+	def::rcode err = demo.Construct(800, 600);
 
 	if (err.ok)
 		demo.Run();
