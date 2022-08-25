@@ -198,7 +198,7 @@ protected:
 int main()
 {
 	RayCasting demo;
-	def::rcode err = demo.Construct(1280, 960, 1, 1);
+	def::rcode err = demo.Construct(1280, 960);
 
 	if (err.ok)
 		demo.Run();
