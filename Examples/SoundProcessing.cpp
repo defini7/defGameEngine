@@ -124,7 +124,7 @@ protected:
 int main()
 {
 	SoundProcessing demo;
-	def::rcode err = demo.Construct(640, 480, 2, 2);
+	def::rcode err = demo.Construct(640, 480, 1, 1);
 
 	if (err.ok)
 		demo.Run();
