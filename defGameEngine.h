@@ -118,7 +118,7 @@ namespace def
 	// KEYBOARD SCANCODES
 
 	typedef SDL_Scancode KeyCode;
-	
+
 	namespace Key
 	{
 		constexpr KeyCode SPACE = SDL_SCANCODE_SPACE;
@@ -486,7 +486,7 @@ namespace def
 			SDL_FreeSurface(m_sdlSurface);
 		}
 
-		SDL_Surface* m_sdlSurface;
+		SDL_Surface* m_sdlSurface = nullptr;
 
 		SDL_Rect m_sdlFileRect;
 		SDL_Rect m_sdlCoordRect;
@@ -501,15 +501,20 @@ namespace def
 	public:
 		void Create(int32_t w, int32_t h)
 		{
-			m_sdlSurface = SDL_CreateRGBSurface(0, w, h, 32, 0, 0, 0, 0);;
+			m_sdlSurface = SDL_CreateRGBSurface(0, w, h, 32, 0, 0, 0, 0);
 
 			m_nWidth = w;
 			m_nHeight = h;
 
+			SDL_LockSurface(m_sdlSurface);
+
+			m_sdlSurface->pixels = new unsigned char[w * h * m_sdlSurface->format->BytesPerPixel];
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
 
-			for (int i = 0; i < w * h * 4; i++)
+			for (int i = 0; i < w * h * m_sdlSurface->format->BytesPerPixel; i++)
 				pixels[i] = 0;
+
+			SDL_UnlockSurface(m_sdlSurface);
 		}
 
 		rcode LoadSprite(std::string filename)
@@ -517,12 +522,12 @@ namespace def
 			rcode rc;
 			rc.ok = false;
 			rc.info = "Ok";
-			
+
 			m_sdlSurface = IMG_Load(filename.c_str());
 
 			if (!m_sdlSurface)
 			{
-				rc.info = "SDL: ";
+				rc.info += "SDL: ";
 				rc.info += SDL_GetError();
 				return rc;
 			}
@@ -636,26 +641,49 @@ namespace def
 
 		void SetPixel(int32_t x, int32_t y, Pixel p)
 		{
+			SDL_LockSurface(m_sdlSurface);
+
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
 
-			pixels[4 * (y * m_nWidth + x) + 0] = p.b;
-			pixels[4 * (y * m_nWidth + x) + 1] = p.g;
-			pixels[4 * (y * m_nWidth + x) + 2] = p.r;
-			pixels[4 * (y * m_nWidth + x) + 3] = p.a;
+			pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 0] = p.b;
+			pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 1] = p.g;
+			pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 2] = p.r;
+
+			if (m_sdlSurface->format->BytesPerPixel > 3)
+				pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 3] = p.a;
+			else
+				pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 3] = 255;
+
+			SDL_UnlockSurface(m_sdlSurface);
 		}
 
 		Pixel GetPixel(int32_t x, int32_t y)
 		{
-			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
+			SDL_LockSurface(m_sdlSurface);
 
+			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
+			
 			Pixel p;
 
-			p.b = pixels[4 * (y * m_nWidth + x) + 0];
-			p.g = pixels[4 * (y * m_nWidth + x) + 1];
-			p.r = pixels[4 * (y * m_nWidth + x) + 2];
-			p.a = pixels[4 * (y * m_nWidth + x) + 3];
+			p.b = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 0];
+			p.g = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 1];
+			p.r = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 2];
+			
+			if (m_sdlSurface->format->BytesPerPixel > 3)
+				p.a = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 3];
+			else
+				p.a = 255;
+
+			SDL_UnlockSurface(m_sdlSurface);
 
 			return p;
+		}
+
+		Pixel Sample(float x, float y)
+		{
+			int32_t sx = std::min((int32_t)((x * (float)m_nWidth)), (int)m_nWidth - 1);
+			int32_t sy = std::min((int32_t)((y * (float)m_nHeight)), (int)m_nHeight - 1);
+			return GetPixel(sx, sy);
 		}
 	};
 
@@ -822,7 +850,7 @@ namespace def
 						{
 						case SDL_QUIT:
 							m_bAppThreadActive = false;
-						break;
+							break;
 
 						case SDL_MOUSEBUTTONDOWN:
 						{
@@ -830,23 +858,23 @@ namespace def
 							{
 							case SDL_BUTTON_LEFT:
 								m_nMouseNewState[0] = 1;
-							break;
+								break;
 
 							case SDL_BUTTON_RIGHT:
 								m_nMouseNewState[1] = 1;
-							break;
+								break;
 
 							case SDL_BUTTON_MIDDLE:
 								m_nMouseNewState[2] = 1;
-							break;
+								break;
 
 							case SDL_BUTTON_X1:
 								m_nMouseNewState[3] = 1;
-							break;
+								break;
 
 							case SDL_BUTTON_X2:
 								m_nMouseNewState[4] = 1;
-							break;
+								break;
 							}
 						}
 						break;
@@ -857,23 +885,23 @@ namespace def
 							{
 							case SDL_BUTTON_LEFT:
 								m_nMouseNewState[0] = 0;
-							break;
+								break;
 
 							case SDL_BUTTON_RIGHT:
 								m_nMouseNewState[1] = 0;
-							break;
+								break;
 
 							case SDL_BUTTON_MIDDLE:
 								m_nMouseNewState[2] = 0;
-							break;
+								break;
 
 							case SDL_BUTTON_X1:
 								m_nMouseNewState[3] = 0;
-							break;
+								break;
 
 							case SDL_BUTTON_X2:
 								m_nMouseNewState[4] = 0;
-							break;
+								break;
 							}
 						}
 						break;
@@ -887,11 +915,11 @@ namespace def
 
 						case SDL_MOUSEWHEEL:
 							m_fWheelDelta += evt.wheel.y;
-						break;
+							break;
 
 						case SDL_KEYDOWN: case SDL_KEYUP:
 							m_nKeyNewState = (uint8_t*)SDL_GetKeyboardState(NULL);
-						break;
+							break;
 
 						}
 					}
@@ -1216,7 +1244,7 @@ namespace def
 
 			auto clip = [](float fSample, float fMax)
 			{
-				return (fSample >= 0.0f) ?  std::fmin(fSample, fMax) : std::fmax(fSample, -fMax);
+				return (fSample >= 0.0f) ? std::fmin(fSample, fMax) : std::fmax(fSample, -fMax);
 			};
 
 			uint32_t i = 0;
@@ -1273,7 +1301,7 @@ namespace def
 
 		float m_fGlobalTime = 0.0f;
 
-};
+	};
 
 	bool GameEngine::SetTitle(const char* title)
 	{
@@ -1484,7 +1512,7 @@ namespace def
 			if (minx > t1x) minx = t1x; if (minx > t2x) minx = t2x;
 			if (maxx < t1x) maxx = t1x; if (maxx < t2x) maxx = t2x;
 			drawline(minx, maxx, y);    // Draw line from min to max points found on the y
-											// Now increase y
+			// Now increase y
 			if (!changed1) t1x += signx1;
 			t1x += t1xp;
 			if (!changed2) t2x += signx2;
