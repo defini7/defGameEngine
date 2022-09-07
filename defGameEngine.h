@@ -307,7 +307,7 @@ namespace def
 
 		float length()
 		{
-			return sqrtf(dot(this));
+			return sqrtf(dot(*this));
 		}
 
 		vec2d_basic<T> norm()
@@ -319,12 +319,13 @@ namespace def
 		T mag() { return T(sqrtf(this->x * this->x + this->y * this->y)); }
 		T mag2() { return T(this->x * this->x + this->y * this->y); }
 
-		vec2d_basic<T> abs() { return vec2d_basic<T>(abs(this->x), abs(this->y)); }
+		vec2d_basic<T> abs() { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
 		vec2d_basic<T> perp() { return vec2d_basic<T>(-this->y, this->x); }
 		vec2d_basic<T> floor() { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
 		vec2d_basic<T> ceil() { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
 		vec2d_basic<T> cart() { return vec2d_basic<T>(cos(this->y) * x, sin(this->y) * this->x); }
 		vec2d_basic<T> polar() { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
+		vec2d_basic<T>& ref() { return *this; }
 	};
 
 	typedef vec2d_basic<int> vi2d;
