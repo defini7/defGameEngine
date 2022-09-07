@@ -48,6 +48,19 @@ namespace def
 
 	struct sRectangle : sShape
 	{
+		sRectangle() = default;
+		sRectangle(vf2d& v, vf2d& s, vf2d& e)
+		{
+			vVelocity = v;
+			vStart = s;
+			vEnd = e;
+
+			contact[0] = nullptr;
+			contact[1] = nullptr;
+			contact[2] = nullptr;
+			contact[3] = nullptr;
+		}
+
 		vf2d vEnd;
 
 		sRectangle* contact[4];
@@ -55,11 +68,27 @@ namespace def
 
 	struct sCircle : sShape
 	{
+		sCircle() = default;
+		sCircle(vf2d& v, vf2d& s, float r)
+		{
+			vVelocity = v;
+			vStart = s;
+			fRadius = r;
+		}
+
 		float fRadius;
 	};
 
 	struct sLine : sShape
 	{
+		sLine() = default;
+		sLine(vf2d& v, vf2d& s, vf2d& e)
+		{
+			vVelocity = v;
+			vStart = s;
+			vEnd = e;
+		}
+
 		vf2d vEnd;
 	};
 
@@ -125,7 +154,7 @@ namespace def
 		bool ResolveLineVsRect(const sLine& l, const sRectangle& r, vf2d& contact_point, vf2d& contact_normal)
 		{
 			float t_hit_near;
-			return LineVsRect(l, r, contact_point, contact_normal, t_hit_near) && t_hit_near < 0.9f && t_hit_near > 0.0f;
+			return LineVsRect(l, r, contact_point, contact_normal, t_hit_near) && t_hit_near < 1.0f;
 		}
 
 		bool DynamicRectVsRect(const sRectangle& r_dynamic, const float fTimeStep, const sRectangle& r_static,
@@ -167,73 +196,6 @@ namespace def
 			}
 
 			return false;
-		}
-
-	private:
-		std::vector<sPoint> vecPoints;
-		std::vector<sRectangle> vecRectangles;
-		std::vector<sCircle> vecCircles;
-		std::vector<sLine> vecLines;
-
-	public:
-		std::vector<sPoint>* GetPoints()
-		{
-			return &vecPoints;
-		}
-
-		std::vector<sRectangle>* GetRectangles()
-		{
-			return &vecRectangles;
-		}
-
-		std::vector<sCircle>* GetCircles()
-		{
-			return &vecCircles;
-		}
-
-		std::vector<sLine>* GetLines()
-		{
-			return &vecLines;
-		}
-
-		void AddPoint(sPoint p)
-		{
-			return vecPoints.push_back(p);
-		}
-
-		void AddRectangle(sRectangle r)
-		{
-			return vecRectangles.push_back(r);
-		}
-
-		void AddCircle(sCircle c)
-		{
-			return vecCircles.push_back(c);
-		}
-
-		void AddLine(sLine l)
-		{
-			return vecLines.push_back(l);
-		}
-
-		sPoint& GetPoint(uint32_t id)
-		{
-			return vecPoints[id];
-		}
-
-		sRectangle& GetRectangle(uint32_t id)
-		{
-			return vecRectangles[id];
-		}
-
-		sCircle& GetCircle(uint32_t id)
-		{
-			return vecCircles[id];
-		}
-
-		sLine& GetLine(uint32_t id)
-		{
-			return vecLines[id];
 		}
 	};
 }
