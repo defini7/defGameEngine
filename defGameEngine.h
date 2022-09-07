@@ -483,14 +483,9 @@ namespace def
 
 		~Sprite()
 		{
-			SDL_FreeSurface(m_sdlSurface);
 		}
 
 		SDL_Surface* m_sdlSurface = nullptr;
-
-		SDL_Rect m_sdlFileRect;
-		SDL_Rect m_sdlCoordRect;
-		uint32_t m_nTexId;
 
 	private:
 		uint32_t m_nWidth;
@@ -614,16 +609,6 @@ namespace def
 			return rc;
 		}
 
-		void SetTexId(uint32_t id)
-		{
-			m_nTexId = id;
-		}
-
-		uint32_t GetTexId() const
-		{
-			return m_nTexId;
-		}
-
 		uint32_t GetWidth() const
 		{
 			return m_nWidth;
@@ -645,14 +630,10 @@ namespace def
 
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
 
-			pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 0] = p.b;
+			pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 0] = p.r;
 			pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 1] = p.g;
-			pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 2] = p.r;
-
-			if (m_sdlSurface->format->BytesPerPixel > 3)
-				pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 3] = p.a;
-			else
-				pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 3] = 255;
+			pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 2] = p.b;
+			pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 3] = p.a;
 
 			SDL_UnlockSurface(m_sdlSurface);
 		}
@@ -665,14 +646,10 @@ namespace def
 			
 			Pixel p;
 
-			p.b = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 0];
+			p.r = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 0];
 			p.g = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 1];
-			p.r = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 2];
-			
-			if (m_sdlSurface->format->BytesPerPixel > 3)
-				p.a = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 3];
-			else
-				p.a = 255;
+			p.b = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 2];
+			p.a = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 3];
 
 			SDL_UnlockSurface(m_sdlSurface);
 
@@ -689,6 +666,84 @@ namespace def
 
 	/************************************
 	* @ END SPRITE CLASS IMPLEMENTATION *
+	*************************************/
+
+
+	/********************************
+	* @ GFX CLASS IMPLEMENTATION *
+	*********************************/
+
+	class GFX
+	{
+	public:
+		GFX(Sprite* spr, SDL_Renderer* r)
+		{
+			m_sprInstance = spr;
+
+			m_sdlCoordRect = new SDL_Rect;
+			m_sdlFileRect = new SDL_Rect;
+			
+			SetCoordRect(0, 0, m_sprInstance->GetWidth(), m_sprInstance->GetHeight());
+			SetFileRect(0, 0, m_sprInstance->GetWidth(), m_sprInstance->GetHeight());
+
+			m_nTex = SDL_CreateTextureFromSurface(r, m_sprInstance->m_sdlSurface);
+		}
+
+	private:
+		Sprite* m_sprInstance;
+
+		SDL_Rect* m_sdlFileRect;
+		SDL_Rect* m_sdlCoordRect;
+
+		SDL_Texture* m_nTex;
+
+	public:
+		void SetTexture(SDL_Texture* t)
+		{
+			m_nTex = t;
+		}
+
+		SDL_Texture* GetTexture()
+		{
+			return m_nTex;
+		}
+
+		Sprite* GetSprIstance()
+		{
+			return m_sprInstance;
+		}
+
+		void SetFileRect(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+		{
+			m_sdlFileRect->x = x;
+			m_sdlFileRect->y = y;
+						 
+			m_sdlFileRect->w = w;
+			m_sdlFileRect->h = h;
+		}
+
+		void SetCoordRect(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+		{
+			m_sdlCoordRect->x = x;
+			m_sdlCoordRect->y = y;
+						  
+			m_sdlCoordRect->w = w;
+			m_sdlCoordRect->h = h;
+		}
+
+		SDL_Rect* GetFileRect()
+		{
+			return m_sdlFileRect;
+		}
+
+		SDL_Rect* GetCoordRect()
+		{
+			return m_sdlCoordRect;
+		}
+	};
+
+	/************************************
+	* @ END GFX CLASS IMPLEMENTATION *
 	*************************************/
 
 
@@ -739,9 +794,6 @@ namespace def
 		int32_t m_nMouseY = -1;
 
 		float m_fDeltaTime;
-
-		std::vector<SDL_Texture*> m_vecTextures;
-		SDL_Rect* m_sdlRect;
 
 		Sprite* m_sprFont;
 
@@ -982,9 +1034,6 @@ namespace def
 		{
 			delete m_sprFont;
 
-			for (auto& t : m_vecTextures)
-				SDL_DestroyTexture(t);
-
 			SDL_CloseAudioDevice(m_sdlAudioDeviceID);
 			SDL_DestroyRenderer(m_sdlRenderer);
 			SDL_DestroyWindow(m_sdlWindow);
@@ -1052,7 +1101,9 @@ namespace def
 
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
 		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr);
-		Sprite* CreateSprite(std::string filename);
+
+		virtual void DrawGFX(int32_t x, int32_t y, GFX* gfx, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
+		virtual void DrawPartialGFX(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, GFX* gfx, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
 
 		KeyState GetKey(KeyCode keyCode) const;
 		KeyState GetMouse(short btnCode) const;
@@ -1070,6 +1121,8 @@ namespace def
 		uint32_t GetFPS() const;
 		float GetDeltaTime() const;
 		float GetWheelDelta() const;
+
+		SDL_Renderer* GetRenderer();
 
 	protected:
 		// AUDIO ENGINE CLASS
@@ -1769,32 +1822,41 @@ namespace def
 		}
 	}
 
-	Sprite* GameEngine::CreateSprite(std::string filename)
+	void GameEngine::DrawGFX(int32_t x, int32_t y, GFX* gfx, float angle, float scale, FlipMode fm)
 	{
-		Sprite* spr = new Sprite(filename);
+		Sprite* spr = gfx->GetSprIstance();
 
-		spr->SetTexId(m_vecTextures.size());
+		gfx->SetCoordRect(uint32_t((float)x * scale), uint32_t((float)y * scale), spr->GetWidth(), spr->GetHeight());
 
-		m_vecTextures.push_back(SDL_CreateTextureFromSurface(m_sdlRenderer, spr->m_sdlSurface));
+		SDL_RenderSetScale(m_sdlRenderer, scale, scale);
 
-		spr->m_sdlCoordRect.w = spr->GetWidth();
-		spr->m_sdlCoordRect.h = spr->GetHeight();
+		SDL_RenderCopyEx(m_sdlRenderer, gfx->GetTexture(), gfx->GetFileRect(), gfx->GetCoordRect(), angle, nullptr, (SDL_RendererFlip)fm);
 
-		spr->m_sdlFileRect = spr->m_sdlCoordRect;
+		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
+	}
 
-		return spr;
+	void GameEngine::DrawPartialGFX(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, GFX* gfx, float angle, float scale, FlipMode fm)
+	{
+		gfx->SetCoordRect(uint32_t((float)x * scale), uint32_t((float)y * scale), fx2 - fx1, fy2 - fy1);
+		gfx->SetFileRect(fx1, fy1, fx2 - fx1, fy2 - fy1);
+
+		SDL_RenderSetScale(m_sdlRenderer, scale, scale);
+
+		SDL_RenderCopyEx(m_sdlRenderer, gfx->GetTexture(), gfx->GetFileRect(), gfx->GetCoordRect(), angle, nullptr, (SDL_RendererFlip)fm);
+
+		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
 	}
 
 	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle, float scale, FlipMode fm)
 	{
-		spr->m_sdlCoordRect.x = int32_t((float)x * scale);
-		spr->m_sdlCoordRect.y = int32_t((float)y * scale);
+		for (int i = 0; i < spr->GetWidth(); i++)
+			for (int j = 0; j < spr->GetHeight(); j++)
+			{
+				def::Pixel p = spr->GetPixel(i, j);
 
-		SDL_RenderSetScale(m_sdlRenderer, scale, scale);
-
-		SDL_RenderCopyEx(m_sdlRenderer, m_vecTextures[spr->GetTexId()], &spr->m_sdlFileRect, &spr->m_sdlCoordRect, angle, nullptr, (SDL_RendererFlip)fm);
-
-		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
+				if (p != def::NONE)
+					Draw(x + i, y + j, p);
+			}
 	}
 
 	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr)
@@ -1866,6 +1928,11 @@ namespace def
 		return m_fWheelDelta;
 	}
 
+	SDL_Renderer* GameEngine::GetRenderer()
+	{
+		return m_sdlRenderer;
+	}
+
 	/**********************************
 	* @ END MAIN CLASS IMPLEMENTATION *
 	**********************************/
@@ -1874,3 +1941,4 @@ namespace def
 /***************************************
 * @ END DEF-GAME-ENGINE IMPLEMENTATION *
 ***************************************/
+
