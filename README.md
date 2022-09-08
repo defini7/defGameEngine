@@ -3,8 +3,8 @@ defGameEngine - это игровой движок, доступный на Wind
 
 # Установка
 
-- Скачать [SDL 2.0](https://www.libsdl.org/download-2.0.php). Нам нужно Development Libraries.
-- Скачать [SDL_Image 2.0](https://www.libsdl.org/projects/SDL_image/). Нам нужно Development Libraries.
+- Скачать [SDL 2.0](https://github.com/libsdl-org/SDL/releases/tag/release-2.24.0).
+- Скачать [SDL_Image 2.0](https://github.com/libsdl-org/SDL_image/releases).
 - Скачать файл [defGameEngine.h](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.h).
 
 # Запуск
