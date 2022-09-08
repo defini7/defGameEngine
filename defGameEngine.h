@@ -49,9 +49,9 @@
 
 		bool OnUserUpdate(float fDeltaTime) override
 		{
-			for (int i = 0; i < GetScreenWidth(); i++)
-				for (int j = 0; j < GetScreenHeight(); j++)
-					Draw(i, j, def::Pixel(rand() % 255, rand() % 255, rand() % 255));
+			for (int i = 0; i < GetScreenWidth(); i+=4)
+				for (int j = 0; j < GetScreenHeight(); j+=4)
+					FillRectangle(i, j, 16, 16, def::Pixel(rand() % 256, rand() % 256, rand() % 256));
 
 			return true;
 		}
@@ -61,7 +61,7 @@
 	int main()
 	{
 		Sample demo;
-		def::rcode err = demo.Construct(256, 240);
+		def::rcode err = demo.Construct(1024, 960);
 
 		if (err.ok)
 			demo.Run();
