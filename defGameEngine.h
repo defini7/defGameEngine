@@ -300,6 +300,9 @@ namespace def
 		friend bool operator>=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x >= v.x && v1.y >= v.y; }
 		friend bool operator!=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x != v.x || v1.y != v.y; }
 
+		template <typename T1>
+		vec2d_basic<T1> to() { return vec2d_basic<T1>((T1)this->x, (T1)this->y); }
+
 		float dot(vec2d_basic<T> v)
 		{
 			return this->x * v.x + this->y * v.y;
@@ -764,7 +767,6 @@ namespace def
 
 		virtual ~GameEngine()
 		{
-			delete[] m_nKeyNewState;
 			QuitApp();
 		}
 
@@ -1090,9 +1092,9 @@ namespace def
 
 		virtual void Draw(int32_t x, int32_t y, Pixel p = WHITE);
 		virtual void Clear(Pixel p = WHITE);
-		virtual void FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = WHITE);
+		virtual void FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p = WHITE);
 		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p = WHITE);
-		virtual void DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p = WHITE);
+		virtual void DrawRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p = WHITE);
 		virtual void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = WHITE);
 		virtual void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p = WHITE);
 		virtual void DrawCircle(int32_t x, int32_t y, uint32_t r, Pixel p = WHITE);
@@ -1101,10 +1103,10 @@ namespace def
 		virtual void DrawString(int32_t x, int32_t y, std::string s, Pixel p = WHITE, float scale = 1.0f);
 
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* spr, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
-		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr);
+		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* spr);
 
 		virtual void DrawGFX(int32_t x, int32_t y, GFX* gfx, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
-		virtual void DrawPartialGFX(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, GFX* gfx, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
+		virtual void DrawPartialGFX(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, GFX* gfx, float angle = 0.0f, float scale = 1.0f, FlipMode fm = FM_NONE);
 
 		KeyState GetKey(KeyCode keyCode) const;
 		KeyState GetMouse(short btnCode) const;
@@ -1405,14 +1407,14 @@ namespace def
 		SDL_RenderClear(m_sdlRenderer);
 	}
 
-	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
+	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p)
 	{
 		SDL_Rect* r = new SDL_Rect;
 
 		r->x = x;
 		r->y = y;
-		r->w = x1 - x;
-		r->h = y1 - y;
+		r->w = sx;
+		r->h = sy;
 
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderFillRect(m_sdlRenderer, r);
@@ -1426,14 +1428,14 @@ namespace def
 		SDL_RenderDrawLine(m_sdlRenderer, x1, y1, x2, y2);
 	}
 
-	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t x1, int32_t y1, Pixel p)
+	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p)
 	{
 		SDL_Rect* r = new SDL_Rect;
 
 		r->x = x;
 		r->y = y;
-		r->w = x1 - x;
-		r->h = y1 - y;
+		r->w = sx;
+		r->h = sy;
 
 		SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 		SDL_RenderDrawRect(m_sdlRenderer, r);
@@ -1452,6 +1454,7 @@ namespace def
 	void GameEngine::FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, Pixel p)
 	{
 		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny) { for (int32_t i = sx; i <= ex; i++) Draw(i, ny, p); };
+		auto swap = [](int32_t& a, int32_t& b) { int32_t tmp = a; a = b; b = tmp; };
 
 		int32_t t1x, t2x, y, minx, maxx, t1xp, t2xp;
 		bool changed1 = false;
@@ -1460,9 +1463,23 @@ namespace def
 		int32_t e1, e2;
 
 		// Sort vertices
-		if (y1 > y2) { std::swap(y1, y2); std::swap(x1, x2); }
-		if (y1 > y3) { std::swap(y1, y3); std::swap(x1, x3); }
-		if (y2 > y3) { std::swap(y2, y3); std::swap(x2, x3); }
+		if (y1 > y2)
+		{
+			swap(y1, y2);
+			swap(x1, x2);
+		}
+
+		if (y1 > y3)
+		{
+			swap(y1, y3);
+			swap(x1, x3);
+		}
+
+		if (y2 > y3)
+		{
+			swap(y2, y3);
+			swap(x2, x3);
+		}
 
 		t1x = t2x = x1;
 		y = y1;   // Starting points
@@ -1491,12 +1508,12 @@ namespace def
 
 		if (dy1 > dx1)
 		{
-			std::swap(dx1, dy1);
+			swap(dx1, dy1);
 			changed1 = true;
 		}
 		if (dy2 > dx2)
 		{
-			std::swap(dy2, dx2);
+			swap(dy2, dx2);
 			changed2 = true;
 		}
 
@@ -1592,7 +1609,7 @@ namespace def
 
 		if (dy1 > dx1)
 		{   // swap values
-			std::swap(dy1, dx1);
+			swap(dy1, dx1);
 			changed1 = true;
 		}
 		else
@@ -1836,10 +1853,10 @@ namespace def
 		SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
 	}
 
-	void GameEngine::DrawPartialGFX(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, GFX* gfx, float angle, float scale, FlipMode fm)
+	void GameEngine::DrawPartialGFX(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, GFX* gfx, float angle, float scale, FlipMode fm)
 	{
-		gfx->SetCoordRect(uint32_t((float)x * scale), uint32_t((float)y * scale), fx2 - fx1, fy2 - fy1);
-		gfx->SetFileRect(fx1, fy1, fx2 - fx1, fy2 - fy1);
+		gfx->SetCoordRect(uint32_t((float)x * scale), uint32_t((float)y * scale), fsx, fsy);
+		gfx->SetFileRect(fx, fy, fsx, fsy);
 
 		SDL_RenderSetScale(m_sdlRenderer, scale, scale);
 
@@ -1860,15 +1877,15 @@ namespace def
 			}
 	}
 
-	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* spr)
+	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* spr)
 	{
-		for (int i = fx1; i < fx2; i++)
-			for (int j = fy1; j < fy2; j++)
+		for (int i = fx; i < fx + fsx; i++)
+			for (int j = fy; j < fy + fsy; j++)
 			{
 				def::Pixel p = spr->GetPixel(i, j);
 
 				if (p != def::NONE)
-					Draw(x + (i - fx1), y + (j - fy1), p);
+					Draw(x + (i - fx), y + (j - fy), p);
 			}
 	}
 
