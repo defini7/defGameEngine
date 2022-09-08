@@ -41,7 +41,7 @@ namespace def
 	struct sShape
 	{
 		vf2d vVelocity;
-		vf2d vStart;
+		vf2d vPos;
 	};
 
 	struct sPoint : sShape {};
@@ -49,11 +49,11 @@ namespace def
 	struct sRectangle : sShape
 	{
 		sRectangle() = default;
-		sRectangle(vf2d& v, vf2d& s, vf2d& e)
+		sRectangle(vf2d& v, vf2d& p, vf2d& s)
 		{
 			vVelocity = v;
-			vStart = s;
-			vEnd = e;
+			vPos = p;
+			vSize = s;
 
 			contact[0] = nullptr;
 			contact[1] = nullptr;
@@ -61,7 +61,7 @@ namespace def
 			contact[3] = nullptr;
 		}
 
-		vf2d vEnd;
+		vf2d vSize;
 
 		sRectangle* contact[4];
 	};
@@ -69,10 +69,10 @@ namespace def
 	struct sCircle : sShape
 	{
 		sCircle() = default;
-		sCircle(vf2d& v, vf2d& s, float r)
+		sCircle(vf2d& v, vf2d& p, float r)
 		{
 			vVelocity = v;
-			vStart = s;
+			vPos = p;
 			fRadius = r;
 		}
 
@@ -82,14 +82,14 @@ namespace def
 	struct sLine : sShape
 	{
 		sLine() = default;
-		sLine(vf2d& v, vf2d& s, vf2d& e)
+		sLine(vf2d& v, vf2d& p, vf2d& s)
 		{
 			vVelocity = v;
-			vStart = s;
-			vEnd = e;
+			vPos = p;
+			vSize = s;
 		}
 
-		vf2d vEnd;
+		vf2d vSize;
 	};
 
 	class DGE_Physics
@@ -97,17 +97,17 @@ namespace def
 	public:
 		bool PointVsCircle(const sPoint& p, const sCircle& c)
 		{
-			return (c.vStart - p.vStart).mag2() <= c.fRadius * c.fRadius;
+			return (c.vPos - p.vPos).mag2() <= c.fRadius * c.fRadius;
 		}
 
 		bool PointVsRectangle(const sPoint& p, const sRectangle& r)
 		{
-			return p.vStart > r.vStart - 1 && p.vStart < r.vEnd + 1;
+			return p.vPos > r.vPos - 1 && p.vPos <= r.vPos + r.vSize;
 		}
 
 		bool RectVsRect(const sRectangle& r1, const sRectangle& r2)
 		{
-			return r1.vStart - 1 < r2.vEnd && r1.vEnd + 1 > r2.vStart;
+			return r1.vPos - 1 < r2.vPos + r2.vSize && r1.vPos + r1.vSize + 1 > r2.vPos;
 		}
 
 		bool LineVsRect(const sLine& l, const sRectangle& r, vf2d& contact_point, vf2d& contact_normal, float& t_hit_near)
@@ -115,10 +115,10 @@ namespace def
 			contact_normal = { 0,0 };
 			contact_point = { 0,0 };
 
-			vf2d invdir = vf2d(1.0f, 1.0f) / l.vEnd;
+			vf2d invdir = vf2d(1.0f, 1.0f) / l.vSize;
 
-			vf2d t_near = (r.vStart - l.vStart) * invdir;
-			vf2d t_far = (r.vEnd - l.vStart) * invdir;
+			vf2d t_near = (r.vPos - l.vPos) * invdir;
+			vf2d t_far = (r.vPos + r.vSize - l.vPos) * invdir;
 
 			if (isnan(t_far.y) || isnan(t_far.x)) return false;
 			if (isnan(t_near.y) || isnan(t_near.x)) return false;
@@ -132,10 +132,10 @@ namespace def
 
 			float t_hit_far = std::min(t_far.x, t_far.y);
 
-			if (t_hit_far < 0)
+			if (t_hit_far < 0.0f)
 				return false;
 
-			contact_point = l.vStart + vf2d(t_hit_near, t_hit_near) * l.vEnd;
+			contact_point = l.vPos + l.vSize * t_hit_near;
 
 			if (t_near.x > t_near.y)
 				if (invdir.x < 0)
@@ -165,12 +165,12 @@ namespace def
 
 			sRectangle expanded_target;
 
-			expanded_target.vStart = r_static.vStart - (r_dynamic.vEnd - r_dynamic.vStart) / 2;
-			expanded_target.vEnd = expanded_target.vStart + (r_static.vEnd - r_static.vStart) + (r_dynamic.vEnd - r_dynamic.vStart);
+			expanded_target.vPos = r_static.vPos - r_dynamic.vSize / 2;
+			expanded_target.vSize = r_static.vSize + r_dynamic.vSize;
 
 			sLine l;
-			l.vStart = r_dynamic.vStart + (r_dynamic.vEnd - r_dynamic.vStart) / 2;
-			l.vEnd = r_dynamic.vVelocity * fTimeStep;
+			l.vPos = r_dynamic.vPos + r_dynamic.vSize / 2;
+			l.vSize = r_dynamic.vVelocity * fTimeStep;
 
 			if (LineVsRect(l, expanded_target, contact_point, contact_normal, contact_time))
 				return (contact_time >= 0.0f && contact_time < 1.0f);
