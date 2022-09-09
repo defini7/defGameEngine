@@ -30,12 +30,13 @@
 
 #pragma region includes
 
-#include "defGameEngine.h"
-
+#include <iostream>
 #include <fstream>
 #include <ctime>
 
 #pragma endregion
+
+#ifdef DGE_LOGGER
 
 namespace def
 {
@@ -85,7 +86,7 @@ namespace def
 			strftime(time, 16, " [ %T ] ", tmCurrentTimeMark);
 		}
 
-		bool LogInfo(def::rcode& rc)
+		bool LogInfo(rcode& rc)
 		{
 			GetTimestamp();
 
@@ -97,7 +98,7 @@ namespace def
 
 		void LogExit()
 		{
-			def::rcode rc;
+			rcode rc;
 
 			rc.ok = true;
 			rc.info = "End running of application";
@@ -115,3 +116,5 @@ namespace def
 
 	};
 }
+
+#endif
