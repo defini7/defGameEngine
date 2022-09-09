@@ -28,13 +28,7 @@
 ***/
 #pragma endregion
 
-#pragma region includes
-
-#include "defGameEngine.h"
-
-#include <algorithm>
-
-#pragma endregion
+#ifdef DGE_PHYSICS
 
 namespace def
 {
@@ -199,3 +193,5 @@ namespace def
 		}
 	};
 }
+
+#endif
