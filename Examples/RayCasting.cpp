@@ -83,10 +83,10 @@ protected:
 
 			float fRayDirX = fDirX + fPlaneX * fCameraX;
 			float fRayDirY = fDirY + fPlaneY * fCameraX;
-			
+
 			float fDistanceX = sqrtf(1.0f + (fRayDirY / fRayDirX) * (fRayDirY / fRayDirX));
 			float fDistanceY = sqrtf(1.0f + (fRayDirX / fRayDirY) * (fRayDirX / fRayDirY));
-			
+
 			int nStepX = 0;
 			int nStepY = 0;
 
@@ -100,7 +100,7 @@ protected:
 			int nMapX = (int)fPlayerX;
 			int nMapY = (int)fPlayerY;
 
-			int nPerpWallDistance;
+			float fPerpWallDistance;
 
 			if (fRayDirX < 0.0f)
 			{
@@ -147,11 +147,11 @@ protected:
 			}
 
 			if (nSide == 0)
-				nPerpWallDistance = fFromCurrentDistX - fDistanceX;
+				fPerpWallDistance = fFromCurrentDistX - fDistanceX;
 			else
-				nPerpWallDistance = fFromCurrentDistY - fDistanceY;
-
-			int nLineHeight = int((float)h / (float)nPerpWallDistance);
+				fPerpWallDistance = fFromCurrentDistY - fDistanceY;
+			
+			int nLineHeight = int((float)h / fPerpWallDistance);
 
 			int nDrawStart = -nLineHeight / 2 + h / 2;
 			int nDrawEnd = nLineHeight / 2 + h / 2;
@@ -162,7 +162,7 @@ protected:
 			if (nDrawEnd >= h)
 				nDrawEnd = h - 1;
 
-			int nCeiling = float(h / 2) - h / ((float)nPerpWallDistance);
+			int nCeiling = float(h / 2) - h / (fPerpWallDistance);
 			int nFloor = h - nCeiling;
 
 			float fBlockMidX = fFromCurrentDistX + 0.5f;
@@ -175,7 +175,7 @@ protected:
 
 			float fSampleX = 0.0f, fSampleY = 0.0f;
 
-			if (nPerpWallDistance < nDepth)
+			if (fPerpWallDistance < (float)nDepth)
 			{
 				if (fTestAngle >= (float)M_PI * 0.25f && fTestAngle < (float)M_PI * 0.25f)
 					fSampleX = fTestPointY - fFromCurrentDistY;
@@ -193,7 +193,7 @@ protected:
 					//else if (nPerpWallDistance < nDepth)			pWallPixel = def::DARK_GREY;
 					//else											pWallPixel = def::BLACK;    // far
 
-					if (nPerpWallDistance < nDepth)
+					if (fPerpWallDistance < (float)nDepth)
 					{
 						fSampleY = ((float)y - (float)nCeiling) / ((float)nFloor - (float)nCeiling);
 						Draw(x, y, sprTex1->Sample(fSampleX, fSampleY));
