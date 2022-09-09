@@ -31,9 +31,9 @@ protected:
 		def::vi2d vFilePos;
 		def::vi2d vFileSize;
 
-		bool bFrameDrawn = anim->Animate(id, vFilePos, vFileSize, fDeltaTime);
+		bool bFrameReady = anim->Animate(id, vFilePos, vFileSize, fDeltaTime);
 
-		if (bFrameDrawn)
+		if (bFrameReady)
 		{
 			Clear();
 			DrawPartialGFX(0, 0, vFilePos.x, vFilePos.y, vFileSize.x, vFileSize.y, gfxDemo, 0.0f, 4.0f);
