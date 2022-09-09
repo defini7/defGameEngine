@@ -1,5 +1,8 @@
 #include "defGameEngine.h"
 
+#define DGE_ANIMATED
+#include "DGE_Animated.h"
+
 class RayCasting : public def::GameEngine
 {
 public:
@@ -24,11 +27,23 @@ private:
 	const int nMapWidth = 32;
 	const int nMapHeight = 32;
 
-	int nDepth = 16;
+	float fDepth = 16.0f;
 
 	std::string sMap;
 
-	def::Sprite* sprTex1 = nullptr;
+	def::Sprite* sprWall = nullptr;
+
+	def::Sprite* sprGun = nullptr;
+	def::GFX* gfxGun = nullptr;
+
+	def::Animated* anim = nullptr; // for animations
+
+	uint32_t id_gun;
+
+	bool bShooting = false;
+
+	def::vi2d vFilePos = def::vi2d(0, 0);
+	def::vi2d vFileSize = def::vi2d(0, 0);
 
 protected:
 	bool OnUserCreate() override
@@ -66,7 +81,14 @@ protected:
 		sMap += "#...............................";
 		sMap += "######..................########";
 
-		sprTex1 = new def::Sprite("wall.png");
+		sprWall = new def::Sprite("wall.png");
+
+		sprGun = new def::Sprite("gun.png");
+		gfxGun = new def::GFX(sprGun, GetRenderer());
+
+		anim = new def::Animated(gfxGun);
+
+		id_gun = anim->AddAnimation(def::vi2d(0, 0).ref(), def::vi2d(128, 128).ref(), 6);
 
 		return true;
 	}
@@ -175,7 +197,7 @@ protected:
 
 			float fSampleX = 0.0f, fSampleY = 0.0f;
 
-			if (fPerpWallDistance < (float)nDepth)
+			if (fPerpWallDistance < fDepth)
 			{
 				if (fTestAngle >= (float)M_PI * 0.25f && fTestAngle < (float)M_PI * 0.25f)
 					fSampleX = fTestPointY - fFromCurrentDistY;
@@ -193,10 +215,10 @@ protected:
 					//else if (nPerpWallDistance < nDepth)			pWallPixel = def::DARK_GREY;
 					//else											pWallPixel = def::BLACK;    // far
 
-					if (fPerpWallDistance < (float)nDepth)
+					if (fPerpWallDistance < fDepth)
 					{
 						fSampleY = ((float)y - (float)nCeiling) / ((float)nFloor - (float)nCeiling);
-						Draw(x, y, sprTex1->Sample(fSampleX, fSampleY));
+						Draw(x, y, sprWall->Sample(fSampleX, fSampleY));
 					}
 				}
 				else
@@ -229,7 +251,24 @@ protected:
 
 		FillRectangle((int)fPlayerX * nCellSize, (int)fPlayerY * nCellSize, nCellSize, nCellSize, def::YELLOW);
 
-		if (GetKey(def::Key::UP).bHeld)
+		auto draw_default_gun = [&]()
+		{
+			DrawPartialGFX(GetScreenWidth() - 256, GetScreenHeight() - 256, 0, 0, 128, 128, gfxGun, 0.0f, 2.0f);
+		};
+
+		if (bShooting)
+		{
+			bShooting = !anim->Animate(id_gun, vFilePos, vFileSize, 10.0f * fDeltaTime);
+			
+			if (vFileSize == 0)
+				draw_default_gun();
+			else
+				DrawPartialGFX(GetScreenWidth() - 256, GetScreenHeight() - 256, vFilePos.x, vFilePos.y, vFileSize.x, vFileSize.y, gfxGun, 0.0f, 2.0f);
+		}
+		else
+			draw_default_gun();
+
+		if (GetKey(def::Key::W).bHeld)
 		{
 			float fNewX = fPlayerX + fDirX * fMoveSpeed * fDeltaTime;
 			float fNewY = fPlayerY + fDirY * fMoveSpeed * fDeltaTime;
@@ -241,7 +280,7 @@ protected:
 			}
 		}
 
-		if (GetKey(def::Key::DOWN).bHeld)
+		if (GetKey(def::Key::S).bHeld)
 		{
 			float fNewX = fPlayerX - fDirX * fMoveSpeed * fDeltaTime;
 			float fNewY = fPlayerY - fDirY * fMoveSpeed * fDeltaTime;
@@ -276,6 +315,9 @@ protected:
 			fPlaneX = fPlaneX * cosf(-fRotSpeed * fDeltaTime) - fPlaneY * sinf(-fRotSpeed * fDeltaTime);
 			fPlaneY = fOldPlaneX * sinf(-fRotSpeed * fDeltaTime) + fPlaneY * cosf(-fRotSpeed * fDeltaTime);
 		}
+
+		if (GetMouse(0).bPressed)
+			bShooting = true;
 
 		return true;
 	}
