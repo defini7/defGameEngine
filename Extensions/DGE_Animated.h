@@ -30,75 +30,85 @@
 
 #ifdef DGE_ANIMATED
 
-struct sAnimation
+namespace def
 {
-public:
-	def::vi2d vPos;
-	def::vi2d vSize;
-
-	uint32_t nFrames;
-
-	def::vi2d vLastPos; // do not modify that
-	uint32_t nCompletedFrames;
-};
-
-class Animated
-{
-public:
-	Animated(def::GFX* gfx)
+	struct sAnimation
 	{
-		m_gfxData = gfx;
-	}
+	public:
+		def::vi2d vPos;
+		def::vi2d vSize;
 
-private:
-	std::vector<sAnimation> m_vecAnimations;
+		uint32_t nFrames;
 
-	def::GFX* m_gfxData;
+		def::vi2d vLastPos; // do not modify that
+		uint32_t nCompletedFrames;
+		float fTicks;
+	};
 
-	float fTicks = 0.0f;
-
-public:
-	uint32_t AddAnimation(def::vi2d& vPos, def::vi2d& vSize, uint32_t nFrames)
+	class Animated
 	{
-		sAnimation a;
-		a.vPos = vPos;
-		a.vSize = vSize;
-		a.nFrames = nFrames;
-
-		a.vLastPos = def::vi2d(-vSize.x, 0);
-		a.nCompletedFrames = 0;
-
-		m_vecAnimations.push_back(a);
-
-		return m_vecAnimations.size() - 1;
-	}
-
-	bool Animate(uint32_t id, def::vi2d& vFilePos, def::vi2d& vFileSize, float fDeltaTime)
-	{
-		sAnimation& a = m_vecAnimations[id];
-
-		if (a.nCompletedFrames < a.nFrames)
+	public:
+		Animated(def::GFX* gfx)
 		{
-			if (fTicks > 1.0f)
-			{
-				vFileSize = a.vSize;
-				vFilePos = a.vLastPos + def::vi2d(a.vSize.x, 0);
-
-				a.vLastPos = vFilePos;
-
-				a.nCompletedFrames++;
-
-				fTicks = 0.0f;
-
-				return true;
-			}
-
-			fTicks += fDeltaTime;
+			m_gfxData = gfx;
 		}
 
-		return false;
-	}
+	private:
+		std::vector<sAnimation> m_vecAnimations;
 
-};
+		def::GFX* m_gfxData;
+
+	public:
+		uint32_t AddAnimation(def::vi2d& vPos, def::vi2d& vSize, uint32_t nFrames)
+		{
+			sAnimation a;
+			a.vPos = vPos;
+			a.vSize = vSize;
+			a.nFrames = nFrames;
+
+			a.vLastPos = def::vi2d(-vSize.x, 0);
+			a.nCompletedFrames = 0;
+			a.fTicks = 0.0f;
+
+			m_vecAnimations.push_back(a);
+
+			return m_vecAnimations.size() - 1;
+		}
+
+		/* returns true if animation is done */
+		bool Animate(uint32_t id, def::vi2d& vFilePos, def::vi2d& vFileSize, float fDeltaTime) 
+		{
+			sAnimation& a = m_vecAnimations[id];
+
+			if (a.nCompletedFrames < a.nFrames)
+			{
+				if (a.fTicks > 1.0f)
+				{
+					vFileSize = a.vSize;
+					vFilePos = a.vLastPos + def::vi2d(a.vSize.x, 0);
+
+					a.vLastPos = vFilePos;
+
+					a.nCompletedFrames++;
+
+					a.fTicks = 0.0f;
+				}
+
+				a.fTicks += fDeltaTime;
+
+				return false; // animation in progress
+			}
+			else
+			{
+				a.nCompletedFrames = 0;
+				a.fTicks = 0.0f;
+				a.vLastPos = def::vi2d(0, 0);
+
+				return true; // animation done
+			}
+		}
+
+	};
+}
 
 #endif
