@@ -3,6 +3,20 @@
 #define DGE_ANIMATED
 #include "DGE_Animated.h"
 
+enum TEXTURES
+{
+	BLUESTONE,
+	COLORSTONE,
+	EAGLE,
+	GREYSTONE,
+	MOSSY,
+	PILLAR,
+	PURPLESTONE,
+	REDBRICK,
+	WOOD,
+	BARREL
+};
+
 class RayCasting : public def::GameEngine
 {
 public:
@@ -33,6 +47,9 @@ private:
 
 	def::Sprite* sprWall = nullptr;
 
+	const int nTexWidth = 64;
+	const int nTexHeight = 64;
+
 	def::Sprite* sprGun = nullptr;
 	def::GFX* gfxGun = nullptr;
 
@@ -48,40 +65,40 @@ private:
 protected:
 	bool OnUserCreate() override
 	{
-		sMap += "#################.........######";
-		sMap += "#..............................#";
-		sMap += "#...#...............#..........#";
-		sMap += "#...#...............#..........#";
-		sMap += "#...##..............##.........#";
-		sMap += "#....#...............#.........#";
-		sMap += "#..............................#";
-		sMap += "#..##..............##..........#";
-		sMap += "........#######.........########";
-		sMap += "...............................#";
-		sMap += "...........#...............#...#";
-		sMap += ".........###.............###...#";
-		sMap += "...............................#";
-		sMap += "...............................#";
-		sMap += "...............................#";
-		sMap += "#...........#####..............#";
-		sMap += "#..............................#";
-		sMap += "#..............................#";
-		sMap += "#...#...............#..........#";
-		sMap += "#...#...............#..........#";
-		sMap += "#...##..............##.........#";
-		sMap += "#....#...............#.........#";
-		sMap += "#..............................#";
-		sMap += "#..##..............##..........#";
-		sMap += "#.......#######.........########";
-		sMap += "#...............................";
-		sMap += "#..........#...............#....";
-		sMap += "#........###.............###....";
-		sMap += "#...............................";
-		sMap += "#...............................";
-		sMap += "#...............................";
-		sMap += "######..................########";
+		sMap += "77777777777777777.........777777";
+		sMap += "7..............................7";
+		sMap += "7...8...............8..........7";
+		sMap += "7...8...............8..........7";
+		sMap += "7...88..............88.........7";
+		sMap += "7....8...............8.........7";
+		sMap += "7..............................7";
+		sMap += "7..88..............88..........7";
+		sMap += "7.......8888888.........88888887";
+		sMap += "7..............................7";
+		sMap += "...........8...............8...7";
+		sMap += ".........888.............888...7";
+		sMap += "...............................2";
+		sMap += "...............................7";
+		sMap += "...............................7";
+		sMap += "............88888..............7";
+		sMap += "...............................7";
+		sMap += "7..............................7";
+		sMap += "7...6...............6..........7";
+		sMap += "7...6...............6..........7";
+		sMap += "7...66..............66.........7";
+		sMap += "7....6...............6.........7";
+		sMap += "7..............................7";
+		sMap += "7..66..............66..........7";
+		sMap += "7.......6666666.........66666667";
+		sMap += "7...............................";
+		sMap += "7..........6...............6....";
+		sMap += "7........666.............666....";
+		sMap += "7...............................";
+		sMap += "7...............................";
+		sMap += "7...............................";
+		sMap += "777777..................77777777";
 
-		sprWall = new def::Sprite("wall.png");
+		sprWall = new def::Sprite("gfx/tileset.png");
 
 		sprGun = new def::Sprite("gun.png");
 		gfxGun = new def::GFX(sprGun, GetRenderer());
@@ -106,8 +123,11 @@ protected:
 			float fRayDirX = fDirX + fPlaneX * fCameraX;
 			float fRayDirY = fDirY + fPlaneY * fCameraX;
 
-			float fDistanceX = sqrtf(1.0f + (fRayDirY / fRayDirX) * (fRayDirY / fRayDirX));
-			float fDistanceY = sqrtf(1.0f + (fRayDirX / fRayDirY) * (fRayDirX / fRayDirY));
+			/*float fDistanceX = sqrtf(1.0f + (fRayDirY / fRayDirX) * (fRayDirY / fRayDirX));
+			float fDistanceY = sqrtf(1.0f + (fRayDirX / fRayDirY) * (fRayDirX / fRayDirY));*/
+
+			float fDistanceX = fabs(1.0f / fRayDirX);
+			float fDistanceY = fabs(1.0f / fRayDirY);
 
 			int nStepX = 0;
 			int nStepY = 0;
@@ -146,6 +166,8 @@ protected:
 				fFromCurrentDistY = ((float)nMapY + 1.0f - fPlayerY) * fDistanceY;
 			}
 
+			int nTexId = -1;
+
 			while (!bHitWall && !bNoWall)
 			{
 				if (fFromCurrentDistX < fFromCurrentDistY)
@@ -161,11 +183,14 @@ protected:
 					nSide = 1;
 				}
 
-				if (nMapY < 0 || nMapY >= nMapWidth)
+				if (nMapY < 0 || nMapY >= nMapHeight || nMapX < 0 || nMapX >= nMapWidth)
 					bNoWall = true;
 
-				if (!bNoWall && sMap[nMapY * nMapWidth + nMapX] == '#')
+				if (!bNoWall && std::isdigit(sMap[nMapY * nMapWidth + nMapX]))
+				{
+					nTexId = (int)sMap[nMapY * nMapWidth + nMapX] - 48;
 					bHitWall = true;
+				}
 			}
 
 			if (nSide == 0)
@@ -173,52 +198,52 @@ protected:
 			else
 				fPerpWallDistance = fFromCurrentDistY - fDistanceY;
 			
-			int nLineHeight = int((float)h / fPerpWallDistance);
-
-			int nDrawStart = -nLineHeight / 2 + h / 2;
-			int nDrawEnd = nLineHeight / 2 + h / 2;
-
-			if (nDrawStart < 0)
-				nDrawStart = 0;
-
-			if (nDrawEnd >= h)
-				nDrawEnd = h - 1;
+			int nLineHeight = int((float)h / fPerpWallDistance) * 2; // change '2' to something and see what happens
 
 			int nCeiling = float(h / 2) - h / (fPerpWallDistance);
 			int nFloor = h - nCeiling;
 
-			float fBlockMidX = fFromCurrentDistX + 0.5f;
-			float fBlockMidY = fFromCurrentDistY + 0.5f;
+			float fTestPoint;
 
-			float fTestPointX = fPlayerX + fRayDirX * fDistanceX;
-			float fTestPointY = fPlayerY + fRayDirY * fDistanceY;
+			if (nSide == 0)
+				fTestPoint = fPlayerY + fRayDirY * fPerpWallDistance;
+			else
+				fTestPoint = fPlayerX + fRayDirX * fPerpWallDistance;
 
-			float fTestAngle = atan2f(fTestPointY - fBlockMidY, fTestPointX - fBlockMidX);
+			fTestPoint -= floorf(fTestPoint);
 
-			float fSampleX = 0.0f, fSampleY = 0.0f;
+			int nTexX = int(fTestPoint * 64.0f);
 
-			if (fPerpWallDistance < fDepth)
-			{
-				if (fTestAngle >= (float)M_PI * 0.25f && fTestAngle < (float)M_PI * 0.25f)
-					fSampleX = fTestPointY - fFromCurrentDistY;
-			}
+			if ((nSide == 0 && fRayDirX > 0.0f) || (nSide == 1 && fRayDirY < 0.0f))
+				nTexX = nTexWidth - nTexX - 1;
+
+			float fTexStep = (float)nTexHeight / (float)nLineHeight;
+			float fTexPos = float(nFloor - h / 2 + nLineHeight / 2) * fTexStep;
 
 			for (int y = 0; y < h; y++)
 			{
 				if (y <= nCeiling) // sky
 					Draw(x, y, def::BLACK);
-				else if (y > nCeiling && y < nFloor && !bNoWall) // wall
+				else if (y > nCeiling && y <= nFloor && !bNoWall) // wall
 				{
-					//if (nPerpWallDistance <= nDepth / 4)			pWallPixel = def::WHITE;	// close
-					//else if (nPerpWallDistance < nDepth / 3)		pWallPixel = def::GREY;
-					//else if (nPerpWallDistance < nDepth / 2)		pWallPixel = def::DARK_GREY;
-					//else if (nPerpWallDistance < nDepth)			pWallPixel = def::DARK_GREY;
-					//else											pWallPixel = def::BLACK;    // far
-
-					if (fPerpWallDistance < fDepth)
+					if (fPerpWallDistance < fDepth && nTexId != -1)
 					{
-						fSampleY = ((float)y - (float)nCeiling) / ((float)nFloor - (float)nCeiling);
-						Draw(x, y, sprWall->Sample(fSampleX, fSampleY));
+						int nTexY = (int)fTexPos & (nTexHeight - 1);
+						fTexPos += fTexStep;
+
+						def::Pixel p = sprWall->GetPixel(nTexId * nTexWidth + nTexX, nTexY);
+
+						if (nTexId == 3)
+							std::cout << nTexId << '\n';
+
+						if (nSide == 1)
+						{
+							p.r = (p.r >> 1) & 8355711;
+							p.g = (p.g >> 1) & 8355711;
+							p.b = (p.b >> 1) & 8355711;
+						}
+
+						Draw(x, y, p);
 					}
 				}
 				else
@@ -242,11 +267,10 @@ protected:
 		for (int x = 0; x < nMapWidth; x++)
 			for (int y = 0; y < nMapHeight; y++)
 			{
-				switch (sMap[y * nMapWidth + x])
-				{
-				case '#': FillRectangle(x * nCellSize, y * nCellSize, nCellSize, nCellSize, def::WHITE); break;
-				case '.': FillRectangle(x * nCellSize, y * nCellSize, nCellSize, nCellSize, def::GREY); break;
-				}
+				if (sMap[y * nMapWidth + x] == '.')
+					FillRectangle(x * nCellSize, y * nCellSize, nCellSize, nCellSize, def::GREY);
+				else
+					FillRectangle(x* nCellSize, y* nCellSize, nCellSize, nCellSize, def::WHITE);
 			}
 
 		FillRectangle((int)fPlayerX * nCellSize, (int)fPlayerY * nCellSize, nCellSize, nCellSize, def::YELLOW);
