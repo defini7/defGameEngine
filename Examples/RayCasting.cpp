@@ -275,22 +275,17 @@ protected:
 
 		FillRectangle((int)fPlayerX * nCellSize, (int)fPlayerY * nCellSize, nCellSize, nCellSize, def::YELLOW);
 
-		auto draw_default_gun = [&]()
-		{
-			DrawPartialGFX(GetScreenWidth() - 256, GetScreenHeight() - 256, 0, 0, 128, 128, gfxGun, 0.0f, 2.0f);
-		};
-
 		if (bShooting)
 		{
 			bShooting = !anim->Animate(id_gun, vFilePos, vFileSize, 10.0f * fDeltaTime);
 			
 			if (vFileSize == 0)
-				draw_default_gun();
-			else
-				DrawPartialGFX(GetScreenWidth() - 256, GetScreenHeight() - 256, vFilePos.x, vFilePos.y, vFileSize.x, vFileSize.y, gfxGun, 0.0f, 2.0f);
+				vFileSize = def::vi2d(128, 128);
+
+			DrawPartialGFX(GetScreenWidth() - 256, GetScreenHeight() - 256, vFilePos.x, vFilePos.y, vFileSize.x, vFileSize.y, gfxGun, 0.0f, 2.0f);
 		}
 		else
-			draw_default_gun();
+			DrawPartialGFX(GetScreenWidth() - 256, GetScreenHeight() - 256, 0, 0, 128, 128, gfxGun, 0.0f, 2.0f);
 
 		if (GetKey(def::Key::W).bHeld)
 		{
