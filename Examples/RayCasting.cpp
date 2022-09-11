@@ -3,6 +3,9 @@
 #define DGE_ANIMATED
 #include "DGE_Animated.h"
 
+#include <algorithm>
+#include <cmath>
+
 class RayCasting : public def::GameEngine
 {
 public:
@@ -52,7 +55,8 @@ private:
 		PURPLESTONE,
 		REDBRICK,
 		WOOD,
-		BARREL
+		BARREL,
+		BULLET
 	};
 
 	uint32_t nGunId;
@@ -74,10 +78,15 @@ private:
 		float x;
 		float y;
 
+		float vx;
+		float vy;
+
 		TEXTURES id;
+
+		bool bRemove = false;
 	};
 
-	std::list<sObject> listObjects;
+	std::vector<sObject> vecObjects;
 
 	float* fDepthBuffer = nullptr;
 
@@ -126,10 +135,10 @@ protected:
 
 		nGunId = anim->AddAnimation(def::vi2d(0, 0).ref(), def::vi2d(128, 128).ref(), 6);
 
-		listObjects = {
-			{ 8.5f, 8.5f, BARREL },
-			{ 7.5f, 7.5f, BARREL },
-			{ 10.0f, 3.0f, BARREL }
+		vecObjects = {
+			{ 8.5f, 8.5f, 0.0f, 0.0f, BARREL },
+			{ 7.5f, 7.5f, 0.0f, 0.0f, BARREL },
+			{ 10.0f, 3.0f, 0.0f, 0.0f, BARREL }
 		};
 
 		fDepthBuffer = new float[GetScreenWidth()];
@@ -231,7 +240,7 @@ protected:
 			if (nCeiling < 0)
 				nCeiling = 0;
 
-			if (nFloor > GetScreenHeight())
+			if (nFloor >= GetScreenHeight())
 				nFloor = GetScreenHeight();
 
 			float fTestPoint;
@@ -297,47 +306,84 @@ protected:
 			fDepthBuffer[x] = fDistanceToWall;
 		}
 
-		for (auto& o : listObjects)
+		std::sort(vecObjects.begin(), vecObjects.end(), [&](sObject& o1, sObject& o2) {
+			float d1 = ((fPlayerX - o1.x) * (fPlayerX - o1.x) + (fPlayerY - o1.y) * (fPlayerY - o1.y));
+			float d2 = ((fPlayerX - o2.x) * (fPlayerX - o2.x) + (fPlayerY - o2.y) * (fPlayerY - o2.y));
+
+			return d1 > d2;
+		});
+
+		for (auto& o : vecObjects)
 		{
-			float fObjDirX = o.x - fPlayerX;
-			float fObjDirY = o.y - fPlayerY;
+			o.x += o.vx * fDeltaTime;
+			o.y += o.vy * fDeltaTime;
 
-			for (int ox = (int)o.x; ox < (int)o.x + nTexWidth; ox++)
+			if ((int)o.x < 0 || (int)o.y < 0 || (int)o.x >= nMapWidth || (int)o.y >= nMapHeight || sMap[(int)o.y * nMapWidth + (int)o.x] == '#')
 			{
-				float fCameraX = 2.0f * fDepthBuffer[ox] / (float)GetScreenWidth() - 1.0f;
+				o.bRemove = true;
+				continue;
+			}
+			
+			float fObjectX = o.x - fPlayerX;
+			float fObjectY = o.y - fPlayerY;
 
-				float fEyeX = fDirX + fPlaneX * fCameraX;
-				float fEyeY = fDirY + fPlaneY * fCameraX;
-				
-				float fDistanceFromPlayer = sqrtf(fObjDirX * fObjDirX + fObjDirY * fObjDirY);
+			float fInvDet = 1.0f / (fPlaneX * fDirY - fDirX * fPlaneY);
 
-				float fObjAngle = atan2f(fEyeY, fEyeX) - atan2f(fObjDirY, fObjDirX);
+			float fTransformX = fInvDet * (fDirY * fObjectX - fDirX * fObjectY);
+			float fTransformY = fInvDet * (-fPlaneY * fObjectX - fPlaneX * fObjectY);
 
-				if (fObjAngle < -3.14159f)
-					fObjAngle += 2.0f * 3.14159f;
+			float fAspectRatio = fTransformX / fTransformY;
 
-				if (fObjAngle > 3.14159f)
-					fObjAngle -= 2.0f * 3.14159f;
+			int nObjectScreenX = int(float(GetScreenWidth() / 2) * (1.0f + fAspectRatio));
 
-				float fObjCeiling = float(GetScreenHeight() / 2) - (float)GetScreenHeight() / fDistanceFromPlayer;
-				float fObjFloor = (float)GetScreenHeight() - fObjCeiling;
-				float fObjMiddle = 0.5f * (fObjAngle / (fPlaneY / 2.0f) + 0.5f) * (float)GetScreenWidth();
+			int nObjectHeight = abs(int((float)GetScreenHeight() / fTransformY));
 
-				if (fabs(fObjAngle) < fPlaneY / 2.0f)
+			int nCeilingY = -nObjectHeight / 2 + GetScreenHeight() / 2;
+			int nFloorY = nObjectHeight / 2 + GetScreenHeight() / 2;
+
+			if (nCeilingY < 0)
+				nCeilingY = 0;
+
+			if (nFloorY >= GetScreenHeight())
+				nFloorY = GetScreenHeight() - 1;
+
+			int nObjectWidth = abs(int((float)GetScreenHeight() / fTransformY));
+
+			int nCeilingX = -nObjectWidth / 2 + nObjectScreenX;
+			int nFloorX = nObjectWidth / 2 + nObjectScreenX;
+
+			if (nCeilingX < 0)
+				nCeilingX = 0;
+
+			if (nFloorX >= GetScreenWidth())
+				nFloorX = GetScreenWidth() - 1;
+
+			for (int x = nCeilingX; x < nFloorX; x++)
+			{
+				int nTexX = (256 * (x - (-nObjectWidth / 2 + nObjectScreenX)) * nTexWidth / nObjectWidth) / 256;
+
+				if (fTransformY > 0 && x > 0 && x < GetScreenWidth() && fTransformY < fDepthBuffer[x])
 				{
-					if (fDistanceFromPlayer >= 0.5f && fDistanceFromPlayer < fDepth)
+					for (int y = nCeilingY; y < nFloorY; y++)
 					{
-						for (int oy = (int)o.y; oy < (int)o.y + nTexHeight; oy++)
-						{
-							int nObjectColumn = int(fObjMiddle + (float)ox - nTexWidth / 2.0f);
+						int d = y * 256 - GetScreenHeight() * 128 + nObjectHeight * 128;
+						int nTexY = (d * nTexHeight / nObjectHeight) / 256;
 
-							if (nObjectColumn >= 0 && nObjectColumn < GetScreenWidth())
-								Draw(nObjectColumn, (int)fObjCeiling + oy, sprTiles->GetPixel(nTexWidth * o.id + ox, oy));
-						}
+						def::Pixel pObjectPixel = sprTiles->GetPixel(o.id * nTexWidth + nTexX, nTexY);
+
+						if (pObjectPixel.a == 255)
+							Draw(x, y, pObjectPixel);
 					}
+
+					fDepthBuffer[x] = fTransformY;
 				}
-			}		
+			}
 		}
+
+		auto itRemove = std::remove_if(vecObjects.begin(), vecObjects.end(), [](sObject& o) { return o.bRemove; });
+
+		if (itRemove != vecObjects.end())
+			vecObjects.erase(itRemove);
 
 		for (int x = 0; x < nMapWidth; x++)
 			for (int y = 0; y < nMapHeight; y++)
@@ -345,7 +391,7 @@ protected:
 				if (sMap[y * nMapWidth + x] == '.')
 					FillRectangle(x * nMapCellSize, y * nMapCellSize, nMapCellSize, nMapCellSize, def::GREY);
 				else
-					FillRectangle(x* nMapCellSize, y* nMapCellSize, nMapCellSize, nMapCellSize, def::WHITE);
+					FillRectangle(x * nMapCellSize, y * nMapCellSize, nMapCellSize, nMapCellSize, def::WHITE);
 			}
 
 		FillRectangle((int)fPlayerX * nMapCellSize, (int)fPlayerY * nMapCellSize, nMapCellSize, nMapCellSize, def::YELLOW);
@@ -423,7 +469,19 @@ protected:
 		}
 
 		if (GetMouse(0).bPressed)
+		{
 			bShooting = true;
+			
+			sObject o;
+
+			o.x = fPlayerX;
+			o.y = fPlayerY;
+
+			o.vx = 1.0f; // TODO
+			o.vy = 1.0f; // TODO
+
+			vecObjects.push_back(o);
+		}
 
 		return true;
 	}
