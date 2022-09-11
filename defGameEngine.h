@@ -294,11 +294,19 @@ namespace def
 			return v1;
 		}
 
-		friend bool operator<(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x < v.x&& v1.y < v.y; }
+		friend bool operator<(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x < v.x && v1.y < v.y; }
 		friend bool operator>(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x > v.x && v1.y > v.y; }
 		friend bool operator<=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x <= v.x && v1.y <= v.y; }
 		friend bool operator>=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x >= v.x && v1.y >= v.y; }
+		friend bool operator==(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x == v.x && v1.y == v.y; }
 		friend bool operator!=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x != v.x || v1.y != v.y; }
+
+		friend bool operator<(const vec2d_basic<T> v1, const T v) { return v1.x < v && v1.y < v; }
+		friend bool operator>(const vec2d_basic<T> v1, const T v) { return v1.x > v && v1.y > v; }
+		friend bool operator<=(const vec2d_basic<T> v1, const T v) { return v1.x <= v && v1.y <= v; }
+		friend bool operator>=(const vec2d_basic<T> v1, const T v) { return v1.x >= v && v1.y >= v; }
+		friend bool operator==(const vec2d_basic<T> v1, const T v) { return v1.x == v && v1.y == v; }
+		friend bool operator!=(const vec2d_basic<T> v1, const T v) { return v1.x != v || v1.y != v; }
 
 		template <typename T1>
 		vec2d_basic<T1> to() { return vec2d_basic<T1>((T1)this->x, (T1)this->y); }
@@ -370,27 +378,27 @@ namespace def
 		uint8_t b;
 		uint8_t a;
 
-		friend Pixel operator+(Pixel& lhs, float& rhs)
+		friend Pixel operator+(Pixel& lhs, float rhs)
 		{
 			return Pixel(lhs.r + (uint8_t)rhs, lhs.g + (uint8_t)rhs, lhs.b + (uint8_t)rhs, lhs.a);
 		}
 
-		friend Pixel operator-(Pixel& lhs, float& rhs)
+		friend Pixel operator-(Pixel& lhs, float rhs)
 		{
 			return Pixel(lhs.r - (uint8_t)rhs, lhs.g - (uint8_t)rhs, lhs.b - (uint8_t)rhs, lhs.a);
 		}
 
-		friend Pixel operator*(Pixel& lhs, float& rhs)
+		friend Pixel operator*(Pixel& lhs, float rhs)
 		{
 			return Pixel(lhs.r * (uint8_t)rhs, lhs.g * (uint8_t)rhs, lhs.b * (uint8_t)rhs, lhs.a);
 		}
 
-		friend Pixel operator/(Pixel& lhs, float& rhs)
+		friend Pixel operator/(Pixel& lhs, float rhs)
 		{
 			return Pixel(lhs.r / (uint8_t)rhs, lhs.g / (uint8_t)rhs, lhs.b / (uint8_t)rhs, lhs.a);
 		}
 
-		friend Pixel operator+=(Pixel& lhs, float& rhs)
+		friend Pixel operator+=(Pixel& lhs, float rhs)
 		{
 			lhs.r += (uint8_t)rhs;
 			lhs.g += (uint8_t)rhs;
@@ -399,7 +407,7 @@ namespace def
 			return lhs;
 		}
 
-		friend Pixel operator-=(Pixel& lhs, float& rhs)
+		friend Pixel operator-=(Pixel& lhs, float rhs)
 		{
 			lhs.r -= (uint8_t)rhs;
 			lhs.g -= (uint8_t)rhs;
@@ -408,7 +416,7 @@ namespace def
 			return lhs;
 		}
 
-		friend Pixel operator*=(Pixel& lhs, float& rhs)
+		friend Pixel operator*=(Pixel& lhs, float rhs)
 		{
 			lhs.r *= (uint8_t)rhs;
 			lhs.g *= (uint8_t)rhs;
@@ -417,7 +425,7 @@ namespace def
 			return lhs;
 		}
 
-		friend Pixel operator/=(Pixel& lhs, float& rhs)
+		friend Pixel operator/=(Pixel& lhs, float rhs)
 		{
 			lhs.r /= (uint8_t)rhs;
 			lhs.g /= (uint8_t)rhs;
@@ -644,6 +652,9 @@ namespace def
 
 		Pixel GetPixel(int32_t x, int32_t y)
 		{
+			if (x < 0 || y < 0 || x >= m_nWidth || y >= m_nHeight)
+				return BLACK;
+
 			SDL_LockSurface(m_sdlSurface);
 
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
@@ -1090,7 +1101,7 @@ namespace def
 		bool IsCursorHidden();
 		WindowState GetScreenState();
 
-		virtual void Draw(int32_t x, int32_t y, Pixel p = WHITE);
+		virtual void Draw(int32_t x, int32_t y, Pixel p = WHITE, uint32_t scale = 1);
 		virtual void Clear(Pixel p = WHITE);
 		virtual void FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, Pixel p = WHITE);
 		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, Pixel p = WHITE);
@@ -1361,9 +1372,11 @@ namespace def
 
 	bool GameEngine::SetTitle(const char* title)
 	{
-		if (sizeof(title) > 128)
+		size_t s = sizeof(title);
+
+		if (s > 128)
 		{
-			std::cerr << "Max length of title is 128, but got " << sizeof(title) << " characters.";
+			std::cerr << "Max length of title is 128, but got " << s << " characters.";
 			return false;
 		}
 
@@ -1392,12 +1405,18 @@ namespace def
 		return static_cast<WindowState>(SDL_GetWindowFlags(m_sdlWindow));
 	}
 
-	void GameEngine::Draw(int32_t x, int32_t y, Pixel p)
+	void GameEngine::Draw(int32_t x, int32_t y, Pixel p, uint32_t scale)
 	{
 		if (x >= 0 && y >= 0 && x < m_nScreenWidth && y < m_nScreenHeight)
 		{
+			if (scale != 1)
+				SDL_RenderSetScale(m_sdlRenderer, (float)scale, (float)scale);
+
 			SDL_SetRenderDrawColor(m_sdlRenderer, p.r, p.g, p.b, p.a);
 			SDL_RenderDrawPoint(m_sdlRenderer, x, y);
+
+			if (scale != 1)
+				SDL_RenderSetScale(m_sdlRenderer, 1.0f, 1.0f);
 		}
 	}
 
@@ -1844,7 +1863,7 @@ namespace def
 	{
 		Sprite* spr = gfx->GetSprIstance();
 
-		gfx->SetCoordRect(uint32_t((float)x * scale), uint32_t((float)y * scale), spr->GetWidth(), spr->GetHeight());
+		gfx->SetCoordRect(uint32_t((float)x / scale), uint32_t((float)y / scale), spr->GetWidth(), spr->GetHeight());
 
 		SDL_RenderSetScale(m_sdlRenderer, scale, scale);
 
@@ -1855,7 +1874,7 @@ namespace def
 
 	void GameEngine::DrawPartialGFX(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, GFX* gfx, float angle, float scale, FlipMode fm)
 	{
-		gfx->SetCoordRect(uint32_t((float)x * scale), uint32_t((float)y * scale), fsx, fsy);
+		gfx->SetCoordRect(uint32_t((float)x / scale), uint32_t((float)y / scale), fsx, fsy);
 		gfx->SetFileRect(fx, fy, fsx, fsy);
 
 		SDL_RenderSetScale(m_sdlRenderer, scale, scale);
