@@ -3,20 +3,6 @@
 #define DGE_ANIMATED
 #include "DGE_Animated.h"
 
-enum TEXTURES
-{
-	BLUESTONE,
-	COLORSTONE,
-	EAGLE,
-	GREYSTONE,
-	MOSSY,
-	PILLAR,
-	PURPLESTONE,
-	REDBRICK,
-	WOOD,
-	BARREL
-};
-
 class RayCasting : public def::GameEngine
 {
 public:
@@ -26,8 +12,8 @@ public:
 	}
 
 private:
-	float fPlayerX = 5.0f;
-	float fPlayerY = 5.0f;
+	float fPlayerX = 7.0f;
+	float fPlayerY = 3.0f;
 
 	float fMoveSpeed = 5.0f;
 	float fRotSpeed = 3.0f;
@@ -38,29 +24,62 @@ private:
 	float fPlaneX = 0.0f;
 	float fPlaneY = 0.66f; // 66 degrees
 
-	const int nMapWidth = 32;
-	const int nMapHeight = 32;
+	int nMapWidth = 32;
+	int nMapHeight = 32;
 
 	float fDepth = 16.0f;
 
 	std::string sMap;
 
-	def::Sprite* sprWall = nullptr;
+	def::Sprite* sprTiles = nullptr;
 
-	const int nTexWidth = 64;
-	const int nTexHeight = 64;
+	int nTexWidth = 64;
+	int nTexHeight = 64;
 
 	def::Sprite* sprGun = nullptr;
 	def::GFX* gfxGun = nullptr;
 
 	def::Animated* anim = nullptr; // for animations
 
-	uint32_t id_gun;
+	enum TEXTURES
+	{
+		BLUESTONE,
+		COLORSTONE,
+		EAGLE,
+		GREYSTONE,
+		MOSSY,
+		PILLAR,
+		PURPLESTONE,
+		REDBRICK,
+		WOOD,
+		BARREL
+	};
+
+	uint32_t nGunId;
 
 	bool bShooting = false;
 
 	def::vi2d vFilePos = def::vi2d(0, 0);
 	def::vi2d vFileSize = def::vi2d(0, 0);
+
+	int nCrosshairWidth = 10;
+	int nCrosshairHeight = 10;
+
+	int nMapCellSize = 3;
+	
+	def::Pixel pCrosshairColor = def::MAGENTA;
+
+	struct sObject
+	{
+		float x;
+		float y;
+
+		TEXTURES id;
+	};
+
+	std::list<sObject> listObjects;
+
+	float* fDepthBuffer = nullptr;
 
 protected:
 	bool OnUserCreate() override
@@ -98,14 +117,22 @@ protected:
 		sMap += "7...............................";
 		sMap += "777777..................77777777";
 
-		sprWall = new def::Sprite("gfx/tileset.png");
+		sprTiles = new def::Sprite("gfx/tileset.png");
 
 		sprGun = new def::Sprite("gun.png");
 		gfxGun = new def::GFX(sprGun, GetRenderer());
 
 		anim = new def::Animated(gfxGun);
 
-		id_gun = anim->AddAnimation(def::vi2d(0, 0).ref(), def::vi2d(128, 128).ref(), 6);
+		nGunId = anim->AddAnimation(def::vi2d(0, 0).ref(), def::vi2d(128, 128).ref(), 6);
+
+		listObjects = {
+			{ 8.5f, 8.5f, BARREL },
+			{ 7.5f, 7.5f, BARREL },
+			{ 10.0f, 3.0f, BARREL }
+		};
+
+		fDepthBuffer = new float[GetScreenWidth()];
 
 		return true;
 	}
@@ -114,17 +141,12 @@ protected:
 	{
 		Clear(def::BLACK);
 
-		int h = GetScreenHeight();
-
 		for (int x = 0; x < GetScreenWidth(); x++)
 		{
 			float fCameraX = 2.0f * x / (float)GetScreenWidth() - 1.0f;
-
+			
 			float fRayDirX = fDirX + fPlaneX * fCameraX;
 			float fRayDirY = fDirY + fPlaneY * fCameraX;
-
-			/*float fDistanceX = sqrtf(1.0f + (fRayDirY / fRayDirX) * (fRayDirY / fRayDirX));
-			float fDistanceY = sqrtf(1.0f + (fRayDirX / fRayDirY) * (fRayDirX / fRayDirY));*/
 
 			float fDistanceX = fabs(1.0f / fRayDirX);
 			float fDistanceY = fabs(1.0f / fRayDirY);
@@ -142,7 +164,7 @@ protected:
 			int nMapX = (int)fPlayerX;
 			int nMapY = (int)fPlayerY;
 
-			float fPerpWallDistance;
+			float fDistanceToWall;
 
 			if (fRayDirX < 0.0f)
 			{
@@ -184,7 +206,10 @@ protected:
 				}
 
 				if (nMapY < 0 || nMapY >= nMapHeight || nMapX < 0 || nMapX >= nMapWidth)
+				{
+					fDistanceToWall = fDepth;
 					bNoWall = true;
+				}
 
 				if (!bNoWall && std::isdigit(sMap[nMapY * nMapWidth + nMapX]))
 				{
@@ -194,90 +219,140 @@ protected:
 			}
 
 			if (nSide == 0)
-				fPerpWallDistance = fFromCurrentDistX - fDistanceX;
+				fDistanceToWall = fFromCurrentDistX - fDistanceX;
 			else
-				fPerpWallDistance = fFromCurrentDistY - fDistanceY;
-			
-			int nLineHeight = int((float)h / fPerpWallDistance) * 2; // change '2' to something and see what happens
+				fDistanceToWall = fFromCurrentDistY - fDistanceY;
 
-			int nCeiling = float(h / 2) - h / (fPerpWallDistance);
-			int nFloor = h - nCeiling;
+			int nLineHeight = int((float)GetScreenHeight() / fDistanceToWall) * 2;
+
+			int nCeiling = -nLineHeight / 2 + GetScreenHeight() / 2;
+			int nFloor = nLineHeight / 2 + GetScreenHeight() / 2;
+
+			if (nCeiling < 0)
+				nCeiling = 0;
+
+			if (nFloor > GetScreenHeight())
+				nFloor = GetScreenHeight();
 
 			float fTestPoint;
 
 			if (nSide == 0)
-				fTestPoint = fPlayerY + fRayDirY * fPerpWallDistance;
+				fTestPoint = fPlayerY + fRayDirY * fDistanceToWall;
 			else
-				fTestPoint = fPlayerX + fRayDirX * fPerpWallDistance;
+				fTestPoint = fPlayerX + fRayDirX * fDistanceToWall;
 
 			fTestPoint -= floorf(fTestPoint);
 
-			int nTexX = int(fTestPoint * 64.0f);
+			int nTexX = int(fTestPoint * (float)nTexWidth);
 
 			if ((nSide == 0 && fRayDirX > 0.0f) || (nSide == 1 && fRayDirY < 0.0f))
 				nTexX = nTexWidth - nTexX - 1;
 
 			float fTexStep = (float)nTexHeight / (float)nLineHeight;
-			float fTexPos = float(nFloor - h / 2 + nLineHeight / 2) * fTexStep;
+			float fTexPos = float(nCeiling - GetScreenHeight() / 2 + nLineHeight / 2) * fTexStep;
 
-			for (int y = 0; y < h; y++)
+			for (int y = 0; y < GetScreenHeight(); y++)
 			{
 				if (y <= nCeiling) // sky
 					Draw(x, y, def::BLACK);
 				else if (y > nCeiling && y <= nFloor && !bNoWall) // wall
 				{
-					if (fPerpWallDistance < fDepth && nTexId != -1)
+					if (fDistanceToWall < fDepth && nTexId != -1)
 					{
 						int nTexY = (int)fTexPos & (nTexHeight - 1);
 						fTexPos += fTexStep;
 
-						def::Pixel p = sprWall->GetPixel(nTexId * nTexWidth + nTexX, nTexY);
-
-						if (nTexId == 3)
-							std::cout << nTexId << '\n';
-
-						if (nSide == 1)
+						def::Pixel pWallPixel = sprTiles->GetPixel(nTexId * nTexWidth + nTexX, nTexY);
+						
+						if (fDistanceToWall > 2.0f)
 						{
-							p.r = (p.r >> 1) & 8355711;
-							p.g = (p.g >> 1) & 8355711;
-							p.b = (p.b >> 1) & 8355711;
+							pWallPixel.r = uint8_t((float)pWallPixel.r / fDistanceToWall * 2.0f);
+							pWallPixel.g = uint8_t((float)pWallPixel.g / fDistanceToWall * 2.0f);
+							pWallPixel.b = uint8_t((float)pWallPixel.b / fDistanceToWall * 2.0f);
 						}
 
-						Draw(x, y, p);
+						Draw(x, y, pWallPixel);
 					}
 				}
 				else
 				{
-					def::Pixel pFloorPixel;
+					float b = 1.0f - ((y - float(GetScreenHeight() / 2)) / (float(GetScreenHeight() / 2)));
 
-					float b = 1.0f - ((y - float(h / 2)) / (float(h / 2)));
-					if (b < 0.25f)		pFloorPixel = def::CYAN;
-					else if (b < 0.5f)	pFloorPixel = def::DARK_CYAN;
-					else if (b < 0.75f)	pFloorPixel = def::BLUE;
-					else if (b < 0.9f)	pFloorPixel = def::DARK_BLUE;
-					else				pFloorPixel = def::BLACK;
+					if (b < 0.9f) // floor
+					{
+						def::Pixel pFloorPixel = def::CYAN;
 
-					Draw(x, y, pFloorPixel);
+						if (fDistanceToWall > 2.0f)
+						{
+							pFloorPixel.r = uint8_t((float)pFloorPixel.r / fDistanceToWall * 2.0f);
+							pFloorPixel.g = uint8_t((float)pFloorPixel.g / fDistanceToWall * 2.0f);
+							pFloorPixel.b = uint8_t((float)pFloorPixel.b / fDistanceToWall * 2.0f);
+						}
+
+						Draw(x, y, pFloorPixel);
+					}
 				}
 			}
+
+			fDepthBuffer[x] = fDistanceToWall;
 		}
 
-		int nCellSize = 3;
+		for (auto& o : listObjects)
+		{
+			float fObjDirX = o.x - fPlayerX;
+			float fObjDirY = o.y - fPlayerY;
+
+			for (int ox = (int)o.x; ox < (int)o.x + nTexWidth; ox++)
+			{
+				float fCameraX = 2.0f * fDepthBuffer[ox] / (float)GetScreenWidth() - 1.0f;
+
+				float fEyeX = fDirX + fPlaneX * fCameraX;
+				float fEyeY = fDirY + fPlaneY * fCameraX;
+				
+				float fDistanceFromPlayer = sqrtf(fObjDirX * fObjDirX + fObjDirY * fObjDirY);
+
+				float fObjAngle = atan2f(fEyeY, fEyeX) - atan2f(fObjDirY, fObjDirX);
+
+				if (fObjAngle < -3.14159f)
+					fObjAngle += 2.0f * 3.14159f;
+
+				if (fObjAngle > 3.14159f)
+					fObjAngle -= 2.0f * 3.14159f;
+
+				float fObjCeiling = float(GetScreenHeight() / 2) - (float)GetScreenHeight() / fDistanceFromPlayer;
+				float fObjFloor = (float)GetScreenHeight() - fObjCeiling;
+				float fObjMiddle = 0.5f * (fObjAngle / (fPlaneY / 2.0f) + 0.5f) * (float)GetScreenWidth();
+
+				if (fabs(fObjAngle) < fPlaneY / 2.0f)
+				{
+					if (fDistanceFromPlayer >= 0.5f && fDistanceFromPlayer < fDepth)
+					{
+						for (int oy = (int)o.y; oy < (int)o.y + nTexHeight; oy++)
+						{
+							int nObjectColumn = int(fObjMiddle + (float)ox - nTexWidth / 2.0f);
+
+							if (nObjectColumn >= 0 && nObjectColumn < GetScreenWidth())
+								Draw(nObjectColumn, (int)fObjCeiling + oy, sprTiles->GetPixel(nTexWidth * o.id + ox, oy));
+						}
+					}
+				}
+			}		
+		}
 
 		for (int x = 0; x < nMapWidth; x++)
 			for (int y = 0; y < nMapHeight; y++)
 			{
 				if (sMap[y * nMapWidth + x] == '.')
-					FillRectangle(x * nCellSize, y * nCellSize, nCellSize, nCellSize, def::GREY);
+					FillRectangle(x * nMapCellSize, y * nMapCellSize, nMapCellSize, nMapCellSize, def::GREY);
 				else
-					FillRectangle(x* nCellSize, y* nCellSize, nCellSize, nCellSize, def::WHITE);
+					FillRectangle(x* nMapCellSize, y* nMapCellSize, nMapCellSize, nMapCellSize, def::WHITE);
 			}
 
-		FillRectangle((int)fPlayerX * nCellSize, (int)fPlayerY * nCellSize, nCellSize, nCellSize, def::YELLOW);
+		FillRectangle((int)fPlayerX * nMapCellSize, (int)fPlayerY * nMapCellSize, nMapCellSize, nMapCellSize, def::YELLOW);
 
 		if (bShooting)
 		{
-			bShooting = !anim->Animate(id_gun, vFilePos, vFileSize, 10.0f * fDeltaTime);
+			bShooting = !anim->Animate(nGunId, vFilePos, vFileSize, 10.0f * fDeltaTime);
 			
 			if (vFileSize == 0)
 				vFileSize = def::vi2d(128, 128);
@@ -286,6 +361,18 @@ protected:
 		}
 		else
 			DrawPartialGFX(GetScreenWidth() - 256, GetScreenHeight() - 256, 0, 0, 128, 128, gfxGun, 0.0f, 2.0f);
+
+		// Draw crosshair
+		
+		DrawLine(
+			GetScreenWidth() / 2 - nCrosshairWidth / 2, GetScreenHeight() / 2,
+			GetScreenWidth() / 2 + nCrosshairWidth / 2, GetScreenHeight() / 2
+		);
+
+		DrawLine(
+			GetScreenWidth() / 2, GetScreenHeight() / 2 - nCrosshairHeight / 2,
+			GetScreenWidth() / 2, GetScreenHeight() / 2 + nCrosshairHeight / 2
+		);
 
 		if (GetKey(def::Key::W).bHeld)
 		{
