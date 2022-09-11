@@ -73,6 +73,9 @@ private:
 	
 	def::Pixel pCrosshairColor = def::MAGENTA;
 
+	TEXTURES nFloorId = GREYSTONE;
+	TEXTURES nCeilingId = BLUESTONE;
+
 	struct sObject
 	{
 		float x;
@@ -153,7 +156,7 @@ protected:
 		for (int x = 0; x < GetScreenWidth(); x++)
 		{
 			float fCameraX = 2.0f * x / (float)GetScreenWidth() - 1.0f;
-			
+
 			float fRayDirX = fDirX + fPlaneX * fCameraX;
 			float fRayDirY = fDirY + fPlaneY * fCameraX;
 
@@ -244,74 +247,110 @@ protected:
 				nFloor = GetScreenHeight();
 
 			float fTestPoint;
+			float fTexStep;
+			float fTexPos;
 
-			if (nSide == 0)
-				fTestPoint = fPlayerY + fRayDirY * fDistanceToWall;
-			else
-				fTestPoint = fPlayerX + fRayDirX * fDistanceToWall;
+			int nTexX;
 
-			fTestPoint -= floorf(fTestPoint);
-
-			int nTexX = int(fTestPoint * (float)nTexWidth);
-
-			if ((nSide == 0 && fRayDirX > 0.0f) || (nSide == 1 && fRayDirY < 0.0f))
-				nTexX = nTexWidth - nTexX - 1;
-
-			float fTexStep = (float)nTexHeight / (float)nLineHeight;
-			float fTexPos = float(nCeiling - GetScreenHeight() / 2 + nLineHeight / 2) * fTexStep;
-
-			for (int y = 0; y < GetScreenHeight(); y++)
+			if (fDistanceToWall < fDepth)
 			{
-				if (y <= nCeiling) // sky
-					Draw(x, y, def::BLACK);
-				else if (y > nCeiling && y <= nFloor && !bNoWall) // wall
+				if (nSide == 0)
+					fTestPoint = fPlayerY + fRayDirY * fDistanceToWall;
+				else
+					fTestPoint = fPlayerX + fRayDirX * fDistanceToWall;
+
+				fTestPoint -= floorf(fTestPoint);
+
+				nTexX = int(fTestPoint * (float)nTexWidth);
+
+				if ((nSide == 0 && fRayDirX > 0.0f) || (nSide == 1 && fRayDirY < 0.0f))
+					nTexX = nTexWidth - nTexX - 1;
+
+				fTexStep = (float)nTexHeight / (float)nLineHeight;
+				fTexPos = float(nCeiling - GetScreenHeight() / 2 + nLineHeight / 2) * fTexStep;
+
+				for (int y = 0; y < GetScreenHeight(); y++)
 				{
-					if (fDistanceToWall < fDepth && nTexId != -1)
+					if (y <= nCeiling) // sky
+						Draw(x, y, def::BLACK);
+					else if (y > nCeiling && y <= nFloor && !bNoWall) // wall
 					{
-						int nTexY = (int)fTexPos & (nTexHeight - 1);
-						fTexPos += fTexStep;
-
-						def::Pixel pWallPixel = sprTiles->GetPixel(nTexId * nTexWidth + nTexX, nTexY);
-						
-						if (fDistanceToWall > 2.0f)
+						if (nTexId != -1)
 						{
-							pWallPixel.r = uint8_t((float)pWallPixel.r / fDistanceToWall * 2.0f);
-							pWallPixel.g = uint8_t((float)pWallPixel.g / fDistanceToWall * 2.0f);
-							pWallPixel.b = uint8_t((float)pWallPixel.b / fDistanceToWall * 2.0f);
-						}
+							int nTexY = (int)fTexPos & (nTexHeight - 1);
+							fTexPos += fTexStep;
 
-						Draw(x, y, pWallPixel);
+							def::Pixel pWallPixel = sprTiles->GetPixel(nTexId * nTexWidth + nTexX, nTexY);
+
+							if (fDistanceToWall > 2.0f)
+							{
+								pWallPixel.r = uint8_t((float)pWallPixel.r / fDistanceToWall * 2.0f);
+								pWallPixel.g = uint8_t((float)pWallPixel.g / fDistanceToWall * 2.0f);
+								pWallPixel.b = uint8_t((float)pWallPixel.b / fDistanceToWall * 2.0f);
+							}
+
+							Draw(x, y, pWallPixel);
+						}
 					}
+					//else
+					//{
+
+					//	float b = 1.0f - ((y - float(GetScreenHeight() / 2)) / (float(GetScreenHeight() / 2)));
+
+					//	if (b < 0.9f) // floor
+					//	{
+					//		
+					//	}
+					//}
+				}
+
+				float fFloorXWall;
+				float fFloorYWall;
+
+				if (nSide == 0 && fRayDirX > 0.0f)
+				{
+					fFloorXWall = (float)nMapX;
+					fFloorYWall = (float)nMapY + fTestPoint;
+				}
+				else if (nSide == 0 && fRayDirX < 0.0f)
+				{
+					fFloorXWall = (float)nMapX + 1.0f;
+					fFloorYWall = (float)nMapY + fTestPoint;
+				}
+				else if (nSide == 1 && fRayDirY > 0)
+				{
+					fFloorXWall = (float)nMapX + fTestPoint;
+					fFloorYWall = nMapY;
 				}
 				else
 				{
-					float b = 1.0f - ((y - float(GetScreenHeight() / 2)) / (float(GetScreenHeight() / 2)));
+					fFloorXWall = (float)nMapX + fTestPoint;
+					fFloorYWall = (float)nMapY + 1.0f;
+				}
 
-					if (b < 0.9f) // floor
-					{
-						def::Pixel pFloorPixel = def::CYAN;
+				float fDistancePlayer = 0.0f;
 
-						if (fDistanceToWall > 2.0f)
-						{
-							pFloorPixel.r = uint8_t((float)pFloorPixel.r / fDistanceToWall * 2.0f);
-							pFloorPixel.g = uint8_t((float)pFloorPixel.g / fDistanceToWall * 2.0f);
-							pFloorPixel.b = uint8_t((float)pFloorPixel.b / fDistanceToWall * 2.0f);
-						}
+				if (nFloor < 0) nFloor = GetScreenHeight() - 1;
 
-						Draw(x, y, pFloorPixel);
-					}
+				for (int y = nFloor + 1; y < GetScreenHeight(); y++)
+				{
+					float fCurrentDist = GetScreenHeight() / (2.0 * y - GetScreenHeight());
+
+					float fWeight = (fCurrentDist - fDistancePlayer) / (fDistanceToWall - fDistancePlayer);
+					
+					float fCurrentFloorX = fWeight * fFloorXWall + (1.0f - fWeight) * fPlayerX;
+					float fCurrentFloorY = fWeight * fFloorYWall + (1.0f - fWeight) * fPlayerY;
+
+					int nFloorTexX = int(fCurrentFloorX * (float)nTexWidth) % nTexWidth;
+					int nFloorTexY = int(fCurrentFloorY * (float)nTexHeight) % nTexHeight;
+
+					Draw(x, y, sprTiles->GetPixel(nFloorId * nTexWidth + nFloorTexX, nFloorTexY));
+					Draw(x, GetScreenHeight() - y, sprTiles->GetPixel(nCeilingId * nTexWidth + nFloorTexX, nFloorTexY));
 				}
 			}
 
 			fDepthBuffer[x] = fDistanceToWall;
 		}
-
-		std::sort(vecObjects.begin(), vecObjects.end(), [&](sObject& o1, sObject& o2) {
-			float d1 = ((fPlayerX - o1.x) * (fPlayerX - o1.x) + (fPlayerY - o1.y) * (fPlayerY - o1.y));
-			float d2 = ((fPlayerX - o2.x) * (fPlayerX - o2.x) + (fPlayerY - o2.y) * (fPlayerY - o2.y));
-
-			return d1 > d2;
-		});
 
 		for (auto& o : vecObjects)
 		{
@@ -374,8 +413,6 @@ protected:
 						if (pObjectPixel.a == 255)
 							Draw(x, y, pObjectPixel);
 					}
-
-					fDepthBuffer[x] = fTransformY;
 				}
 			}
 		}
@@ -477,8 +514,8 @@ protected:
 			o.x = fPlayerX;
 			o.y = fPlayerY;
 
-			o.vx = 1.0f; // TODO
-			o.vy = 1.0f; // TODO
+			o.vx = fDirX;
+			o.vy = fDirY;
 
 			vecObjects.push_back(o);
 		}
