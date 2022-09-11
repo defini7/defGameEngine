@@ -59,7 +59,7 @@ namespace def
 		def::GFX* m_gfxData;
 
 	public:
-		uint32_t AddAnimation(def::vi2d& vPos, def::vi2d& vSize, uint32_t nFrames)
+		uint32_t AddAnimation(def::vi2d vPos, def::vi2d vSize, uint32_t nFrames)
 		{
 			sAnimation a;
 			a.vPos = vPos;
