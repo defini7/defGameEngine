@@ -41,7 +41,7 @@ private:
 
 	def::Sprite* sprGun = nullptr;
 	def::GFX* gfxGun = nullptr;
-
+	
 	def::Animated* anim = nullptr; // for animations
 
 	enum TEXTURES
@@ -74,7 +74,7 @@ private:
 	def::Pixel pCrosshairColor = def::MAGENTA;
 
 	TEXTURES nFloorId = GREYSTONE;
-	TEXTURES nCeilingId = BLUESTONE;
+	TEXTURES nCeilingId = WOOD;
 
 	struct sObject
 	{
@@ -136,7 +136,7 @@ protected:
 
 		anim = new def::Animated(gfxGun);
 
-		nGunId = anim->AddAnimation(def::vi2d(0, 0).ref(), def::vi2d(128, 128).ref(), 6);
+		nGunId = anim->AddAnimation(def::vi2d(0, 0), def::vi2d(128, 128), 6);
 
 		vecObjects = {
 			{ 8.5f, 8.5f, 0.0f, 0.0f, BARREL },
@@ -252,100 +252,71 @@ protected:
 
 			int nTexX;
 
-			if (fDistanceToWall < fDepth)
+			if (nSide == 0)
+				fTestPoint = fPlayerY + fRayDirY * fDistanceToWall;
+			else
+				fTestPoint = fPlayerX + fRayDirX * fDistanceToWall;
+
+			fTestPoint -= floorf(fTestPoint);
+
+			nTexX = int(fTestPoint * (float)nTexWidth);
+
+			if ((nSide == 0 && fRayDirX > 0.0f) || (nSide == 1 && fRayDirY < 0.0f))
+				nTexX = nTexWidth - nTexX - 1;
+
+			fTexStep = (float)nTexHeight / (float)nLineHeight;
+			fTexPos = float(nCeiling - GetScreenHeight() / 2 + nLineHeight / 2) * fTexStep;
+
+			for (int y = 0; y < GetScreenHeight(); y++)
 			{
-				if (nSide == 0)
-					fTestPoint = fPlayerY + fRayDirY * fDistanceToWall;
-				else
-					fTestPoint = fPlayerX + fRayDirX * fDistanceToWall;
-
-				fTestPoint -= floorf(fTestPoint);
-
-				nTexX = int(fTestPoint * (float)nTexWidth);
-
-				if ((nSide == 0 && fRayDirX > 0.0f) || (nSide == 1 && fRayDirY < 0.0f))
-					nTexX = nTexWidth - nTexX - 1;
-
-				fTexStep = (float)nTexHeight / (float)nLineHeight;
-				fTexPos = float(nCeiling - GetScreenHeight() / 2 + nLineHeight / 2) * fTexStep;
-
-				for (int y = 0; y < GetScreenHeight(); y++)
+				if (y <= nCeiling) // sky and floor
 				{
-					if (y <= nCeiling) // sky
-						Draw(x, y, def::BLACK);
-					else if (y > nCeiling && y <= nFloor && !bNoWall) // wall
+					float fPlaneZ = float(GetScreenHeight() / 2) / float(GetScreenHeight() / 2 - y);
+
+					float fPlanePointX = fPlayerX + 2.0f * fRayDirX * fPlaneZ;
+					float fPlanePointY = fPlayerY + 2.0f * fRayDirY * fPlaneZ;
+						
+					float fPlaneSampleX = fPlanePointX - (float)(int)fPlanePointX;
+					float fPlaneSampleY = fPlanePointY - (float)(int)fPlanePointY;
+
+					int nTexX = std::min(int(fPlaneSampleX * (float)nTexWidth), nTexWidth);
+					int nTexY = std::min(int(fPlaneSampleY * (float)nTexHeight), nTexHeight);
+						
+					def::Pixel pCeilingPixel = sprTiles->GetPixel(nCeilingId * nTexWidth + nTexX, nTexY);
+					def::Pixel pFloorPixel = sprTiles->GetPixel(nFloorId * nTexWidth + nTexX, nTexY);
+						
+					if (fDistanceToWall > 2.0f)
 					{
-						if (nTexId != -1)
-						{
-							int nTexY = (int)fTexPos & (nTexHeight - 1);
-							fTexPos += fTexStep;
-
-							def::Pixel pWallPixel = sprTiles->GetPixel(nTexId * nTexWidth + nTexX, nTexY);
-
-							if (fDistanceToWall > 2.0f)
-							{
-								pWallPixel.r = uint8_t((float)pWallPixel.r / fDistanceToWall * 2.0f);
-								pWallPixel.g = uint8_t((float)pWallPixel.g / fDistanceToWall * 2.0f);
-								pWallPixel.b = uint8_t((float)pWallPixel.b / fDistanceToWall * 2.0f);
-							}
-
-							Draw(x, y, pWallPixel);
-						}
+						pCeilingPixel.r = uint8_t((float)pCeilingPixel.r / fDistanceToWall * 2.0f);
+						pCeilingPixel.g = uint8_t((float)pCeilingPixel.g / fDistanceToWall * 2.0f);
+						pCeilingPixel.b = uint8_t((float)pCeilingPixel.b / fDistanceToWall * 2.0f);
+						
+						pFloorPixel.r = uint8_t((float)pFloorPixel.r / fDistanceToWall * 2.0f);
+						pFloorPixel.g = uint8_t((float)pFloorPixel.g / fDistanceToWall * 2.0f);
+						pFloorPixel.b = uint8_t((float)pFloorPixel.b / fDistanceToWall * 2.0f);
 					}
-					//else
-					//{
 
-					//	float b = 1.0f - ((y - float(GetScreenHeight() / 2)) / (float(GetScreenHeight() / 2)));
-
-					//	if (b < 0.9f) // floor
-					//	{
-					//		
-					//	}
-					//}
+					Draw(x, y, pCeilingPixel); // sky
+					Draw(x, GetScreenHeight() - y, pFloorPixel); // ceiling
 				}
-
-				float fFloorXWall;
-				float fFloorYWall;
-
-				if (nSide == 0 && fRayDirX > 0.0f)
+				else if (y > nCeiling && y <= nFloor && !bNoWall) // wall
 				{
-					fFloorXWall = (float)nMapX;
-					fFloorYWall = (float)nMapY + fTestPoint;
-				}
-				else if (nSide == 0 && fRayDirX < 0.0f)
-				{
-					fFloorXWall = (float)nMapX + 1.0f;
-					fFloorYWall = (float)nMapY + fTestPoint;
-				}
-				else if (nSide == 1 && fRayDirY > 0)
-				{
-					fFloorXWall = (float)nMapX + fTestPoint;
-					fFloorYWall = nMapY;
-				}
-				else
-				{
-					fFloorXWall = (float)nMapX + fTestPoint;
-					fFloorYWall = (float)nMapY + 1.0f;
-				}
+					if (fDistanceToWall < fDepth && nTexId != -1)
+					{
+						int nTexY = (int)fTexPos & (nTexHeight - 1);
+						fTexPos += fTexStep;
 
-				float fDistancePlayer = 0.0f;
+						def::Pixel pWallPixel = sprTiles->GetPixel(nTexId * nTexWidth + nTexX, nTexY);
 
-				if (nFloor < 0) nFloor = GetScreenHeight() - 1;
+						if (fDistanceToWall > 2.0f)
+						{
+							pWallPixel.r = uint8_t((float)pWallPixel.r / fDistanceToWall * 2.0f);
+							pWallPixel.g = uint8_t((float)pWallPixel.g / fDistanceToWall * 2.0f);
+							pWallPixel.b = uint8_t((float)pWallPixel.b / fDistanceToWall * 2.0f);
+						}
 
-				for (int y = nFloor + 1; y < GetScreenHeight(); y++)
-				{
-					float fCurrentDist = GetScreenHeight() / (2.0 * y - GetScreenHeight());
-
-					float fWeight = (fCurrentDist - fDistancePlayer) / (fDistanceToWall - fDistancePlayer);
-					
-					float fCurrentFloorX = fWeight * fFloorXWall + (1.0f - fWeight) * fPlayerX;
-					float fCurrentFloorY = fWeight * fFloorYWall + (1.0f - fWeight) * fPlayerY;
-
-					int nFloorTexX = int(fCurrentFloorX * (float)nTexWidth) % nTexWidth;
-					int nFloorTexY = int(fCurrentFloorY * (float)nTexHeight) % nTexHeight;
-
-					Draw(x, y, sprTiles->GetPixel(nFloorId * nTexWidth + nFloorTexX, nFloorTexY));
-					Draw(x, GetScreenHeight() - y, sprTiles->GetPixel(nCeilingId * nTexWidth + nFloorTexX, nFloorTexY));
+						Draw(x, y, pWallPixel);
+					}
 				}
 			}
 
@@ -357,7 +328,7 @@ protected:
 			o.x += o.vx * fDeltaTime;
 			o.y += o.vy * fDeltaTime;
 
-			if ((int)o.x < 0 || (int)o.y < 0 || (int)o.x >= nMapWidth || (int)o.y >= nMapHeight || sMap[(int)o.y * nMapWidth + (int)o.x] == '#')
+			if ((int)o.x < 0 || (int)o.y < 0 || (int)o.x >= nMapWidth || (int)o.y >= nMapHeight || std::isdigit(sMap[(int)o.y * nMapWidth + (int)o.x]))
 			{
 				o.bRemove = true;
 				continue;
@@ -369,7 +340,7 @@ protected:
 			float fInvDet = 1.0f / (fPlaneX * fDirY - fDirX * fPlaneY);
 
 			float fTransformX = fInvDet * (fDirY * fObjectX - fDirX * fObjectY);
-			float fTransformY = fInvDet * (-fPlaneY * fObjectX - fPlaneX * fObjectY);
+			float fTransformY = fInvDet * (-fPlaneY * fObjectX + fPlaneX * fObjectY);
 
 			float fAspectRatio = fTransformX / fTransformY;
 
@@ -412,6 +383,8 @@ protected:
 
 						if (pObjectPixel.a == 255)
 							Draw(x, y, pObjectPixel);
+
+						fDepthBuffer[x] = fTransformY;
 					}
 				}
 			}
@@ -436,14 +409,14 @@ protected:
 		if (bShooting)
 		{
 			bShooting = !anim->Animate(nGunId, vFilePos, vFileSize, 10.0f * fDeltaTime);
-			
-			if (vFileSize == 0)
-				vFileSize = def::vi2d(128, 128);
 
-			DrawPartialGFX(GetScreenWidth() - 256, GetScreenHeight() - 256, vFilePos.x, vFilePos.y, vFileSize.x, vFileSize.y, gfxGun, 0.0f, 2.0f);
+			if (vFileSize.x == 0 && vFileSize.y == 0)
+				vFileSize = def::vi2d(128, 128);
+			
+			DrawPartialGFX(float(GetScreenWidth() - 256), float(GetScreenHeight() - 256), vFilePos.x, vFilePos.y, vFileSize.x, vFileSize.y, gfxGun, 0.0f, 2.0f);
 		}
 		else
-			DrawPartialGFX(GetScreenWidth() - 256, GetScreenHeight() - 256, 0, 0, 128, 128, gfxGun, 0.0f, 2.0f);
+			DrawPartialGFX(float(GetScreenWidth() - 256), float(GetScreenHeight() - 256), 0.0f, 0.0f, 128.0f, 128.0f, gfxGun, 0.0f, 2.0f);
 
 		// Draw crosshair
 		
@@ -514,8 +487,8 @@ protected:
 			o.x = fPlayerX;
 			o.y = fPlayerY;
 
-			o.vx = fDirX;
-			o.vy = fDirY;
+			o.vx = sinf(fDirX);
+			o.vy = cosf(fDirY);
 
 			vecObjects.push_back(o);
 		}
