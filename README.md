@@ -10,7 +10,7 @@ defGameEngine - это игровой движок, доступный на Wind
 # Запуск
 
 1. Windows MinGW:
-- Указать путь на папку lib и папку include SDL2
+- Указать путь на папку *lib* и папку *include* SDL2
 - Создать файл Makefile и поместить туда следующий текст:
 ```
 OBJS = main.cpp
@@ -25,7 +25,7 @@ OBJ_NAME = out
 all: $(OBJS)
 	$(CC) -std=$(CC_VERSION) main.cpp $(INCLUDE_FLAGS) $(INCLUDE_TARGET) $(LINKER_FLAGS) $(LINKER_TARGET) -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -o main
 ```
-- Запустить команду mingw32-make
+- Запустить команду `mingw32-make`
 - Положить все .dll файлы рядом с исполняемым (.exe) файлом.
 
 2. Windows MSVC:
