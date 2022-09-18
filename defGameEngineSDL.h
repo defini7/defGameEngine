@@ -31,7 +31,7 @@
 #pragma region sample
 /**
 * Example:
-	#include "defGameEngine.h"
+	#include "defGameEngineSDL.h"
 
 	class Sample : public def::GameEngine
 	{
