@@ -16,7 +16,7 @@ Linux:
 
 Для всех платформ:
 
-- Скачать файл [defGameEngine.h](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.h).
+- Скачать файл [defGameEngine.h](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngineSDL.h).
 
 # Запуск
 
