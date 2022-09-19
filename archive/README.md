@@ -26,7 +26,7 @@ Linux:
 ```
 OBJS = main.cpp
 CC = g++
-CC_VERSION = c++17
+CC_VERSION = c++20
 LINKER_FLAGS = -L
 LINKER_TARGET = полный путь к lib
 INCLUDE_FLAGS = -I
