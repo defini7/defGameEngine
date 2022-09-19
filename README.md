@@ -1,6 +1,8 @@
 # defGameEngine
 defGameEngine - это игровой движок, доступный на Windows, Linux
 
+# SDL2
+
 # Установка
 
 - Скачать [SDL 2.0](https://github.com/libsdl-org/SDL/releases/tag/release-2.24.0).
@@ -46,6 +48,36 @@ all: $(OBJS)
 2) ```sudo apt-get install libsdl2-dev```,
 3) ```sudo apt-get install libsdl2-image-dev```,
 4) ```g++ -o main main.cpp -lSDL2main -lSDL2 -lSDL2_image```.
+
+# GLFW
+
+# Установка
+
+- Скачать [SDL 2.0](https://github.com/libsdl-org/SDL/releases/tag/release-2.24.0).
+- Скачать [SDL_Image 2.0](https://github.com/libsdl-org/SDL_image/releases).
+- Скачать файл [defGameEngine.h](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.h).
+
+# Запуск
+
+Используется C++20
+
+1. Windows MSVC:
+- На верхней панели нажать ``Проект`` -> ``Свойства: название проекта``.
+- В появившемся окне выбрать вкладку ``C++`` -> ``Общие``.
+- В поле ``Дополнительные каталоги включаемых библиотек`` вы должны вписать полный путь до папки ```include``` SDL2.
+- Далее выбрать вкладку ``Компоновщик`` -> ``Общие``.
+- В поле ``Дополнительные каталоги библиотек`` вы должны вписать полный путь до папки ``x86`` или до ``x64``, эти папки находятся в папке ``lib`` SDL2.
+- Далее в той же самой вкладке выбрать пункт ``Ввод``.
+- В поле ``Дополнительные зависимости`` вписать ```SDL2.lib; SDL2_image.lib; SDL2main.lib;``` к уже существующему там тексту.
+
+2. Linux G++:
+- Открыть терминал
+- В командной строке написать: 
+1) ```sudo apt-get install xorg libx11-dev libglu1-mesa-dev freeglut3-dev libglu1-mesa libgl1-mesa-glx libgl1-mesa-dev libglfw3 libxrandr-dev 
+	libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev libglew-dev libglfw3-dev```,
+2) ```g++ <source filename>.cpp -o <output filename> -std=c++20 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl
+	-lXinerama -lXcursor```,
+3) ```g++ <файл>.cpp -o <файл> -std=c++20 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor```,
 
 На этом все!
 
