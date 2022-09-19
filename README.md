@@ -1,60 +1,6 @@
 # defGameEngine
 defGameEngine - это игровой движок, доступный на Windows, Linux
 
-# SDL2
-
-# Установка
-
-Windows:
-
-- Скачать [SDL 2.0](https://github.com/libsdl-org/SDL/releases/tag/release-2.24.0).
-- Скачать [SDL_Image 2.0](https://github.com/libsdl-org/SDL_image/releases).
-
-Linux:
-
-- ```sudo apt-get install libsdl2-dev libsdl2-image-dev```
-
-Для всех платформ:
-
-- Скачать файл [defGameEngineSDL.h](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngineSDL.h).
-
-# Запуск
-
-Используется C++20
-
-1. Windows MinGW:
-- Указать путь на папку *lib* и папку *include* SDL2
-- Создать файл Makefile и поместить туда следующий текст:
-```
-OBJS = main.cpp
-CC = g++
-CC_VERSION = c++17
-LINKER_FLAGS = -L
-LINKER_TARGET = полный путь к lib
-INCLUDE_FLAGS = -I
-INCLUDE_TARGET = полный путь к include
-OBJ_NAME = out
-
-all: $(OBJS)
-	$(CC) -std=$(CC_VERSION) main.cpp $(INCLUDE_FLAGS) $(INCLUDE_TARGET) $(LINKER_FLAGS) $(LINKER_TARGET) -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -o main
-```
-- Запустить команду `mingw32-make`
-- Положить все .dll файлы рядом с исполняемым (.exe) файлом.
-
-2. Windows MSVC:
-- На верхней панели нажать ``Проект`` -> ``Свойства: название проекта``.
-- В появившемся окне выбрать вкладку ``C++`` -> ``Общие``.
-- В поле ``Дополнительные каталоги включаемых библиотек`` вы должны вписать полный путь до папки ```include```.
-- Далее выбрать вкладку ``Компоновщик`` -> ``Общие``.
-- В поле ``Дополнительные каталоги библиотек`` вы должны вписать полный путь до папки ``x86`` или до ``x64``, эти папки находятся в папке ``lib``.
-
-3. Linux G++:
-- Открыть терминал
-- В командной строке написать: 
-	```g++ -o main main.cpp -lSDL2main -lSDL2 -lSDL2_image```.
-
-# GLFW
-
 # Установка
 
 Windows:
