@@ -96,6 +96,12 @@
 #include <Windows.h>
 #endif
 
+#if defined(__WIN32__) && !defined(__MINGW32__)
+#pragma comment(lib, "SDL2.lib")
+#pragma comment(lib, "SDL2_image.lib")
+#pragma comment(lib, "SDL2main.lib")
+#endif
+
 #pragma endregion
 
 #if defined(SDL_MAIN_NEEDED) || !defined(SDL_MAIN_AVAILABLE)
