@@ -5,7 +5,7 @@ defGameEngine - это игровой движок, доступный на Wind
 
 Windows:
 
-- Скачать [GLFW](https://github.com/libsdl-org/SDL/releases/tag/release-2.24.0).
+- Скачать [GLFW](https://www.glfw.org/download.html).
 
 Linux:
 - ```sudo apt-get install xorg libx11-dev libglu1-mesa-dev freeglut3-dev libglu1-mesa libgl1-mesa-glx libgl1-mesa-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev libglew-dev libglfw3-dev```
