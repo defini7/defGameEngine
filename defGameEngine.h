@@ -104,6 +104,13 @@
 
 namespace def
 {
+	enum WindowState
+	{
+		WS_NONE,
+		WS_MAXIMIZED,
+		WS_FOCUSED
+	};
+
 	namespace Key
 	{
 		constexpr unsigned int SPACE = 32;
@@ -368,6 +375,11 @@ namespace def
 		{
 			ok = bOk;
 			info = sInfo;
+		}
+
+		operator bool()
+		{
+			return ok;
 		}
 
 		bool ok;
@@ -701,6 +713,8 @@ namespace def
 		GameEngine()
 		{
 			m_sAppName = "Undefined";
+
+			m_bCustomIcon = false;
 		}
 
 		virtual ~GameEngine()
@@ -729,6 +743,8 @@ namespace def
 		bool m_bFullScreen;
 		bool m_bVSync;
 
+		bool m_bCustomIcon;
+
 		KeyState m_ksKeys[512];
 		KeyState m_ksMouse[5];
 
@@ -745,6 +761,7 @@ namespace def
 
 		float m_fDeltaTime;
 
+		Sprite* m_sprIcon;
 		Sprite* m_sprFont;
 
 	public:
@@ -807,18 +824,44 @@ namespace def
 			glEnable(GL_TEXTURE_2D);
 			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-			ConstructFontSprite();			
+			if (m_bVSync)
+				glfwSwapInterval(1);
+
+			ConstructFontSprite();	
+
+			if (m_bCustomIcon)
+			{
+				ConstructIconSprite();
+				ApplyIcon();
+			}
 
 			return rcode(true);
 		}
 
-		void Start()
+		void Run()
 		{
 			m_bAppRunning = true;
 			AppThread();
 		}
 
 	private:
+		void ConstructIconSprite()
+		{
+			m_sprIcon = new def::Sprite(m_sIconFileName);
+		}
+
+		void ApplyIcon()
+		{
+			GLFWimage img[1];
+
+			img[0].width = m_sprIcon->GetWidth();
+			img[0].height = m_sprIcon->GetHeight();
+
+			img[0].pixels = m_sprIcon->GetPixelData();
+
+			glfwSetWindowIcon(m_glWindow, 1, img);
+		}
+
 		void ConstructFontSprite()
 		{
 			std::string data =
@@ -959,9 +1002,6 @@ namespace def
 
 				glPopMatrix();
 
-				if (m_bVSync)
-					glfwSwapInterval(1);
-
 				glfwSwapBuffers(m_glWindow);
 				
 				glfwPollEvents();
@@ -1041,6 +1081,14 @@ namespace def
 
 		int32_t GetScreenWidth();
 		int32_t GetScreenHeight();
+
+		float GetWheelDelta();
+		bool FullScreenEnabled();
+		bool VSyncEnabled();
+
+		void SetIcon(const std::string& filename);
+
+		WindowState GetWindowState();
 
 	};
 
@@ -1720,9 +1768,46 @@ namespace def
 		return m_nScreenHeight;
 	}
 
+	float GameEngine::GetWheelDelta()
+	{
+		return m_fWheelDelta;
+	}
+
+	bool GameEngine::FullScreenEnabled()
+	{
+		return m_bFullScreen;
+	}
+
+	bool GameEngine::VSyncEnabled()
+	{
+		return m_bVSync;
+	}
+
+	void GameEngine::SetIcon(const std::string& filename)
+	{
+		m_sIconFileName = filename;
+		m_bCustomIcon = true;
+	}
+
 	void GameEngine::SetTitle(const std::string& title)
 	{
 		m_sAppName = title;
+	}
+
+	WindowState GameEngine::GetWindowState()
+	{
+		bool bFocused = glfwGetWindowAttrib(m_glWindow, GLFW_FOCUSED);
+		bool bMaximized = glfwGetWindowAttrib(m_glWindow, GLFW_MAXIMIZED);
+
+		int f = WS_NONE;
+
+		if (bFocused)
+			f |= WS_FOCUSED;
+
+		if (bMaximized)
+			f |= WS_MAXIMIZED;
+
+		return static_cast<WindowState>(f);
 	}
 
 	template<typename T>
