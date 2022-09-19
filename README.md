@@ -82,8 +82,7 @@ Linux:
 2. Linux G++:
 - Открыть терминал
 - В командной строке написать: 
-1) ```g++ <source filename>.cpp -o <output filename> -std=c++20 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl
-	-lXinerama -lXcursor```,
+1) ```g++ <source filename>.cpp -o <output filename> -std=c++20 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor```,
 2) ```g++ <файл>.cpp -o <файл> -std=c++20 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor```,
 
 На этом все!
