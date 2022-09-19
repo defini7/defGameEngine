@@ -300,14 +300,14 @@ namespace def
 			return v1;
 		}
 
-		friend bool operator<(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x < v.x && v1.y < v.y; }
+		friend bool operator<(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x < v.x&& v1.y < v.y; }
 		friend bool operator>(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x > v.x && v1.y > v.y; }
 		friend bool operator<=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x <= v.x && v1.y <= v.y; }
 		friend bool operator>=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x >= v.x && v1.y >= v.y; }
 		friend bool operator==(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x == v.x && v1.y == v.y; }
 		friend bool operator!=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x != v.x || v1.y != v.y; }
 
-		friend bool operator<(const vec2d_basic<T> v1, const T v) { return v1.x < v && v1.y < v; }
+		friend bool operator<(const vec2d_basic<T> v1, const T v) { return v1.x < v&& v1.y < v; }
 		friend bool operator>(const vec2d_basic<T> v1, const T v) { return v1.x > v && v1.y > v; }
 		friend bool operator<=(const vec2d_basic<T> v1, const T v) { return v1.x <= v && v1.y <= v; }
 		friend bool operator>=(const vec2d_basic<T> v1, const T v) { return v1.x >= v && v1.y >= v; }
@@ -351,10 +351,22 @@ namespace def
 	struct rcode
 	{
 		rcode() = default;
-		rcode(bool bOk, bool bInfo)
+
+		rcode(bool bOk)
 		{
 			ok = bOk;
-			info = bInfo;
+			info = "ok";
+		}
+
+		rcode(bool bOk, const std::string& sInfo)
+		{
+			ok = bOk;
+			info = sInfo;
+		}
+
+		operator bool()
+		{
+			return ok;
 		}
 
 		bool ok;
@@ -664,7 +676,7 @@ namespace def
 			SDL_LockSurface(m_sdlSurface);
 
 			unsigned char* pixels = (unsigned char*)m_sdlSurface->pixels;
-			
+
 			Pixel p;
 
 			p.r = pixels[m_sdlSurface->format->BytesPerPixel * (y * m_nWidth + x) + 0];
@@ -703,7 +715,7 @@ namespace def
 
 			m_sdlCoordRect = new SDL_Rect;
 			m_sdlFileRect = new SDL_Rect;
-			
+
 			SetCoordRect(0, 0, m_sprInstance->GetWidth(), m_sprInstance->GetHeight());
 			SetFileRect(0, 0, m_sprInstance->GetWidth(), m_sprInstance->GetHeight());
 
@@ -738,7 +750,7 @@ namespace def
 		{
 			m_sdlFileRect->x = x;
 			m_sdlFileRect->y = y;
-						 
+
 			m_sdlFileRect->w = w;
 			m_sdlFileRect->h = h;
 		}
@@ -747,7 +759,7 @@ namespace def
 		{
 			m_sdlCoordRect->x = x;
 			m_sdlCoordRect->y = y;
-						  
+
 			m_sdlCoordRect->w = w;
 			m_sdlCoordRect->h = h;
 		}
@@ -1984,4 +1996,3 @@ namespace def
 /***************************************
 * @ END DEF-GAME-ENGINE IMPLEMENTATION *
 ***************************************/
-
