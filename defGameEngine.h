@@ -556,7 +556,7 @@ namespace def
 				rc.info = "stb_image: file does not exist";
 				return rc;
 			}
-
+			
 			m_cData = stbi_load(m_sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 4);
 
 			if (!m_cData)
@@ -618,8 +618,8 @@ namespace def
 
 		Pixel Sample(float x, float y)
 		{
-			int32_t sx = std::min((int32_t)((x * (float)m_nWidth)), (int)m_nWidth - 1);
-			int32_t sy = std::min((int32_t)((y * (float)m_nHeight)), (int)m_nHeight - 1);
+			int32_t sx = std::min(int32_t(x * (float)m_nWidth), m_nWidth - 1);
+			int32_t sy = std::min(int32_t(y * (float)m_nHeight), m_nHeight - 1);
 			return GetPixel(sx, sy);
 		}
 	};
