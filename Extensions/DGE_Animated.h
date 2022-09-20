@@ -48,15 +48,10 @@ namespace def
 	class Animated
 	{
 	public:
-		Animated(def::GFX* gfx)
-		{
-			m_gfxData = gfx;
-		}
+		Animated() = default;
 
 	private:
 		std::vector<sAnimation> m_vecAnimations;
-
-		def::GFX* m_gfxData;
 
 	public:
 		uint32_t AddAnimation(def::vi2d vPos, def::vi2d vSize, uint32_t nFrames)
