@@ -499,39 +499,6 @@ namespace def
 		return (float)b / 255.0f;
 	}
 
-	/**********************************
-	* @ GRAPHIC STRUCT IMPLEMENTATION *
-	**********************************/
-
-	struct Graphic
-	{
-		Graphic() = default;
-
-		Graphic(const std::string& filename)
-		{
-			Load(filename);
-		}
-
-		~Graphic()
-		{
-			delete tex;
-			delete spr;
-		}
-
-		def::Texture* tex;
-		def::Sprite* spr;
-
-		void Load(const std::string& filename)
-		{
-			spr = new def::Sprite(filename);
-			tex = new def::Texture(spr);
-		}
-	};
-
-	/**************************************
-	* @ END GRAPHIC STRUCT IMPLEMENTATION *
-	**************************************/
-
 
 	/********************************
 	* @ SPRITE CLASS IMPLEMENTATION *
@@ -757,6 +724,40 @@ namespace def
 	/*************************************
 	* @ END TEXTURE CLASS IMPLEMENTATION *
 	*************************************/
+
+
+	/**********************************
+	* @ GRAPHIC STRUCT IMPLEMENTATION *
+	**********************************/
+
+	struct Graphic
+	{
+		Graphic() = default;
+
+		Graphic(const std::string& filename)
+		{
+			Load(filename);
+		}
+
+		~Graphic()
+		{
+			delete tex;
+			delete spr;
+		}
+
+		Texture* tex;
+		Sprite* spr;
+
+		void Load(const std::string& filename)
+		{
+			spr = new Sprite(filename);
+			tex = new Texture(spr);
+		}
+	};
+
+	/**************************************
+	* @ END GRAPHIC STRUCT IMPLEMENTATION *
+	**************************************/
 
 
 	/******************************************
