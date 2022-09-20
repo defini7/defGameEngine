@@ -25,7 +25,7 @@ private:
 
 	def::Sprite* sprGun = nullptr;
 	def::Texture* gfxGun = nullptr;
-	
+
 	def::Animated* anim = nullptr; // for animations
 
 	enum TEXTURES
@@ -54,7 +54,7 @@ private:
 	int nCrosshairHeight = 10;
 
 	int nMapCellSize = 3;
-	
+
 	def::Pixel pCrosshairColor = def::WHITE;
 
 	TEXTURES nFloorId = GREYSTONE;
@@ -167,12 +167,12 @@ protected:
 			for (int y = 0; y < nMapHeight; y++)
 			{
 				if (sMap[y * nMapWidth + x] == '.')
-					FillRectangle(x * nMapCellSize, y * nMapCellSize, nMapCellSize, nMapCellSize, def::GREY);
+					Draw(x, y, def::GREY);
 				else
-					FillRectangle(x * nMapCellSize, y * nMapCellSize, nMapCellSize, nMapCellSize, def::WHITE);
+					Draw(x, y, def::WHITE);
 			}
 
-		FillRectangle((int)GetPlayerX() * nMapCellSize, (int)GetPlayerY() * nMapCellSize, nMapCellSize, nMapCellSize, def::YELLOW);
+		Draw((int)GetPlayerX(), (int)GetPlayerY(), def::YELLOW);
 
 		if (bShooting)
 		{
@@ -183,14 +183,14 @@ protected:
 
 			if (vFileSize.x == 0 && vFileSize.y == 0)
 				vFileSize = def::vi2d(128, 128);
-			
-			DrawPartialTexture(float(GetScreenWidth() - 256), float(GetScreenHeight() - 256), vFilePos.x, vFilePos.y, vFileSize.x, vFileSize.y, gfxGun, 0.0f, 2.0f);
+
+			DrawPartialTexture(GetScreenSize<int>() - 128, vFilePos, vFileSize, gfxGun);
 		}
 		else
-			DrawPartialTexture(float(GetScreenWidth() - 256), float(GetScreenHeight() - 256), 0.0f, 0.0f, 128.0f, 128.0f, gfxGun, 0.0f, 2.0f);
+			DrawPartialTexture(GetScreenSize<int>() - 128, def::vi2d(0, 0), def::vi2d(128, 128), gfxGun);
 
 		// Draw crosshair
-		
+
 		DrawLine(
 			GetScreenWidth() / 2 - nCrosshairWidth / 2, GetScreenHeight() / 2,
 			GetScreenWidth() / 2 + nCrosshairWidth / 2, GetScreenHeight() / 2,
@@ -206,14 +206,14 @@ protected:
 		if (GetMouse(0).bPressed)
 		{
 			bShooting = true;
-			
+
 			def::sObject o;
 
 			o.x = GetPlayerX();
 			o.y = GetPlayerY();
 
 			o.speed = 5.0f;
-			
+
 			o.vx = GetDirX();
 			o.vy = GetDirY();
 
@@ -231,7 +231,7 @@ int main()
 {
 	RayCasting demo;
 
-	if (demo.Construct(256, 240, 4, 4).ok)
+	if (demo.Construct(512, 320, 2, 2).ok)
 		demo.Run();
 
 	return 0;
