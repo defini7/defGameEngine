@@ -106,11 +106,11 @@ namespace def
 
 		float* m_fDepthBuffer = nullptr;
 
-		KeyCode m_kcForward;
-		KeyCode m_kcBack;
+		unsigned int m_kcForward;
+		unsigned int m_kcBack;
 		
-		KeyCode m_kcRotLeft;
-		KeyCode m_kcRotRight;
+		unsigned int m_kcRotLeft;
+		unsigned int m_kcRotRight;
 
 	public:
 
@@ -162,7 +162,7 @@ namespace def
 			return m_fDirY;
 		}
 
-		void SetKeys(KeyCode kcForward, KeyCode kcBack, KeyCode kcRotLeft, KeyCode kcRotRight)
+		void SetKeys(unsigned int kcForward, unsigned int kcBack, unsigned int kcRotLeft, unsigned int kcRotRight)
 		{
 			m_kcForward = kcForward;
 			m_kcBack = kcBack;
@@ -183,7 +183,7 @@ namespace def
 		virtual def::Pixel ApplyObjectPixel(uint32_t id, int tex_x, int tex_y) = 0;
 
 		virtual void DrawPixel(int x, int y, def::Pixel p) = 0;
-		virtual bool GetKeyState(KeyCode kc, State s) = 0;
+		virtual bool GetKeyState(unsigned int kc, State s) = 0;
 
 		void DoRayCasting()
 		{
