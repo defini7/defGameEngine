@@ -24,7 +24,7 @@ private:
 	int nTexHeight = 64;
 
 	def::Sprite* sprGun = nullptr;
-	def::GFX* gfxGun = nullptr;
+	def::Texture* gfxGun = nullptr;
 	
 	def::Animated* anim = nullptr; // for animations
 
@@ -86,7 +86,7 @@ protected:
 		Draw(x, y, p);
 	}
 
-	bool GetKeyState(def::KeyCode kc, def::State s) override
+	bool GetKeyState(unsigned int kc, def::State s) override
 	{
 		switch (s)
 		{
@@ -143,9 +143,9 @@ protected:
 		sprTiles = new def::Sprite("gfx/tileset.png");
 
 		sprGun = new def::Sprite("gfx/gun.png");
-		gfxGun = new def::GFX(sprGun, GetRenderer());
+		gfxGun = new def::Texture(sprGun);
 
-		anim = new def::Animated(gfxGun);
+		anim = new def::Animated();
 
 		nGunId = anim->AddAnimation(def::vi2d(0, 0), def::vi2d(128, 128), 6);
 
@@ -184,10 +184,10 @@ protected:
 			if (vFileSize.x == 0 && vFileSize.y == 0)
 				vFileSize = def::vi2d(128, 128);
 			
-			DrawPartialGFX(float(GetScreenWidth() - 256), float(GetScreenHeight() - 256), vFilePos.x, vFilePos.y, vFileSize.x, vFileSize.y, gfxGun, 0.0f, 2.0f);
+			DrawPartialTexture(float(GetScreenWidth() - 256), float(GetScreenHeight() - 256), vFilePos.x, vFilePos.y, vFileSize.x, vFileSize.y, gfxGun, 0.0f, 2.0f);
 		}
 		else
-			DrawPartialGFX(float(GetScreenWidth() - 256), float(GetScreenHeight() - 256), 0.0f, 0.0f, 128.0f, 128.0f, gfxGun, 0.0f, 2.0f);
+			DrawPartialTexture(float(GetScreenWidth() - 256), float(GetScreenHeight() - 256), 0.0f, 0.0f, 128.0f, 128.0f, gfxGun, 0.0f, 2.0f);
 
 		// Draw crosshair
 		
@@ -231,7 +231,7 @@ int main()
 {
 	RayCasting demo;
 
-	if (demo.Construct(800, 600).ok)
+	if (demo.Construct(256, 240, 4, 4).ok)
 		demo.Run();
 
 	return 0;
