@@ -499,6 +499,44 @@ namespace def
 		return (float)b / 255.0f;
 	}
 
+	/**********************************
+	* @ GRAPHIC STRUCT IMPLEMENTATION *
+	**********************************/
+
+	struct Graphic
+	{
+		Graphic() = default;
+
+		Graphic(const std::string& filename)
+		{
+			Load(filename);
+		}
+
+		~Graphic()
+		{
+			delete tex;
+			delete spr;
+		}
+
+		def::Texture* tex;
+		def::Sprite* spr;
+
+		void Load(const std::string& filename)
+		{
+			spr = new def::Sprite(filename);
+			tex = new def::Texture(spr);
+		}
+	};
+
+	/**************************************
+	* @ END GRAPHIC STRUCT IMPLEMENTATION *
+	**************************************/
+
+
+	/********************************
+	* @ SPRITE CLASS IMPLEMENTATION *
+	********************************/
+
 	class Sprite
 	{
 	public:
@@ -624,6 +662,15 @@ namespace def
 		}
 	};
 
+	/************************************
+	* @ END SPRITE CLASS IMPLEMENTATION *
+	************************************/
+
+
+	/*********************************
+	* @ TEXTURE CLASS IMPLEMENTATION *
+	*********************************/
+
 	class Texture
 	{
 	public:
@@ -706,6 +753,15 @@ namespace def
 			return m_fUVScaleY;
 		}
 	};
+
+	/*************************************
+	* @ END TEXTURE CLASS IMPLEMENTATION *
+	*************************************/
+
+
+	/******************************************
+	* @ MAIN GAME ENGINE CLASS IMPLEMENTATION *
+	******************************************/
 
 	class GameEngine
 	{
@@ -1913,5 +1969,9 @@ namespace def
 	{
 		return vec2d_basic<T>((T)m_nMouseX, (T)m_nMouseY);
 	}
+
+	/******************************************
+	* @ MAIN GAME ENGINE CLASS IMPLEMENTATION *
+	******************************************/
 
 }
