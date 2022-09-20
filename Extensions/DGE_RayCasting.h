@@ -100,6 +100,8 @@ namespace def
 		int m_nTexWidth = 0;
 		int m_nTexHeight = 0;
 
+		bool m_bLigthingEnabled = false;
+
 		std::string m_sMap;
 
 		std::vector<sObject> m_vecObjects;
@@ -108,7 +110,7 @@ namespace def
 
 		unsigned int m_kcForward;
 		unsigned int m_kcBack;
-		
+
 		unsigned int m_kcRotLeft;
 		unsigned int m_kcRotRight;
 
@@ -135,6 +137,11 @@ namespace def
 
 			m_nMapWidth = nMapWidth;
 			m_nMapHeight = nMapHeight;
+		}
+
+		void EnableLighting(bool enable = true)
+		{
+			m_bLigthingEnabled = enable;
 		}
 
 		void AddObject(sObject o)
@@ -314,16 +321,17 @@ namespace def
 						def::Pixel pCeilingPixel = ApplyWorldPixel(CEILING, nTexX, nTexY, nMapX, nMapY);
 						def::Pixel pFloorPixel = ApplyWorldPixel(FLOOR, nTexX, nTexY, nMapX, nMapY);
 
-						if (fDistanceToWall > 2.0f)
-						{
-							pCeilingPixel.r = uint8_t((float)pCeilingPixel.r / fDistanceToWall * 2.0f);
-							pCeilingPixel.g = uint8_t((float)pCeilingPixel.g / fDistanceToWall * 2.0f);
-							pCeilingPixel.b = uint8_t((float)pCeilingPixel.b / fDistanceToWall * 2.0f);
+						if (m_bLigthingEnabled)
+							if (fDistanceToWall > 2.0f)
+							{
+								pCeilingPixel.r = uint8_t((float)pCeilingPixel.r / fDistanceToWall * 2.0f);
+								pCeilingPixel.g = uint8_t((float)pCeilingPixel.g / fDistanceToWall * 2.0f);
+								pCeilingPixel.b = uint8_t((float)pCeilingPixel.b / fDistanceToWall * 2.0f);
 
-							pFloorPixel.r = uint8_t((float)pFloorPixel.r / fDistanceToWall * 2.0f);
-							pFloorPixel.g = uint8_t((float)pFloorPixel.g / fDistanceToWall * 2.0f);
-							pFloorPixel.b = uint8_t((float)pFloorPixel.b / fDistanceToWall * 2.0f);
-						}
+								pFloorPixel.r = uint8_t((float)pFloorPixel.r / fDistanceToWall * 2.0f);
+								pFloorPixel.g = uint8_t((float)pFloorPixel.g / fDistanceToWall * 2.0f);
+								pFloorPixel.b = uint8_t((float)pFloorPixel.b / fDistanceToWall * 2.0f);
+							}
 
 						DrawPixel(x, y, pCeilingPixel); // sky
 						DrawPixel(x, m_nScreenHeight - y, pFloorPixel); // ceiling
@@ -337,12 +345,13 @@ namespace def
 
 							def::Pixel pWallPixel = ApplyWorldPixel(WALL, nTexX, nTexY, nMapX, nMapY, true);
 
-							if (fDistanceToWall > 2.0f)
-							{
-								pWallPixel.r = uint8_t((float)pWallPixel.r / fDistanceToWall * 2.0f);
-								pWallPixel.g = uint8_t((float)pWallPixel.g / fDistanceToWall * 2.0f);
-								pWallPixel.b = uint8_t((float)pWallPixel.b / fDistanceToWall * 2.0f);
-							}
+							if (m_bLigthingEnabled)
+								if (fDistanceToWall > 2.0f)
+								{
+									pWallPixel.r = uint8_t((float)pWallPixel.r / fDistanceToWall * 2.0f);
+									pWallPixel.g = uint8_t((float)pWallPixel.g / fDistanceToWall * 2.0f);
+									pWallPixel.b = uint8_t((float)pWallPixel.b / fDistanceToWall * 2.0f);
+								}
 
 							DrawPixel(x, y, pWallPixel);
 						}
