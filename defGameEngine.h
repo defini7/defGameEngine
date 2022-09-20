@@ -624,10 +624,10 @@ namespace def
 		}
 	};
 
-	class GFX
+	class Texture
 	{
 	public:
-		GFX(Sprite* spr, bool clamp = false)
+		Texture(Sprite* spr, bool clamp = false)
 		{
 			m_sprInstance = spr;
 			
@@ -1051,12 +1051,12 @@ namespace def
 		void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* sprite);
 
 		template <typename T>
-		void DrawGFX(vec2d_basic<T> pos, GFX* gfx, vec2d_basic<float> scale);
-		void DrawGFX(int32_t x, int32_t y, GFX* gfx, float scale_x = 1.0f, float scale_y = 1.0f);
+		void DrawTexture(vec2d_basic<T> pos, Texture* Texture, vec2d_basic<float> scale);
+		void DrawTexture(int32_t x, int32_t y, Texture* Texture, float scale_x = 1.0f, float scale_y = 1.0f);
 
 		template <typename T>
-		void DrawPartialGFX(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, GFX* gfx, vec2d_basic<float> scale);
-		void DrawPartialGFX(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, GFX* gfx, float scale_x = 1.0f, float scale_y = 1.0f);
+		void DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* Texture, vec2d_basic<float> scale);
+		void DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* Texture, float scale_x = 1.0f, float scale_y = 1.0f);
 
 		template <typename T>
 		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vec2d_basic<T> pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
@@ -1558,7 +1558,12 @@ namespace def
 
 		for (int i = 0; i < sprite->GetWidth(); i++)
 			for (int j = 0; j < sprite->GetHeight(); j++)
-				Draw(x + i, y + j, sprite->GetPixel(i, j));
+			{
+				def::Pixel p = sprite->GetPixel(i, j);
+
+				if ((float)p.a / 255.0f > 0.1f)
+					Draw(x + i, y + j, p);
+			}
 	}
 
 	void def::GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* sprite)
@@ -1568,11 +1573,18 @@ namespace def
 
 		for (int i = fx, x1 = 0; i < fsx; i++, x1++)
 			for (int j = fy, y1 = 0; j < fsy; j++, y1++)
-				Draw(x + x1, y + y1, sprite->GetPixel(i, j));
+			{
+				def::Pixel p = sprite->GetPixel(i, j);
+
+				if ((float)p.a / 255.0f > 0.1f)
+					Draw(x + x1, y + y1, sprite->GetPixel(i, j));
+			}
 	}
 
-	void GameEngine::DrawGFX(int32_t x, int32_t y, GFX* gfx, float scale_x, float scale_y)
+	void GameEngine::DrawTexture(int32_t x, int32_t y, Texture* Texture, float scale_x, float scale_y)
 	{
+		glEnd();
+
 		glPushMatrix();
 			glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
 
@@ -1581,15 +1593,15 @@ namespace def
 			glColor3f(1.0f, 1.0f, 1.0f);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			
-			glBindTexture(GL_TEXTURE_2D, gfx->GetTexId());
+			glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
 
 			x /= scale_x;
 			y /= scale_y;
 			
 			glBegin(GL_QUADS);
-				glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + gfx->Sprite()->GetHeight());
-				glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + gfx->Sprite()->GetWidth(), y / scale_y + gfx->Sprite()->GetHeight());
-				glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + gfx->Sprite()->GetWidth(), y / scale_y);
+				glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + Texture->Sprite()->GetHeight());
+				glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + Texture->Sprite()->GetWidth(), y / scale_y + Texture->Sprite()->GetHeight());
+				glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + Texture->Sprite()->GetWidth(), y / scale_y);
 				glTexCoord2f(0.0f, 0.0f); glVertex2f(x / scale_x, y / scale_y);
 			glEnd();
 			
@@ -1600,9 +1612,11 @@ namespace def
 		glEnd();
 
 		glPopMatrix();
+
+		glBegin(GL_TRIANGLES);
 	}
 
-	void GameEngine::DrawPartialGFX(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, GFX* gfx, float scale_x, float scale_y)
+	void GameEngine::DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* Texture, float scale_x, float scale_y)
 	{
 		glEnd();
 
@@ -1615,10 +1629,10 @@ namespace def
 			glColor3f(1.0f, 1.0f, 1.0f);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			glBindTexture(GL_TEXTURE_2D, gfx->GetTexId());
+			glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
 
-			float us = gfx->GetUVScaleX();
-			float vs = gfx->GetUVScaleY();
+			float us = Texture->GetUVScaleX();
+			float vs = Texture->GetUVScaleY();
 
 			x /= scale_x;
 			y /= scale_y;
@@ -1871,15 +1885,15 @@ namespace def
 	}
 
 	template<typename T>
-	void GameEngine::DrawGFX(vec2d_basic<T> pos, GFX* gfx, vec2d_basic<float> scale)
+	void GameEngine::DrawTexture(vec2d_basic<T> pos, Texture* Texture, vec2d_basic<float> scale)
 	{
-		DrawGFX(pos.x, pos.y, gfx, scale.x, scale.y);
+		DrawTexture(pos.x, pos.y, Texture, scale.x, scale.y);
 	}
 
 	template<typename T>
-	void GameEngine::DrawPartialGFX(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, GFX* gfx, vec2d_basic<float> scale)
+	void GameEngine::DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* Texture, vec2d_basic<float> scale)
 	{
-		DrawPartialGFX(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, gfx, scale.x, scale.y);
+		DrawPartialTexture(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, Texture, scale.x, scale.y);
 	}
 
 	template<typename T>
