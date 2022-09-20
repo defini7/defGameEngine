@@ -235,6 +235,8 @@ namespace def
 		constexpr unsigned int MENU = 348;
 	}
 
+	const float PI = 2.0f * acosf(0.0f);
+
 	template <class T>
 	struct vec2d_basic
 	{
@@ -1072,15 +1074,15 @@ namespace def
 		virtual void Draw(int32_t x, int32_t y, const Pixel& p = WHITE);
 
 		template <typename T>
-		void DrawLine(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p = WHITE);
+		void DrawLine(vec2d_basic<T> pos1, vec2d_basic<T> pos2, const Pixel& p = WHITE);
 		void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
 		template <typename T>
-		void DrawTriangle(vec2d_basic<T> pos, vec2d_basic<T> size, vec2d_basic<T> pos3, const Pixel& p = WHITE);
+		void DrawTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p = WHITE);
 		void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
 
 		template <typename T>
-		void FillTriangle(vec2d_basic<T> pos, vec2d_basic<T> size, vec2d_basic<T> pos3, const Pixel& p = WHITE);
+		void FillTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p = WHITE);
 		void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
 
 		template <typename T>
@@ -1882,21 +1884,21 @@ namespace def
 	}
 
 	template<typename T>
-	void GameEngine::DrawLine(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p)
+	void GameEngine::DrawLine(vec2d_basic<T> pos1, vec2d_basic<T> pos2, const Pixel& p)
 	{
-		DrawLine(pos.x, pos.y, size.x, size.y, p);
+		DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, p);
 	}
 
 	template<typename T>
-	void GameEngine::DrawTriangle(vec2d_basic<T> pos, vec2d_basic<T> size, vec2d_basic<T> pos3, const Pixel& p)
+	void GameEngine::DrawTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p)
 	{
-		DrawTriangle(pos.x, pos.y, size.x, size.y, pos3.x, pos3.y, p);
+		DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
 	}
 
 	template<typename T>
-	void GameEngine::FillTriangle(vec2d_basic<T> pos, vec2d_basic<T> size, vec2d_basic<T> pos3, const Pixel& p)
+	void GameEngine::FillTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p)
 	{
-		FillTriangle(pos.x, pos.y, size.x, size.y, pos3.x, pos3.y, p);
+		FillTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
 	}
 
 	template<typename T>
