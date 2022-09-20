@@ -56,7 +56,7 @@
 			return true;
 		}
 	};
-	
+
 	int main()
 	{
 		Sample demo;
@@ -91,13 +91,13 @@
 #include "stb_image.h"
 
 #ifdef _WIN32
-	#pragma comment(lib, "glfw3.lib")
-	#pragma comment(lib, "opengl32.lib")
+#pragma comment(lib, "glfw3.lib")
+#pragma comment(lib, "opengl32.lib")
 #else
-	/*
-	* link libraries
-	* to your project
-	*/
+/*
+* link libraries
+* to your project
+*/
 #endif
 
 #pragma endregion
@@ -530,7 +530,7 @@ namespace def
 		{
 			stbi_image_free(m_cData);
 		}
-		
+
 	private:
 		int32_t m_nWidth;
 		int32_t m_nHeight;
@@ -545,7 +545,7 @@ namespace def
 		{
 			m_nWidth = w;
 			m_nHeight = h;
-			
+
 			m_nChannels = 4;
 
 			m_cData = new uint8_t[w * h * m_nChannels];
@@ -563,7 +563,7 @@ namespace def
 				rc.info = "stb_image: file does not exist";
 				return rc;
 			}
-			
+
 			m_cData = stbi_load(m_sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 4);
 
 			if (!m_cData)
@@ -646,7 +646,7 @@ namespace def
 		Texture(Sprite* spr, bool clamp = false)
 		{
 			m_sprInstance = spr;
-			
+
 			LoadTexture(m_sprInstance->GetPixelData());
 
 			m_fUVScaleX = 1.0f / (float)m_sprInstance->GetWidth();
@@ -809,7 +809,7 @@ namespace def
 
 		bool m_nKeyOldState[512];
 		bool m_nKeyNewState[512];
-		
+
 		bool m_nMouseOldState[5];
 		bool m_nMouseNewState[5];
 
@@ -886,7 +886,7 @@ namespace def
 			if (m_bVSync)
 				glfwSwapInterval(1);
 
-			ConstructFontSprite();	
+			ConstructFontSprite();
 
 			if (m_bCustomIcon)
 			{
@@ -1062,7 +1062,7 @@ namespace def
 				glPopMatrix();
 
 				glfwSwapBuffers(m_glWindow);
-				
+
 				glfwPollEvents();
 			}
 		}
@@ -1132,11 +1132,14 @@ namespace def
 
 		template <typename T>
 		vec2d_basic<T> GetMouse();
-		
+
 		int32_t GetMouseX();
 		int32_t GetMouseY();
 
 		void SetTitle(const std::string& title);
+
+		template <typename T>
+		vec2d_basic<T> GetScreenSize();
 
 		int32_t GetScreenWidth();
 		int32_t GetScreenHeight();
@@ -1277,7 +1280,7 @@ namespace def
 		if (y1 > y2) { std::swap(y1, y2); std::swap(x1, x2); }
 		if (y1 > y3) { std::swap(y1, y3); std::swap(x1, x3); }
 		if (y2 > y3) { std::swap(y2, y3); std::swap(x2, x3); }
-		
+
 		t1x = t2x = x1; y = y1;   // Starting points
 		dx1 = (int32_t)(x2 - x1);
 
@@ -1565,7 +1568,7 @@ namespace def
 			Draw(x - y1, y + x1, p);	// lower lower left
 			Draw(x + y1, y + x1, p);	// lower lower right
 			Draw(x + x1, y + y1, p);	// lower right right
-			
+
 			if (p1 < 0)
 			{
 				p1 += 4 * x1 + 6;
@@ -1645,25 +1648,28 @@ namespace def
 		glEnd();
 
 		glPushMatrix();
-			glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
+		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
 
-			glEnable(GL_BLEND);
+		glEnable(GL_BLEND);
 
-			glColor4ub(tint.r, tint.g, tint.b, tint.a);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			
-			glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
-			
-			glBegin(GL_QUADS);
-				glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + Texture->Spr()->GetHeight());
-				glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + Texture->Spr()->GetWidth(), y / scale_y + Texture->Spr()->GetHeight());
-				glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + Texture->Spr()->GetWidth(), y / scale_y);
-				glTexCoord2f(0.0f, 0.0f); glVertex2f(x / scale_x, y / scale_y);
-			glEnd();
-			
-			glBindTexture(GL_TEXTURE_2D, 0);
+		glColor4ub(tint.r, tint.g, tint.b, tint.a);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			glDisable(GL_BLEND);
+		glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
+
+		x /= scale_x;
+		y /= scale_y;
+
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + Texture->Spr()->GetHeight());
+		glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + Texture->Spr()->GetWidth(), y / scale_y + Texture->Spr()->GetHeight());
+		glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + Texture->Spr()->GetWidth(), y / scale_y);
+		glTexCoord2f(0.0f, 0.0f); glVertex2f(x / scale_x, y / scale_y);
+		glEnd();
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glDisable(GL_BLEND);
 
 		glEnd();
 
@@ -1677,31 +1683,34 @@ namespace def
 		glEnd();
 
 		glPushMatrix();
-		
-			glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
 
-			glEnable(GL_BLEND);
+		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
 
-			glColor4ub(tint.r, tint.g, tint.b, tint.a);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
 
-			glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
+		glColor4ub(tint.r, tint.g, tint.b, tint.a);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			float us = Texture->GetUVScaleX();
-			float vs = Texture->GetUVScaleY();
-		
-			glBegin(GL_QUADS);
-				glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
-				glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + fsy);
-				glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + fsx, y + fsy);
-				glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + fsx, y);
-			glEnd();
+		glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
 
-			glBindTexture(GL_TEXTURE_2D, 0);
-			
-			glDisable(GL_BLEND);
+		float us = Texture->GetUVScaleX();
+		float vs = Texture->GetUVScaleY();
 
-			glEnd();
+		x /= scale_x;
+		y /= scale_y;
+
+		glBegin(GL_QUADS);
+		glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
+		glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + fsy);
+		glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + fsx, y + fsy);
+		glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + fsx, y);
+		glEnd();
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glDisable(GL_BLEND);
+
+		glEnd();
 
 		glPopMatrix();
 
@@ -1961,6 +1970,12 @@ namespace def
 		DrawString(pos.x, pos.y, text, p, scale.x, scale.y);
 	}
 
+	template <typename T>
+	vec2d_basic<T> GameEngine::GetScreenSize()
+	{
+		return vec2d_basic<T>((T)m_nScreenWidth, (T)m_nScreenHeight);
+	}
+
 	template<typename T>
 	vec2d_basic<T> GameEngine::GetMouse()
 	{
@@ -1972,3 +1987,4 @@ namespace def
 	******************************************/
 
 }
+
