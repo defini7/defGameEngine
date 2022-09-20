@@ -1651,9 +1651,6 @@ namespace def
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			
 			glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
-
-			x /= scale_x;
-			y /= scale_y;
 			
 			glBegin(GL_QUADS);
 				glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + Texture->Sprite()->GetHeight());
@@ -1690,9 +1687,6 @@ namespace def
 
 			float us = Texture->GetUVScaleX();
 			float vs = Texture->GetUVScaleY();
-
-			x /= scale_x;
-			y /= scale_y;
 		
 			glBegin(GL_QUADS);
 				glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
