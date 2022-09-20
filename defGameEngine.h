@@ -1108,12 +1108,12 @@ namespace def
 		void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* sprite);
 
 		template <typename T>
-		void DrawTexture(vec2d_basic<T> pos, Texture* Texture, vec2d_basic<float> scale);
-		void DrawTexture(int32_t x, int32_t y, Texture* Texture, float scale_x = 1.0f, float scale_y = 1.0f);
+		void DrawTexture(vec2d_basic<T> pos, Texture* Texture, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
+		void DrawTexture(int32_t x, int32_t y, Texture* Texture, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
 		template <typename T>
-		void DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* Texture, vec2d_basic<float> scale);
-		void DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* Texture, float scale_x = 1.0f, float scale_y = 1.0f);
+		void DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* Texture, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
+		void DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* Texture, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
 		template <typename T>
 		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vec2d_basic<T> pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
@@ -1638,7 +1638,7 @@ namespace def
 			}
 	}
 
-	void GameEngine::DrawTexture(int32_t x, int32_t y, Texture* Texture, float scale_x, float scale_y)
+	void GameEngine::DrawTexture(int32_t x, int32_t y, Texture* Texture, float scale_x, float scale_y, def::Pixel tint)
 	{
 		glEnd();
 
@@ -1647,7 +1647,7 @@ namespace def
 
 			glEnable(GL_BLEND);
 
-			glColor3f(1.0f, 1.0f, 1.0f);
+			glColor4ub(tint.r, tint.g, tint.b, tint.a);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			
 			glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
@@ -1673,7 +1673,7 @@ namespace def
 		glBegin(GL_TRIANGLES);
 	}
 
-	void GameEngine::DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* Texture, float scale_x, float scale_y)
+	void GameEngine::DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* Texture, float scale_x, float scale_y, def::Pixel tint)
 	{
 		glEnd();
 
@@ -1683,7 +1683,7 @@ namespace def
 
 			glEnable(GL_BLEND);
 
-			glColor3f(1.0f, 1.0f, 1.0f);
+			glColor4ub(tint.r, tint.g, tint.b, tint.a);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
@@ -1942,15 +1942,15 @@ namespace def
 	}
 
 	template<typename T>
-	void GameEngine::DrawTexture(vec2d_basic<T> pos, Texture* Texture, vec2d_basic<float> scale)
+	void GameEngine::DrawTexture(vec2d_basic<T> pos, Texture* Texture, vec2d_basic<float> scale, def::Pixel tint)
 	{
-		DrawTexture(pos.x, pos.y, Texture, scale.x, scale.y);
+		DrawTexture(pos.x, pos.y, Texture, scale.x, scale.y, tint);
 	}
 
 	template<typename T>
-	void GameEngine::DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* Texture, vec2d_basic<float> scale)
+	void GameEngine::DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* Texture, vec2d_basic<float> scale, def::Pixel tint)
 	{
-		DrawPartialTexture(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, Texture, scale.x, scale.y);
+		DrawPartialTexture(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, Texture, scale.x, scale.y, tint);
 	}
 
 	template<typename T>
