@@ -707,7 +707,7 @@ namespace def
 			return m_nTexId;
 		}
 
-		Sprite* Sprite()
+		Sprite* Spr()
 		{
 			return m_sprInstance;
 		}
@@ -1655,9 +1655,9 @@ namespace def
 			glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
 			
 			glBegin(GL_QUADS);
-				glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + Texture->Sprite()->GetHeight());
-				glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + Texture->Sprite()->GetWidth(), y / scale_y + Texture->Sprite()->GetHeight());
-				glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + Texture->Sprite()->GetWidth(), y / scale_y);
+				glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + Texture->Spr()->GetHeight());
+				glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + Texture->Spr()->GetWidth(), y / scale_y + Texture->Spr()->GetHeight());
+				glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + Texture->Spr()->GetWidth(), y / scale_y);
 				glTexCoord2f(0.0f, 0.0f); glVertex2f(x / scale_x, y / scale_y);
 			glEnd();
 			
