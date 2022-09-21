@@ -169,6 +169,41 @@ namespace def
 			return m_fDirY;
 		}
 
+		std::vector<sObject>& GetObjects()
+		{
+			return m_vecObjects;
+		}
+
+		void SetObjects(std::vector<sObject>& objects)
+		{
+			m_vecObjects = objects;
+		}
+
+		void ManipulateObjects(const std::function<std::pair<sObject*, sObject*>(std::pair<sObject*, sObject*>)> func)
+		{
+			int i = 0;
+			int j = 0;
+
+			for (def::sObject& o1 : m_vecObjects)
+			{
+				for (def::sObject& o2 : m_vecObjects)
+				{
+					if (i != j)
+					{
+						std::pair<def::sObject*, def::sObject*> input = std::make_pair(&o1, &o2);
+						std::pair<def::sObject*, def::sObject*> output = func(input);
+
+						o1 = *output.first;
+						o2 = *output.second;
+					}
+
+					j++;
+				}
+				j = 0;
+				i++;
+			}
+		}
+
 		void SetKeys(unsigned int kcForward, unsigned int kcBack, unsigned int kcRotLeft, unsigned int kcRotRight)
 		{
 			m_kcForward = kcForward;
@@ -361,6 +396,11 @@ namespace def
 				m_fDepthBuffer[x] = fDistanceToWall;
 			}
 
+			auto itRemove = std::remove_if(m_vecObjects.begin(), m_vecObjects.end(), [](sObject& o) { return o.bRemove; });
+
+			if (itRemove != m_vecObjects.end())
+				m_vecObjects.erase(itRemove);
+
 			for (auto& o : m_vecObjects)
 			{
 				o.x += o.speed * o.vx * m_fDeltaTime;
@@ -427,11 +467,6 @@ namespace def
 					}
 				}
 			}
-
-			auto itRemove = std::remove_if(m_vecObjects.begin(), m_vecObjects.end(), [](sObject& o) { return o.bRemove; });
-
-			if (itRemove != m_vecObjects.end())
-				m_vecObjects.erase(itRemove);
 
 			if (GetKeyState(m_kcForward, HELD))
 			{
