@@ -1,4 +1,4 @@
-#include "defGameEngineSDL.h"
+#include "defGameEngine.h"
 #include "escapi.h"
 
 class WebCam : public def::GameEngine
@@ -106,7 +106,7 @@ protected:
 int main()
 {
 	WebCam demo;
-	def::rcode err = demo.Construct(800, 600);
+	def::rcode err = demo.Construct(256, 240, 4, 4);
 
 	if (err.ok)
 		demo.Run();
