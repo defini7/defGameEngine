@@ -605,12 +605,14 @@ namespace def
 			if (x < 0 || y < 0 || x >= m_nWidth || y >= m_nHeight)
 				return BLACK;
 
-			return Pixel(
+			const Pixel& p = Pixel(
 				m_cData[m_nChannels * (y * m_nWidth + x) + 0],
 				m_cData[m_nChannels * (y * m_nWidth + x) + 1],
 				m_cData[m_nChannels * (y * m_nWidth + x) + 2],
 				m_cData[m_nChannels * (y * m_nWidth + x) + 3]
 			);
+
+			return p;
 		}
 
 		uint8_t* GetPixelData()
@@ -1065,6 +1067,8 @@ namespace def
 
 				glfwPollEvents();
 			}
+
+			return true;
 		}
 
 	public:
@@ -1987,4 +1991,5 @@ namespace def
 	******************************************/
 
 }
+
 
