@@ -863,10 +863,16 @@ namespace def
 
 			if (m_bFullScreen)
 			{
+				m_nScreenWidth = vm->width / m_nPixelWidth;
+				m_nScreenHeight = vm->height / m_nPixelHeight;
+
+				m_nWindowWidth = vm->width;
+				m_nWindowHeight = vm->height;
+
+				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, title.c_str(), m_glMonitor, NULL);
+
 				glfwSetWindowMonitor(m_glWindow, m_glMonitor,
 					0, 0, m_nWindowWidth, m_nWindowHeight, vm->refreshRate);
-
-				m_glWindow = glfwCreateWindow(vm->width, vm->height, title.c_str(), m_glMonitor, NULL);
 			}
 			else
 				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, title.c_str(), NULL, NULL);
@@ -1991,5 +1997,4 @@ namespace def
 	******************************************/
 
 }
-
 
