@@ -1,4 +1,4 @@
-#include "defGameEngine.h"
+#include "defGameEngineSDL.h"
 #include "escapi.h"
 
 class WebCam : public def::GameEngine
