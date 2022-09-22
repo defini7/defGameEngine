@@ -223,17 +223,17 @@ protected:
 		}
 
 		ManipulateObjects([&](std::pair<def::sObject*, def::sObject*> o) {
-				if ((int)round(o.first->x) == (int)round(o.second->x) && (int)round(o.first->y) == (int)round(o.second->y)) // check for collision
+			if ((int)round(o.first->x) == (int)round(o.second->x) && (int)round(o.first->y) == (int)round(o.second->y)) // check for collision
+			{
+				if (o.first->id == BULLET || o.second->id == BULLET)
 				{
-					if (o.first->id == BULLET || o.second->id == BULLET)
-					{
-						o.first->bRemove = true;
-						o.second->bRemove = true;
-					}
+					o.first->bRemove = true;
+					o.second->bRemove = true;
 				}
+			}
 
-				return o;
-			});
+			return o;
+		});
 
 		return true;
 	}
@@ -244,7 +244,7 @@ int main()
 {
 	RayCasting demo;
 
-	if (demo.Construct(256, 240, 4, 4).ok)
+	if (demo.Construct(256, 240, 4, 4, false, true).ok)
 		demo.Run();
 
 	return 0;
