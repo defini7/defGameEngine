@@ -473,7 +473,7 @@ namespace def
 				float fNewX = m_fPlayerX + m_fDirX * m_fMoveSpeed * m_fDeltaTime;
 				float fNewY = m_fPlayerY + m_fDirY * m_fMoveSpeed * m_fDeltaTime;
 
-				if ((int)fNewX < m_nMapWidth && (int)fNewX >= 0 && (int)fNewY < m_nMapHeight && (int)fNewY >= 0)
+				if (fNewX < (float)m_nMapWidth && fNewX > 0.0f && fNewY < (float)m_nMapHeight && fNewY > 0.0f)
 				{
 					if (m_sMap[(int)fNewY * m_nMapWidth + (int)fNewX] == '.') m_fPlayerX = fNewX;
 					if (m_sMap[(int)fNewY * m_nMapWidth + (int)fNewX] == '.') m_fPlayerY = fNewY;
@@ -485,7 +485,7 @@ namespace def
 				float fNewX = m_fPlayerX - m_fDirX * m_fMoveSpeed * m_fDeltaTime;
 				float fNewY = m_fPlayerY - m_fDirY * m_fMoveSpeed * m_fDeltaTime;
 
-				if ((int)fNewX < m_nMapWidth && (int)fNewX >= 0 && (int)fNewY < m_nMapHeight && (int)fNewY >= 0)
+				if (fNewX < (float)m_nMapWidth && fNewX > 0.0f && fNewY < (float)m_nMapHeight && fNewY > 0.0f)
 				{
 					if (m_sMap[(int)fNewY * m_nMapWidth + (int)fNewX] == '.') m_fPlayerX = fNewX;
 					if (m_sMap[(int)fNewY * m_nMapWidth + (int)fNewX] == '.') m_fPlayerY = fNewY;
