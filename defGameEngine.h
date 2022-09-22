@@ -64,7 +64,7 @@
 		def::rcode err = demo.Construct(256, 240, 4, 4);
 
 		if (err.ok)
-			demo.Start();
+			demo.Run();
 		else
 			std::cerr << err.info << "\n";
 
