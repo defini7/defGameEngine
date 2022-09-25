@@ -524,6 +524,8 @@ namespace def
 
 			if (!rc.ok)
 				std::cerr << rc.info << "\n";
+
+			m_bOk = rc.ok;
 		}
 
 		~Sprite()
@@ -539,6 +541,8 @@ namespace def
 		std::string m_sFilename;
 
 		uint8_t* m_cData;
+
+		bool m_bOk = true;
 
 	public:
 		void Create(int32_t w, int32_t h)
@@ -592,6 +596,11 @@ namespace def
 			return m_sFilename;
 		}
 
+		bool IsOk()
+		{
+			return m_bOk;
+		}
+
 		void SetPixel(int32_t x, int32_t y, const Pixel& p)
 		{
 			m_cData[m_nChannels * (y * m_nWidth + x) + 0] = p.r;
@@ -618,6 +627,24 @@ namespace def
 		uint8_t* GetPixelData()
 		{
 			return m_cData;
+		}
+
+		void SetPixelData(uint8_t* data)
+		{
+			for (int i = 0; i < m_nWidth * m_nHeight * m_nChannels; i++)
+				m_cData[i] = data[i];
+		}
+
+		void SetPixelData(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
+		{
+			for (int i = 0; i < m_nWidth; i++)
+				for (int j = 0; j < m_nHeight; j++)
+				{
+					m_cData[m_nChannels * (j * m_nWidth + i) + 0] = r;
+					m_cData[m_nChannels * (j * m_nWidth + i) + 1] = g;
+					m_cData[m_nChannels * (j * m_nWidth + i) + 2] = b;
+					m_cData[m_nChannels * (j * m_nWidth + i) + 3] = a;
+				}
 		}
 
 		int GetChannels()
@@ -752,10 +779,17 @@ namespace def
 		Texture* tex;
 		Sprite* spr;
 
-		void Load(const std::string& filename)
+		bool Load(const std::string& filename)
 		{
 			spr = new Sprite(filename);
-			tex = new Texture(spr);
+
+			if (spr->IsOk())
+			{
+				tex = new Texture(spr);
+				return true;
+			}
+
+			return false;
 		}
 	};
 
@@ -861,6 +895,9 @@ namespace def
 
 			std::string title = "github.com/defini7 - defGameEngine - " + m_sAppName;
 
+			if (!m_bVSync)
+				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
+
 			if (m_bFullScreen)
 			{
 				m_nScreenWidth = vm->width / m_nPixelWidth;
@@ -891,8 +928,8 @@ namespace def
 			glEnable(GL_TEXTURE_2D);
 			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-			if (m_bVSync)
-				glfwSwapInterval(1);
+			if (!m_bVSync)
+				glfwSwapInterval(0);
 
 			ConstructFontSprite();
 
@@ -1069,7 +1106,10 @@ namespace def
 
 				glPopMatrix();
 
-				glfwSwapBuffers(m_glWindow);
+				if (m_bVSync)
+					glfwSwapBuffers(m_glWindow);
+				else
+					glFlush();
 
 				glfwPollEvents();
 			}
@@ -1120,12 +1160,12 @@ namespace def
 		void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* sprite);
 
 		template <typename T>
-		void DrawTexture(vec2d_basic<T> pos, Texture* Texture, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
-		void DrawTexture(int32_t x, int32_t y, Texture* Texture, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+		void DrawTexture(vec2d_basic<T> pos, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
+		void DrawTexture(int32_t x, int32_t y, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
 		template <typename T>
-		void DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* Texture, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
-		void DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* Texture, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+		void DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
+		void DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
 		template <typename T>
 		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vec2d_basic<T> pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
@@ -1628,6 +1668,9 @@ namespace def
 		if (sprite == nullptr)
 			return;
 
+		if (!sprite->IsOk())
+			return;
+
 		for (int i = 0; i < sprite->GetWidth(); i++)
 			for (int j = 0; j < sprite->GetHeight(); j++)
 			{
@@ -1643,6 +1686,9 @@ namespace def
 		if (sprite == nullptr)
 			return;
 
+		if (!sprite->IsOk())
+			return;
+
 		for (int i = fx, x1 = 0; i < fsx; i++, x1++)
 			for (int j = fy, y1 = 0; j < fsy; j++, y1++)
 			{
@@ -1653,8 +1699,14 @@ namespace def
 			}
 	}
 
-	void GameEngine::DrawTexture(int32_t x, int32_t y, Texture* Texture, float scale_x, float scale_y, def::Pixel tint)
+	void GameEngine::DrawTexture(int32_t x, int32_t y, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
 	{
+		if (tex == nullptr)
+			return;
+
+		if (!tex->Spr()->IsOk())
+			return;
+
 		glEnd();
 
 		glPushMatrix();
@@ -1665,15 +1717,15 @@ namespace def
 		glColor4ub(tint.r, tint.g, tint.b, tint.a);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
+		glBindTexture(GL_TEXTURE_2D, tex->GetTexId());
 
 		x /= scale_x;
 		y /= scale_y;
 
 		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + Texture->Spr()->GetHeight());
-		glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + Texture->Spr()->GetWidth(), y / scale_y + Texture->Spr()->GetHeight());
-		glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + Texture->Spr()->GetWidth(), y / scale_y);
+		glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + tex->Spr()->GetHeight());
+		glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + tex->Spr()->GetWidth(), y / scale_y + tex->Spr()->GetHeight());
+		glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + tex->Spr()->GetWidth(), y / scale_y);
 		glTexCoord2f(0.0f, 0.0f); glVertex2f(x / scale_x, y / scale_y);
 		glEnd();
 
@@ -1688,8 +1740,14 @@ namespace def
 		glBegin(GL_TRIANGLES);
 	}
 
-	void GameEngine::DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* Texture, float scale_x, float scale_y, def::Pixel tint)
+	void GameEngine::DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
 	{
+		if (tex == nullptr)
+			return;
+
+		if (!tex->Spr()->IsOk())
+			return;
+
 		glEnd();
 
 		glPushMatrix();
@@ -1701,10 +1759,10 @@ namespace def
 		glColor4ub(tint.r, tint.g, tint.b, tint.a);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glBindTexture(GL_TEXTURE_2D, Texture->GetTexId());
+		glBindTexture(GL_TEXTURE_2D, tex->GetTexId());
 
-		float us = Texture->GetUVScaleX();
-		float vs = Texture->GetUVScaleY();
+		float us = tex->GetUVScaleX();
+		float vs = tex->GetUVScaleY();
 
 		x /= scale_x;
 		y /= scale_y;
