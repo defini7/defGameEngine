@@ -893,8 +893,6 @@ namespace def
 
 			const GLFWvidmode* vm = glfwGetVideoMode(m_glMonitor);
 
-			std::string title = "github.com/defini7 - defGameEngine - " + m_sAppName;
-
 			if (!m_bVSync)
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
@@ -906,13 +904,13 @@ namespace def
 				m_nWindowWidth = vm->width;
 				m_nWindowHeight = vm->height;
 
-				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, title.c_str(), m_glMonitor, NULL);
+				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, "", m_glMonitor, NULL);
 
 				glfwSetWindowMonitor(m_glWindow, m_glMonitor,
 					0, 0, m_nWindowWidth, m_nWindowHeight, vm->refreshRate);
 			}
 			else
-				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, title.c_str(), NULL, NULL);
+				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, "", NULL, NULL);
 
 			if (!m_glWindow)
 			{
@@ -928,8 +926,8 @@ namespace def
 			glEnable(GL_TEXTURE_2D);
 			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-			if (!m_bVSync)
-				glfwSwapInterval(0);
+			// On some laptops with integrated graphics VSync does not work at all!
+			glfwSwapInterval(m_bVSync);
 
 			ConstructFontSprite();
 
@@ -1094,6 +1092,9 @@ namespace def
 
 				m_nMouseX = (int)dMouseX / m_nPixelWidth;
 				m_nMouseY = (int)dMouseY / m_nPixelHeight;
+
+				std::string title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
+				glfwSetWindowTitle(m_glWindow, title.c_str());
 
 				glPushMatrix();
 
