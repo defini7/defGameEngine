@@ -1720,9 +1720,6 @@ namespace def
 
 		glBindTexture(GL_TEXTURE_2D, tex->GetTexId());
 
-		x /= scale_x;
-		y /= scale_y;
-
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + tex->Spr()->GetHeight());
 		glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + tex->Spr()->GetWidth(), y / scale_y + tex->Spr()->GetHeight());
