@@ -91,8 +91,13 @@
 #include "stb_image.h"
 
 #ifdef _WIN32
+
 #pragma comment(lib, "glfw3.lib")
 #pragma comment(lib, "opengl32.lib")
+
+#undef min
+#undef max
+
 #else
 /*
 * link libraries
@@ -168,7 +173,7 @@ namespace def
 		constexpr unsigned int TAB = 258;
 		constexpr unsigned int BACKSPACE = 259;
 		constexpr unsigned int INSERT = 260;
-		constexpr unsigned int DELETE = 261;
+		constexpr unsigned int DEL = 261;
 		constexpr unsigned int RIGHT = 262;
 		constexpr unsigned int LEFT = 263;
 		constexpr unsigned int DOWN = 264;
@@ -1162,11 +1167,11 @@ namespace def
 
 		template <typename T>
 		void DrawTexture(vec2d_basic<T> pos, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
-		void DrawTexture(int32_t x, int32_t y, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+		void DrawTexture(float x, float y, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
 		template <typename T>
 		void DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
-		void DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+		void DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
 		template <typename T>
 		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vec2d_basic<T> pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
@@ -1607,7 +1612,7 @@ namespace def
 
 		int32_t x1 = 0;
 		int32_t y1 = r;
-		int32_t p1 = 3 - 2 * r;
+		float p1 = 3.0f - 2.0f * (float)r;
 
 		while (y1 >= x1)
 		{
@@ -1700,7 +1705,7 @@ namespace def
 			}
 	}
 
-	void GameEngine::DrawTexture(int32_t x, int32_t y, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
+	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
 	{
 		if (tex == nullptr)
 			return;
@@ -1738,7 +1743,7 @@ namespace def
 		glBegin(GL_TRIANGLES);
 	}
 
-	void GameEngine::DrawPartialTexture(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
+	void GameEngine::DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
 	{
 		if (tex == nullptr)
 			return;
@@ -1762,14 +1767,16 @@ namespace def
 		float us = tex->GetUVScaleX();
 		float vs = tex->GetUVScaleY();
 
+		def::Sprite* spr = tex->Spr();
+
 		x /= scale_x;
 		y /= scale_y;
 
 		glBegin(GL_QUADS);
 		glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
-		glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + fsy);
-		glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + fsx, y + fsy);
-		glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + fsx, y);
+		glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + spr->GetHeight());
+		glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + spr->GetWidth(), y + spr->GetHeight());
+		glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + spr->GetWidth(), y);
 		glEnd();
 
 		glBindTexture(GL_TEXTURE_2D, 0);
