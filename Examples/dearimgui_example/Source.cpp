@@ -42,7 +42,7 @@ protected:
 		));
 
 		ImGui::Begin("Settings");
-		ImGui::DragFloat("Factor", &fFactor, 0.01f, 0.0f, 1.0f);
+		ImGui::SliderFloat("Factor", &fFactor, 0.0f, 1.0f);
 		ImGui::End();
 
 		return true;
