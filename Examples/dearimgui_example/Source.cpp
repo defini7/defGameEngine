@@ -17,7 +17,7 @@ public:
 	}
 
 private:
-	float fValue = 0.0f;
+	float fFactor = 0.0f;
 
 protected:
 	bool OnUserCreate() override
@@ -27,18 +27,30 @@ protected:
 		return true;
 	}
 
-	bool OnUserUpdate(float fDeltaTime) override
+	bool OnBeforeUserUpdate(float fDeltaTime) override
 	{
 		imgui.NewFrame();
+		return true;
+	}
+
+	bool OnUserUpdate(float fDeltaTime) override
+	{
+		Clear(def::WHITE);
+
+		FillRectangle(10, 10, 50, 50, def::Pixel(
+			uint8_t(255.0f * fFactor), uint8_t(255.0f * fFactor), uint8_t(255.0f * fFactor)
+		));
 
 		ImGui::Begin("Settings");
-		ImGui::Button("Hello");
-		ImGui::DragFloat("Value", &fValue);
+		ImGui::DragFloat("Factor", &fFactor, 0.01f, 0.0f, 1.0f);
 		ImGui::End();
 
-		Clear(def::WHITE);
-		imgui.Draw();
+		return true;
+	}
 
+	bool OnAfterUserUpdate(float fDeltaTime) override
+	{
+		imgui.Draw();
 		return true;
 	}
 
@@ -51,7 +63,7 @@ int main()
 {
 	Sample demo;
 
-	def::rcode err = demo.Construct(256, 240, 4, 4);
+	def::rcode err = demo.Construct(800, 600, 1, 1);
 
 	if (err.ok)
 		demo.Run();
