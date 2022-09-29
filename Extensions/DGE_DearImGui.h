@@ -91,6 +91,7 @@ namespace def
 		{
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
+
 			ImGui::NewFrame();
 		}
 
@@ -99,13 +100,13 @@ namespace def
 			ImGui::Render();
 
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+			
 			if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 			{
-				GLFWwindow* backup_current_context = glfwGetCurrentContext();
+				GLFWwindow* backup = glfwGetCurrentContext();
 				ImGui::UpdatePlatformWindows();
 				ImGui::RenderPlatformWindowsDefault();
-				glfwMakeContextCurrent(backup_current_context);
+				glfwMakeContextCurrent(backup);
 			}
 		}
 
