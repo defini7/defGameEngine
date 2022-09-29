@@ -92,6 +92,10 @@
 
 #ifdef _WIN32
 
+#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #pragma comment(lib, "glfw3.lib")
 #pragma comment(lib, "opengl32.lib")
 
@@ -819,6 +823,13 @@ namespace def
 
 		virtual ~GameEngine()
 		{
+			delete m_sprFont;
+			
+			if (m_sprIcon)
+				delete m_sprIcon;
+
+			glfwDestroyWindow(m_glWindow);
+
 			glfwTerminate();
 		}
 
@@ -868,6 +879,12 @@ namespace def
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 
+		virtual bool OnBeforeUserCreate() { return true; }
+		virtual bool OnAfterUserCreate() { return true; }
+
+		virtual bool OnBeforeUserUpdate(float fDeltaTime) { return true; }
+		virtual bool OnAfterUserUpdate(float fDeltaTime) { return true; }
+
 		rcode Construct(uint32_t nScreenWidth, uint32_t nScreenHeight, uint32_t nPixelWidth, uint32_t nPixelHeight, bool bFullScreen = false, bool bVSync = false)
 		{
 			if (nScreenWidth < 0 || nScreenHeight < 0)
@@ -897,6 +914,9 @@ namespace def
 			}
 
 			const GLFWvidmode* vm = glfwGetVideoMode(m_glMonitor);
+
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
 			if (!m_bVSync)
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
@@ -1011,7 +1031,19 @@ namespace def
 
 		bool AppThread()
 		{
+			if (!OnBeforeUserCreate())
+			{
+				m_bAppRunning = false;
+				return false;
+			}
+
 			if (!OnUserCreate())
+			{
+				m_bAppRunning = false;
+				return false;
+			}
+
+			if (!OnAfterUserCreate())
 			{
 				m_bAppRunning = false;
 				return false;
@@ -1101,6 +1133,9 @@ namespace def
 				std::string title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
 				glfwSetWindowTitle(m_glWindow, title.c_str());
 
+				if (!OnBeforeUserUpdate(m_fDeltaTime))
+					m_bAppRunning = false;
+
 				glPushMatrix();
 
 				glBegin(GL_TRIANGLES);
@@ -1111,6 +1146,9 @@ namespace def
 				glEnd();
 
 				glPopMatrix();
+				
+				if (!OnAfterUserUpdate(m_fDeltaTime))
+					m_bAppRunning = false;
 
 				if (m_bVSync)
 					glfwSwapBuffers(m_glWindow);
@@ -1207,6 +1245,8 @@ namespace def
 		void SetIcon(const std::string& filename);
 
 		WindowState GetWindowState();
+
+		GLFWwindow* GetWindow();
 
 	};
 
@@ -1773,10 +1813,10 @@ namespace def
 		y /= scale_y;
 
 		glBegin(GL_QUADS);
-		glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
-		glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + spr->GetHeight());
-		glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + spr->GetWidth(), y + spr->GetHeight());
-		glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + spr->GetWidth(), y);
+			glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
+			glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + spr->GetHeight());
+			glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + spr->GetWidth(), y + spr->GetHeight());
+			glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + spr->GetWidth(), y);
 		glEnd();
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -1957,6 +1997,11 @@ namespace def
 			f |= WS_MAXIMIZED;
 
 		return static_cast<WindowState>(f);
+	}
+
+	GLFWwindow* GameEngine::GetWindow()
+	{
+		return m_glWindow;
 	}
 
 	template<typename T>
