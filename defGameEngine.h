@@ -1169,56 +1169,56 @@ namespace def
 
 		template <typename T>
 		void DrawLine(vec2d_basic<T> pos1, vec2d_basic<T> pos2, const Pixel& p = WHITE);
-		void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
+		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
 		template <typename T>
 		void DrawTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p = WHITE);
-		void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
+		virtual void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
 
 		template <typename T>
 		void FillTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p = WHITE);
-		void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
+		virtual void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
 
 		template <typename T>
 		void DrawRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p = WHITE);
-		void DrawRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
+		virtual void DrawRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
 		template <typename T>
 		void FillRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p = WHITE);
-		void FillRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
+		virtual void FillRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
 		template <typename T>
 		void DrawCircle(vec2d_basic<T> pos, int32_t radius, const Pixel& p = WHITE);
-		void DrawCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
+		virtual void DrawCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
 
 		template <typename T>
 		void FillCircle(vec2d_basic<T> pos, int32_t radius, const Pixel& p = WHITE);
-		void FillCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
+		virtual void FillCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
 
 		template <typename T>
 		void DrawSprite(vec2d_basic<T> pos, Sprite* sprite);
-		void DrawSprite(int32_t x, int32_t y, Sprite* sprite);
+		virtual void DrawSprite(int32_t x, int32_t y, Sprite* sprite);
 
 		template <typename T>
 		void DrawPartialSprite(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Sprite* sprite);
-		void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* sprite);
+		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* sprite);
 
 		template <typename T>
 		void DrawTexture(vec2d_basic<T> pos, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
-		void DrawTexture(float x, float y, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+		virtual void DrawTexture(float x, float y, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
 		template <typename T>
 		void DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
-		void DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+		virtual void DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
 		template <typename T>
 		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vec2d_basic<T> pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
-		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 
 		template <typename T>
 		void DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p = WHITE, vec2d_basic<float> scale = { 1.0f, 1.0f });
-		void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE, float scale_x = 1.0f, float scale_y = 1.0f);
-
+		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE, float scale_x = 1.0f, float scale_y = 1.0f);
+		
 		void Clear(const Pixel& p);
 
 		KeyState GetKey(uint32_t k);
