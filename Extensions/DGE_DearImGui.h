@@ -38,6 +38,10 @@
 
 #pragma endregion
 
+#ifdef IMGUI_HAS_DOCK
+#define DEF_DEARIMGUI_DOCKING
+#endif
+
 namespace def
 {
 	enum ImGuiTheme
@@ -53,15 +57,18 @@ namespace def
 		DearImGui() = default;
 
 	public:
-		bool Setup(GLFWwindow* w, ImGuiTheme t)
+		bool Setup(GLFWwindow* w, ImGuiTheme t, float border_radius = 0.0f)
 		{
 			// Setup Dear ImGui context
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO(); (void)io;
 			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+
+#ifdef DEF_DEARIMGUI_DOCKING
 			io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 			io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+#endif
 
 			// Setup Dear ImGui style
 			switch (t)
@@ -71,18 +78,19 @@ namespace def
 			case IGT_CLASSIC: ImGui::StyleColorsClassic(); break;
 			}
 
-			// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
 			ImGuiStyle& style = ImGui::GetStyle();
+			style.WindowRounding = border_radius;
+
+#ifdef DEF_DEARIMGUI_DOCKING
+			// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
 			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-			{
-				style.WindowRounding = 0.0f;
 				style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-			}
+#endif
 
 			// Setup Platform/Renderer backends
 			if (!ImGui_ImplGlfw_InitForOpenGL(w, true))
 				return false;
-			
+
 			if (!ImGui_ImplOpenGL3_Init("#version 150"))
 				return false;
 		}
@@ -100,7 +108,8 @@ namespace def
 			ImGui::Render();
 
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-			
+
+#ifdef DEF_DEARIMGUI_DOCKING
 			if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 			{
 				GLFWwindow* backup = glfwGetCurrentContext();
@@ -108,6 +117,7 @@ namespace def
 				ImGui::RenderPlatformWindowsDefault();
 				glfwMakeContextCurrent(backup);
 			}
+#endif
 		}
 
 		void Destroy()
