@@ -106,7 +106,7 @@ namespace def
 		void Draw()
 		{
 			ImGui::Render();
-
+			
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 #ifdef DEF_DEARIMGUI_DOCKING
