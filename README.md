@@ -1,4 +1,4 @@
-<p>
+<p align="center">
    <img src="dge_large_logo.png">
 </p>
 
