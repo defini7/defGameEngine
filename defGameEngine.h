@@ -510,6 +510,11 @@ namespace def
 		return (float)b / 255.0f;
 	}
 
+	uint8_t F2B(float f)
+	{
+		return uint8_t(f * 255.0f);
+	}
+
 
 	/********************************
 	* @ SPRITE CLASS IMPLEMENTATION *
@@ -577,7 +582,7 @@ namespace def
 				return rc;
 			}
 
-			m_cData = stbi_load(m_sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 4);
+			m_cData = stbi_load(m_sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 0);
 
 			if (!m_cData)
 			{
@@ -855,6 +860,8 @@ namespace def
 		bool m_bVSync;
 
 		bool m_bCustomIcon;
+		
+		bool m_bShowFPS;
 
 		KeyState m_ksKeys[512];
 		KeyState m_ksMouse[5];
@@ -951,10 +958,31 @@ namespace def
 			glEnable(GL_TEXTURE_2D);
 			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
+			std::string title = "github.com/defini7 - " + m_sAppName;
+			glfwSetWindowTitle(m_glWindow, title.c_str());
+
 			// On some laptops with integrated graphics VSync does not work at all!
 			glfwSwapInterval(m_bVSync);
 
-			ConstructFontSprite();
+			std::string data =
+				"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
+				"O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400"
+				"Of80001oOg<7O7moBGT7O7lABET024@aBEd714AiOdl717a_=TH013Q>00000000"
+				"720D000V?V5oB3Q_HdUoE7a9@DdDE4A9@DmoE4A;Hg]oM4Aj8S4D84@`00000000"
+				"OaPT1000Oa`^13P1@AI[?g`1@A=[OdAoHgljA4Ao?WlBA7l1710007l100000000"
+				"ObM6000oOfMV?3QoBDD`O7a0BDDH@5A0BDD<@5A0BGeVO5ao@CQR?5Po00000000"
+				"Oc``000?Ogij70PO2D]??0Ph2DUM@7i`2DTg@7lh2GUj?0TO0C1870T?00000000"
+				"70<4001o?P<7?1QoHg43O;`h@GT0@:@LB@d0>:@hN@L0@?aoN@<0O7ao0000?000"
+				"OcH0001SOglLA7mg24TnK7ln24US>0PL24U140PnOgl0>7QgOcH0K71S0000A000"
+				"00H00000@Dm1S007@DUSg00?OdTnH7YhOfTL<7Yh@Cl0700?@Ah0300700000000"
+				"<008001QL00ZA41a@6HnI<1i@FHLM81M@@0LG81?O`0nC?Y7?`0ZA7Y300080000"
+				"O`082000Oh0827mo6>Hn?Wmo?6HnMb11MP08@C11H`08@FP0@@0004@000000000"
+				"00P00001Oab00003OcKP0006@6=PMgl<@440MglH@000000`@000001P00000000"
+				"Ob@8@@00Ob@8@Ga13R@8Mga172@8?PAo3R@827QoOb@820@0O`0007`0000007P0"
+				"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
+				"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
+
+			ConstructFontSprite(data);
 
 			if (m_bCustomIcon)
 			{
@@ -989,26 +1017,8 @@ namespace def
 			glfwSetWindowIcon(m_glWindow, 1, img);
 		}
 
-		void ConstructFontSprite()
+		void ConstructFontSprite(const std::string& data)
 		{
-			std::string data =
-				"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
-				"O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400"
-				"Of80001oOg<7O7moBGT7O7lABET024@aBEd714AiOdl717a_=TH013Q>00000000"
-				"720D000V?V5oB3Q_HdUoE7a9@DdDE4A9@DmoE4A;Hg]oM4Aj8S4D84@`00000000"
-				"OaPT1000Oa`^13P1@AI[?g`1@A=[OdAoHgljA4Ao?WlBA7l1710007l100000000"
-				"ObM6000oOfMV?3QoBDD`O7a0BDDH@5A0BDD<@5A0BGeVO5ao@CQR?5Po00000000"
-				"Oc``000?Ogij70PO2D]??0Ph2DUM@7i`2DTg@7lh2GUj?0TO0C1870T?00000000"
-				"70<4001o?P<7?1QoHg43O;`h@GT0@:@LB@d0>:@hN@L0@?aoN@<0O7ao0000?000"
-				"OcH0001SOglLA7mg24TnK7ln24US>0PL24U140PnOgl0>7QgOcH0K71S0000A000"
-				"00H00000@Dm1S007@DUSg00?OdTnH7YhOfTL<7Yh@Cl0700?@Ah0300700000000"
-				"<008001QL00ZA41a@6HnI<1i@FHLM81M@@0LG81?O`0nC?Y7?`0ZA7Y300080000"
-				"O`082000Oh0827mo6>Hn?Wmo?6HnMb11MP08@C11H`08@FP0@@0004@000000000"
-				"00P00001Oab00003OcKP0006@6=PMgl<@440MglH@000000`@000001P00000000"
-				"Ob@8@@00Ob@8@Ga13R@8Mga172@8?PAo3R@827QoOb@820@0O`0007`0000007P0"
-				"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
-				"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
-
 			m_sprFont = new Sprite(128, 48);
 			int px = 0, py = 0;
 
@@ -1130,15 +1140,21 @@ namespace def
 				m_nMouseX = (int)dMouseX / m_nPixelWidth;
 				m_nMouseY = (int)dMouseY / m_nPixelHeight;
 
-				std::string title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
-				glfwSetWindowTitle(m_glWindow, title.c_str());
+				if (m_bShowFPS)
+				{
+					std::string title = "github.com/defini7 - " + m_sAppName +" - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
+					glfwSetWindowTitle(m_glWindow, title.c_str());
+				}
 
 				if (!OnBeforeUserUpdate(m_fDeltaTime))
 					m_bAppRunning = false;
 
 				glPushMatrix();
 
-				glBegin(GL_TRIANGLES);
+				if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+					glBegin(GL_POINTS);
+				else
+					glBegin(GL_QUADS);
 
 				if (!OnUserUpdate(m_fDeltaTime))
 					m_bAppRunning = false;
@@ -1248,21 +1264,22 @@ namespace def
 
 		GLFWwindow* GetWindow();
 
+		void ShowFPS(bool show = true);
+
 	};
 
 	void def::GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
 	{
-		if (x >= 0 && y >= 0 && x < m_nScreenWidth && y < m_nScreenHeight)
-		{
-			glColor4ub(p.r, p.g, p.b, p.a);
+		glColor4ub(p.r, p.g, p.b, p.a);
 
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glVertex2f(x, y);
+		else
+		{
 			glVertex2i(x * m_nPixelWidth, y * m_nPixelHeight);
 			glVertex2i(x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight);
 			glVertex2i(x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
-
-			glVertex2i(x * m_nPixelWidth, y * m_nPixelHeight);
 			glVertex2i(x * m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
-			glVertex2i(x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
 		}
 	}
 
@@ -1780,7 +1797,10 @@ namespace def
 
 		glPopMatrix();
 
-		glBegin(GL_TRIANGLES);
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
 	}
 
 	void GameEngine::DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
@@ -1827,7 +1847,10 @@ namespace def
 
 		glPopMatrix();
 
-		glBegin(GL_TRIANGLES);
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
 	}
 
 	void def::GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r, float s, const Pixel& p)
@@ -1880,7 +1903,10 @@ namespace def
 
 		glScalef(scale_x, scale_y, 1.0f);
 
-		glBegin(GL_TRIANGLES);
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
 
 		int32_t sx = 0;
 		int32_t sy = 0;
@@ -1914,7 +1940,10 @@ namespace def
 
 		glPopMatrix();
 
-		glBegin(GL_TRIANGLES);
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
 	}
 
 	void def::GameEngine::Clear(const Pixel& p)
@@ -1924,7 +1953,10 @@ namespace def
 		glClearColor(B2F(p.r), B2F(p.g), B2F(p.b), B2F(p.a));
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glBegin(GL_TRIANGLES);
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
 	}
 
 	KeyState GameEngine::GetKey(uint32_t k)
@@ -1981,6 +2013,11 @@ namespace def
 	void GameEngine::SetTitle(const std::string& title)
 	{
 		m_sAppName = title;
+	}
+
+	void GameEngine::ShowFPS(bool show)
+	{
+		m_bShowFPS = show;
 	}
 
 	WindowState GameEngine::GetWindowState()
