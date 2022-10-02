@@ -1,4 +1,4 @@
-![](dge_logo.png)
+![](dge_large_logo.png)
 
 # defGameEngine
 defGameEngine - это игровой движок, доступный на Windows, Linux
