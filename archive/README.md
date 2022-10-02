@@ -1,4 +1,4 @@
-# defGameEngine
+# defGameEngine (может не работать)
 defGameEngine - это игровой движок, доступный на Windows, Linux
 
 # Установка
