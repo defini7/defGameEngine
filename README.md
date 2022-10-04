@@ -3,7 +3,7 @@
 </p>
 
 # defGameEngine
-defGameEngine - это игровой движок, доступный на Windows, Linux
+defGameEngine - это игровой движок, доступный на Windows ( > 7 ), Linux
 
 # Установка
 
