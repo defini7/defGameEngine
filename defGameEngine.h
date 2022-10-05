@@ -420,66 +420,108 @@ namespace def
 		uint8_t b;
 		uint8_t a;
 
-		friend Pixel operator+(Pixel& lhs, float rhs)
-		{
-			return Pixel(lhs.r + (uint8_t)rhs, lhs.g + (uint8_t)rhs, lhs.b + (uint8_t)rhs, lhs.a);
-		}
+		template <typename T>
+		friend Pixel operator+(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r + rhs), uint8_t((T)lhs.g + rhs), uint8_t((T)lhs.b + rhs), lhs.a); }
 
-		friend Pixel operator-(Pixel& lhs, float rhs)
-		{
-			return Pixel(lhs.r - (uint8_t)rhs, lhs.g - (uint8_t)rhs, lhs.b - (uint8_t)rhs, lhs.a);
-		}
+		template <typename T>
+		friend Pixel operator-(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r - rhs), uint8_t((T)lhs.g - rhs), uint8_t((T)lhs.b - rhs), lhs.a); }
 
-		friend Pixel operator*(Pixel& lhs, float rhs)
-		{
-			return Pixel(lhs.r * (uint8_t)rhs, lhs.g * (uint8_t)rhs, lhs.b * (uint8_t)rhs, lhs.a);
-		}
+		template <typename T>
+		friend Pixel operator*(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r * rhs), uint8_t((T)lhs.g * rhs), uint8_t((T)lhs.b * rhs), lhs.a); }
 
-		friend Pixel operator/(Pixel& lhs, float rhs)
-		{
-			return Pixel(lhs.r / (uint8_t)rhs, lhs.g / (uint8_t)rhs, lhs.b / (uint8_t)rhs, lhs.a);
-		}
+		template <typename T>
+		friend Pixel operator/(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r / rhs), uint8_t((T)lhs.g / rhs), uint8_t((T)rhs.b / rhs), lhs.a); }
 
-		friend Pixel operator+=(Pixel& lhs, float rhs)
+		template <typename T>
+		friend Pixel operator+=(Pixel& lhs, T rhs)
 		{
-			lhs.r += (uint8_t)rhs;
-			lhs.g += (uint8_t)rhs;
-			lhs.b += (uint8_t)rhs;
+			lhs.r += rhs;
+			lhs.g += rhs;
+			lhs.b += rhs;
 
 			return lhs;
 		}
 
-		friend Pixel operator-=(Pixel& lhs, float rhs)
+		template <typename T>
+		friend Pixel operator-=(Pixel& lhs, T rhs)
 		{
-			lhs.r -= (uint8_t)rhs;
-			lhs.g -= (uint8_t)rhs;
-			lhs.b -= (uint8_t)rhs;
+			lhs.r -= rhs;
+			lhs.g -= rhs;
+			lhs.b -= rhs;
 
 			return lhs;
 		}
 
-		friend Pixel operator*=(Pixel& lhs, float rhs)
+		template <typename T>
+		friend Pixel operator*=(Pixel& lhs, T rhs)
 		{
-			lhs.r *= (uint8_t)rhs;
-			lhs.g *= (uint8_t)rhs;
-			lhs.b *= (uint8_t)rhs;
+			lhs.r *= rhs;
+			lhs.g *= rhs;
+			lhs.b *= rhs;
 
 			return lhs;
 		}
 
-		friend Pixel operator/=(Pixel& lhs, float rhs)
+		template <typename T>
+		friend Pixel operator/=(Pixel& lhs, T rhs)
 		{
-			lhs.r /= (uint8_t)rhs;
-			lhs.g /= (uint8_t)rhs;
-			lhs.b /= (uint8_t)rhs;
+			lhs.r /= rhs;
+			lhs.g /= rhs;
+			lhs.b /= rhs;
 
 			return lhs;
 		}
 
-		friend bool operator==(Pixel& lhs, Pixel& rhs)
+		template <typename T>
+		friend Pixel operator+(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b, lhs.a); }
+
+		template <typename T>
+		friend Pixel operator-(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b, lhs.a); }
+
+		template <typename T>
+		friend Pixel operator*(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r * rhs.r, lhs.g * rhs.g, lhs.b * rhs.b, lhs.a); }
+
+		template <typename T>
+		friend Pixel operator/(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r / rhs.r, lhs.g / rhs.g, lhs.b / rhs.b, lhs.a); }
+
+		friend Pixel operator+=(Pixel& lhs, Pixel& rhs)
 		{
-			return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
+			lhs.r += rhs.r;
+			lhs.g += rhs.g;
+			lhs.b += rhs.b;
+
+			return lhs;
 		}
+
+		friend Pixel operator-=(Pixel& lhs, Pixel& rhs)
+		{
+			lhs.r -= rhs.r;
+			lhs.g -= rhs.g;
+			lhs.b -= rhs.b;
+
+			return lhs;
+		}
+
+		friend Pixel operator*=(Pixel& lhs, Pixel& rhs)
+		{
+			lhs.r *= rhs.r;
+			lhs.g *= rhs.g;
+			lhs.b *= rhs.b;
+
+			return lhs;
+		}
+
+		friend Pixel operator/=(Pixel& lhs, Pixel& rhs)
+		{
+			lhs.r /= rhs.r;
+			lhs.g /= rhs.g;
+			lhs.b /= rhs.b;
+
+			return lhs;
+		}
+
+		friend bool operator==(Pixel& lhs, Pixel& rhs) { return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b; }
+		friend bool operator!=(Pixel& lhs, Pixel& rhs) { return lhs.r != rhs.r || lhs.g != rhs.g || lhs.b != rhs.b; }
 	};
 
 	Pixel BLACK(0, 0, 0, 0),
@@ -882,6 +924,10 @@ namespace def
 		Sprite* m_sprIcon;
 		Sprite* m_sprFont;
 
+		GLbitfield m_bfClearMask;
+
+		bool m_bDirtyPixel;
+
 	public:
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
@@ -892,7 +938,7 @@ namespace def
 		virtual bool OnBeforeUserUpdate(float fDeltaTime) { return true; }
 		virtual bool OnAfterUserUpdate(float fDeltaTime) { return true; }
 
-		rcode Construct(uint32_t nScreenWidth, uint32_t nScreenHeight, uint32_t nPixelWidth, uint32_t nPixelHeight, bool bFullScreen = false, bool bVSync = false)
+		rcode Construct(uint32_t nScreenWidth, uint32_t nScreenHeight, uint32_t nPixelWidth, uint32_t nPixelHeight, bool bFullScreen = false, bool bVSync = false, bool bDirtyPixel = false)
 		{
 			if (nScreenWidth < 0 || nScreenHeight < 0)
 				return rcode(false, "Width or height less than zero");
@@ -908,6 +954,8 @@ namespace def
 
 			m_bFullScreen = bFullScreen;
 			m_bVSync = bVSync;
+
+			m_bDirtyPixel = bDirtyPixel;
 
 			if (!glfwInit())
 				return rcode(false, "Could not init GLFW!");
@@ -925,7 +973,13 @@ namespace def
 			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
-			if (!m_bVSync)
+			// On some laptops with integrated graphics VSync does not work at all!
+			if (m_bVSync)
+			{
+				glfwSwapInterval(1);
+				glfwWindowHint(GLFW_REFRESH_RATE, vm->refreshRate);
+			}
+			else
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
 			if (m_bFullScreen)
@@ -946,8 +1000,10 @@ namespace def
 
 			if (!m_glWindow)
 			{
+				const char* err;
+				glfwGetError(&err);
 				glfwTerminate();
-				return rcode(false, "Could not create a window!");
+				return rcode(false, err);
 			}
 
 			glfwMakeContextCurrent(m_glWindow);
@@ -955,14 +1011,14 @@ namespace def
 			glViewport(0, 0, m_nWindowWidth, m_nWindowHeight);
 			glOrtho(0.0, (double)m_nWindowWidth, (double)m_nWindowHeight, 0.0, -1.0, 1.0);
 
-			glEnable(GL_TEXTURE_2D);
-			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+			if (m_bDirtyPixel)
+			{
+				glEnable(GL_TEXTURE_2D);
+				glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+			}
 
 			std::string title = "github.com/defini7 - " + m_sAppName;
 			glfwSetWindowTitle(m_glWindow, title.c_str());
-
-			// On some laptops with integrated graphics VSync does not work at all!
-			glfwSwapInterval(m_bVSync);
 
 			std::string data =
 				"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
@@ -1142,7 +1198,7 @@ namespace def
 
 				if (m_bShowFPS)
 				{
-					std::string title = "github.com/defini7 - " + m_sAppName +" - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
+					std::string title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
 					glfwSetWindowTitle(m_glWindow, title.c_str());
 				}
 
@@ -1235,7 +1291,7 @@ namespace def
 		void DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p = WHITE, vec2d_basic<float> scale = { 1.0f, 1.0f });
 		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE, float scale_x = 1.0f, float scale_y = 1.0f);
 		
-		void Clear(const Pixel& p);
+		virtual void Clear(const Pixel& p);
 
 		KeyState GetKey(uint32_t k);
 		KeyState GetMouse(uint32_t k);
@@ -1265,6 +1321,8 @@ namespace def
 		GLFWwindow* GetWindow();
 
 		void ShowFPS(bool show = true);
+
+		void SetClearFlags(GLbitfield mask);
 
 	};
 
@@ -2039,6 +2097,11 @@ namespace def
 	GLFWwindow* GameEngine::GetWindow()
 	{
 		return m_glWindow;
+	}
+
+	void def::GameEngine::SetClearFlags(GLbitfield mask)
+	{
+		m_bfClearMask = mask;
 	}
 
 	template<typename T>
