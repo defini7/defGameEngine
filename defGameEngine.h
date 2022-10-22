@@ -1,26 +1,20 @@
 #pragma once
 
-#pragma region consolegameengine_license
+#pragma region license
 /***
 *	BSD 3-Clause License
-
 	Copyright (c) 2021, 2022 Alex
 	All rights reserved.
-
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
-
 	1. Redistributions of source code must retain the above copyright notice, this
 	   list of conditions and the following disclaimer.
-
 	2. Redistributions in binary form must reproduce the above copyright notice,
 	   this list of conditions and the following disclaimer in the documentation
 	   and/or other materials provided with the distribution.
-
 	3. Neither the name of the copyright holder nor the names of its
 	   contributors may be used to endorse or promote products derived from
 	   this software without specific prior written permission.
-
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -34,19 +28,17 @@
 ***/
 #pragma endregion
 
-#pragma region consolegameengine_sample
+#pragma region sample
 /**
-* Example (engine only supports .spr files, check [this](https://github.com/defini7/SpriteEditor) for editing .spr files):
-	#include "ConsoleGameEngine.h"
+* Example:
+	#include "defGameEngine.h"
 
-	using namespace def;
-
-	class Example : public def::ConsoleGameEngine
+	class Sample : public def::GameEngine
 	{
 	public:
-		Example()
+		Sample()
 		{
-			sAppName = L"Example";
+			SetTitle("Sample");
 		}
 
 	protected:
@@ -57,9 +49,9 @@
 
 		bool OnUserUpdate(float fDeltaTime) override
 		{
-			for (int i = 0; i < GetpScreenWidth(); i++)
-				for (int j = 0; j < GetpScreenHeight(); j++)
-					Draw(i, j, def::PIXEL_SOLID, rand() % 15);
+			for (int i = 0; i < GetScreenWidth(); i++)
+				for (int j = 0; j < GetScreenHeight(); j++)
+					Draw(i, j, def::RandomPixel());
 
 			return true;
 		}
@@ -67,137 +59,192 @@
 
 	int main()
 	{
-			Example demo;
-			def::rcode err = demo.ConstructConsole(120, 40, 12, 12);
+		Sample demo;
 
-			if (err.ok)
-				demo.Run();
-			else
-				std::cerr << err.info << "\n";
+		def::rcode err = demo.Construct(256, 240, 4, 4);
 
-			return 0;
+		if (err.ok)
+			demo.Run();
+		else
+			std::cerr << err.info << "\n";
+
+		return 0;
 	}
 **/
 #pragma endregion
 
-#ifndef UNICODE
-#error Enable Unicode in settings
-#endif
-
-#define _CRT_SECURE_NO_WARNINGS
+#pragma region includes
 
 #include <iostream>
-#include <Windows.h>
-#include <vector>
-#include <chrono>
-#include <cmath>
-#include <fstream>
-#include <algorithm>
-#include <thread>
+#include <cstdio>
 #include <string>
+#include <chrono>
+#include <vector>
+#include <cmath>
 #include <list>
-#include <cstdint>
+#include <functional>
+#include <filesystem>
 
-#pragma comment(lib, "winmm.lib")
+#include <GLFW/glfw3.h>
 
-#ifdef XBOX_CONTROLLER
-#include <Xinput.h>
-#pragma comment(lib, "XInput.lib")
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#ifdef _WIN32
+
+#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
+#define _CRT_SECURE_NO_WARNINGS
 #endif
+
+#pragma comment(lib, "glfw3.lib")
+#pragma comment(lib, "opengl32.lib")
+
+#undef min
+#undef max
+
+#else
+/*
+* link libraries
+* to your project
+*/
+#endif
+
+#pragma endregion
 
 namespace def
 {
-	enum FG_COLORS : short
+	enum WindowState
 	{
-		FG_BLACK,
-		FG_DARK_BLUE,
-		FG_DARK_GREEN,
-		FG_DARK_CYAN,
-		FG_DARK_RED,
-		FG_DARK_MAGENTA,
-		FG_DARK_YELLOW,
-		FG_GREY,
-		FG_DARK_GREY,
-		FG_BLUE,
-		FG_GREEN,
-		FG_CYAN,
-		FG_RED,
-		FG_MAGENTA,
-		FG_YELLOW,
-		FG_WHITE
+		WS_NONE,
+		WS_MAXIMIZED,
+		WS_FOCUSED
 	};
 
-	enum BG_COLORS : short
+	namespace Key
 	{
-		BG_BLACK = 0x0000,
-		BG_DARK_BLUE = 0x0010,
-		BG_DARK_GREEN = 0x0020,
-		BG_DARK_CYAN = 0x0030,
-		BG_DARK_RED = 0x0040,
-		BG_DARK_MAGENTA = 0x0050,
-		BG_DARK_YELLOW = 0x0060,
-		BG_GREY = 0x0070,
-		BG_DARK_GREY = 0x0080,
-		BG_BLUE = 0x0090,
-		BG_GREEN = 0x00A0,
-		BG_CYAN = 0x00B0,
-		BG_RED = 0x00C0,
-		BG_MAGENTA = 0x00D0,
-		BG_YELLOW = 0x00E0,
-		BG_WHITE = 0x00F0
-	};
-
-	enum PIXEL_TYPE : short
-	{
-		PIXEL_SOLID = 0x2588,
-		PIXEL_THREEQUARTERS = 0x2593,
-		PIXEL_HALF = 0x2592,
-		PIXEL_QUARTER = 0x2591
-	};
-
-	enum COMMON_LVB : int
-	{
-		CL_GRID_HORIZONTAL = 0x400,
-		CL_GRID_LVERTICAL = 0x0800,
-		CL_GRID_RVERTICAL = 0x1000,
-		CL_UNDERSCORE = 0x8000
-	};
-
-	struct rcode
-	{
-		rcode() = default;
-
-		rcode(bool bOk)
-		{
-			ok = bOk;
-			info = "ok";
-		}
-
-		rcode(bool bOk, const std::string& sInfo)
-		{
-			ok = bOk;
-			info = sInfo;
-		}
-
-		operator bool()
-		{
-			return ok;
-		}
-
-		bool ok;
-		std::string info;
-	};
-
-	namespace Font
-	{
-		std::wstring CONSOLAS = L"Consolas";
-		std::wstring COURIER_NEW = L"Courier New";
-		std::wstring LUCIDA_CONSOLE = L"Lucida Console";
-		std::wstring LUCIDA_SANS_TYPEWRITER = L"Lucida Sans Typewriter";
-		std::wstring MS_GOTHIC = L"MS Gothic";
-		std::wstring NSIMSUN = L"NSimSum";
-		std::wstring SIMSUM_EXTB = L"SimSun-ExtB";
+		constexpr unsigned int SPACE = 32;
+		constexpr unsigned int APOSTROPHE = 39;
+		constexpr unsigned int COMMA = 44;
+		constexpr unsigned int MINUS = 45;
+		constexpr unsigned int PERIOD = 46;
+		constexpr unsigned int SLASH = 47;
+		constexpr unsigned int K0 = 48;
+		constexpr unsigned int K1 = 49;
+		constexpr unsigned int K2 = 50;
+		constexpr unsigned int K3 = 51;
+		constexpr unsigned int K4 = 52;
+		constexpr unsigned int K5 = 53;
+		constexpr unsigned int K6 = 54;
+		constexpr unsigned int K7 = 55;
+		constexpr unsigned int K8 = 56;
+		constexpr unsigned int K9 = 57;
+		constexpr unsigned int SEMICOLON = 59;
+		constexpr unsigned int EQUAL = 61;
+		constexpr unsigned int A = 65;
+		constexpr unsigned int B = 66;
+		constexpr unsigned int C = 67;
+		constexpr unsigned int D = 68;
+		constexpr unsigned int E = 69;
+		constexpr unsigned int F = 70;
+		constexpr unsigned int G = 71;
+		constexpr unsigned int H = 72;
+		constexpr unsigned int I = 73;
+		constexpr unsigned int J = 74;
+		constexpr unsigned int K = 75;
+		constexpr unsigned int L = 76;
+		constexpr unsigned int M = 77;
+		constexpr unsigned int N = 78;
+		constexpr unsigned int O = 79;
+		constexpr unsigned int P = 80;
+		constexpr unsigned int Q = 81;
+		constexpr unsigned int R = 82;
+		constexpr unsigned int S = 83;
+		constexpr unsigned int T = 84;
+		constexpr unsigned int U = 85;
+		constexpr unsigned int V = 86;
+		constexpr unsigned int W = 87;
+		constexpr unsigned int X = 88;
+		constexpr unsigned int Y = 89;
+		constexpr unsigned int Z = 90;
+		constexpr unsigned int LEFT_BRACKET = 91; /* [ */
+		constexpr unsigned int BACKSLASH = 92; /* \ */
+		constexpr unsigned int RIGHT_BRACKET = 93; /* ] */
+		constexpr unsigned int GRAVE_ACCENT = 96; /* ` */
+		constexpr unsigned int WORLD_1 = 161; /* non-US #1 */
+		constexpr unsigned int WORLD_2 = 162; /* non-US #2 */
+		constexpr unsigned int ESCAPE = 256;
+		constexpr unsigned int ENTER = 257;
+		constexpr unsigned int TAB = 258;
+		constexpr unsigned int BACKSPACE = 259;
+		constexpr unsigned int INSERT = 260;
+		constexpr unsigned int DEL = 261;
+		constexpr unsigned int RIGHT = 262;
+		constexpr unsigned int LEFT = 263;
+		constexpr unsigned int DOWN = 264;
+		constexpr unsigned int UP = 265;
+		constexpr unsigned int PAGE_UP = 266;
+		constexpr unsigned int PAGE_DOWN = 267;
+		constexpr unsigned int HOME = 268;
+		constexpr unsigned int END = 269;
+		constexpr unsigned int CAPS_LOCK = 280;
+		constexpr unsigned int SCROLL_LOCK = 281;
+		constexpr unsigned int NUM_LOCK = 282;
+		constexpr unsigned int PRINT_SCREEN = 283;
+		constexpr unsigned int PAUSE = 284;
+		constexpr unsigned int F1 = 290;
+		constexpr unsigned int F2 = 291;
+		constexpr unsigned int F3 = 292;
+		constexpr unsigned int F4 = 293;
+		constexpr unsigned int F5 = 294;
+		constexpr unsigned int F6 = 295;
+		constexpr unsigned int F7 = 296;
+		constexpr unsigned int F8 = 297;
+		constexpr unsigned int F9 = 298;
+		constexpr unsigned int F10 = 299;
+		constexpr unsigned int F11 = 300;
+		constexpr unsigned int F12 = 301;
+		constexpr unsigned int F13 = 302;
+		constexpr unsigned int F14 = 303;
+		constexpr unsigned int F15 = 304;
+		constexpr unsigned int F16 = 305;
+		constexpr unsigned int F17 = 306;
+		constexpr unsigned int F18 = 307;
+		constexpr unsigned int F19 = 308;
+		constexpr unsigned int F20 = 309;
+		constexpr unsigned int F21 = 310;
+		constexpr unsigned int F22 = 311;
+		constexpr unsigned int F23 = 312;
+		constexpr unsigned int F24 = 313;
+		constexpr unsigned int F25 = 314;
+		constexpr unsigned int NP_0 = 320;
+		constexpr unsigned int NP_1 = 321;
+		constexpr unsigned int NP_2 = 322;
+		constexpr unsigned int NP_3 = 323;
+		constexpr unsigned int NP_4 = 324;
+		constexpr unsigned int NP_5 = 325;
+		constexpr unsigned int NP_6 = 326;
+		constexpr unsigned int NP_7 = 327;
+		constexpr unsigned int NP_8 = 328;
+		constexpr unsigned int NP_9 = 329;
+		constexpr unsigned int NP_DECIMAL = 330;
+		constexpr unsigned int NP_DIVIDE = 331;
+		constexpr unsigned int NP_MULTIPLY = 332;
+		constexpr unsigned int NP_SUBTRACT = 333;
+		constexpr unsigned int NP_ADD = 334;
+		constexpr unsigned int NP_ENTER = 335;
+		constexpr unsigned int NP_EQUAL = 336;
+		constexpr unsigned int LEFT_SHIFT = 340;
+		constexpr unsigned int LEFT_CONTROL = 341;
+		constexpr unsigned int LEFT_ALT = 342;
+		constexpr unsigned int LEFT_SUPER = 343;
+		constexpr unsigned int RIGHT_SHIFT = 344;
+		constexpr unsigned int RIGHT_CONTROL = 345;
+		constexpr unsigned int RIGHT_ALT = 346;
+		constexpr unsigned int RIGHT_SUPER = 347;
+		constexpr unsigned int MENU = 348;
 	}
+
+	const float PI = 2.0f * acosf(0.0f);
 
 	template <class T>
 	struct vec2d_basic
@@ -312,7 +359,7 @@ namespace def
 
 		T mag() { return T(sqrtf(this->x * this->x + this->y * this->y)); }
 		T mag2() { return T(this->x * this->x + this->y * this->y); }
-		
+
 		vec2d_basic<T> abs() { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
 		vec2d_basic<T> perp() { return vec2d_basic<T>(-this->y, this->x); }
 		vec2d_basic<T> floor() { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
@@ -325,609 +372,980 @@ namespace def
 	typedef vec2d_basic<int> vi2d;
 	typedef vec2d_basic<float> vf2d;
 
-	struct sKeyState
+	struct rcode
+	{
+		rcode() = default;
+
+		rcode(bool bOk)
+		{
+			ok = bOk;
+			info = "ok";
+		}
+
+		rcode(bool bOk, const std::string& sInfo)
+		{
+			ok = bOk;
+			info = sInfo;
+		}
+
+		operator bool()
+		{
+			return ok;
+		}
+
+		bool ok;
+		std::string info;
+	};
+
+	struct KeyState
 	{
 		bool bHeld;
 		bool bReleased;
 		bool bPressed;
 	};
 
-	const float PI = 2.0f * acosf(0.0f);
+	struct Pixel
+	{
+		Pixel() = default;
+		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca = 255U)
+		{
+			r = cr;
+			g = cg;
+			b = cb;
+			a = ca;
+		}
+
+		uint8_t r;
+		uint8_t g;
+		uint8_t b;
+		uint8_t a;
+
+		template <typename T>
+		friend Pixel operator+(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r + rhs), uint8_t((T)lhs.g + rhs), uint8_t((T)lhs.b + rhs), lhs.a); }
+
+		template <typename T>
+		friend Pixel operator-(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r - rhs), uint8_t((T)lhs.g - rhs), uint8_t((T)lhs.b - rhs), lhs.a); }
+
+		template <typename T>
+		friend Pixel operator*(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r * rhs), uint8_t((T)lhs.g * rhs), uint8_t((T)lhs.b * rhs), lhs.a); }
+
+		template <typename T>
+		friend Pixel operator/(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r / rhs), uint8_t((T)lhs.g / rhs), uint8_t((T)rhs.b / rhs), lhs.a); }
+
+		template <typename T>
+		friend Pixel operator+=(Pixel& lhs, T rhs)
+		{
+			lhs.r += rhs;
+			lhs.g += rhs;
+			lhs.b += rhs;
+
+			return lhs;
+		}
+
+		template <typename T>
+		friend Pixel operator-=(Pixel& lhs, T rhs)
+		{
+			lhs.r -= rhs;
+			lhs.g -= rhs;
+			lhs.b -= rhs;
+
+			return lhs;
+		}
+
+		template <typename T>
+		friend Pixel operator*=(Pixel& lhs, T rhs)
+		{
+			lhs.r *= rhs;
+			lhs.g *= rhs;
+			lhs.b *= rhs;
+
+			return lhs;
+		}
+
+		template <typename T>
+		friend Pixel operator/=(Pixel& lhs, T rhs)
+		{
+			lhs.r /= rhs;
+			lhs.g /= rhs;
+			lhs.b /= rhs;
+
+			return lhs;
+		}
+
+		template <typename T>
+		friend Pixel operator+(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b, lhs.a); }
+
+		template <typename T>
+		friend Pixel operator-(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b, lhs.a); }
+
+		template <typename T>
+		friend Pixel operator*(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r * rhs.r, lhs.g * rhs.g, lhs.b * rhs.b, lhs.a); }
+
+		template <typename T>
+		friend Pixel operator/(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r / rhs.r, lhs.g / rhs.g, lhs.b / rhs.b, lhs.a); }
+
+		friend Pixel operator+=(Pixel& lhs, Pixel& rhs)
+		{
+			lhs.r += rhs.r;
+			lhs.g += rhs.g;
+			lhs.b += rhs.b;
+
+			return lhs;
+		}
+
+		friend Pixel operator-=(Pixel& lhs, Pixel& rhs)
+		{
+			lhs.r -= rhs.r;
+			lhs.g -= rhs.g;
+			lhs.b -= rhs.b;
+
+			return lhs;
+		}
+
+		friend Pixel operator*=(Pixel& lhs, Pixel& rhs)
+		{
+			lhs.r *= rhs.r;
+			lhs.g *= rhs.g;
+			lhs.b *= rhs.b;
+
+			return lhs;
+		}
+
+		friend Pixel operator/=(Pixel& lhs, Pixel& rhs)
+		{
+			lhs.r /= rhs.r;
+			lhs.g /= rhs.g;
+			lhs.b /= rhs.b;
+
+			return lhs;
+		}
+
+		friend bool operator==(Pixel& lhs, Pixel& rhs) { return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b; }
+		friend bool operator!=(Pixel& lhs, Pixel& rhs) { return lhs.r != rhs.r || lhs.g != rhs.g || lhs.b != rhs.b; }
+	};
+
+	Pixel BLACK(0, 0, 0, 0),
+		DARK_BLUE(0, 55, 218, 255),
+		DARK_GREEN(19, 161, 14, 255),
+		DARK_CYAN(59, 120, 255, 255),
+		DARK_RED(197, 15, 31, 255),
+		DARK_MAGENTA(136, 32, 152, 255),
+		DARK_GREY(118, 118, 118, 255),
+		ORANGE(255, 165, 0, 255),
+		GREY(204, 204, 204, 255),
+		BLUE(0, 0, 255, 255),
+		GREEN(0, 255, 0, 255),
+		CYAN(58, 150, 221, 255),
+		RED(255, 0, 0, 255),
+		MAGENTA(180, 0, 158, 255),
+		YELLOW(255, 255, 0, 255),
+		WHITE(255, 255, 255, 255),
+		NONE(0, 0, 0, 0);
+
+	Pixel RandomPixel(bool bRandomAlpha = false)
+	{
+		return Pixel(rand() % 256, rand() % 256, rand() % 256, bRandomAlpha ? rand() % 256 : 255);
+	}
+
+	float B2F(uint8_t b)
+	{
+		return (float)b / 255.0f;
+	}
+
+	uint8_t F2B(float f)
+	{
+		return uint8_t(f * 255.0f);
+	}
+
+
+	/********************************
+	* @ SPRITE CLASS IMPLEMENTATION *
+	********************************/
 
 	class Sprite
 	{
 	public:
-		Sprite()
+		Sprite() = default;
+		Sprite(int32_t w, int32_t h)
 		{
-			Create(8, 8);
+			if (w > 0 && h > 0)
+				Create(w, h);
 		}
 
-		Sprite(int w, int h)
+		Sprite(const std::string& filename)
 		{
-			Create(w, h);
+			m_sFilename = filename;
+
+			rcode rc = LoadSprite();
+
+			if (!rc.ok)
+				std::cerr << rc.info << "\n";
+
+			m_bOk = rc.ok;
 		}
 
-		Sprite(std::wstring sFileName)
+		~Sprite()
 		{
-			if (!Load(sFileName))
-				Create(8, 8);
+			stbi_image_free(m_cData);
 		}
 
 	private:
-		short* m_Glyphs = nullptr;
-		short* m_Colours = nullptr;
+		int32_t m_nWidth;
+		int32_t m_nHeight;
+		int32_t m_nChannels;
+
+		std::string m_sFilename;
+
+		uint8_t* m_cData;
+
+		bool m_bOk = true;
 
 	public:
-		int nWidth = 0;
-		int nHeight = 0;
-
-	private:
-		void Create(int w, int h)
+		void Create(int32_t w, int32_t h)
 		{
-			nWidth = w;
-			nHeight = h;
+			m_nWidth = w;
+			m_nHeight = h;
 
-			m_Glyphs = new short[w * h];
-			m_Colours = new short[w * h];
+			m_nChannels = 4;
 
-			for (int i = 0; i < w * h; i++)
+			m_cData = new uint8_t[w * h * m_nChannels];
+
+			for (int i = 0; i < w * h * m_nChannels; i++)
+				m_cData[i] = 0;
+		}
+
+		rcode LoadSprite()
+		{
+			rcode rc(false);
+
+			if (!std::filesystem::exists(m_sFilename))
 			{
-				m_Glyphs[i] = L' ';
-				m_Colours[i] = FG_BLACK;
+				rc.info = "stb_image: file does not exist";
+				return rc;
 			}
+
+			m_cData = stbi_load(m_sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 0);
+
+			if (!m_cData)
+			{
+				rc.info = "stb_image: ";
+				rc.info += stbi_failure_reason();
+				return rc;
+			}
+
+			rc.ok = true;
+			return rc;
 		}
 
-	public:
-		void SetGlyph(int x, int y, short c)
+		uint32_t GetWidth() const
 		{
-			if (x > 0 || x < nWidth || y > 0 || y < nHeight)
-				m_Glyphs[y * nWidth + x] = c;
+			return m_nWidth;
 		}
 
-		void SetColour(int x, int y, short c)
+		uint32_t GetHeight() const
 		{
-			if (x > 0 || x < nWidth || y > 0 || y < nHeight)
-				m_Colours[y * nWidth + x] = c;
+			return m_nHeight;
 		}
 
-		short GetGlyph(int x, int y)
+		std::string GetFilename() const
 		{
-			if (x > 0 || x < nWidth || y > 0 || y < nHeight)
-				return m_Glyphs[y * nWidth + x];
-
-			return L' ';
+			return m_sFilename;
 		}
 
-		short GetColour(int x, int y)
+		bool IsOk()
 		{
-			if (x > 0 || x < nWidth || y > 0 || y < nHeight)
-				return m_Colours[y * nWidth + x];
-
-			return FG_BLACK;
+			return m_bOk;
 		}
 
-		bool Save(std::wstring sFile)
+		void SetPixel(int32_t x, int32_t y, const Pixel& p)
 		{
-			FILE* f = nullptr;
-
-			_wfopen_s(&f, sFile.c_str(), L"wb");
-
-			if (f == nullptr)
-				return false;
-
-			fwrite(&nWidth, sizeof(int), 1, f);
-			fwrite(&nHeight, sizeof(int), 1, f);
-
-			fwrite(m_Colours, sizeof(short), nWidth * nHeight, f);
-			fwrite(m_Glyphs, sizeof(short), nWidth * nHeight, f);
-
-			fclose(f);
-
-			return true;
+			m_cData[m_nChannels * (y * m_nWidth + x) + 0] = p.r;
+			m_cData[m_nChannels * (y * m_nWidth + x) + 1] = p.g;
+			m_cData[m_nChannels * (y * m_nWidth + x) + 2] = p.b;
+			m_cData[m_nChannels * (y * m_nWidth + x) + 3] = p.a;
 		}
 
-		bool Load(std::wstring sFile)
+		const Pixel& GetPixel(int32_t x, int32_t y)
 		{
-			delete[] m_Glyphs;
-			delete[] m_Colours;
+			if (x < 0 || y < 0 || x >= m_nWidth || y >= m_nHeight)
+				return BLACK;
 
-			nWidth = 0;
-			nHeight = 0;
+			const Pixel& p = Pixel(
+				m_cData[m_nChannels * (y * m_nWidth + x) + 0],
+				m_cData[m_nChannels * (y * m_nWidth + x) + 1],
+				m_cData[m_nChannels * (y * m_nWidth + x) + 2],
+				m_cData[m_nChannels * (y * m_nWidth + x) + 3]
+			);
 
-			FILE* f = nullptr;
+			return p;
+		}
 
-			_wfopen_s(&f, sFile.c_str(), L"rb");
+		uint8_t* GetPixelData()
+		{
+			return m_cData;
+		}
 
-			if (f == nullptr)
-				return false;
+		void SetPixelData(uint8_t* data)
+		{
+			for (int i = 0; i < m_nWidth * m_nHeight * m_nChannels; i++)
+				m_cData[i] = data[i];
+		}
 
-			std::fread(&nWidth, sizeof(int), 1, f);
-			std::fread(&nHeight, sizeof(int), 1, f);
+		void SetPixelData(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
+		{
+			for (int i = 0; i < m_nWidth; i++)
+				for (int j = 0; j < m_nHeight; j++)
+				{
+					m_cData[m_nChannels * (j * m_nWidth + i) + 0] = r;
+					m_cData[m_nChannels * (j * m_nWidth + i) + 1] = g;
+					m_cData[m_nChannels * (j * m_nWidth + i) + 2] = b;
+					m_cData[m_nChannels * (j * m_nWidth + i) + 3] = a;
+				}
+		}
 
-			Create(nWidth, nHeight);
+		int GetChannels()
+		{
+			return m_nChannels;
+		}
 
-			std::fread(m_Colours, sizeof(short), nWidth * nHeight, f);
-			std::fread(m_Glyphs, sizeof(short), nWidth * nHeight, f);
-
-			std::fclose(f);
-
-			return true;
+		Pixel Sample(float x, float y)
+		{
+			int32_t sx = std::min(int32_t(x * (float)m_nWidth), m_nWidth - 1);
+			int32_t sy = std::min(int32_t(y * (float)m_nHeight), m_nHeight - 1);
+			return GetPixel(sx, sy);
 		}
 	};
 
-	class ConsoleGameEngine
+	/************************************
+	* @ END SPRITE CLASS IMPLEMENTATION *
+	************************************/
+
+
+	/*********************************
+	* @ TEXTURE CLASS IMPLEMENTATION *
+	*********************************/
+
+	class Texture
 	{
 	public:
-		ConsoleGameEngine()
+		Texture(Sprite* spr, bool clamp = false)
 		{
-			hConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
-			hConsoleIn = GetStdHandle(STD_INPUT_HANDLE);
+			m_sprInstance = spr;
 
-			hWnd = GetConsoleWindow();
+			LoadTexture(m_sprInstance->GetPixelData());
 
-			hDC = GetDC(hWnd);
-
-			sAppName = L"Undefined";
-			sFont = L"Consolas";
+			m_fUVScaleX = 1.0f / (float)m_sprInstance->GetWidth();
+			m_fUVScaleY = 1.0f / (float)m_sprInstance->GetHeight();
 		}
 
-		virtual ~ConsoleGameEngine()
+	private:
+		Sprite* m_sprInstance;
+
+		GLuint m_nTexId;
+
+		float m_fUVScaleX;
+		float m_fUVScaleY;
+
+	public:
+		void LoadTexture(uint8_t* pixel_data)
 		{
-			delete[] pScreen;
+			GLenum nFormat;
+
+			switch (m_sprInstance->GetChannels())
+			{
+			case 3: nFormat = GL_RGB; break;
+			case 4: nFormat = GL_RGBA; break;
+			}
+
+			glGenTextures(1, &m_nTexId);
+			glBindTexture(GL_TEXTURE_2D, m_nTexId);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glTexImage2D(
+				GL_TEXTURE_2D,
+				0,
+				nFormat,
+				m_sprInstance->GetWidth(),
+				m_sprInstance->GetHeight(),
+				0,
+				nFormat,
+				GL_UNSIGNED_BYTE,
+				pixel_data
+			);
+
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
+
+		void SetTexId(uint32_t id)
+		{
+			m_nTexId = id;
+		}
+
+		uint32_t GetTexId()
+		{
+			return m_nTexId;
+		}
+
+		Sprite* Spr()
+		{
+			return m_sprInstance;
+		}
+
+		float GetUVScaleX()
+		{
+			return m_fUVScaleX;
+		}
+
+		float GetUVScaleY()
+		{
+			return m_fUVScaleY;
+		}
+	};
+
+	/*************************************
+	* @ END TEXTURE CLASS IMPLEMENTATION *
+	*************************************/
+
+
+	/**********************************
+	* @ GRAPHIC STRUCT IMPLEMENTATION *
+	**********************************/
+
+	struct Graphic
+	{
+		Graphic() = default;
+
+		Graphic(const std::string& filename)
+		{
+			Load(filename);
+		}
+
+		~Graphic()
+		{
+			delete tex;
+			delete spr;
+		}
+
+		Texture* tex;
+		Sprite* spr;
+
+		bool Load(const std::string& filename)
+		{
+			spr = new Sprite(filename);
+
+			if (spr->IsOk())
+			{
+				tex = new Texture(spr);
+				return true;
+			}
+
+			return false;
+		}
+	};
+
+	/**************************************
+	* @ END GRAPHIC STRUCT IMPLEMENTATION *
+	**************************************/
+
+
+	/******************************************
+	* @ MAIN GAME ENGINE CLASS IMPLEMENTATION *
+	******************************************/
+
+	class GameEngine
+	{
+	public:
+		GameEngine()
+		{
+			m_sAppName = "Undefined";
+
+			m_bCustomIcon = false;
+		}
+
+		virtual ~GameEngine()
+		{
+			delete m_sprFont;
+
+			if (m_sprIcon)
+				delete m_sprIcon;
+
+			glfwDestroyWindow(m_glWindow);
+
+			glfwTerminate();
+		}
+
+	private:
+		std::string m_sAppName;
+		std::string m_sIconFileName;
+
+		uint32_t m_nScreenWidth;
+		uint32_t m_nScreenHeight;
+
+		uint32_t m_nPixelWidth;
+		uint32_t m_nPixelHeight;
+
+		uint32_t m_nWindowWidth;
+		uint32_t m_nWindowHeight;
+
+		GLFWwindow* m_glWindow;
+		GLFWmonitor* m_glMonitor;
+
+		bool m_bAppRunning;
+
+		bool m_bFullScreen;
+		bool m_bVSync;
+
+		bool m_bCustomIcon;
+
+		bool m_bShowFPS;
+
+		KeyState m_ksKeys[512];
+		KeyState m_ksMouse[5];
+
+		bool m_nKeyOldState[512];
+		bool m_nKeyNewState[512];
+
+		bool m_nMouseOldState[5];
+		bool m_nMouseNewState[5];
+
+		float m_fWheelDelta = 0.0f;
+
+		int32_t m_nMouseX = -1;
+		int32_t m_nMouseY = -1;
+
+		float m_fDeltaTime;
+
+		Sprite* m_sprIcon;
+		Sprite* m_sprFont;
+
+		GLbitfield m_bfClearMask;
+
+		bool m_bDirtyPixel;
 
 	public:
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 
-		rcode ConstructConsole(int width = 120, int height = 40, int fontw = 4, int fonth = 4)
+		virtual bool OnBeforeUserCreate() { return true; }
+		virtual bool OnAfterUserCreate() { return true; }
+
+		virtual bool OnBeforeUserUpdate(float fDeltaTime) { return true; }
+		virtual bool OnAfterUserUpdate(float fDeltaTime) { return true; }
+
+		rcode Construct(uint32_t nScreenWidth, uint32_t nScreenHeight, uint32_t nPixelWidth, uint32_t nPixelHeight, bool bFullScreen = false, bool bVSync = false, bool bDirtyPixel = false)
 		{
-			if (width <= 0 || height <= 0 || fontw <= 0 || fonth <= 0)
-				return rcode(false, "Invalid width or height");
+			if (nScreenWidth < 0 || nScreenHeight < 0)
+				return rcode(false, "Width or height less than zero");
 
-			nScreenWidth = width;
-			nScreenHeight = height;
+			m_nScreenWidth = nScreenWidth;
+			m_nScreenHeight = nScreenHeight;
 
-			nFontW = fontw;
-			nFontH = fonth;
+			m_nPixelWidth = nPixelWidth;
+			m_nPixelHeight = nPixelHeight;
 
-			hConsoleOut = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+			m_nWindowWidth = m_nScreenWidth * m_nPixelWidth;
+			m_nWindowHeight = m_nScreenHeight * m_nPixelHeight;
 
-			if (hConsoleOut == INVALID_HANDLE_VALUE)
-				return rcode(false, "Can't create console pScreen buffer for output");
+			m_bFullScreen = bFullScreen;
+			m_bVSync = bVSync;
 
-			rRectWindow = { 0, 0, 1, 1 };
-			SetConsoleWindowInfo(hConsoleOut, TRUE, &rRectWindow);
-			
-			COORD coord = { (short)nScreenWidth, (short)nScreenHeight };
-			if (!SetConsoleScreenBufferSize(hConsoleOut, coord))
-				return rcode(false, "Too large or to small pScreen width or height");
+			m_bDirtyPixel = bDirtyPixel;
 
-			if (!SetConsoleActiveScreenBuffer(hConsoleOut))
-				return rcode(false, "Can't set console pScreen buffer");
+			if (!glfwInit())
+				return rcode(false, "Could not init GLFW!");
 
-			CONSOLE_FONT_INFOEX cfi;
-			cfi.cbSize = sizeof(cfi);
-			cfi.nFont = 0;
-			cfi.dwFontSize.X = nFontW;
-			cfi.dwFontSize.Y = nFontH;
-			cfi.FontFamily = FF_DONTCARE;
-			cfi.FontWeight = FW_NORMAL;
+			m_glMonitor = glfwGetPrimaryMonitor();
 
-			wcscpy_s(cfi.FaceName, sFont.c_str());
-			if (!SetCurrentConsoleFontEx(hConsoleOut, false, &cfi))
-				return rcode(false, "Can't set font");
+			if (!m_glMonitor)
+			{
+				glfwTerminate();
+				return rcode(false, "No monitors were found!");
+			}
 
-			if (!SetConsoleMode(hConsoleIn, ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT))
-				return rcode(false, "Could not set console mode (ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT)");
+			const GLFWvidmode* vm = glfwGetVideoMode(m_glMonitor);
 
-			CONSOLE_SCREEN_BUFFER_INFO csbi;
-			if (!GetConsoleScreenBufferInfo(hConsoleOut, &csbi))
-				return rcode(false, "Could not get console pScreen buffer info");
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
-			if (nScreenHeight > csbi.dwMaximumWindowSize.Y)
-				return rcode(false, "Specified pScreen height larger than maximum window height");
+			// On some laptops with integrated graphics VSync does not work at all!
+			if (m_bVSync)
+			{
+				glfwSwapInterval(1);
+				glfwWindowHint(GLFW_REFRESH_RATE, vm->refreshRate);
+			}
+			else
+				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
-			if (nScreenWidth > csbi.dwMaximumWindowSize.X)
-				return rcode(false, "Specified pScreen width larger than maximum window width");
+			if (m_bFullScreen)
+			{
+				m_nScreenWidth = vm->width / m_nPixelWidth;
+				m_nScreenHeight = vm->height / m_nPixelHeight;
 
-			rRectWindow = { 0, 0, short(nScreenWidth - 1), short(nScreenHeight - 1) };
-			SetConsoleWindowInfo(hConsoleOut, TRUE, &rRectWindow);
-			
-			pScreen = new CHAR_INFO[nScreenWidth * nScreenHeight];
-			memset(pScreen, 0, sizeof(CHAR_INFO) * nScreenWidth * nScreenHeight);
+				m_nWindowWidth = vm->width;
+				m_nWindowHeight = vm->height;
 
-			return rcode(true, "Ok");
+				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, "", m_glMonitor, NULL);
+
+				glfwSetWindowMonitor(m_glWindow, m_glMonitor,
+					0, 0, m_nWindowWidth, m_nWindowHeight, vm->refreshRate);
+			}
+			else
+				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, "", NULL, NULL);
+
+			if (!m_glWindow)
+			{
+				const char* err;
+				glfwGetError(&err);
+				glfwTerminate();
+				return rcode(false, err);
+			}
+
+			glfwMakeContextCurrent(m_glWindow);
+
+			glViewport(0, 0, m_nWindowWidth, m_nWindowHeight);
+			glOrtho(0.0, (double)m_nWindowWidth, (double)m_nWindowHeight, 0.0, -1.0, 1.0);
+
+			glEnable(GL_TEXTURE_2D);
+
+			if (m_bDirtyPixel)
+				glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+			std::string title = "github.com/defini7 - " + m_sAppName;
+			glfwSetWindowTitle(m_glWindow, title.c_str());
+
+			std::string data =
+				"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
+				"O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400"
+				"Of80001oOg<7O7moBGT7O7lABET024@aBEd714AiOdl717a_=TH013Q>00000000"
+				"720D000V?V5oB3Q_HdUoE7a9@DdDE4A9@DmoE4A;Hg]oM4Aj8S4D84@`00000000"
+				"OaPT1000Oa`^13P1@AI[?g`1@A=[OdAoHgljA4Ao?WlBA7l1710007l100000000"
+				"ObM6000oOfMV?3QoBDD`O7a0BDDH@5A0BDD<@5A0BGeVO5ao@CQR?5Po00000000"
+				"Oc``000?Ogij70PO2D]??0Ph2DUM@7i`2DTg@7lh2GUj?0TO0C1870T?00000000"
+				"70<4001o?P<7?1QoHg43O;`h@GT0@:@LB@d0>:@hN@L0@?aoN@<0O7ao0000?000"
+				"OcH0001SOglLA7mg24TnK7ln24US>0PL24U140PnOgl0>7QgOcH0K71S0000A000"
+				"00H00000@Dm1S007@DUSg00?OdTnH7YhOfTL<7Yh@Cl0700?@Ah0300700000000"
+				"<008001QL00ZA41a@6HnI<1i@FHLM81M@@0LG81?O`0nC?Y7?`0ZA7Y300080000"
+				"O`082000Oh0827mo6>Hn?Wmo?6HnMb11MP08@C11H`08@FP0@@0004@000000000"
+				"00P00001Oab00003OcKP0006@6=PMgl<@440MglH@000000`@000001P00000000"
+				"Ob@8@@00Ob@8@Ga13R@8Mga172@8?PAo3R@827QoOb@820@0O`0007`0000007P0"
+				"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
+				"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
+
+			ConstructFontSprite(data);
+
+			if (m_bCustomIcon)
+			{
+				ConstructIconSprite();
+				ApplyIcon();
+			}
+
+			return rcode(true);
 		}
 
 		void Run()
 		{
-			bGameThreadActive = true;
-
-			std::thread t = std::thread(&def::ConsoleGameEngine::AppThread, this);
-			t.join();
+			m_bAppRunning = true;
+			AppThread();
 		}
 
-	public:
-		template <typename T>
-		void Draw(vec2d_basic<T> pos, short c = 0x2588, short col = 0x000F);
-		virtual void Draw(int x, int y, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void DrawLine(vec2d_basic<T> pos1, vec2d_basic<T> pos2, short c = 0x2588, short col = 0x000F);
-		virtual void DrawLine(int x1, int y1, int x2, int y2, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void DrawTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, short c = 0x2588, short col = 0x000F);
-		virtual void DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void FillTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, short c = 0x2588, short col = 0x000F);
-		virtual void FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void DrawRectangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, short c = 0x2588, short col = 0x000F);
-		virtual void DrawRectangle(int x1, int y1, int x2, int y2, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void DrawRectangleS(vec2d_basic<T> pos, vec2d_basic<T> size, short c = 0x2588, short col = 0x000F);
-		virtual void DrawRectangleS(int x, int y, int size_x, int size_y, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void FillRectangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, short c = 0x2588, short col = 0x000F);
-		virtual void FillRectangle(int x1, int y1, int x2, int y2, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void FillRectangleS(vec2d_basic<T> pos, vec2d_basic<T> size, short c = 0x2588, short col = 0x000F);
-		virtual void FillRectangleS(int x, int y, int size_x, int size_y, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void DrawCircle(vec2d_basic<T> pos, int radius, short c = 0x2588, short col = 0x000F);
-		virtual void DrawCircle(int x, int y, int radius, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void FillCircle(vec2d_basic<T> pos, int radius, short c = 0x2588, short col = 0x000F);
-		virtual void FillCircle(int x, int y, int radius, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void DrawSprite(vec2d_basic<T> pos, Sprite* sprite);
-		virtual void DrawSprite(int x, int y, Sprite* sprite);
-
-		template <typename T>
-		void DrawPartialSprite(vec2d_basic<T> pos, vec2d_basic<T> fpos1, vec2d_basic<T> fpos2, Sprite* sprite);
-		virtual void DrawPartialSprite(int x, int y, int fx1, int fy1, int fx2, int fy2, Sprite* sprite);
-
-		template <typename T>
-		void DrawPartialSpriteS(vec2d_basic<T> pos, vec2d_basic<T> fpos1, vec2d_basic<T> fpos2, Sprite* sprite);
-		virtual void DrawPartialSpriteS(int x, int y, int fx1, int fy1, int fx2, int fy2, Sprite* sprite);
-
-		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, short c = 0x2588, short col = 0x000F);
-
-		template <typename T>
-		void DrawString(vec2d_basic<T> pos, std::wstring text, short col = 0x000F);
-		virtual void DrawString(int x, int y, std::wstring text, short col = 0x000F);
-
-		virtual void Clear(short c = 0x2588, short col = 0x000F);
-
-		bool MakeSound(std::wstring sFilename, bool bLoop = false);
-		bool Focused();
-
-		template <typename T>
-		inline vec2d_basic<T> GetMouse() const;
-
-		inline int GetMouseX() const;
-		inline int GetMouseY() const;
-
-		inline sKeyState GetMouse(short button) const;
-		inline sKeyState GetKey(short key) const;
-
-		inline int GetCharacter(bool bHeld = true, bool bPressed = false, bool bReleased = false);
-
-		inline int GetpScreenWidth() const;
-		inline int GetpScreenHeight() const;
-
-		template <typename T>
-		inline vec2d_basic<T> GetpScreenSize() const;
-
-		inline float GetDeltaTime() const;
-
 	private:
-		void AppThread()
+		void ConstructIconSprite()
 		{
-			if (!OnUserCreate())
-				bGameThreadActive = false;
+			m_sprIcon = new def::Sprite(m_sIconFileName);
+		}
 
-			if (bGameThreadActive)
+		void ApplyIcon()
+		{
+			GLFWimage img[1];
+
+			img[0].width = m_sprIcon->GetWidth();
+			img[0].height = m_sprIcon->GetHeight();
+
+			img[0].pixels = m_sprIcon->GetPixelData();
+
+			glfwSetWindowIcon(m_glWindow, 1, img);
+		}
+
+		void ConstructFontSprite(const std::string& data)
+		{
+			m_sprFont = new Sprite(128, 48);
+			int px = 0, py = 0;
+
+			for (size_t b = 0; b < 1024; b += 4)
 			{
-				auto tp1 = std::chrono::system_clock::now();
-				auto tp2 = std::chrono::system_clock::now();
+				uint32_t sym1 = (uint32_t)data[b + 0] - 48;
+				uint32_t sym2 = (uint32_t)data[b + 1] - 48;
+				uint32_t sym3 = (uint32_t)data[b + 2] - 48;
+				uint32_t sym4 = (uint32_t)data[b + 3] - 48;
+				uint32_t r = sym1 << 18 | sym2 << 12 | sym3 << 6 | sym4;
 
-				for (int i = 0; i < 256; i++)
-					vKeys.push_back({ false, false, false });
-
-				for (int i = 0; i < 5; i++)
-					vMouse.push_back({ false, false, false });
-
-				while (bGameThreadActive)
+				for (int i = 0; i < 24; i++)
 				{
-					tp2 = std::chrono::system_clock::now();
-					std::chrono::duration<float> elapsedTime = tp2 - tp1;
-					tp1 = tp2;
-					fDeltaTime = elapsedTime.count();
-
-					wchar_t buffer_title[256];
-					swprintf_s(buffer_title, 256, L"github.com/defini7 - Consola Prod - %s - FPS: %3.2f", sAppName.c_str(), 1.0f / fDeltaTime);
-					SetConsoleTitleW(buffer_title);
-
-					if (!OnUserUpdate(fDeltaTime))
-						bGameThreadActive = false;
-
-					INPUT_RECORD inBuf[32];
-					DWORD events = 0;
-					GetNumberOfConsoleInputEvents(hConsoleIn, &events);
-					if (events > 0)
-						ReadConsoleInputW(hConsoleIn, inBuf, events, &events);
-
-					for (DWORD i = 0; i < events; i++)
-					{
-						switch (inBuf[i].EventType)
-						{
-						case FOCUS_EVENT:
-							bFocused = inBuf[i].Event.FocusEvent.bSetFocus;
-							break;
-
-						case MOUSE_EVENT:
-						{
-							switch (inBuf[i].Event.MouseEvent.dwEventFlags)
-							{
-							case MOUSE_MOVED:
-							{
-								nMousePosX = inBuf[i].Event.MouseEvent.dwMousePosition.X;
-								nMousePosY = inBuf[i].Event.MouseEvent.dwMousePosition.Y;
-							}
-							break;
-
-							case 0:
-							{
-								for (int m = 0; m < 5; m++)
-									bMouseNewState[m] = (inBuf[i].Event.MouseEvent.dwButtonState & (1 << m)) > 0;
-							}
-							break;
-
-							default:
-								break;
-							}
-						}
-						break;
-
-						default:
-							break;
-						}
-					}
-
-					for (int i = 0; i < 256; i++)
-					{
-						nKeyNewState[i] = GetAsyncKeyState(i);
-
-						vKeys[i].bPressed = false;
-						vKeys[i].bReleased = false;
-
-						if (nKeyNewState[i] != nKeyOldState[i])
-						{
-							if (nKeyNewState[i] & 0x8000)
-							{
-								vKeys[i].bPressed = !vKeys[i].bHeld;
-								vKeys[i].bHeld = true;
-							}
-							else
-							{
-								vKeys[i].bReleased = true;
-								vKeys[i].bHeld = false;
-							}
-						}
-
-						nKeyOldState[i] = nKeyNewState[i];
-					}
-
-					for (int m = 0; m < 5; m++)
-					{
-						vMouse[m].bPressed = false;
-						vMouse[m].bReleased = false;
-
-						if (bMouseNewState[m] != bMouseOldState[m])
-						{
-							if (bMouseNewState[m])
-							{
-								vMouse[m].bPressed = true;
-								vMouse[m].bHeld = true;
-							}
-							else
-							{
-								vMouse[m].bReleased = true;
-								vMouse[m].bHeld = false;
-							}
-						}
-
-						bMouseOldState[m] = bMouseNewState[m];
-					}
-
-					WriteConsoleOutputW(hConsoleOut, pScreen, { (short)nScreenWidth, (short)nScreenHeight }, { 0,0 }, &rRectWindow);
+					int k = r & (1 << i) ? 255 : 0;
+					m_sprFont->SetPixel(px, py, Pixel(k, k, k, k));
+					if (++py == 48) { px++; py = 0; }
 				}
 			}
 		}
 
-	protected:
-		std::wstring sAppName;
-		std::wstring sFont;
+		bool AppThread()
+		{
+			if (!OnBeforeUserCreate())
+			{
+				m_bAppRunning = false;
+				return false;
+			}
 
-	private:
-		CHAR_INFO* pScreen = nullptr;
-		HANDLE hConsoleOut;
-		HANDLE hConsoleIn;
-		SMALL_RECT rRectWindow;
-		HWND hWnd;
-		HDC hDC;
+			if (!OnUserCreate())
+			{
+				m_bAppRunning = false;
+				return false;
+			}
 
-		std::vector<sKeyState> vKeys;
-		std::vector<sKeyState> vMouse;
+			if (!OnAfterUserCreate())
+			{
+				m_bAppRunning = false;
+				return false;
+			}
 
-		short nKeyOldState[256];
-		short nKeyNewState[256];
+			auto tp1 = std::chrono::system_clock::now();
+			auto tp2 = tp1;
 
-		bool bMouseOldState[5];
-		bool bMouseNewState[5];
+			for (int i = 0; i < 512; i++)
+				m_ksKeys[i] = { false, false, false };
 
-		int nMousePosX;
-		int nMousePosY;
-		
-		int nScreenWidth;
-		int nScreenHeight;
+			for (int i = 0; i < 5; i++)
+				m_ksMouse[i] = { false, false, false };
 
-		int nFontW;
-		int nFontH;
+			for (int i = 0; i < 512; i++)
+				m_nKeyOldState[i] = 0;
 
-		float fDeltaTime;
+			for (int i = 0; i < 5; i++)
+				m_nMouseOldState[i] = 0;
 
-		bool bGameThreadActive;
-		bool bFocused;
+			for (int i = 0; i < 512; i++)
+				m_nKeyNewState[i] = 0;
+
+			while (m_bAppRunning)
+			{
+				tp2 = std::chrono::system_clock::now();
+				m_fDeltaTime = std::chrono::duration<float>(tp2 - tp1).count();
+				tp1 = tp2;
+
+				m_bAppRunning = !glfwWindowShouldClose(m_glWindow);
+
+				for (int i = 0; i < 512; i++)
+				{
+					m_nKeyNewState[i] = glfwGetKey(m_glWindow, i);
+
+					m_ksKeys[i].bPressed = false;
+					m_ksKeys[i].bReleased = false;
+
+					if (m_nKeyNewState[i] != m_nKeyOldState[i])
+					{
+						if (m_nKeyNewState[i])
+						{
+							m_ksKeys[i].bPressed = !m_ksKeys[i].bHeld;
+							m_ksKeys[i].bHeld = true;
+						}
+						else
+						{
+							m_ksKeys[i].bReleased = true;
+							m_ksKeys[i].bHeld = false;
+						}
+					}
+
+					m_nKeyOldState[i] = m_nKeyNewState[i];
+				}
+
+				for (int i = 0; i < 5; i++)
+				{
+					m_nMouseNewState[i] = glfwGetMouseButton(m_glWindow, i);
+
+					m_ksMouse[i].bPressed = false;
+					m_ksMouse[i].bReleased = false;
+
+					if (m_nMouseNewState[i] != m_nMouseOldState[i])
+					{
+						if (m_nMouseNewState[i])
+						{
+							m_ksMouse[i].bPressed = true;
+							m_ksMouse[i].bHeld = true;
+						}
+						else
+						{
+							m_ksMouse[i].bReleased = true;
+							m_ksMouse[i].bHeld = false;
+						}
+					}
+
+					m_nMouseOldState[i] = m_nMouseNewState[i];
+				}
+
+				double dMouseX, dMouseY;
+
+				glfwGetCursorPos(m_glWindow, &dMouseX, &dMouseY);
+
+				m_nMouseX = (int)dMouseX / m_nPixelWidth;
+				m_nMouseY = (int)dMouseY / m_nPixelHeight;
+
+				if (m_bShowFPS)
+				{
+					std::string title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
+					glfwSetWindowTitle(m_glWindow, title.c_str());
+				}
+
+				if (!OnBeforeUserUpdate(m_fDeltaTime))
+					m_bAppRunning = false;
+
+				glPushMatrix();
+
+				if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+					glBegin(GL_POINTS);
+				else
+					glBegin(GL_QUADS);
+
+				if (!OnUserUpdate(m_fDeltaTime))
+					m_bAppRunning = false;
+
+				glEnd();
+
+				glPopMatrix();
+
+				if (!OnAfterUserUpdate(m_fDeltaTime))
+					m_bAppRunning = false;
+
+				if (m_bVSync)
+					glfwSwapBuffers(m_glWindow);
+				else
+					glFlush();
+
+				glfwPollEvents();
+			}
+
+			return true;
+		}
+
+	public:
+
+		template <typename T>
+		void Draw(vec2d_basic<T> pos, const Pixel& p = WHITE);
+		virtual void Draw(int32_t x, int32_t y, const Pixel& p = WHITE);
+
+		template <typename T>
+		void DrawLine(vec2d_basic<T> pos1, vec2d_basic<T> pos2, const Pixel& p = WHITE);
+		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
+
+		template <typename T>
+		void DrawTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p = WHITE);
+		virtual void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
+
+		template <typename T>
+		void FillTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p = WHITE);
+		virtual void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
+
+		template <typename T>
+		void DrawRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p = WHITE);
+		virtual void DrawRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
+
+		template <typename T>
+		void FillRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p = WHITE);
+		virtual void FillRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
+
+		template <typename T>
+		void DrawCircle(vec2d_basic<T> pos, int32_t radius, const Pixel& p = WHITE);
+		virtual void DrawCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
+
+		template <typename T>
+		void FillCircle(vec2d_basic<T> pos, int32_t radius, const Pixel& p = WHITE);
+		virtual void FillCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
+
+		template <typename T>
+		void DrawSprite(vec2d_basic<T> pos, Sprite* sprite);
+		virtual void DrawSprite(int32_t x, int32_t y, Sprite* sprite);
+
+		template <typename T>
+		void DrawPartialSprite(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Sprite* sprite);
+		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* sprite);
+
+		template <typename T>
+		void DrawTexture(vec2d_basic<T> pos, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
+		virtual void DrawTexture(float x, float y, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+
+		template <typename T>
+		void DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
+		virtual void DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+
+		template <typename T>
+		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vec2d_basic<T> pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+
+		template <typename T>
+		void DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p = WHITE, vec2d_basic<float> scale = { 1.0f, 1.0f });
+		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE, float scale_x = 1.0f, float scale_y = 1.0f);
+
+		virtual void Clear(const Pixel& p);
+
+		KeyState GetKey(uint32_t k);
+		KeyState GetMouse(uint32_t k);
+
+		template <typename T>
+		vec2d_basic<T> GetMouse();
+
+		int32_t GetMouseX();
+		int32_t GetMouseY();
+
+		void SetTitle(const std::string& title);
+
+		template <typename T>
+		vec2d_basic<T> GetScreenSize();
+
+		int32_t GetScreenWidth();
+		int32_t GetScreenHeight();
+
+		float GetWheelDelta();
+		bool FullScreenEnabled();
+		bool VSyncEnabled();
+
+		void SetIcon(const std::string& filename);
+
+		WindowState GetWindowState();
+
+		GLFWwindow* GetWindow();
+
+		void ShowFPS(bool show = true);
+
+		void SetClearFlags(GLbitfield mask);
+
 	};
 
-	bool ConsoleGameEngine::MakeSound(std::wstring sFilename, bool bLoop)
+	void def::GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
 	{
-		DWORD f = SND_ASYNC | SND_FILENAME;
+		glColor4ub(p.r, p.g, p.b, p.a);
 
-		if (bLoop)
-			f |= SND_LOOP;
-
-		return (bool)PlaySoundW(sFilename.c_str(), nullptr, f);
-	}
-
-	bool ConsoleGameEngine::Focused()
-	{
-		return bFocused;
-	}
-
-	template <typename T>
-	void ConsoleGameEngine::FillRectangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, short c, short col)
-	{
-		for (int i = pos1.x; i <= pos2.x; i++)
-			for (int j = pos1.y; j <= pos2.y; j++)
-			{
-				pScreen[j * npScreenWidth + i].Char.UnicodeChar = c;
-				pScreen[j * npScreenWidth + i].Attributes = col;
-			}
-	}
-
-	void ConsoleGameEngine::FillRectangle(int x1, int y1, int x2, int y2, short c, short col)
-	{
-		FillRectangle<int>({ x1, y1 }, { x2, y2 }, c, col);
-	}
-
-	template <typename T>
-	void ConsoleGameEngine::FillRectangleS(vec2d_basic<T> pos, vec2d_basic<T> size, short c, short col)
-	{
-		FillRectangle(pos, { pos.x + size.x, pos.y + size.y }, c, col);
-	}
-
-	void ConsoleGameEngine::FillRectangleS(int x, int y, int size_x, int size_y, short c, short col)
-	{
-		FillRectangle<int>({ x, y }, { x + size_x, y + size_y }, c, col);
-	}
-
-	template <typename T>
-	void ConsoleGameEngine::DrawCircle(vec2d_basic<T> pos, int radius, short c, short col)
-	{
-		if (!radius) return;
-
-		int x = 0;
-		int y = radius;
-		int p = 3 - 2 * radius;
-
-		while (y >= x)
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glVertex2f(x, y);
+		else
 		{
-			Draw(pos.x - x, pos.y - y, c, col);	// upper left left
-			Draw(pos.x - y, pos.y - x, c, col);	// upper upper left
-			Draw(pos.x + y, pos.y - x, c, col);	// upper upper right
-			Draw(pos.x + x, pos.y - y, c, col);	// upper right right
-			Draw(pos.x - x, pos.y + y, c, col);	// lower left left
-			Draw(pos.x - y, pos.y + x, c, col);	// lower lower left
-			Draw(pos.x + y, pos.y + x, c, col);	// lower lower right
-			Draw(pos.x + x, pos.y + y, c, col);	// lower right right
-
-			if (p < 0)
-			{
-				p += 4 * x + 6;
-
-				x++;
-			}
-			else
-			{
-				p += 4 * (x - y) + 10;
-
-				x++;
-				y--;
-			}
+			glVertex2i(x * m_nPixelWidth, y * m_nPixelHeight);
+			glVertex2i(x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight);
+			glVertex2i(x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
+			glVertex2i(x * m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
 		}
 	}
 
-	void ConsoleGameEngine::DrawCircle(int x, int y, int radius, short c, short col)
+	void def::GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p)
 	{
-		DrawCircle<int>({ x, y }, radius, c, col);
-	}
+		int32_t x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
 
-	template <typename T>
-	void ConsoleGameEngine::FillCircle(vec2d_basic<T> pos, int radius, short c, short col)
-	{
-		if (!radius) return;
-
-		int x = 0;
-		int y = radius;
-		int p = 3 - 2 * radius;
-
-		auto drawline = [&](int sx, int ex, int ny)
-		{
-			for (int i = sx; i <= ex; i++)
-				Draw(i, ny, c, col);
-		};
-
-		while (y >= x)
-		{
-			drawline(pos.x - x, pos.x + x, pos.y - y);
-			drawline(pos.x - y, pos.x + y, pos.y - x);
-			drawline(pos.x - x, pos.x + x, pos.y + y);
-			drawline(pos.x - y, pos.x + y, pos.y + x);
-			if (p < 0) p += 4 * x++ + 6;
-			else p += 4 * (x++ - y--) + 10;
-		}
-	}
-
-	void ConsoleGameEngine::FillCircle(int x, int y, int radius, short c, short col)
-	{
-		FillCircle<int>({ x, y }, radius, c, col);
-	}
-
-	template <typename T>
-	void ConsoleGameEngine::Draw(vec2d_basic<T> pos, short c, short col)
-	{
-		if (pos.x >= 0 && pos.x < npScreenWidth && pos.y >= 0 && pos.y < npScreenHeight)
-		{
-			pScreen[pos.y * npScreenWidth + pos.x].Char.UnicodeChar = c;
-			pScreen[pos.y * npScreenWidth + pos.x].Attributes = col;
-		}
-	}
-
-	void ConsoleGameEngine::Draw(int x, int y, short c, short col)
-	{
-		Draw<int>({ x, y }, c, col);
-	}
-
-	template <typename T>
-	void ConsoleGameEngine::DrawLine(vec2d_basic<T> pos1, vec2d_basic<T> pos2, short c, short col)
-	{
-		int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
-
-		dx = pos2.x - pos1.x;
-		dy = pos2.y - pos1.y;
+		dx = x2 - x1;
+		dy = y2 - y1;
 
 		dx1 = abs(dx);
 		dy1 = abs(dy);
@@ -939,18 +1357,18 @@ namespace def
 		{
 			if (dx >= 0)
 			{
-				x = pos1.x;
-				y = pos1.y;
-				xe = pos2.x;
+				x = x1;
+				y = y1;
+				xe = x2;
 			}
 			else
 			{
-				x = pos2.x;
-				y = pos2.y;
-				xe = pos1.x;
+				x = x2;
+				y = y2;
+				xe = x1;
 			}
 
-			Draw(x, y, c, col);
+			Draw(x, y, p);
 
 			for (i = 0; x < xe; i++)
 			{
@@ -967,25 +1385,26 @@ namespace def
 
 					px = px + 2 * (dy1 - dx1);
 				}
-				Draw(x, y, c, col);
+
+				Draw(x, y, p);
 			}
 		}
 		else
 		{
 			if (dy >= 0)
 			{
-				x = pos1.x;
-				y = pos1.y;
-				ye = pos2.y;
+				x = x1;
+				y = y1;
+				ye = y2;
 			}
 			else
 			{
-				x = pos2.x;
-				y = pos2.y;
-				ye = pos1.y;
+				x = x2;
+				y = y2;
+				ye = y1;
 			}
 
-			Draw(x, y, c, col);
+			Draw(x, y, p);
 
 			for (i = 0; y < ye; i++)
 			{
@@ -1003,50 +1422,37 @@ namespace def
 					py = py + 2 * (dx1 - dy1);
 				}
 
-				Draw(x, y, c, col);
+				Draw(x, y, p);
 			}
 		}
 	}
 
-	void ConsoleGameEngine::DrawLine(int x1, int y1, int x2, int y2, short c, short col)
+	void def::GameEngine::DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p)
 	{
-		DrawLine<int>({ x1, y1 }, { x2, y2 }, c, col);
+		DrawLine(x1, y1, x2, y2, p);
+		DrawLine(x2, y2, x3, y3, p);
+		DrawLine(x3, y3, x1, y1, p);
 	}
 
-	template <typename T>
-	void ConsoleGameEngine::DrawTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, short c, short col)
+	void def::GameEngine::FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p)
 	{
-		DrawLine(pos1, pos2, c, col);
-		DrawLine(pos2, pos3, c, col);
-		DrawLine(pos3, pos1, c, col);
-	}
+		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, p); };
 
-	void ConsoleGameEngine::DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, short c, short col)
-	{
-		DrawTriangle<int>({ x1, y1 }, { x2, y2 }, { x3, y3 }, c, col);
-	}
-
-	// https://www.avrfreaks.net/sites/default/files/triangles.c
-	template <typename T>
-	void ConsoleGameEngine::FillTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, short c, short col)
-	{
-		auto drawline = [&](int sx, int ex, int ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, c, col); };
-
-		int t1x, t2x, y, minx, maxx, t1xp, t2xp;
+		int32_t t1x, t2x, y, minx, maxx, t1xp, t2xp;
 
 		bool changed1 = false;
 		bool changed2 = false;
 
-		int signx1, signx2, dx1, dy1, dx2, dy2;
-		int e1, e2;
+		int32_t signx1, signx2, dx1, dy1, dx2, dy2;
+		int32_t e1, e2;
 
 		// Sort vertices
-		if (pos1.y > pos2.y) { std::swap(pos1.y, pos2.y); std::swap(pos1.x, pos2.x); }
-		if (pos1.y > pos3.y) { std::swap(pos1.y, pos3.y); std::swap(pos1.x, pos3.x); }
-		if (pos2.y > pos3.y) { std::swap(pos2.y, pos3.y); std::swap(pos2.x, pos3.x); }
+		if (y1 > y2) { std::swap(y1, y2); std::swap(x1, x2); }
+		if (y1 > y3) { std::swap(y1, y3); std::swap(x1, x3); }
+		if (y2 > y3) { std::swap(y2, y3); std::swap(x2, x3); }
 
-		t1x = t2x = pos1.x; y = pos1.y;   // Starting points
-		dx1 = (int)(pos2.x - pos1.x);
+		t1x = t2x = x1; y = y1;   // Starting points
+		dx1 = (int32_t)(x2 - x1);
 
 		if (dx1 < 0)
 		{
@@ -1056,9 +1462,9 @@ namespace def
 		else
 			signx1 = 1;
 
-		dy1 = (int)(pos2.y - pos1.y);
+		dy1 = (int32_t)(y2 - y1);
 
-		dx2 = (int)(pos3.x - pos1.x);
+		dx2 = (int32_t)(x3 - x1);
 
 		if (dx2 < 0)
 		{
@@ -1068,7 +1474,7 @@ namespace def
 		else
 			signx2 = 1;
 
-		dy2 = (int)(pos3.y - pos1.y);
+		dy2 = (int32_t)(y3 - y1);
 
 		if (dy1 > dx1)
 		{   // swap values
@@ -1081,13 +1487,13 @@ namespace def
 			changed2 = true;
 		}
 
-		e2 = (int)(dx2 >> 1);
+		e2 = (int32_t)(dx2 >> 1);
 
 		// Flat top, just process the second half
-		if (pos1.y == pos2.y)
+		if (y1 == y2)
 			goto next;
 
-		e1 = (int)(dx1 >> 1);
+		e1 = (int32_t)(dx1 >> 1);
 
 		for (int i = 0; i < dx1;)
 		{
@@ -1169,13 +1575,13 @@ namespace def
 			t2x += t2xp;
 			y += 1;
 
-			if (y == pos2.y)
+			if (y == y2)
 				break;
 
 		}
 	next:
 		// Second half
-		dx1 = (int)(pos3.x - pos2.x);
+		dx1 = (int32_t)(x3 - x2);
 
 		if (dx1 < 0)
 		{
@@ -1185,8 +1591,8 @@ namespace def
 		else
 			signx1 = 1;
 
-		dy1 = (int)(pos3.y - pos2.y);
-		t1x = pos2.x;
+		dy1 = (int32_t)(y3 - y2);
+		t1x = x2;
 
 		if (dy1 > dx1)
 		{   // swap values
@@ -1196,7 +1602,7 @@ namespace def
 		else
 			changed1 = false;
 
-		e1 = (int)(dx1 >> 1);
+		e1 = (int32_t)(dx1 >> 1);
 
 		for (int i = 0; i <= dx1; i++)
 		{
@@ -1241,7 +1647,7 @@ namespace def
 			}
 		next3:
 			// process second line until y value is about to change
-			while (t2x != pos3.x)
+			while (t2x != x3)
 			{
 				e2 += dy2;
 
@@ -1287,109 +1693,229 @@ namespace def
 			t2x += t2xp;
 			y += 1;
 
-			if (y > pos3.y)
+			if (y > y3)
 				return;
 		}
 	}
 
-	void ConsoleGameEngine::FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, short c, short col)
+	void def::GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
 	{
-		FillTriangle<int>({ x1, y1 }, { x2, y2 }, { x3, y3 }, c, col);
-	}
-
-	template <typename T>
-	void ConsoleGameEngine::DrawRectangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, short c, short col)
-	{
-		for (int x = 0; x <= pos2.x - pos1.x; x++)
+		for (int i = 0; i <= sx; i++)
 		{
-			Draw(pos1.x + x, pos1.y, c, col);
-			Draw(pos1.x + x, pos2.y, c, col);
+			Draw(x + i, y, p);
+			Draw(x + i, y + sy, p);
 		}
 
-		for (int y = 0; y <= pos2.y - pos1.y; y++)
+		for (int j = 0; j <= sy; j++)
 		{
-			Draw(pos1.x, pos1.y + y, c, col);
-			Draw(pos2.x, pos1.y + y, c, col);
+			Draw(x, y + j, p);
+			Draw(x + sx, y + j, p);
 		}
 	}
 
-	void ConsoleGameEngine::DrawRectangle(int x1, int y1, int x2, int y2, short c, short col)
+	void def::GameEngine::FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
 	{
-		DrawRectangle<int>({ x1, y1 }, { x2, y2 }, c, col);
+		for (int i = x; i <= x + sx; i++)
+			for (int j = y; j <= y + sy; j++)
+				Draw(i, j, p);
 	}
 
-	template <typename T>
-	void ConsoleGameEngine::DrawRectangleS(vec2d_basic<T> pos, vec2d_basic<T> size, short c, short col)
+	void def::GameEngine::DrawCircle(int32_t x, int32_t y, int32_t r, const Pixel& p)
 	{
-		DrawRectangle<int>(pos, { pos.x + size.x, pos.y + size.y }, c, col);
+		if (!r) return;
+
+		int32_t x1 = 0;
+		int32_t y1 = r;
+		float p1 = 3.0f - 2.0f * (float)r;
+
+		while (y1 >= x1)
+		{
+			Draw(x - x1, y - y1, p);	// upper left left
+			Draw(x - y1, y - x1, p);	// upper upper left
+			Draw(x + y1, y - x1, p);	// upper upper right
+			Draw(x + x1, y - y1, p);	// upper right right
+			Draw(x - x1, y + y1, p);	// lower left left
+			Draw(x - y1, y + x1, p);	// lower lower left
+			Draw(x + y1, y + x1, p);	// lower lower right
+			Draw(x + x1, y + y1, p);	// lower right right
+
+			if (p1 < 0)
+			{
+				p1 += 4 * x1 + 6;
+
+				x1++;
+			}
+			else
+			{
+				p1 += 4 * (x1 - y1) + 10;
+
+				x1++;
+				y1--;
+			}
+		}
 	}
 
-	void ConsoleGameEngine::DrawRectangleS(int x, int y, int size_x, int size_y, short c, short col)
+	void def::GameEngine::FillCircle(int32_t x, int32_t y, int32_t r, const Pixel& p)
 	{
-		DrawRectangle<int>({ x, y }, { x + size_x, y + size_y }, c, col);
+		if (!r) return;
+
+		int32_t x1 = 0;
+		int32_t y1 = r;
+		int32_t p1 = 3 - 2 * r;
+
+		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny)
+		{
+			for (int i = sx; i <= ex; i++)
+				Draw(i, ny, p);
+		};
+
+		while (y1 >= x1)
+		{
+			drawline(x - x1, x + x1, y - y1);
+			drawline(x - y1, x + y1, y - x1);
+			drawline(x - x1, x + x1, y + y1);
+			drawline(x - y1, x + y1, y + x1);
+
+			if (p1 < 0)
+				p1 += 4 * x1++ + 6;
+			else
+				p1 += 4 * (x1++ - y1--) + 10;
+		}
 	}
 
-	template <typename T>
-	void ConsoleGameEngine::DrawSprite(vec2d_basic<T> pos, Sprite* sprite)
+	void def::GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* sprite)
 	{
 		if (sprite == nullptr)
 			return;
 
-		for (int i = 0; i < sprite->nWidth; i++)
-		{
-			for (int j = 0; j < sprite->nHeight; j++)
-			{
-				if (sprite->GetGlyph(i, j) != L' ')
-					Draw(pos.x + i, pos.y + j, sprite->GetGlyph(i, j), sprite->GetColour(i, j));
-			}
-		}
-	}
-
-	void ConsoleGameEngine::DrawSprite(int x, int y, Sprite* sprite)
-	{
-		DrawSprite<int>({ x, y }, sprite);
-	}
-
-	template <typename T>
-	void ConsoleGameEngine::DrawPartialSprite(vec2d_basic<T> pos, vec2d_basic<T> fpos1, vec2d_basic<T> fpos2, Sprite* sprite)
-	{
-		if (sprite == nullptr || fpos1.x < 0 || fpos1.y < 0 || fpos2.x > sprite->nWidth || fpos2.y > sprite->nHeight)
+		if (!sprite->IsOk())
 			return;
 
-		for (int i = fpos1.x, x = 0; i < fpos2.x; i++, x++)
-		{
-			for (int j = fpos1.y, y = 0; j < fpos2.y; j++, y++)
+		for (int i = 0; i < sprite->GetWidth(); i++)
+			for (int j = 0; j < sprite->GetHeight(); j++)
 			{
-				if (sprite->GetGlyph(i, j) != L' ')
-					Draw(pos.x + x, pos.y + y, sprite->GetGlyph(i, j), sprite->GetColour(i, j));
+				def::Pixel p = sprite->GetPixel(i, j);
+
+				if ((float)p.a / 255.0f > 0.1f)
+					Draw(x + i, y + j, p);
 			}
-		}
 	}
 
-	void ConsoleGameEngine::DrawPartialSprite(int x, int y, int fx1, int fy1, int fx2, int fy2, Sprite* sprite)
+	void def::GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* sprite)
 	{
-		DrawPartialSprite<int>({ x, y }, { fx1, fy1 }, { fx2, fy2 }, sprite);
+		if (sprite == nullptr)
+			return;
+
+		if (!sprite->IsOk())
+			return;
+
+		for (int i = fx, x1 = 0; i < fsx; i++, x1++)
+			for (int j = fy, y1 = 0; j < fsy; j++, y1++)
+			{
+				def::Pixel p = sprite->GetPixel(i, j);
+
+				if ((float)p.a / 255.0f > 0.1f)
+					Draw(x + x1, y + y1, sprite->GetPixel(i, j));
+			}
 	}
 
-	template <typename T>
-	void ConsoleGameEngine::DrawPartialSpriteS(vec2d_basic<T> pos, vec2d_basic<T> fpos1, vec2d_basic<T> fpos2, Sprite* sprite)
+	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
 	{
-		DrawPartialSprite<int>({ pos.x, pos.y }, { fpos1.x, fpos1.y }, { fpos1.x + fpos2.x, fpos1.y + fpos2.y }, sprite);
+		if (tex == nullptr)
+			return;
+
+		if (!tex->Spr()->IsOk())
+			return;
+
+		glEnd();
+
+		glPushMatrix();
+		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glColor4ub(tint.r, tint.g, tint.b, tint.a);
+
+		glBindTexture(GL_TEXTURE_2D, tex->GetTexId());
+
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + tex->Spr()->GetHeight());
+		glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + tex->Spr()->GetWidth(), y / scale_y + tex->Spr()->GetHeight());
+		glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + tex->Spr()->GetWidth(), y / scale_y);
+		glTexCoord2f(0.0f, 0.0f); glVertex2f(x / scale_x, y / scale_y);
+		glEnd();
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glDisable(GL_BLEND);
+
+		glEnd();
+
+		glPopMatrix();
+
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
 	}
 
-	void ConsoleGameEngine::DrawPartialSpriteS(int x, int y, int fx1, int fy1, int fx2, int fy2, Sprite* sprite)
+	void GameEngine::DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
 	{
-		DrawPartialSprite<int>({ x, y }, { fx1, fy1 }, { fx1 + fx2, fy1 + fy2 }, sprite);
+		if (tex == nullptr)
+			return;
+
+		if (!tex->Spr()->IsOk())
+			return;
+
+		glEnd();
+
+		glPushMatrix();
+
+		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glColor4ub(tint.r, tint.g, tint.b, tint.a);
+
+		glBindTexture(GL_TEXTURE_2D, tex->GetTexId());
+
+		float us = tex->GetUVScaleX();
+		float vs = tex->GetUVScaleY();
+
+		x /= scale_x;
+		y /= scale_y;
+
+		glBegin(GL_QUADS);
+			glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
+			glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + tex->Spr()->GetHeight());
+			glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + tex->Spr()->GetWidth(), y + tex->Spr()->GetHeight());
+			glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + tex->Spr()->GetWidth(), y);
+		glEnd();
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glDisable(GL_BLEND);
+
+		glEnd();
+
+		glPopMatrix();
+
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
 	}
 
-	void ConsoleGameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r, float s, short c, short col)
+	void def::GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r, float s, const Pixel& p)
 	{
 		// pair.first = x coordinate
 		// pair.second = y coordinate
 
 		// Create translated model vector of coordinate pairs
 		std::vector<std::pair<float, float>> vecTransformedCoordinates;
-		int verts = vecModelCoordinates.size();
+		int32_t verts = vecModelCoordinates.size();
 		vecTransformedCoordinates.resize(verts);
 
 		// Rotate
@@ -1416,101 +1942,263 @@ namespace def
 		// Draw Closed Polygon
 		for (int i = 0; i < verts + 1; i++)
 		{
-			int j = (i + 1);
-			DrawLine((int)vecTransformedCoordinates[i % verts].first, (int)vecTransformedCoordinates[i % verts].second,
-				(int)vecTransformedCoordinates[j % verts].first, (int)vecTransformedCoordinates[j % verts].second, c, col);
+			int32_t j = (i + 1);
+			DrawLine((int32_t)vecTransformedCoordinates[i % verts].first, (int32_t)vecTransformedCoordinates[i % verts].second,
+				(int32_t)vecTransformedCoordinates[j % verts].first, (int32_t)vecTransformedCoordinates[j % verts].second, p);
 		}
 	}
 
-	template <typename T>
-	void ConsoleGameEngine::DrawString(vec2d_basic<T> pos, std::wstring text, short col)
+	void def::GameEngine::DrawString(int32_t x, int32_t y, const std::string& s, const Pixel& p, float scale_x, float scale_y)
 	{
-		for (size_t i = 0; i < text.size(); i++)
+		glEnd();
+
+		glPopMatrix();
+
+		glPushMatrix();
+
+		glScalef(scale_x, scale_y, 1.0f);
+
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
+
+		int32_t sx = 0;
+		int32_t sy = 0;
+
+		for (auto c : s)
 		{
-			pScreen[pos.y * npScreenWidth + pos.x + i].Char.UnicodeChar = text[i];
-			pScreen[pos.y * npScreenWidth + pos.x + i].Attributes = col;
+			if (c == '\n')
+			{
+				sx = 0;
+				sy += 8;
+			}
+			else if (c == '\t')
+				sx += 32;
+			else
+			{
+				int32_t ox = (c - 32) % 16;
+				int32_t oy = (c - 32) / 16;
+
+				for (uint32_t i = 0; i < 8; i++)
+					for (uint32_t j = 0; j < 8; j++)
+						if (m_sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
+							Draw(x + sx + i, y + sy + j, p);
+
+				sx += 8;
+			}
 		}
+
+		glEnd();
+
+		glScalef(1.0f, 1.0f, 1.0f);
+
+		glPopMatrix();
+
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
 	}
 
-	void ConsoleGameEngine::DrawString(int x, int y, std::wstring text, short col)
+	void def::GameEngine::Clear(const Pixel& p)
 	{
-		DrawString<int>({ x, y }, text, col);
+		glEnd();
+
+		glClearColor(B2F(p.r), B2F(p.g), B2F(p.b), B2F(p.a));
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+			glBegin(GL_POINTS);
+		else
+			glBegin(GL_QUADS);
 	}
 
-	void ConsoleGameEngine::Clear(short c, short col)
+	KeyState GameEngine::GetKey(uint32_t k)
 	{
-		FillRectangle(0, 0, nScreenWidth - 1, nScreenHeight - 1, c, col);
+		return m_ksKeys[k];
+	}
+
+	KeyState GameEngine::GetMouse(uint32_t k)
+	{
+		return m_ksMouse[k];
+	}
+
+	int32_t GameEngine::GetMouseX()
+	{
+		return m_nMouseX;
+	}
+
+	int32_t GameEngine::GetMouseY()
+	{
+		return m_nMouseY;
+	}
+
+	int32_t GameEngine::GetScreenWidth()
+	{
+		return m_nScreenWidth;
+	}
+
+	int32_t GameEngine::GetScreenHeight()
+	{
+		return m_nScreenHeight;
+	}
+
+	float GameEngine::GetWheelDelta()
+	{
+		return m_fWheelDelta;
+	}
+
+	bool GameEngine::FullScreenEnabled()
+	{
+		return m_bFullScreen;
+	}
+
+	bool GameEngine::VSyncEnabled()
+	{
+		return m_bVSync;
+	}
+
+	void GameEngine::SetIcon(const std::string& filename)
+	{
+		m_sIconFileName = filename;
+		m_bCustomIcon = true;
+	}
+
+	void GameEngine::SetTitle(const std::string& title)
+	{
+		m_sAppName = title;
+	}
+
+	void GameEngine::ShowFPS(bool show)
+	{
+		m_bShowFPS = show;
+	}
+
+	WindowState GameEngine::GetWindowState()
+	{
+		bool bFocused = glfwGetWindowAttrib(m_glWindow, GLFW_FOCUSED);
+		bool bMaximized = glfwGetWindowAttrib(m_glWindow, GLFW_MAXIMIZED);
+
+		int f = WS_NONE;
+
+		if (bFocused)
+			f |= WS_FOCUSED;
+
+		if (bMaximized)
+			f |= WS_MAXIMIZED;
+
+		return static_cast<WindowState>(f);
+	}
+
+	GLFWwindow* GameEngine::GetWindow()
+	{
+		return m_glWindow;
+	}
+
+	void def::GameEngine::SetClearFlags(GLbitfield mask)
+	{
+		m_bfClearMask = mask;
+	}
+
+	template<typename T>
+	void GameEngine::Draw(vec2d_basic<T> pos, const Pixel& p)
+	{
+		Draw(pos.x, pos.y, p);
+	}
+
+	template<typename T>
+	void GameEngine::DrawLine(vec2d_basic<T> pos1, vec2d_basic<T> pos2, const Pixel& p)
+	{
+		DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, p);
+	}
+
+	template<typename T>
+	void GameEngine::DrawTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p)
+	{
+		DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
+	}
+
+	template<typename T>
+	void GameEngine::FillTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p)
+	{
+		FillTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
+	}
+
+	template<typename T>
+	void GameEngine::DrawRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p)
+	{
+		DrawRectangle(pos.x, pos.y, size.x, size.y, p);
+	}
+
+	template<typename T>
+	void GameEngine::FillRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p)
+	{
+		FillRectangle(pos.x, pos.y, size.x, size.y, p);
+	}
+
+	template<typename T>
+	void GameEngine::DrawCircle(vec2d_basic<T> pos, int32_t r, const Pixel& p)
+	{
+		DrawCircle(pos.x, pos.y, r, p);
+	}
+
+	template<typename T>
+	void GameEngine::FillCircle(vec2d_basic<T> pos, int32_t r, const Pixel& p)
+	{
+		FillCircle(pos.x, pos.y, r, p);
+	}
+
+	template<typename T>
+	void GameEngine::DrawSprite(vec2d_basic<T> pos, Sprite* spr)
+	{
+		DrawSprite(pos.x, pos.y, spr);
+	}
+
+	template<typename T>
+	void GameEngine::DrawPartialSprite(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Sprite* spr)
+	{
+		DrawPartialSprite(pos.x, pos.y, fpos.x, fpos.y, fpos.x, fpos.y, fsize.x, fsize.y);
+	}
+
+	template<typename T>
+	void GameEngine::DrawTexture(vec2d_basic<T> pos, Texture* Texture, vec2d_basic<float> scale, def::Pixel tint)
+	{
+		DrawTexture(pos.x, pos.y, Texture, scale.x, scale.y, tint);
+	}
+
+	template<typename T>
+	void GameEngine::DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* Texture, vec2d_basic<float> scale, def::Pixel tint)
+	{
+		DrawPartialTexture(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, Texture, scale.x, scale.y, tint);
+	}
+
+	template<typename T>
+	void GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vec2d_basic<T> pos, float r, float s, const Pixel& p)
+	{
+		DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p);
+	}
+
+	template<typename T>
+	void GameEngine::DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p, vec2d_basic<float> scale)
+	{
+		DrawString(pos.x, pos.y, text, p, scale.x, scale.y);
 	}
 
 	template <typename T>
-	inline vec2d_basic<T> ConsoleGameEngine::GetMouse() const
+	vec2d_basic<T> GameEngine::GetScreenSize()
 	{
-		return { nMousePosX, nMousePosY };
+		return vec2d_basic<T>((T)m_nScreenWidth, (T)m_nScreenHeight);
 	}
 
-	inline int ConsoleGameEngine::GetMouseX() const
+	template<typename T>
+	vec2d_basic<T> GameEngine::GetMouse()
 	{
-		return nMousePosX;
+		return vec2d_basic<T>((T)m_nMouseX, (T)m_nMouseY);
 	}
 
-	inline int ConsoleGameEngine::GetMouseY() const
-	{
-		return nMousePosY;
-	}
+	/******************************************
+	* @ MAIN GAME ENGINE CLASS IMPLEMENTATION *
+	******************************************/
 
-	inline sKeyState ConsoleGameEngine::GetMouse(short button) const
-	{
-		return vMouse[button];
-	}
-
-	inline sKeyState ConsoleGameEngine::GetKey(short key) const
-	{
-		return vKeys[key];
-	}
-
-	inline int ConsoleGameEngine::GetpScreenWidth() const
-	{
-		return nScreenWidth;
-	}
-
-	inline int ConsoleGameEngine::GetpScreenHeight() const
-	{
-		return nScreenHeight;
-	}
-
-	inline int ConsoleGameEngine::GetCharacter(bool bHeld, bool bPressed, bool bReleased)
-	{
-		for (int i = ' '; i <= '~'; i++)
-		{
-			if (bHeld)
-			{
-				if (vKeys[i].bHeld)
-					return i;
-			}
-			else if (bPressed)
-			{
-				if (vKeys[i].bPressed)
-					return i;
-			}
-			else if (bReleased)
-			{
-				if (vKeys[i].bReleased)
-					return i;
-			}
-
-		}
-
-		return -1;
-	}
-
-	template <typename T>
-	inline vec2d_basic<T> ConsoleGameEngine::GetpScreenSize() const
-	{
-		return { npScreenWidth, npScreenHeight };
-	}
-
-	inline float ConsoleGameEngine::GetDeltaTime() const
-	{
-		return fDeltaTime;
-	}
 }
