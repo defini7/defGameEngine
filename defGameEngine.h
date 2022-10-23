@@ -1830,6 +1830,7 @@ namespace def
 		glEnd();
 
 		glPushMatrix();
+
 		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
 
 		glEnable(GL_BLEND);
@@ -1888,10 +1889,10 @@ namespace def
 		y /= scale_y;
 
 		glBegin(GL_QUADS);
-			glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
-			glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + tex->Spr()->GetHeight());
-			glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + tex->Spr()->GetWidth(), y + tex->Spr()->GetHeight());
-			glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + tex->Spr()->GetWidth(), y);
+		glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
+		glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + fsy);
+		glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + fsx, y + fsy);
+		glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + fsx, y);
 		glEnd();
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -1907,6 +1908,7 @@ namespace def
 		else
 			glBegin(GL_QUADS);
 	}
+
 
 	void def::GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r, float s, const Pixel& p)
 	{
