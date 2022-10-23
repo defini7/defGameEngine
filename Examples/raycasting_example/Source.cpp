@@ -15,6 +15,7 @@ public:
 	RayCasting()
 	{
 		SetTitle("Ray Casting");
+		ShowFPS();
 	}
 
 private:
@@ -167,12 +168,12 @@ protected:
 			for (int y = 0; y < nMapHeight; y++)
 			{
 				if (sMap[y * nMapWidth + x] == '.')
-					Draw(x, y, def::GREY);
+					FillRectangle(x * 4, y * 4, 4, 4, def::GREY);
 				else
-					Draw(x, y, def::WHITE);
+					FillRectangle(x * 4, y * 4, 4, 4, def::WHITE);
 			}
 
-		Draw((int)GetPlayerX(), (int)GetPlayerY(), def::YELLOW);
+		FillRectangle((int)GetPlayerX() * 4, (int)GetPlayerY() * 4, 4, 4, def::YELLOW);
 
 		if (bShooting)
 		{
@@ -184,10 +185,10 @@ protected:
 			if (vFileSize.x == 0 && vFileSize.y == 0)
 				vFileSize = def::vi2d(128, 128);
 
-			DrawPartialTexture(GetScreenSize<int>() - 128, vFilePos, vFileSize, gfxGun);
+			DrawPartialTexture(GetScreenSize<int>() - 256, vFilePos, vFileSize, gfxGun, def::vf2d(2.0f, 2.0f));
 		}
 		else
-			DrawPartialTexture(GetScreenSize<int>() - 128, def::vi2d(0, 0), def::vi2d(128, 128), gfxGun);
+			DrawPartialTexture(GetScreenSize<int>() - 256, def::vi2d(0, 0), def::vi2d(128, 128), gfxGun, def::vf2d(2.0f, 2.0f));
 
 		// Draw crosshair
 
@@ -217,15 +218,17 @@ protected:
 			o.vx = GetDirX();
 			o.vy = GetDirY();
 
-			o.id = BULLET;
+			o.type = BULLET;
+			o.id = GetObjectsCount();
 
 			AddObject(o);
 		}
 
 		ManipulateObjects([&](std::pair<def::sObject*, def::sObject*> o) {
-			if ((int)round(o.first->x) == (int)round(o.second->x) && (int)round(o.first->y) == (int)round(o.second->y)) // check for collision
+
+			if ((int)round(o.first->x) == (int)round(o.second->x) && (int)round(o.first->y) == (int)round(o.second->y)) // check if 2 objects collide with each other
 			{
-				if (o.first->id == BULLET || o.second->id == BULLET)
+				if (o.first->type == BULLET || o.second->type == BULLET)
 				{
 					o.first->bRemove = true;
 					o.second->bRemove = true;
@@ -233,6 +236,7 @@ protected:
 			}
 
 			return o;
+
 		});
 
 		return true;
@@ -244,7 +248,7 @@ int main()
 {
 	RayCasting demo;
 
-	if (demo.Construct(256, 240, 4, 4, false, true).ok)
+	if (demo.Construct(800, 600, 1, 1))
 		demo.Run();
 
 	return 0;
