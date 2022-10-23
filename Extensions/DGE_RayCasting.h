@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 
 #pragma region license
 /***
@@ -45,6 +46,7 @@ namespace def
 
 		float speed;
 
+		uint32_t type;
 		uint32_t id;
 
 		bool bRemove = false;
@@ -149,22 +151,22 @@ namespace def
 			m_vecObjects.push_back(o);
 		}
 
-		float GetPlayerX()
+		float GetPlayerX() const
 		{
 			return m_fPlayerX;
 		}
 
-		float GetPlayerY()
+		float GetPlayerY() const
 		{
 			return m_fPlayerY;
 		}
 
-		float GetDirX()
+		float GetDirX() const
 		{
 			return m_fDirX;
 		}
 
-		float GetDirY()
+		float GetDirY() const
 		{
 			return m_fDirY;
 		}
@@ -174,33 +176,35 @@ namespace def
 			return m_vecObjects;
 		}
 
-		void SetObjects(std::vector<sObject>& objects)
+		sObject* GetObject(uint32_t i)
+		{
+			return &m_vecObjects[i];
+		}
+
+		uint32_t GetObjectsCount() const
+		{
+			return m_vecObjects.size();
+		}
+
+		void SetObjects(std::vector<sObject> objects)
 		{
 			m_vecObjects = objects;
 		}
 
 		void ManipulateObjects(const std::function<std::pair<sObject*, sObject*>(std::pair<sObject*, sObject*>)> func)
 		{
-			int i = 0;
-			int j = 0;
-
-			for (def::sObject& o1 : m_vecObjects)
+			for (sObject& o1 : m_vecObjects)
 			{
-				for (def::sObject& o2 : m_vecObjects)
+				for (sObject& o2 : m_vecObjects)
 				{
-					if (i != j)
+					if (o1.id != o2.id)
 					{
-						std::pair<def::sObject*, def::sObject*> input = std::make_pair(&o1, &o2);
-						std::pair<def::sObject*, def::sObject*> output = func(input);
+						std::pair<sObject*, sObject*> output = func(std::make_pair(&o1, &o2));
 
 						o1 = *output.first;
 						o2 = *output.second;
 					}
-
-					j++;
 				}
-				j = 0;
-				i++;
 			}
 		}
 
@@ -457,7 +461,7 @@ namespace def
 							int d = y * 256 - m_nScreenHeight * 128 + nObjectHeight * 128;
 							int nTexY = (d * m_nTexHeight / nObjectHeight) / 256;
 
-							def::Pixel pObjectPixel = ApplyObjectPixel(o.id, nTexX, nTexY);
+							def::Pixel pObjectPixel = ApplyObjectPixel(o.type, nTexX, nTexY);
 
 							if (pObjectPixel.a == 255)
 								DrawPixel(x, y, pObjectPixel);
