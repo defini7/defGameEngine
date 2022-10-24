@@ -14,6 +14,11 @@ protected:
 		listSections = { 0, 0, 0, 0 };
 		fSectionWidth = (float)GetScreenWidth() / float(listSections.size() - 1);
 
+		fLevelPosition = 0.0f;
+
+		nObstacleCount = 0;
+		nMaxObstacleCount = 4;
+
 		vPosition.x = 5;
 		vPosition.y = GetScreenHeight() / 2;
 
@@ -26,6 +31,11 @@ protected:
 		vSize.x = 16;
 		vSize.y = 16;
 
+		fGravity = 50.0f;
+
+		nScore = 0;
+		bAlive = true;
+
 		return true;
 	}
 
@@ -34,11 +44,42 @@ protected:
 		return vPos1 - 1 < vPos2 + vSize2 && vPos1 + vSize1 + 1 > vPos2;
 	}
 
+	void ResetGame()
+	{
+		listSections = { 0, 0, 0, 0 };
+		fSectionWidth = (float)GetScreenWidth() / float(listSections.size() - 1);
+
+		fLevelPosition = 0.0f;
+
+		nObstacleCount = 0;
+		nMaxObstacleCount = 4;
+
+		vPosition.x = 5;
+		vPosition.y = GetScreenHeight() / 2;
+
+		vAcceleration.x = 0.0f;
+		vAcceleration.y = 0.0f;
+
+		vVelocity.x = 0.0f;
+		vVelocity.y = fGravity;
+
+		vSize.x = 16;
+		vSize.y = 16;
+
+		fGravity = 50.0f;
+
+		nScore = 0;
+		bAlive = true;
+	}
+
 	bool OnUserUpdate(float fDeltaTime) override
 	{
 		if (!bAlive)
 		{
-			DrawString(GetScreenWidth() / 2 - GetScreenWidth() / 10, GetScreenHeight() / 2, "Game Over!", def::WHITE);
+			if (GetKey(def::Key::SPACE).bPressed)
+				ResetGame();
+
+			DrawString(GetScreenWidth() / 2 - GetScreenWidth() / 5, GetScreenHeight() / 2, "\tGame Over!\nPress Space to try again!", def::WHITE);
 			return true;
 		}
 
@@ -120,7 +161,7 @@ protected:
 	}
 
 private:
-	float fGravity = 50.0f;
+	float fGravity;
 
 	def::vf2d vPosition;
 	def::vi2d vSize;
@@ -130,13 +171,13 @@ private:
 
 	float fSectionWidth;
 	std::list<int> listSections;
-	float fLevelPosition = 0.0f;
+	float fLevelPosition;
 
-	int nObstacleCount = 0;
-	int nMaxObstacleCount = 4;
+	int nObstacleCount;
+	int nMaxObstacleCount;
 
-	bool bAlive = true;
-	int nScore = 0;
+	bool bAlive;
+	int nScore;
 
 };
 
