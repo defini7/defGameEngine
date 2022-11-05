@@ -113,6 +113,7 @@
 
 namespace def
 {
+	// 3 possible states of window
 	enum WindowState
 	{
 		WS_NONE,
@@ -120,6 +121,7 @@ namespace def
 		WS_FOCUSED
 	};
 
+	// Keyboard keys constants for convenient usage
 	namespace Key
 	{
 		constexpr unsigned int SPACE = 32;
@@ -244,8 +246,10 @@ namespace def
 		constexpr unsigned int MENU = 348;
 	}
 
+	// Pi constant
 	const float PI = 2.0f * acosf(0.0f);
 
+	// Basic 2d vector implementation for convenient usage
 	template <class T>
 	struct vec2d_basic
 	{
@@ -372,6 +376,7 @@ namespace def
 	typedef vec2d_basic<int> vi2d;
 	typedef vec2d_basic<float> vf2d;
 
+	// Holds information about error
 	struct rcode
 	{
 		rcode() = default;
@@ -397,6 +402,7 @@ namespace def
 		std::string info;
 	};
 
+	// Holds 3 possible states of each key
 	struct KeyState
 	{
 		bool bHeld;
@@ -524,15 +530,19 @@ namespace def
 		friend bool operator!=(Pixel& lhs, Pixel& rhs) { return lhs.r != rhs.r || lhs.g != rhs.g || lhs.b != rhs.b; }
 	};
 
-	Pixel BLACK(0, 0, 0, 0),
+	// Standart colors for convenient usage
+	static Pixel BLACK(0, 0, 0, 0),
 		DARK_BLUE(0, 55, 218, 255),
 		DARK_GREEN(19, 161, 14, 255),
 		DARK_CYAN(59, 120, 255, 255),
 		DARK_RED(197, 15, 31, 255),
 		DARK_MAGENTA(136, 32, 152, 255),
 		DARK_GREY(118, 118, 118, 255),
+		DARK_ORANGE(255, 140, 0, 255),
+		DARK_BROWN(76, 63, 47, 255),
+		DARK_PURPLE(112, 31, 126, 255),
 		ORANGE(255, 165, 0, 255),
-		GREY(204, 204, 204, 255),
+		GREY(200, 200, 200, 255),
 		BLUE(0, 0, 255, 255),
 		GREEN(0, 255, 0, 255),
 		CYAN(58, 150, 221, 255),
@@ -540,6 +550,14 @@ namespace def
 		MAGENTA(180, 0, 158, 255),
 		YELLOW(255, 255, 0, 255),
 		WHITE(255, 255, 255, 255),
+		GOLD(255, 203, 0, 255),
+		PINK(255, 109, 194, 255),
+		MAROON(190, 33, 55, 255),
+		LIME(0, 158, 47, 255),
+		BROWN(127, 106, 79, 255),
+		BEIGE(211, 176, 131, 255),
+		VIOLET(135, 60, 190, 255),
+		PURPLE(200, 122, 255, 255),
 		NONE(0, 0, 0, 0);
 
 	Pixel RandomPixel(bool bRandomAlpha = false)
@@ -547,12 +565,14 @@ namespace def
 		return Pixel(rand() % 256, rand() % 256, rand() % 256, bRandomAlpha ? rand() % 256 : 255);
 	}
 
-	float B2F(uint8_t b)
+	// Converts byte (0 - 255) to float (0.0f - 1.0f)
+	float Byte2Float(uint8_t b)
 	{
 		return (float)b / 255.0f;
 	}
 
-	uint8_t F2B(float f)
+	// Converts float (0.0f - 1.0f) to byte (0 - 255)
+	uint8_t Float2Byte(float f)
 	{
 		return uint8_t(f * 255.0f);
 	}
@@ -924,7 +944,7 @@ namespace def
 		Sprite* m_sprIcon;
 		Sprite* m_sprFont;
 
-		GLbitfield m_bfClearMask;
+		uint32_t m_nClearMask = 0;
 
 		bool m_bDirtyPixel;
 
@@ -1321,7 +1341,7 @@ namespace def
 
 		void ShowFPS(bool show = true);
 
-		void SetClearFlags(GLbitfield mask);
+		void SetClearFlags(uint32_t mask);
 
 	};
 
@@ -1958,6 +1978,9 @@ namespace def
 
 		glPushMatrix();
 
+		scale_x *= (float)m_nPixelWidth;
+		scale_y *= (float)m_nPixelHeight;
+
 		glScalef(scale_x, scale_y, 1.0f);
 
 		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
@@ -1985,7 +2008,7 @@ namespace def
 				for (uint32_t i = 0; i < 8; i++)
 					for (uint32_t j = 0; j < 8; j++)
 						if (m_sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
-							Draw(x + sx + i, y + sy + j, p);
+							Draw(x / scale_x + sx + i, y / scale_y + sy + j, p);
 
 				sx += 8;
 			}
@@ -2007,8 +2030,11 @@ namespace def
 	{
 		glEnd();
 
-		glClearColor(B2F(p.r), B2F(p.g), B2F(p.b), B2F(p.a));
-		glClear(GL_COLOR_BUFFER_BIT);
+		if (m_nClearMask == 0)
+			m_nClearMask = GL_COLOR_BUFFER_BIT;
+
+		glClearColor(Byte2Float(p.r), Byte2Float(p.g), Byte2Float(p.b), Byte2Float(p.a));
+		glClear(m_nClearMask);
 
 		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
 			glBegin(GL_POINTS);
@@ -2098,9 +2124,9 @@ namespace def
 		return m_glWindow;
 	}
 
-	void def::GameEngine::SetClearFlags(GLbitfield mask)
+	void def::GameEngine::SetClearFlags(uint32_t mask)
 	{
-		m_bfClearMask = mask;
+		m_nClearMask = mask;
 	}
 
 	template<typename T>
