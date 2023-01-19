@@ -263,118 +263,117 @@ namespace def
 		T x;
 		T y;
 
-		friend vec2d_basic<T> operator+(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return { v1.x + v2.x, v1.y + v2.y }; }
-		friend vec2d_basic<T> operator-(const vec2d_basic<T> v1, const vec2d_basic<T>& v2) { return { v1.x - v2.x, v1.y - v2.y }; }
-		friend vec2d_basic<T> operator*(const vec2d_basic<T> v1, const vec2d_basic<T>& v2) { return { v1.x * v2.x, v1.y * v2.y }; }
-		friend vec2d_basic<T> operator/(const vec2d_basic<T> v1, const vec2d_basic<T>& v2) { return { v1.x / v2.x, v1.y / v2.y }; }
-		friend vec2d_basic<T> operator+(const vec2d_basic<T> v1, const T v) { return { v1.x + v, v1.y + v }; }
-		friend vec2d_basic<T> operator-(const vec2d_basic<T> v1, const T v) { return { v1.x - v, v1.y - v }; }
-		friend vec2d_basic<T> operator*(const vec2d_basic<T> v1, const T v) { return { v1.x * v, v1.y * v }; }
-		friend vec2d_basic<T> operator/(vec2d_basic<T> v1, const T v) { return { v1.x / v,	v1.y / v }; }
+		vec2d_basic& operator=(const vec2d_basic& v) = default;
+		vec2d_basic<T> operator+(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x + v.x, this->y + v.y); }
+		vec2d_basic<T> operator-(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x - v.x, this->y - v.y); }
+		vec2d_basic<T> operator*(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x * v.x, this->y * v.y); }
+		vec2d_basic<T> operator/(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x / v.x, this->y / v.y); }
+		vec2d_basic<T> operator+(const T& v)			  { return vec2d_basic<T>(this->x + v, this->y + v); }
+		vec2d_basic<T> operator-(const T& v)			  { return vec2d_basic<T>(this->x - v, this->y - v); }
+		vec2d_basic<T> operator*(const T& v)			  { return vec2d_basic<T>(this->x * v, this->y * v); }
+		vec2d_basic<T> operator/(const T& v)			  { return vec2d_basic<T>(this->x / v, this->y / v); }
 
-		friend vec2d_basic<T> operator+=(vec2d_basic<T>& v1, const vec2d_basic<T>& v2)
+		vec2d_basic<T>& operator+=(const vec2d_basic<T>& v)
 		{
-			v1.x += v2.x;
-			v1.y += v2.y;
-			return v1;
+			this->x += v.x;
+			this->y += v.y;
+			return *this;
 		}
 
-		friend vec2d_basic<T> operator-=(vec2d_basic<T> v1, const vec2d_basic<T>& v2)
+		vec2d_basic<T>& operator-=(const vec2d_basic<T>& v)
 		{
-			v1.x -= v2.x;
-			v1.y -= v2.y;
-			return v1;
+			this->x -= v.x;
+			this->y -= v.y;
+			return *this;
 		}
 
-		friend vec2d_basic<T> operator*=(vec2d_basic<T> v1, const vec2d_basic<T>& v2)
+		vec2d_basic<T>& operator*=(const vec2d_basic<T>& v)
 		{
-			v1.x *= v2.x;
-			v1.y *= v2.y;
-			return v1;
+			this->x *= v.x;
+			this->y *= v.y;
+			return *this;
 		}
 
-		friend vec2d_basic<T> operator/=(vec2d_basic<T> v1, const vec2d_basic<T>& v2)
+		vec2d_basic<T>& operator/=(const vec2d_basic<T>& v)
 		{
-			v1.x /= v2.x;
-			v1.y /= v2.y;
-			return v1;
+			this->x /= v.x;
+			this->y /= v.y;
+			return *this;
 		}
 
-		friend vec2d_basic<T> operator+=(vec2d_basic<T> v1, const T v)
+		vec2d_basic<T>& operator+=(const T& v)
 		{
-			v1.x += v;
-			v1.y += v;
-			return v1;
+			this->x += v;
+			this->y += v;
+			return *this;
 		}
 
-		friend vec2d_basic<T> operator-=(vec2d_basic<T> v1, const T v)
+		vec2d_basic<T>& operator-=(const T& v)
 		{
-			v1.x -= v;
-			v1.y -= v;
-			return v1;
+			this->x -= v;
+			this->y -= v;
+			return *this;
 		}
 
-		friend vec2d_basic<T> operator*=(vec2d_basic<T> v1, const T v)
+		vec2d_basic<T>& operator*=(const T& v)
 		{
-			v1.x *= v;
-			v1.y *= v;
-			return v1;
+			this->x *= v;
+			this->y *= v;
+			return *this;
 		}
 
-		friend vec2d_basic<T> operator/=(vec2d_basic<T> v1, const T v)
+		vec2d_basic<T>& operator/=(const T& v)
 		{
-			v1.x /= v;
-			v1.y /= v;
-			return v1;
+			this->x /= v;
+			this->y /= v;
+			return *this;
 		}
 
-		friend bool operator<(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x < v.x&& v1.y < v.y; }
-		friend bool operator>(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x > v.x && v1.y > v.y; }
-		friend bool operator<=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x <= v.x && v1.y <= v.y; }
-		friend bool operator>=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x >= v.x && v1.y >= v.y; }
-		friend bool operator==(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x == v.x && v1.y == v.y; }
-		friend bool operator!=(const vec2d_basic<T> v1, const vec2d_basic<T> v) { return v1.x != v.x || v1.y != v.y; }
+		bool operator==(const vec2d_basic<T>& v) { return this->x == v.x && this->y == v.y; }
+		bool operator!=(const vec2d_basic<T>& v) { return this->x != v.x || this->y != v.y; }
 
-		friend bool operator<(const vec2d_basic<T> v1, const T v) { return v1.x < v&& v1.y < v; }
-		friend bool operator>(const vec2d_basic<T> v1, const T v) { return v1.x > v && v1.y > v; }
-		friend bool operator<=(const vec2d_basic<T> v1, const T v) { return v1.x <= v && v1.y <= v; }
-		friend bool operator>=(const vec2d_basic<T> v1, const T v) { return v1.x >= v && v1.y >= v; }
-		friend bool operator==(const vec2d_basic<T> v1, const T v) { return v1.x == v && v1.y == v; }
-		friend bool operator!=(const vec2d_basic<T> v1, const T v) { return v1.x != v || v1.y != v; }
+		friend vec2d_basic<T> operator*(const float& lhs, const vec2d_basic<T>& rhs)
+		{ return vec2d_basic<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y)); }
 
-		template <typename T1>
-		vec2d_basic<T1> to() { return vec2d_basic<T1>((T1)this->x, (T1)this->y); }
+		friend vec2d_basic<T> operator * (const double& lhs, const vec2d_basic<T>& rhs)
+		{ return vec2d_basic<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y)); }
 
-		float dot(vec2d_basic<T> v)
-		{
-			return this->x * v.x + this->y * v.y;
-		}
+		friend vec2d_basic<T> operator * (const int& lhs, const vec2d_basic<T>& rhs)
+		{ return vec2d_basic<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y)); }
 
-		float length()
-		{
-			return sqrtf(dot(*this));
-		}
+		friend vec2d_basic<T> operator / (const float& lhs, const vec2d_basic<T>& rhs)
+		{ return vec2d_basic<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y)); }
 
-		vec2d_basic<T> norm()
-		{
-			float l = length();
-			return vec2d_basic<T>(this->x / l, this->y / l);
-		}
+		friend vec2d_basic<T> operator / (const double& lhs, const vec2d_basic<T>& rhs)
+		{ return vec2d_basic<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y)); }
 
-		T mag() { return T(sqrtf(this->x * this->x + this->y * this->y)); }
-		T mag2() { return T(this->x * this->x + this->y * this->y); }
+		friend vec2d_basic<T> operator / (const int& lhs, const vec2d_basic<T>& rhs)
+		{ return vec2d_basic<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y)); }
 
-		vec2d_basic<T> abs() { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
-		vec2d_basic<T> perp() { return vec2d_basic<T>(-this->y, this->x); }
-		vec2d_basic<T> floor() { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
-		vec2d_basic<T> ceil() { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
-		vec2d_basic<T> cart() { return vec2d_basic<T>(cos(this->y) * x, sin(this->y) * this->x); }
-		vec2d_basic<T> polar() { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
-		vec2d_basic<T>& ref() { return *this; }
+		operator vec2d_basic<int>()		const { return { static_cast<int32_t>(this->x), static_cast<int32_t>(this->y) }; }
+		operator vec2d_basic<float>()	const { return { static_cast<float>(this->x), static_cast<float>(this->y) }; }
+		operator vec2d_basic<double>()	const { return { static_cast<double>(this->x), static_cast<double>(this->y) }; }
+
+		float dot(vec2d_basic<T> v) { return this->x * v.x + this->y * v.y; }
+		float length() { return sqrtf(dot(*this)); }
+
+		T mag()  { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
+		T mag2() { return static_cast<T>(this->x * this->x + this->y * this->y); }
+
+		vec2d_basic<T> norm()	{ float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
+		vec2d_basic<T> abs()	{ return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
+		vec2d_basic<T> perp()	{ return vec2d_basic<T>(-this->y, this->x); }
+		vec2d_basic<T> floor()	{ return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
+		vec2d_basic<T> ceil()	{ return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
+		vec2d_basic<T> cart()	{ return vec2d_basic<T>(cos(this->y) * x, sin(this->y) * this->x); }
+		vec2d_basic<T> polar()	{ return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
+		vec2d_basic<T>& ref()	{ return *this; }
+		std::string str()		{ return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
 	};
 
 	typedef vec2d_basic<int> vi2d;
 	typedef vec2d_basic<float> vf2d;
+	typedef vec2d_basic<double> vd2d;
 
 	// Holds information about error
 	struct rcode
@@ -769,12 +768,18 @@ namespace def
 	public:
 		void LoadTexture(uint8_t* pixel_data)
 		{
-			GLenum nFormat;
+			GLenum nFormat = 0;
 
 			switch (m_sprInstance->GetChannels())
 			{
 			case 3: nFormat = GL_RGB; break;
 			case 4: nFormat = GL_RGBA; break;
+			}
+
+			if (nFormat == 0)
+			{
+				std::cerr << "Invalid number of channels for " << m_sprInstance->GetFilename() << std::endl;
+				abort();
 			}
 
 			glGenTextures(1, &m_nTexId);
@@ -890,14 +895,7 @@ namespace def
 
 		virtual ~GameEngine()
 		{
-			delete m_sprFont;
-
-			if (m_sprIcon)
-				delete m_sprIcon;
-
-			glfwDestroyWindow(m_glWindow);
-
-			glfwTerminate();
+			Destroy();
 		}
 
 	private:
@@ -913,8 +911,8 @@ namespace def
 		uint32_t m_nWindowWidth;
 		uint32_t m_nWindowHeight;
 
-		GLFWwindow* m_glWindow;
-		GLFWmonitor* m_glMonitor;
+		GLFWwindow* m_glWindow = nullptr;
+		GLFWmonitor* m_glMonitor = nullptr;
 
 		bool m_bAppRunning;
 
@@ -925,8 +923,8 @@ namespace def
 
 		bool m_bShowFPS;
 
-		KeyState m_ksKeys[512];
-		KeyState m_ksMouse[5];
+		KeyState m_keys[512];
+		KeyState m_mouse[5];
 
 		bool m_nKeyOldState[512];
 		bool m_nKeyNewState[512];
@@ -941,12 +939,12 @@ namespace def
 
 		float m_fDeltaTime;
 
-		Sprite* m_sprIcon;
-		Sprite* m_sprFont;
-
-		uint32_t m_nClearMask = 0;
+		Sprite* m_sprIcon = nullptr;
+		Sprite* m_sprFont = nullptr;
 
 		bool m_bDirtyPixel;
+
+		def::Pixel* m_pScreen = nullptr;
 
 	public:
 		virtual bool OnUserCreate() = 0;
@@ -963,6 +961,9 @@ namespace def
 			if (nScreenWidth < 0 || nScreenHeight < 0)
 				return rcode(false, "Width or height less than zero");
 
+			if (!glfwInit())
+				return rcode(false, "Could not init GLFW!");
+
 			m_nScreenWidth = nScreenWidth;
 			m_nScreenHeight = nScreenHeight;
 
@@ -977,21 +978,15 @@ namespace def
 
 			m_bDirtyPixel = bDirtyPixel;
 
-			if (!glfwInit())
-				return rcode(false, "Could not init GLFW!");
-
 			m_glMonitor = glfwGetPrimaryMonitor();
 
 			if (!m_glMonitor)
 			{
-				glfwTerminate();
+				Destroy();
 				return rcode(false, "No monitors were found!");
 			}
 
 			const GLFWvidmode* vm = glfwGetVideoMode(m_glMonitor);
-
-			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
 			// On some laptops with integrated graphics VSync does not work at all!
 			if (m_bVSync)
@@ -1022,9 +1017,11 @@ namespace def
 			{
 				const char* err;
 				glfwGetError(&err);
-				glfwTerminate();
+				Destroy();
 				return rcode(false, err);
 			}
+
+			m_pScreen = new Pixel[m_nScreenWidth * m_nScreenHeight];
 
 			glfwMakeContextCurrent(m_glWindow);
 
@@ -1057,43 +1054,6 @@ namespace def
 				"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
 				"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
 
-			ConstructFontSprite(data);
-
-			if (m_bCustomIcon)
-			{
-				ConstructIconSprite();
-				ApplyIcon();
-			}
-
-			return rcode(true);
-		}
-
-		void Run()
-		{
-			m_bAppRunning = true;
-			AppThread();
-		}
-
-	private:
-		void ConstructIconSprite()
-		{
-			m_sprIcon = new def::Sprite(m_sIconFileName);
-		}
-
-		void ApplyIcon()
-		{
-			GLFWimage img[1];
-
-			img[0].width = m_sprIcon->GetWidth();
-			img[0].height = m_sprIcon->GetHeight();
-
-			img[0].pixels = m_sprIcon->GetPixelData();
-
-			glfwSetWindowIcon(m_glWindow, 1, img);
-		}
-
-		void ConstructFontSprite(const std::string& data)
-		{
 			m_sprFont = new Sprite(128, 48);
 			int px = 0, py = 0;
 
@@ -1112,6 +1072,44 @@ namespace def
 					if (++py == 48) { px++; py = 0; }
 				}
 			}
+
+			if (m_bCustomIcon)
+			{
+				m_sprIcon = new def::Sprite(m_sIconFileName);
+
+				GLFWimage img;
+
+				img.width = m_sprIcon->GetWidth();
+				img.height = m_sprIcon->GetHeight();
+
+				img.pixels = m_sprIcon->GetPixelData();
+
+				glfwSetWindowIcon(m_glWindow, 1, &img);
+			}
+
+			return rcode(true);
+		}
+
+		void Run()
+		{
+			m_bAppRunning = true;
+			AppThread();
+		}
+
+	private:
+		void Destroy()
+		{
+			if (m_pScreen)
+				delete[] m_pScreen;
+
+			if (m_sprFont)
+				delete m_sprFont;
+
+			if (m_sprIcon)
+				delete m_sprIcon;
+
+			glfwDestroyWindow(m_glWindow);
+			glfwTerminate();
 		}
 
 		bool AppThread()
@@ -1138,10 +1136,10 @@ namespace def
 			auto tp2 = tp1;
 
 			for (int i = 0; i < 512; i++)
-				m_ksKeys[i] = { false, false, false };
+				m_keys[i] = { false, false, false };
 
 			for (int i = 0; i < 5; i++)
-				m_ksMouse[i] = { false, false, false };
+				m_mouse[i] = { false, false, false };
 
 			for (int i = 0; i < 512; i++)
 				m_nKeyOldState[i] = 0;
@@ -1164,20 +1162,20 @@ namespace def
 				{
 					m_nKeyNewState[i] = glfwGetKey(m_glWindow, i);
 
-					m_ksKeys[i].bPressed = false;
-					m_ksKeys[i].bReleased = false;
+					m_keys[i].bPressed = false;
+					m_keys[i].bReleased = false;
 
 					if (m_nKeyNewState[i] != m_nKeyOldState[i])
 					{
 						if (m_nKeyNewState[i])
 						{
-							m_ksKeys[i].bPressed = !m_ksKeys[i].bHeld;
-							m_ksKeys[i].bHeld = true;
+							m_keys[i].bPressed = !m_keys[i].bHeld;
+							m_keys[i].bHeld = true;
 						}
 						else
 						{
-							m_ksKeys[i].bReleased = true;
-							m_ksKeys[i].bHeld = false;
+							m_keys[i].bReleased = true;
+							m_keys[i].bHeld = false;
 						}
 					}
 
@@ -1188,20 +1186,20 @@ namespace def
 				{
 					m_nMouseNewState[i] = glfwGetMouseButton(m_glWindow, i);
 
-					m_ksMouse[i].bPressed = false;
-					m_ksMouse[i].bReleased = false;
+					m_mouse[i].bPressed = false;
+					m_mouse[i].bReleased = false;
 
 					if (m_nMouseNewState[i] != m_nMouseOldState[i])
 					{
 						if (m_nMouseNewState[i])
 						{
-							m_ksMouse[i].bPressed = true;
-							m_ksMouse[i].bHeld = true;
+							m_mouse[i].bPressed = true;
+							m_mouse[i].bHeld = true;
 						}
 						else
 						{
-							m_ksMouse[i].bReleased = true;
-							m_ksMouse[i].bHeld = false;
+							m_mouse[i].bReleased = true;
+							m_mouse[i].bHeld = false;
 						}
 					}
 
@@ -1226,16 +1224,31 @@ namespace def
 
 				glPushMatrix();
 
-				if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
-					glBegin(GL_POINTS);
-				else
-					glBegin(GL_QUADS);
-
 				if (!OnUserUpdate(m_fDeltaTime))
 					m_bAppRunning = false;
+				
+				glBegin(GL_QUADS);
 
+				for (int32_t x = 0; x < m_nScreenWidth; x++)
+					for (int32_t y = 0; y < m_nScreenHeight; y++)
+					{
+						const def::Pixel& p = m_pScreen[y * m_nScreenWidth + x];
+
+						int nTopLeftX = x * m_nPixelWidth;
+						int nTopLeftY = y * m_nPixelHeight;
+
+						int nTopRightX = x * m_nPixelWidth + m_nPixelWidth;
+						int nTopRightY = y * m_nPixelHeight + m_nPixelHeight;
+
+						glColor4ub(p.r, p.g, p.b, p.a);
+
+						glVertex2i(nTopLeftX, nTopLeftY);
+						glVertex2i(nTopRightX, nTopLeftY);
+						glVertex2i(nTopRightX, nTopRightY);
+						glVertex2i(nTopLeftX, nTopRightY);
+					}
+				
 				glEnd();
-
 				glPopMatrix();
 
 				if (!OnAfterUserUpdate(m_fDeltaTime))
@@ -1307,8 +1320,8 @@ namespace def
 		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 
 		template <typename T>
-		void DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p = WHITE, vec2d_basic<float> scale = { 1.0f, 1.0f });
-		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE, float scale_x = 1.0f, float scale_y = 1.0f);
+		void DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p = WHITE);
+		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE);
 
 		virtual void Clear(const Pixel& p);
 
@@ -1341,23 +1354,14 @@ namespace def
 
 		void ShowFPS(bool show = true);
 
-		void SetClearFlags(uint32_t mask);
-
 	};
 
 	void def::GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
 	{
-		glColor4ub(p.r, p.g, p.b, p.a);
+		if (x < 0 || y < 0 || x >= GetScreenWidth() || y >= GetScreenHeight())
+			return;
 
-		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
-			glVertex2f(x, y);
-		else
-		{
-			glVertex2i(x * m_nPixelWidth, y * m_nPixelHeight);
-			glVertex2i(x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight);
-			glVertex2i(x * m_nPixelWidth + m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
-			glVertex2i(x * m_nPixelWidth, y * m_nPixelHeight + m_nPixelHeight);
-		}
+		m_pScreen[y * GetScreenWidth() + x] = p;
 	}
 
 	void def::GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p)
@@ -1847,10 +1851,6 @@ namespace def
 		if (!tex->Spr()->IsOk())
 			return;
 
-		glEnd();
-
-		glPushMatrix();
-
 		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
 
 		glEnable(GL_BLEND);
@@ -1872,13 +1872,6 @@ namespace def
 		glDisable(GL_BLEND);
 
 		glEnd();
-
-		glPopMatrix();
-
-		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
-			glBegin(GL_POINTS);
-		else
-			glBegin(GL_QUADS);
 	}
 
 	void GameEngine::DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
@@ -1888,10 +1881,6 @@ namespace def
 
 		if (!tex->Spr()->IsOk())
 			return;
-
-		glEnd();
-
-		glPushMatrix();
 
 		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
 
@@ -1920,15 +1909,7 @@ namespace def
 		glDisable(GL_BLEND);
 
 		glEnd();
-
-		glPopMatrix();
-
-		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
-			glBegin(GL_POINTS);
-		else
-			glBegin(GL_QUADS);
 	}
-
 
 	void def::GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r, float s, const Pixel& p)
 	{
@@ -1970,24 +1951,8 @@ namespace def
 		}
 	}
 
-	void def::GameEngine::DrawString(int32_t x, int32_t y, const std::string& s, const Pixel& p, float scale_x, float scale_y)
+	void def::GameEngine::DrawString(int32_t x, int32_t y, const std::string& s, const Pixel& p)
 	{
-		glEnd();
-
-		glPopMatrix();
-
-		glPushMatrix();
-
-		scale_x *= (float)m_nPixelWidth;
-		scale_y *= (float)m_nPixelHeight;
-
-		glScalef(scale_x, scale_y, 1.0f);
-
-		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
-			glBegin(GL_POINTS);
-		else
-			glBegin(GL_QUADS);
-
 		int32_t sx = 0;
 		int32_t sy = 0;
 
@@ -2008,48 +1973,27 @@ namespace def
 				for (uint32_t i = 0; i < 8; i++)
 					for (uint32_t j = 0; j < 8; j++)
 						if (m_sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
-							Draw(x / scale_x + sx + i, y / scale_y + sy + j, p);
+							Draw(x + sx + i, y + sy + j, p);
 
 				sx += 8;
 			}
 		}
-
-		glEnd();
-
-		glScalef(1.0f, 1.0f, 1.0f);
-
-		glPopMatrix();
-
-		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
-			glBegin(GL_POINTS);
-		else
-			glBegin(GL_QUADS);
 	}
 
 	void def::GameEngine::Clear(const Pixel& p)
 	{
-		glEnd();
-
-		if (m_nClearMask == 0)
-			m_nClearMask = GL_COLOR_BUFFER_BIT;
-
-		glClearColor(Byte2Float(p.r), Byte2Float(p.g), Byte2Float(p.b), Byte2Float(p.a));
-		glClear(m_nClearMask);
-
-		if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
-			glBegin(GL_POINTS);
-		else
-			glBegin(GL_QUADS);
+		for (int32_t i = 0; i < m_nScreenWidth * m_nScreenHeight; i++)
+			m_pScreen[i] = p;
 	}
 
 	KeyState GameEngine::GetKey(uint32_t k)
 	{
-		return m_ksKeys[k];
+		return m_keys[k];
 	}
 
 	KeyState GameEngine::GetMouse(uint32_t k)
 	{
-		return m_ksMouse[k];
+		return m_mouse[k];
 	}
 
 	int32_t GameEngine::GetMouseX()
@@ -2115,18 +2059,13 @@ namespace def
 
 		if (bMaximized)
 			f |= WS_MAXIMIZED;
-
+		
 		return static_cast<WindowState>(f);
 	}
 
 	GLFWwindow* GameEngine::GetWindow()
 	{
 		return m_glWindow;
-	}
-
-	void def::GameEngine::SetClearFlags(uint32_t mask)
-	{
-		m_nClearMask = mask;
 	}
 
 	template<typename T>
@@ -2208,9 +2147,9 @@ namespace def
 	}
 
 	template<typename T>
-	void GameEngine::DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p, vec2d_basic<float> scale)
+	void GameEngine::DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p)
 	{
-		DrawString(pos.x, pos.y, text, p, scale.x, scale.y);
+		DrawString(pos.x, pos.y, text, p);
 	}
 
 	template <typename T>
