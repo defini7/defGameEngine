@@ -92,15 +92,12 @@
 
 #ifdef _WIN32
 
-#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
+#if defined(_MSVC_LANG) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
 #pragma comment(lib, "glfw3.lib")
 #pragma comment(lib, "opengl32.lib")
-
-#undef min
-#undef max
 
 #else
 /*
@@ -529,6 +526,11 @@ namespace def
 		friend bool operator!=(Pixel& lhs, Pixel& rhs) { return lhs.r != rhs.r || lhs.g != rhs.g || lhs.b != rhs.b; }
 	};
 
+	def::Pixel PixelF(float r, float g, float b)
+	{
+		return def::Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f));
+	}
+
 	// Standart colors for convenient usage
 	static Pixel BLACK(0, 0, 0, 0),
 		DARK_BLUE(0, 55, 218, 255),
@@ -605,7 +607,7 @@ namespace def
 
 		~Sprite()
 		{
-			stbi_image_free(m_cData);
+			stbi_image_free(m_pData);
 		}
 
 	private:
@@ -615,7 +617,7 @@ namespace def
 
 		std::string m_sFilename;
 
-		uint8_t* m_cData;
+		uint8_t* m_pData;
 
 		bool m_bOk = true;
 
@@ -627,10 +629,10 @@ namespace def
 
 			m_nChannels = 4;
 
-			m_cData = new uint8_t[w * h * m_nChannels];
+			m_pData = new uint8_t[w * h * m_nChannels];
 
 			for (int i = 0; i < w * h * m_nChannels; i++)
-				m_cData[i] = 0;
+				m_pData[i] = 0;
 		}
 
 		rcode LoadSprite()
@@ -643,9 +645,9 @@ namespace def
 				return rc;
 			}
 
-			m_cData = stbi_load(m_sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 0);
+			m_pData = stbi_load(m_sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 0);
 
-			if (!m_cData)
+			if (!m_pData)
 			{
 				rc.info = "stb_image: ";
 				rc.info += stbi_failure_reason();
@@ -678,10 +680,10 @@ namespace def
 
 		void SetPixel(int32_t x, int32_t y, const Pixel& p)
 		{
-			m_cData[m_nChannels * (y * m_nWidth + x) + 0] = p.r;
-			m_cData[m_nChannels * (y * m_nWidth + x) + 1] = p.g;
-			m_cData[m_nChannels * (y * m_nWidth + x) + 2] = p.b;
-			m_cData[m_nChannels * (y * m_nWidth + x) + 3] = p.a;
+			m_pData[m_nChannels * (y * m_nWidth + x) + 0] = p.r;
+			m_pData[m_nChannels * (y * m_nWidth + x) + 1] = p.g;
+			m_pData[m_nChannels * (y * m_nWidth + x) + 2] = p.b;
+			m_pData[m_nChannels * (y * m_nWidth + x) + 3] = p.a;
 		}
 
 		const Pixel& GetPixel(int32_t x, int32_t y)
@@ -690,10 +692,10 @@ namespace def
 				return BLACK;
 
 			const Pixel& p = Pixel(
-				m_cData[m_nChannels * (y * m_nWidth + x) + 0],
-				m_cData[m_nChannels * (y * m_nWidth + x) + 1],
-				m_cData[m_nChannels * (y * m_nWidth + x) + 2],
-				m_cData[m_nChannels * (y * m_nWidth + x) + 3]
+				m_pData[m_nChannels * (y * m_nWidth + x) + 0],
+				m_pData[m_nChannels * (y * m_nWidth + x) + 1],
+				m_pData[m_nChannels * (y * m_nWidth + x) + 2],
+				m_pData[m_nChannels * (y * m_nWidth + x) + 3]
 			);
 
 			return p;
@@ -701,13 +703,13 @@ namespace def
 
 		uint8_t* GetPixelData()
 		{
-			return m_cData;
+			return m_pData;
 		}
 
 		void SetPixelData(uint8_t* data)
 		{
 			for (int i = 0; i < m_nWidth * m_nHeight * m_nChannels; i++)
-				m_cData[i] = data[i];
+				m_pData[i] = data[i];
 		}
 
 		void SetPixelData(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
@@ -715,10 +717,10 @@ namespace def
 			for (int i = 0; i < m_nWidth; i++)
 				for (int j = 0; j < m_nHeight; j++)
 				{
-					m_cData[m_nChannels * (j * m_nWidth + i) + 0] = r;
-					m_cData[m_nChannels * (j * m_nWidth + i) + 1] = g;
-					m_cData[m_nChannels * (j * m_nWidth + i) + 2] = b;
-					m_cData[m_nChannels * (j * m_nWidth + i) + 3] = a;
+					m_pData[m_nChannels * (j * m_nWidth + i) + 0] = r;
+					m_pData[m_nChannels * (j * m_nWidth + i) + 1] = g;
+					m_pData[m_nChannels * (j * m_nWidth + i) + 2] = b;
+					m_pData[m_nChannels * (j * m_nWidth + i) + 3] = a;
 				}
 		}
 
@@ -1227,25 +1229,31 @@ namespace def
 				if (!OnUserUpdate(m_fDeltaTime))
 					m_bAppRunning = false;
 				
-				glBegin(GL_QUADS);
+				if (m_nPixelWidth + m_nPixelHeight == 2) glBegin(GL_POINTS);
+				else									 glBegin(GL_QUADS);
 
-				for (int32_t x = 0; x < m_nScreenWidth; x++)
-					for (int32_t y = 0; y < m_nScreenHeight; y++)
+				for (uint32_t x = 0; x < m_nScreenWidth; x++)
+					for (uint32_t y = 0; y < m_nScreenHeight; y++)
 					{
 						const def::Pixel& p = m_pScreen[y * m_nScreenWidth + x];
-
-						int nTopLeftX = x * m_nPixelWidth;
-						int nTopLeftY = y * m_nPixelHeight;
-
-						int nTopRightX = x * m_nPixelWidth + m_nPixelWidth;
-						int nTopRightY = y * m_nPixelHeight + m_nPixelHeight;
-
 						glColor4ub(p.r, p.g, p.b, p.a);
+						
+						// Some optimization
+						if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
+							glVertex2i(x, y);
+						else
+						{
+							int nTopLeftX = x * m_nPixelWidth;
+							int nTopLeftY = y * m_nPixelHeight;
 
-						glVertex2i(nTopLeftX, nTopLeftY);
-						glVertex2i(nTopRightX, nTopLeftY);
-						glVertex2i(nTopRightX, nTopRightY);
-						glVertex2i(nTopLeftX, nTopRightY);
+							int nTopRightX = x * m_nPixelWidth + m_nPixelWidth;
+							int nTopRightY = y * m_nPixelHeight + m_nPixelHeight;
+
+							glVertex2i(nTopLeftX, nTopLeftY);
+							glVertex2i(nTopRightX, nTopLeftY);
+							glVertex2i(nTopRightX, nTopRightY);
+							glVertex2i(nTopLeftX, nTopRightY);
+						}
 					}
 				
 				glEnd();
