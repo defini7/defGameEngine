@@ -82,8 +82,6 @@
 #include <vector>
 #include <cmath>
 #include <list>
-#include <functional>
-#include <filesystem>
 
 #include <GLFW/glfw3.h>
 
@@ -643,12 +641,6 @@ namespace def
 		rcode LoadSprite()
 		{
 			rcode rc(false);
-
-			if (!std::filesystem::exists(m_sFilename))
-			{
-				rc.info = "stb_image: file does not exist";
-				return rc;
-			}
 
 			m_pData = stbi_load(m_sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 0);
 
