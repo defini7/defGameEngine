@@ -328,6 +328,10 @@ namespace def
 
 		constexpr bool operator==(const vec2d_basic<T>& v) { return this->x == v.x && this->y == v.y; }
 		constexpr bool operator!=(const vec2d_basic<T>& v) { return this->x != v.x || this->y != v.y; }
+		constexpr bool operator<(const vec2d_basic<T>& v)  { return this->x < v.x && this->y < v.y; }
+		constexpr bool operator>(const vec2d_basic<T>& v)  { return this->x > v.x && this->y > v.y; }
+		constexpr bool operator<=(const vec2d_basic<T>& v) { return this->x <= v.x && this->y <= v.y; }
+		constexpr bool operator>=(const vec2d_basic<T>& v) { return this->x >= v.x && this->y >= v.y; }
 
 		friend constexpr vec2d_basic<T> operator*(const float& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y)); }
