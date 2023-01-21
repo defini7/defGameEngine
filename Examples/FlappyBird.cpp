@@ -39,9 +39,9 @@ protected:
 		return true;
 	}
 
-	bool RectVsRect(const def::vf2d& vPos1, const def::vf2d& vSize1, const def::vf2d& vPos2, const def::vf2d& vSize2)
+	bool RectVsRect(def::vf2d& vPos1, def::vf2d& vSize1, def::vf2d& vPos2, def::vf2d& vSize2)
 	{
-		return vPos1 - 1 < vPos2 + vSize2 && vPos1 + vSize1 + 1 > vPos2;
+		return vPos1 < vPos2 + vSize2 && vPos1 + vSize1 + 1 > vPos2;
 	}
 
 	void ResetGame()
@@ -79,13 +79,13 @@ protected:
 			if (GetKey(def::Key::SPACE).bPressed)
 				ResetGame();
 
-			DrawString(GetScreenWidth() / 2 - GetScreenWidth() / 5, GetScreenHeight() / 2, "\tGame Over!\nPress Space to try again!", def::WHITE);
+			DrawString(GetScreenWidth() / 2 - GetScreenWidth() / 5, GetScreenHeight() / 2, "\t\tGame Over!\nPress Space to try again!", def::WHITE);
 			return true;
 		}
 
 		Clear(def::BLACK);
 
-		bAlive = (vPosition >= 0.0f && vPosition < GetScreenSize<float>());
+		bAlive = (vPosition >= def::vf2d(0.0f, 0.0f) && vPosition < GetScreenSize<float>());
 
 		if (GetKey(def::Key::SPACE).bPressed)
 		{
@@ -116,7 +116,7 @@ protected:
 			listSections.push_back(x);
 		}
 
-		FillRectangle(vPosition.to<int>(), vSize, def::ORANGE);
+		FillRectangle(def::vi2d(vPosition), vSize, def::ORANGE);
 
 		int nSection = 0;
 		for (auto s : listSections)
@@ -139,13 +139,13 @@ protected:
 				FillRectangle(nBottomX, nBottomY, nBottomSizeX, nBottomSizeY, def::GREEN);
 
 				bool bCollideTop = RectVsRect(
-					def::vf2d(nTopX, nTopY), def::vf2d(nTopSizeX, nTopSizeY),
-					vPosition, vSize.to<float>()
+					def::vf2d(nTopX, nTopY).ref(), def::vf2d(nTopSizeX, nTopSizeY).ref(),
+					vPosition, def::vf2d(vSize).ref()
 				);
 
 				bool bCollideBottom = RectVsRect(
-					def::vf2d(nBottomX, nBottomY), def::vf2d(nBottomSizeX, nBottomSizeY),
-					vPosition, vSize.to<float>()
+					def::vf2d(nBottomX, nBottomY).ref(), def::vf2d(nBottomSizeX, nBottomSizeY).ref(),
+					vPosition, def::vf2d(vSize).ref()
 				);
 
 				if (bCollideTop || bCollideBottom)
