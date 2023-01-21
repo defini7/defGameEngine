@@ -247,11 +247,11 @@ namespace def
 	const float PI = 2.0f * acosf(0.0f);
 
 	// Basic 2d vector implementation for convenient usage
-	template <class T>
+	template <typename T>
 	struct vec2d_basic
 	{
-		vec2d_basic() = default;
-		vec2d_basic(T x, T y)
+		constexpr vec2d_basic() = default;
+		constexpr vec2d_basic(T x, T y)
 		{
 			this->x = x;
 			this->y = y;
@@ -260,112 +260,113 @@ namespace def
 		T x;
 		T y;
 
-		vec2d_basic& operator=(const vec2d_basic& v) = default;
-		vec2d_basic<T> operator+(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x + v.x, this->y + v.y); }
-		vec2d_basic<T> operator-(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x - v.x, this->y - v.y); }
-		vec2d_basic<T> operator*(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x * v.x, this->y * v.y); }
-		vec2d_basic<T> operator/(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x / v.x, this->y / v.y); }
-		vec2d_basic<T> operator+(const T& v)			  { return vec2d_basic<T>(this->x + v, this->y + v); }
-		vec2d_basic<T> operator-(const T& v)			  { return vec2d_basic<T>(this->x - v, this->y - v); }
-		vec2d_basic<T> operator*(const T& v)			  { return vec2d_basic<T>(this->x * v, this->y * v); }
-		vec2d_basic<T> operator/(const T& v)			  { return vec2d_basic<T>(this->x / v, this->y / v); }
+		constexpr vec2d_basic& operator=(const vec2d_basic& v) = default;
+		constexpr vec2d_basic<T> operator+(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x + v.x, this->y + v.y); }
+		constexpr vec2d_basic<T> operator-(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x - v.x, this->y - v.y); }
+		constexpr vec2d_basic<T> operator*(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x * v.x, this->y * v.y); }
+		constexpr vec2d_basic<T> operator/(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x / v.x, this->y / v.y); }
+		constexpr vec2d_basic<T> operator+(const T& v)				{ return vec2d_basic<T>(this->x + v, this->y + v); }
+		constexpr vec2d_basic<T> operator-(const T& v)				{ return vec2d_basic<T>(this->x - v, this->y - v); }
+		constexpr vec2d_basic<T> operator*(const T& v)				{ return vec2d_basic<T>(this->x * v, this->y * v); }
+		constexpr vec2d_basic<T> operator/(const T& v)				{ return vec2d_basic<T>(this->x / v, this->y / v); }
 
-		vec2d_basic<T>& operator+=(const vec2d_basic<T>& v)
+		constexpr vec2d_basic<T>& operator+=(const vec2d_basic<T>& v)
 		{
 			this->x += v.x;
 			this->y += v.y;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator-=(const vec2d_basic<T>& v)
+		constexpr vec2d_basic<T>& operator-=(const vec2d_basic<T>& v)
 		{
 			this->x -= v.x;
 			this->y -= v.y;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator*=(const vec2d_basic<T>& v)
+		constexpr vec2d_basic<T>& operator*=(const vec2d_basic<T>& v)
 		{
 			this->x *= v.x;
 			this->y *= v.y;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator/=(const vec2d_basic<T>& v)
+		constexpr vec2d_basic<T>& operator/=(const vec2d_basic<T>& v)
 		{
 			this->x /= v.x;
 			this->y /= v.y;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator+=(const T& v)
+		constexpr vec2d_basic<T>& operator+=(const T& v)
 		{
 			this->x += v;
 			this->y += v;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator-=(const T& v)
+		constexpr vec2d_basic<T>& operator-=(const T& v)
 		{
 			this->x -= v;
 			this->y -= v;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator*=(const T& v)
+		constexpr vec2d_basic<T>& operator*=(const T& v)
 		{
 			this->x *= v;
 			this->y *= v;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator/=(const T& v)
+		constexpr vec2d_basic<T>& operator/=(const T& v)
 		{
 			this->x /= v;
 			this->y /= v;
 			return *this;
 		}
 
-		bool operator==(const vec2d_basic<T>& v) { return this->x == v.x && this->y == v.y; }
-		bool operator!=(const vec2d_basic<T>& v) { return this->x != v.x || this->y != v.y; }
+		constexpr bool operator==(const vec2d_basic<T>& v) { return this->x == v.x && this->y == v.y; }
+		constexpr bool operator!=(const vec2d_basic<T>& v) { return this->x != v.x || this->y != v.y; }
 
-		friend vec2d_basic<T> operator*(const float& lhs, const vec2d_basic<T>& rhs)
+		friend constexpr vec2d_basic<T> operator*(const float& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y)); }
 
-		friend vec2d_basic<T> operator * (const double& lhs, const vec2d_basic<T>& rhs)
+		friend constexpr vec2d_basic<T> operator * (const double& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y)); }
 
-		friend vec2d_basic<T> operator * (const int& lhs, const vec2d_basic<T>& rhs)
+		friend constexpr vec2d_basic<T> operator * (const int& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y)); }
 
-		friend vec2d_basic<T> operator / (const float& lhs, const vec2d_basic<T>& rhs)
+		friend constexpr vec2d_basic<T> operator / (const float& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y)); }
 
-		friend vec2d_basic<T> operator / (const double& lhs, const vec2d_basic<T>& rhs)
+		friend constexpr vec2d_basic<T> operator / (const double& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y)); }
 
-		friend vec2d_basic<T> operator / (const int& lhs, const vec2d_basic<T>& rhs)
+		friend constexpr vec2d_basic<T> operator / (const int& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y)); }
 
-		operator vec2d_basic<int>()		const { return { static_cast<int32_t>(this->x), static_cast<int32_t>(this->y) }; }
-		operator vec2d_basic<float>()	const { return { static_cast<float>(this->x), static_cast<float>(this->y) }; }
-		operator vec2d_basic<double>()	const { return { static_cast<double>(this->x), static_cast<double>(this->y) }; }
+		constexpr operator vec2d_basic<int>()	 const { return { static_cast<int32_t>(this->x), static_cast<int32_t>(this->y) }; }
+		constexpr operator vec2d_basic<float>()	 const { return { static_cast<float>(this->x), static_cast<float>(this->y) }; }
+		constexpr operator vec2d_basic<double>() const { return { static_cast<double>(this->x), static_cast<double>(this->y) }; }
 
-		float dot(vec2d_basic<T> v) { return this->x * v.x + this->y * v.y; }
-		float length() { return sqrtf(dot(*this)); }
+		constexpr float dot(vec2d_basic<T> v) { return this->x * v.x + this->y * v.y; }
+		constexpr float length() { return sqrtf(dot(*this)); }
 
-		T mag()  { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
-		T mag2() { return static_cast<T>(this->x * this->x + this->y * this->y); }
+		constexpr T mag()  { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
+		constexpr T mag2() { return static_cast<T>(this->x * this->x + this->y * this->y); }
 
-		vec2d_basic<T> norm()	{ float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
-		vec2d_basic<T> abs()	{ return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
-		vec2d_basic<T> perp()	{ return vec2d_basic<T>(-this->y, this->x); }
-		vec2d_basic<T> floor()	{ return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
-		vec2d_basic<T> ceil()	{ return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
-		vec2d_basic<T> cart()	{ return vec2d_basic<T>(cos(this->y) * x, sin(this->y) * this->x); }
-		vec2d_basic<T> polar()	{ return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
-		vec2d_basic<T>& ref()	{ return *this; }
-		std::string str()		{ return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
+		constexpr vec2d_basic<T> norm()	 { float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
+		constexpr vec2d_basic<T> abs()	 { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
+		constexpr vec2d_basic<T> perp()	 { return vec2d_basic<T>(-this->y, this->x); }
+		constexpr vec2d_basic<T> floor() { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
+		constexpr vec2d_basic<T> ceil()	 { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
+		constexpr vec2d_basic<T> cart()	 { return vec2d_basic<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
+		constexpr vec2d_basic<T> polar() { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
+		constexpr vec2d_basic<T>& ref()	 { return *this; }
+
+		operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z) + ")"; }
 	};
 
 	typedef vec2d_basic<int> vi2d;
