@@ -119,126 +119,126 @@ namespace def
 	// Keyboard keys constants for convenient usage
 	namespace Key
 	{
-		constexpr unsigned int SPACE = 32;
-		constexpr unsigned int APOSTROPHE = 39;
-		constexpr unsigned int COMMA = 44;
-		constexpr unsigned int MINUS = 45;
-		constexpr unsigned int PERIOD = 46;
-		constexpr unsigned int SLASH = 47;
-		constexpr unsigned int K0 = 48;
-		constexpr unsigned int K1 = 49;
-		constexpr unsigned int K2 = 50;
-		constexpr unsigned int K3 = 51;
-		constexpr unsigned int K4 = 52;
-		constexpr unsigned int K5 = 53;
-		constexpr unsigned int K6 = 54;
-		constexpr unsigned int K7 = 55;
-		constexpr unsigned int K8 = 56;
-		constexpr unsigned int K9 = 57;
-		constexpr unsigned int SEMICOLON = 59;
-		constexpr unsigned int EQUAL = 61;
-		constexpr unsigned int A = 65;
-		constexpr unsigned int B = 66;
-		constexpr unsigned int C = 67;
-		constexpr unsigned int D = 68;
-		constexpr unsigned int E = 69;
-		constexpr unsigned int F = 70;
-		constexpr unsigned int G = 71;
-		constexpr unsigned int H = 72;
-		constexpr unsigned int I = 73;
-		constexpr unsigned int J = 74;
-		constexpr unsigned int K = 75;
-		constexpr unsigned int L = 76;
-		constexpr unsigned int M = 77;
-		constexpr unsigned int N = 78;
-		constexpr unsigned int O = 79;
-		constexpr unsigned int P = 80;
-		constexpr unsigned int Q = 81;
-		constexpr unsigned int R = 82;
-		constexpr unsigned int S = 83;
-		constexpr unsigned int T = 84;
-		constexpr unsigned int U = 85;
-		constexpr unsigned int V = 86;
-		constexpr unsigned int W = 87;
-		constexpr unsigned int X = 88;
-		constexpr unsigned int Y = 89;
-		constexpr unsigned int Z = 90;
-		constexpr unsigned int LEFT_BRACKET = 91; /* [ */
-		constexpr unsigned int BACKSLASH = 92; /* \ */
-		constexpr unsigned int RIGHT_BRACKET = 93; /* ] */
-		constexpr unsigned int GRAVE_ACCENT = 96; /* ` */
-		constexpr unsigned int WORLD_1 = 161; /* non-US #1 */
-		constexpr unsigned int WORLD_2 = 162; /* non-US #2 */
-		constexpr unsigned int ESCAPE = 256;
-		constexpr unsigned int ENTER = 257;
-		constexpr unsigned int TAB = 258;
-		constexpr unsigned int BACKSPACE = 259;
-		constexpr unsigned int INSERT = 260;
-		constexpr unsigned int DEL = 261;
-		constexpr unsigned int RIGHT = 262;
-		constexpr unsigned int LEFT = 263;
-		constexpr unsigned int DOWN = 264;
-		constexpr unsigned int UP = 265;
-		constexpr unsigned int PAGE_UP = 266;
-		constexpr unsigned int PAGE_DOWN = 267;
-		constexpr unsigned int HOME = 268;
-		constexpr unsigned int END = 269;
-		constexpr unsigned int CAPS_LOCK = 280;
-		constexpr unsigned int SCROLL_LOCK = 281;
-		constexpr unsigned int NUM_LOCK = 282;
-		constexpr unsigned int PRINT_SCREEN = 283;
-		constexpr unsigned int PAUSE = 284;
-		constexpr unsigned int F1 = 290;
-		constexpr unsigned int F2 = 291;
-		constexpr unsigned int F3 = 292;
-		constexpr unsigned int F4 = 293;
-		constexpr unsigned int F5 = 294;
-		constexpr unsigned int F6 = 295;
-		constexpr unsigned int F7 = 296;
-		constexpr unsigned int F8 = 297;
-		constexpr unsigned int F9 = 298;
-		constexpr unsigned int F10 = 299;
-		constexpr unsigned int F11 = 300;
-		constexpr unsigned int F12 = 301;
-		constexpr unsigned int F13 = 302;
-		constexpr unsigned int F14 = 303;
-		constexpr unsigned int F15 = 304;
-		constexpr unsigned int F16 = 305;
-		constexpr unsigned int F17 = 306;
-		constexpr unsigned int F18 = 307;
-		constexpr unsigned int F19 = 308;
-		constexpr unsigned int F20 = 309;
-		constexpr unsigned int F21 = 310;
-		constexpr unsigned int F22 = 311;
-		constexpr unsigned int F23 = 312;
-		constexpr unsigned int F24 = 313;
-		constexpr unsigned int F25 = 314;
-		constexpr unsigned int NP_0 = 320;
-		constexpr unsigned int NP_1 = 321;
-		constexpr unsigned int NP_2 = 322;
-		constexpr unsigned int NP_3 = 323;
-		constexpr unsigned int NP_4 = 324;
-		constexpr unsigned int NP_5 = 325;
-		constexpr unsigned int NP_6 = 326;
-		constexpr unsigned int NP_7 = 327;
-		constexpr unsigned int NP_8 = 328;
-		constexpr unsigned int NP_9 = 329;
-		constexpr unsigned int NP_DECIMAL = 330;
-		constexpr unsigned int NP_DIVIDE = 331;
-		constexpr unsigned int NP_MULTIPLY = 332;
-		constexpr unsigned int NP_SUBTRACT = 333;
-		constexpr unsigned int NP_ADD = 334;
-		constexpr unsigned int NP_ENTER = 335;
-		constexpr unsigned int NP_EQUAL = 336;
-		constexpr unsigned int LEFT_SHIFT = 340;
-		constexpr unsigned int LEFT_CONTROL = 341;
-		constexpr unsigned int LEFT_ALT = 342;
-		constexpr unsigned int LEFT_SUPER = 343;
-		constexpr unsigned int RIGHT_SHIFT = 344;
-		constexpr unsigned int RIGHT_CONTROL = 345;
-		constexpr unsigned int RIGHT_ALT = 346;
-		constexpr unsigned int RIGHT_SUPER = 347;
-		constexpr unsigned int MENU = 348;
+		unsigned int SPACE = 32;
+		unsigned int APOSTROPHE = 39;
+		unsigned int COMMA = 44;
+		unsigned int MINUS = 45;
+		unsigned int PERIOD = 46;
+		unsigned int SLASH = 47;
+		unsigned int K0 = 48;
+		unsigned int K1 = 49;
+		unsigned int K2 = 50;
+		unsigned int K3 = 51;
+		unsigned int K4 = 52;
+		unsigned int K5 = 53;
+		unsigned int K6 = 54;
+		unsigned int K7 = 55;
+		unsigned int K8 = 56;
+		unsigned int K9 = 57;
+		unsigned int SEMICOLON = 59;
+		unsigned int EQUAL = 61;
+		unsigned int A = 65;
+		unsigned int B = 66;
+		unsigned int C = 67;
+		unsigned int D = 68;
+		unsigned int E = 69;
+		unsigned int F = 70;
+		unsigned int G = 71;
+		unsigned int H = 72;
+		unsigned int I = 73;
+		unsigned int J = 74;
+		unsigned int K = 75;
+		unsigned int L = 76;
+		unsigned int M = 77;
+		unsigned int N = 78;
+		unsigned int O = 79;
+		unsigned int P = 80;
+		unsigned int Q = 81;
+		unsigned int R = 82;
+		unsigned int S = 83;
+		unsigned int T = 84;
+		unsigned int U = 85;
+		unsigned int V = 86;
+		unsigned int W = 87;
+		unsigned int X = 88;
+		unsigned int Y = 89;
+		unsigned int Z = 90;
+		unsigned int LEFT_BRACKET = 91; /* [ */
+		unsigned int BACKSLASH = 92; /* \ */
+		unsigned int RIGHT_BRACKET = 93; /* ] */
+		unsigned int GRAVE_ACCENT = 96; /* ` */
+		unsigned int WORLD_1 = 161; /* non-US #1 */
+		unsigned int WORLD_2 = 162; /* non-US #2 */
+		unsigned int ESCAPE = 256;
+		unsigned int ENTER = 257;
+		unsigned int TAB = 258;
+		unsigned int BACKSPACE = 259;
+		unsigned int INSERT = 260;
+		unsigned int DEL = 261;
+		unsigned int RIGHT = 262;
+		unsigned int LEFT = 263;
+		unsigned int DOWN = 264;
+		unsigned int UP = 265;
+		unsigned int PAGE_UP = 266;
+		unsigned int PAGE_DOWN = 267;
+		unsigned int HOME = 268;
+		unsigned int END = 269;
+		unsigned int CAPS_LOCK = 280;
+		unsigned int SCROLL_LOCK = 281;
+		unsigned int NUM_LOCK = 282;
+		unsigned int PRINT_SCREEN = 283;
+		unsigned int PAUSE = 284;
+		unsigned int F1 = 290;
+		unsigned int F2 = 291;
+		unsigned int F3 = 292;
+		unsigned int F4 = 293;
+		unsigned int F5 = 294;
+		unsigned int F6 = 295;
+		unsigned int F7 = 296;
+		unsigned int F8 = 297;
+		unsigned int F9 = 298;
+		unsigned int F10 = 299;
+		unsigned int F11 = 300;
+		unsigned int F12 = 301;
+		unsigned int F13 = 302;
+		unsigned int F14 = 303;
+		unsigned int F15 = 304;
+		unsigned int F16 = 305;
+		unsigned int F17 = 306;
+		unsigned int F18 = 307;
+		unsigned int F19 = 308;
+		unsigned int F20 = 309;
+		unsigned int F21 = 310;
+		unsigned int F22 = 311;
+		unsigned int F23 = 312;
+		unsigned int F24 = 313;
+		unsigned int F25 = 314;
+		unsigned int NP_0 = 320;
+		unsigned int NP_1 = 321;
+		unsigned int NP_2 = 322;
+		unsigned int NP_3 = 323;
+		unsigned int NP_4 = 324;
+		unsigned int NP_5 = 325;
+		unsigned int NP_6 = 326;
+		unsigned int NP_7 = 327;
+		unsigned int NP_8 = 328;
+		unsigned int NP_9 = 329;
+		unsigned int NP_DECIMAL = 330;
+		unsigned int NP_DIVIDE = 331;
+		unsigned int NP_MULTIPLY = 332;
+		unsigned int NP_SUBTRACT = 333;
+		unsigned int NP_ADD = 334;
+		unsigned int NP_ENTER = 335;
+		unsigned int NP_EQUAL = 336;
+		unsigned int LEFT_SHIFT = 340;
+		unsigned int LEFT_CONTROL = 341;
+		unsigned int LEFT_ALT = 342;
+		unsigned int LEFT_SUPER = 343;
+		unsigned int RIGHT_SHIFT = 344;
+		unsigned int RIGHT_CONTROL = 345;
+		unsigned int RIGHT_ALT = 346;
+		unsigned int RIGHT_SUPER = 347;
+		unsigned int MENU = 348;
 	}
 
 	// Pi constant
@@ -248,125 +248,147 @@ namespace def
 	template <typename T>
 	struct vec2d_basic
 	{
-		constexpr vec2d_basic() = default;
-		constexpr vec2d_basic(T x, T y)
+		vec2d_basic() = default;
+		vec2d_basic(T x, T y)
 		{
 			this->x = x;
 			this->y = y;
 		}
 
-		T x;
-		T y;
+		T x = (T)0;
+		T y = (T)0;
 
-		constexpr vec2d_basic& operator=(const vec2d_basic& v) = default;
-		constexpr vec2d_basic<T> operator+(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x + v.x, this->y + v.y); }
-		constexpr vec2d_basic<T> operator-(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x - v.x, this->y - v.y); }
-		constexpr vec2d_basic<T> operator*(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x * v.x, this->y * v.y); }
-		constexpr vec2d_basic<T> operator/(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x / v.x, this->y / v.y); }
-		constexpr vec2d_basic<T> operator+(const T& v)				{ return vec2d_basic<T>(this->x + v, this->y + v); }
-		constexpr vec2d_basic<T> operator-(const T& v)				{ return vec2d_basic<T>(this->x - v, this->y - v); }
-		constexpr vec2d_basic<T> operator*(const T& v)				{ return vec2d_basic<T>(this->x * v, this->y * v); }
-		constexpr vec2d_basic<T> operator/(const T& v)				{ return vec2d_basic<T>(this->x / v, this->y / v); }
+		vec2d_basic<T>& operator=(const vec2d_basic<T>& v)
+		{
+			this->x = v.x;
+			this->y = v.y;
+			return *this;
+		}
 
-		constexpr vec2d_basic<T>& operator+=(const vec2d_basic<T>& v)
+		vec2d_basic<T> operator+(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x + v.x, this->y + v.y); }
+		vec2d_basic<T> operator-(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x - v.x, this->y - v.y); }
+		vec2d_basic<T> operator*(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x * v.x, this->y * v.y); }
+		vec2d_basic<T> operator/(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x / v.x, this->y / v.y); }
+		vec2d_basic<T> operator+(const T& v)				{ return vec2d_basic<T>(this->x + v, this->y + v); }
+		vec2d_basic<T> operator-(const T& v)				{ return vec2d_basic<T>(this->x - v, this->y - v); }
+		vec2d_basic<T> operator*(const T& v)				{ return vec2d_basic<T>(this->x * v, this->y * v); }
+		vec2d_basic<T> operator/(const T& v)				{ return vec2d_basic<T>(this->x / v, this->y / v); }
+
+		vec2d_basic<T>& operator+=(const vec2d_basic<T>& v)
 		{
 			this->x += v.x;
 			this->y += v.y;
 			return *this;
 		}
 
-		constexpr vec2d_basic<T>& operator-=(const vec2d_basic<T>& v)
+		vec2d_basic<T>& operator-=(const vec2d_basic<T>& v)
 		{
 			this->x -= v.x;
 			this->y -= v.y;
 			return *this;
 		}
 
-		constexpr vec2d_basic<T>& operator*=(const vec2d_basic<T>& v)
+		vec2d_basic<T>& operator*=(const vec2d_basic<T>& v)
 		{
 			this->x *= v.x;
 			this->y *= v.y;
 			return *this;
 		}
 
-		constexpr vec2d_basic<T>& operator/=(const vec2d_basic<T>& v)
+		vec2d_basic<T>& operator/=(const vec2d_basic<T>& v)
 		{
 			this->x /= v.x;
 			this->y /= v.y;
 			return *this;
 		}
 
-		constexpr vec2d_basic<T>& operator+=(const T& v)
+		vec2d_basic<T>& operator+=(const T& v)
 		{
 			this->x += v;
 			this->y += v;
 			return *this;
 		}
 
-		constexpr vec2d_basic<T>& operator-=(const T& v)
+		vec2d_basic<T>& operator-=(const T& v)
 		{
 			this->x -= v;
 			this->y -= v;
 			return *this;
 		}
 
-		constexpr vec2d_basic<T>& operator*=(const T& v)
+		vec2d_basic<T>& operator*=(const T& v)
 		{
 			this->x *= v;
 			this->y *= v;
 			return *this;
 		}
 
-		constexpr vec2d_basic<T>& operator/=(const T& v)
+		vec2d_basic<T>& operator/=(const T& v)
 		{
 			this->x /= v;
 			this->y /= v;
 			return *this;
 		}
 
-		constexpr bool operator==(const vec2d_basic<T>& v) { return this->x == v.x && this->y == v.y; }
-		constexpr bool operator!=(const vec2d_basic<T>& v) { return this->x != v.x || this->y != v.y; }
-		constexpr bool operator<(const vec2d_basic<T>& v)  { return this->x < v.x && this->y < v.y; }
-		constexpr bool operator>(const vec2d_basic<T>& v)  { return this->x > v.x && this->y > v.y; }
-		constexpr bool operator<=(const vec2d_basic<T>& v) { return this->x <= v.x && this->y <= v.y; }
-		constexpr bool operator>=(const vec2d_basic<T>& v) { return this->x >= v.x && this->y >= v.y; }
+		bool operator==(const vec2d_basic<T>& v) { return this->x == v.x && this->y == v.y; }
+		bool operator!=(const vec2d_basic<T>& v) { return this->x != v.x || this->y != v.y; }
+		bool operator<(const vec2d_basic<T>& v)  { return this->x < v.x && this->y < v.y; }
+		bool operator>(const vec2d_basic<T>& v)  { return this->x > v.x && this->y > v.y; }
+		bool operator<=(const vec2d_basic<T>& v) { return this->x <= v.x && this->y <= v.y; }
+		bool operator>=(const vec2d_basic<T>& v) { return this->x >= v.x && this->y >= v.y; }
 
-		friend constexpr vec2d_basic<T> operator*(const float& lhs, const vec2d_basic<T>& rhs)
+		friend vec2d_basic<T> operator*(const float& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y)); }
 
-		friend constexpr vec2d_basic<T> operator * (const double& lhs, const vec2d_basic<T>& rhs)
+		friend vec2d_basic<T> operator * (const double& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y)); }
 
-		friend constexpr vec2d_basic<T> operator * (const int& lhs, const vec2d_basic<T>& rhs)
+		friend vec2d_basic<T> operator * (const int& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y)); }
 
-		friend constexpr vec2d_basic<T> operator / (const float& lhs, const vec2d_basic<T>& rhs)
+		friend vec2d_basic<T> operator / (const float& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y)); }
 
-		friend constexpr vec2d_basic<T> operator / (const double& lhs, const vec2d_basic<T>& rhs)
+		friend vec2d_basic<T> operator / (const double& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y)); }
 
-		friend constexpr vec2d_basic<T> operator / (const int& lhs, const vec2d_basic<T>& rhs)
+		friend vec2d_basic<T> operator / (const int& lhs, const vec2d_basic<T>& rhs)
 		{ return vec2d_basic<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y)); }
 
-		constexpr operator vec2d_basic<int>()	 const { return { static_cast<int32_t>(this->x), static_cast<int32_t>(this->y) }; }
-		constexpr operator vec2d_basic<float>()	 const { return { static_cast<float>(this->x), static_cast<float>(this->y) }; }
-		constexpr operator vec2d_basic<double>() const { return { static_cast<double>(this->x), static_cast<double>(this->y) }; }
+		operator vec2d_basic<int>()	   const { return { static_cast<int32_t>(this->x),  static_cast<int32_t>(this->y) }; }
+		operator vec2d_basic<float>()  const { return { static_cast<float>(this->x),	static_cast<float>(this->y)	  }; }
+		operator vec2d_basic<double>() const { return { static_cast<double>(this->x),	static_cast<double>(this->y)  }; }
 
-		constexpr float dot(vec2d_basic<T> v) { return this->x * v.x + this->y * v.y; }
-		constexpr float length() { return sqrtf(dot(*this)); }
+		vec2d_basic<T> clamp(const vec2d_basic<T>& start, const vec2d_basic<T>& end) const
+		{
+			vec2d_basic<T> temp;
 
-		constexpr T mag()  { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
-		constexpr T mag2() { return static_cast<T>(this->x * this->x + this->y * this->y); }
+			temp.x = this->x;
+			temp.y = this->y;
 
-		constexpr vec2d_basic<T> norm()	 { float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
-		constexpr vec2d_basic<T> abs()	 { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
-		constexpr vec2d_basic<T> perp()	 { return vec2d_basic<T>(-this->y, this->x); }
-		constexpr vec2d_basic<T> floor() { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
-		constexpr vec2d_basic<T> ceil()	 { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
-		constexpr vec2d_basic<T> cart()	 { return vec2d_basic<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
-		constexpr vec2d_basic<T> polar() { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
-		constexpr vec2d_basic<T>& ref()	 { return *this; }
+			if (temp.x < start.x) temp.x = start.x;
+			if (temp.y < start.y) temp.y = start.y;
+
+			if (temp.x > end.x) temp.x = end.x;
+			if (temp.y > end.y) temp.y = end.y;
+
+			return temp;
+		}
+
+		float dot(vec2d_basic<T> v) { return this->x * v.x + this->y * v.y; }
+		float length() { return sqrtf(dot(*this)); }
+
+		T mag()  { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
+		T mag2() { return static_cast<T>(this->x * this->x + this->y * this->y); }
+
+		vec2d_basic<T> norm()	 { float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
+		vec2d_basic<T> abs()	 { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
+		vec2d_basic<T> perp()	 { return vec2d_basic<T>(-this->y, this->x); }
+		vec2d_basic<T> floor()	 { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
+		vec2d_basic<T> ceil()	 { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
+		vec2d_basic<T> cart()	 { return vec2d_basic<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
+		vec2d_basic<T> polar()	 { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
+		vec2d_basic<T>& ref()	 { return *this; }
 
 		operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z) + ")"; }
 	};
@@ -426,19 +448,19 @@ namespace def
 		uint8_t a;
 
 		template <typename T>
-		friend Pixel operator+(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r + rhs), uint8_t((T)lhs.g + rhs), uint8_t((T)lhs.b + rhs), lhs.a); }
+		friend Pixel operator+(const Pixel& lhs, uint8_t rhs) { return Pixel(uint8_t(lhs.r + rhs), uint8_t(lhs.g + rhs), uint8_t(lhs.b + rhs), lhs.a); }
 
 		template <typename T>
-		friend Pixel operator-(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r - rhs), uint8_t((T)lhs.g - rhs), uint8_t((T)lhs.b - rhs), lhs.a); }
+		friend Pixel operator-(const Pixel& lhs, uint8_t rhs) { return Pixel(uint8_t(lhs.r - rhs), uint8_t(lhs.g - rhs), uint8_t(lhs.b - rhs), lhs.a); }
 
 		template <typename T>
-		friend Pixel operator*(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r * rhs), uint8_t((T)lhs.g * rhs), uint8_t((T)lhs.b * rhs), lhs.a); }
+		friend Pixel operator*(const Pixel& lhs, uint8_t rhs) { return Pixel(uint8_t(lhs.r * rhs), uint8_t(lhs.g * rhs), uint8_t(lhs.b * rhs), lhs.a); }
 
 		template <typename T>
-		friend Pixel operator/(Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r / rhs), uint8_t((T)lhs.g / rhs), uint8_t((T)rhs.b / rhs), lhs.a); }
+		friend Pixel operator/(const Pixel& lhs, uint8_t rhs) { return Pixel(uint8_t(lhs.r / rhs), uint8_t(lhs.g / rhs), uint8_t((T)rhs.b / rhs), lhs.a); }
 
 		template <typename T>
-		friend Pixel operator+=(Pixel& lhs, T rhs)
+		friend Pixel operator+=(const Pixel& lhs, uint8_t rhs)
 		{
 			lhs.r += rhs;
 			lhs.g += rhs;
@@ -448,7 +470,7 @@ namespace def
 		}
 
 		template <typename T>
-		friend Pixel operator-=(Pixel& lhs, T rhs)
+		friend Pixel operator-=(const Pixel& lhs, uint8_t rhs)
 		{
 			lhs.r -= rhs;
 			lhs.g -= rhs;
@@ -458,7 +480,7 @@ namespace def
 		}
 
 		template <typename T>
-		friend Pixel operator*=(Pixel& lhs, T rhs)
+		friend Pixel operator*=(const Pixel& lhs, uint8_t rhs)
 		{
 			lhs.r *= rhs;
 			lhs.g *= rhs;
@@ -468,7 +490,7 @@ namespace def
 		}
 
 		template <typename T>
-		friend Pixel operator/=(Pixel& lhs, T rhs)
+		friend Pixel operator/=(const Pixel& lhs, uint8_t rhs)
 		{
 			lhs.r /= rhs;
 			lhs.g /= rhs;
@@ -477,52 +499,29 @@ namespace def
 			return lhs;
 		}
 
-		template <typename T>
-		friend Pixel operator+(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b, lhs.a); }
+		friend Pixel operator+(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b, lhs.a); }
+		friend Pixel operator-(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b, lhs.a); }
+		friend Pixel operator*(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r * rhs.r, lhs.g * rhs.g, lhs.b * rhs.b, lhs.a); }
+		friend Pixel operator/(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r / rhs.r, lhs.g / rhs.g, lhs.b / rhs.b, lhs.a); }
 
-		template <typename T>
-		friend Pixel operator-(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b, lhs.a); }
-
-		template <typename T>
-		friend Pixel operator*(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r * rhs.r, lhs.g * rhs.g, lhs.b * rhs.b, lhs.a); }
-
-		template <typename T>
-		friend Pixel operator/(Pixel& lhs, Pixel& rhs) { return Pixel(lhs.r / rhs.r, lhs.g / rhs.g, lhs.b / rhs.b, lhs.a); }
-
-		friend Pixel operator+=(Pixel& lhs, Pixel& rhs)
+		friend Pixel operator+=(const Pixel& lhs, const Pixel& rhs)
 		{
-			lhs.r += rhs.r;
-			lhs.g += rhs.g;
-			lhs.b += rhs.b;
-
-			return lhs;
+			return lhs + rhs;
 		}
 
-		friend Pixel operator-=(Pixel& lhs, Pixel& rhs)
+		friend Pixel operator-=(const Pixel& lhs, const Pixel& rhs)
 		{
-			lhs.r -= rhs.r;
-			lhs.g -= rhs.g;
-			lhs.b -= rhs.b;
-
-			return lhs;
+			return lhs - rhs;
 		}
 
-		friend Pixel operator*=(Pixel& lhs, Pixel& rhs)
+		friend Pixel operator*=(const Pixel& lhs, const Pixel& rhs)
 		{
-			lhs.r *= rhs.r;
-			lhs.g *= rhs.g;
-			lhs.b *= rhs.b;
-
-			return lhs;
+			return lhs * rhs;
 		}
 
-		friend Pixel operator/=(Pixel& lhs, Pixel& rhs)
+		friend Pixel operator/=(const Pixel& lhs, const Pixel& rhs)
 		{
-			lhs.r /= rhs.r;
-			lhs.g /= rhs.g;
-			lhs.b /= rhs.b;
-
-			return lhs;
+			return lhs / rhs;
 		}
 
 		friend bool operator==(Pixel& lhs, Pixel& rhs) { return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b; }
@@ -665,6 +664,11 @@ namespace def
 			return m_nHeight;
 		}
 
+		vi2d GetSize() const
+		{
+			return vi2d(m_nWidth, m_nHeight);
+		}
+
 		std::string GetFilename() const
 		{
 			return m_sFilename;
@@ -746,10 +750,21 @@ namespace def
 	class Texture
 	{
 	public:
-		Texture(Sprite* spr, bool clamp = false)
+		Texture(Sprite* spr)
 		{
-			m_sprInstance = spr;
+			m_sprInstance = std::unique_ptr<Sprite>(spr);
+			Construct();
+		}
 
+		Texture(const std::string& filename)
+		{
+			m_sprInstance = std::make_unique<def::Sprite>(filename);
+			Construct();
+		}
+
+	private:
+		void Construct()
+		{
 			LoadTexture(m_sprInstance->GetPixelData());
 
 			m_fUVScaleX = 1.0f / (float)m_sprInstance->GetWidth();
@@ -757,7 +772,7 @@ namespace def
 		}
 
 	private:
-		Sprite* m_sprInstance;
+		std::unique_ptr<Sprite> m_sprInstance;
 
 		GLuint m_nTexId;
 
@@ -818,7 +833,7 @@ namespace def
 
 		Sprite* Spr()
 		{
-			return m_sprInstance;
+			return m_sprInstance.get();
 		}
 
 		float GetUVScaleX()
@@ -1333,16 +1348,14 @@ namespace def
 		KeyState GetKey(uint32_t k);
 		KeyState GetMouse(uint32_t k);
 
-		template <typename T>
-		vec2d_basic<T> GetMouse();
+		vi2d GetMouse();
 
 		int32_t GetMouseX();
 		int32_t GetMouseY();
 
 		void SetTitle(const std::string& title);
 
-		template <typename T>
-		vec2d_basic<T> GetScreenSize();
+		vi2d GetScreenSize();
 
 		int32_t GetScreenWidth();
 		int32_t GetScreenHeight();
@@ -2157,16 +2170,14 @@ namespace def
 		DrawString(pos.x, pos.y, text, p);
 	}
 
-	template <typename T>
-	vec2d_basic<T> GameEngine::GetScreenSize()
+	vi2d GameEngine::GetScreenSize()
 	{
-		return vec2d_basic<T>((T)m_nScreenWidth, (T)m_nScreenHeight);
+		return vi2d(m_nScreenWidth, m_nScreenHeight);
 	}
 
-	template<typename T>
-	vec2d_basic<T> GameEngine::GetMouse()
+	vi2d GameEngine::GetMouse()
 	{
-		return vec2d_basic<T>((T)m_nMouseX, (T)m_nMouseY);
+		return vi2d(m_nMouseX, m_nMouseY);
 	}
 
 	/******************************************
