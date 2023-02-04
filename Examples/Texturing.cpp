@@ -33,7 +33,9 @@ public:
 		switch (sample)
 		{
 		case SampleMode::Point:
+		{
 			out = GetPixel(tex, vFilePos, wrap);
+		}
 		break;
 		
 		}
@@ -108,11 +110,11 @@ protected:
 			for (int y = 0; y < GetScreenHeight(); y++)
 			{
 				def::vf2d vSample = {
-					(float)x / GetScreenWidth(),
-					(float)y / GetScreenHeight(),
+					(float)x / (float)GetScreenWidth(),
+					(float)y / (float)GetScreenHeight()
 				};
 
-				def::Pixel p = Sample(texDemo, vSample, SampleMode::Point, WrapMode::Repeat);
+				def::Pixel p = Sample(texDemo, vSample, SampleMode::Point, WrapMode::None);
 				Draw(x, y, p);
 			}
 
