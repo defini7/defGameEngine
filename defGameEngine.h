@@ -390,7 +390,7 @@ namespace def
 		vec2d_basic<T> polar()	 { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
 		vec2d_basic<T>& ref()	 { return *this; }
 
-		operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z) + ")"; }
+		operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
 	};
 
 	typedef vec2d_basic<int> vi2d;
@@ -687,12 +687,12 @@ namespace def
 			m_pData[m_nChannels * (y * m_nWidth + x) + 3] = p.a;
 		}
 
-		const Pixel& GetPixel(int32_t x, int32_t y)
+		Pixel GetPixel(int32_t x, int32_t y)
 		{
 			if (x < 0 || y < 0 || x >= m_nWidth || y >= m_nHeight)
 				return BLACK;
 
-			const Pixel& p = Pixel(
+			Pixel p = Pixel(
 				m_pData[m_nChannels * (y * m_nWidth + x) + 0],
 				m_pData[m_nChannels * (y * m_nWidth + x) + 1],
 				m_pData[m_nChannels * (y * m_nWidth + x) + 2],
@@ -946,8 +946,6 @@ namespace def
 		bool m_nMouseOldState[5];
 		bool m_nMouseNewState[5];
 
-		float m_fWheelDelta = 0.0f;
-
 		int32_t m_nMouseX = -1;
 		int32_t m_nMouseY = -1;
 
@@ -959,6 +957,9 @@ namespace def
 		bool m_bDirtyPixel;
 
 		def::Pixel* m_pScreen = nullptr;
+
+		def::vi2d m_vTrans = { 0.0f, 0.0f };
+		def::vf2d m_vScale = { 1.0f, 1.0f };
 
 	public:
 		virtual bool OnUserCreate() = 0;
@@ -1036,6 +1037,7 @@ namespace def
 			}
 
 			m_pScreen = new Pixel[m_nScreenWidth * m_nScreenHeight];
+			Clear(def::BLACK);
 
 			glfwMakeContextCurrent(m_glWindow);
 
@@ -1219,7 +1221,7 @@ namespace def
 
 					m_nMouseOldState[i] = m_nMouseNewState[i];
 				}
-
+				
 				double dMouseX, dMouseY;
 
 				glfwGetCursorPos(m_glWindow, &dMouseX, &dMouseY);
@@ -1240,6 +1242,9 @@ namespace def
 
 				if (!OnUserUpdate(m_fDeltaTime))
 					m_bAppRunning = false;
+
+				glTranslatef((float)m_vTrans.x, (float)m_vTrans.y, 0.0f);
+				glScalef(m_vScale.x, m_vScale.y, 1.0f);
 				
 				if (m_nPixelWidth + m_nPixelHeight == 2) glBegin(GL_POINTS);
 				else									 glBegin(GL_QUADS);
@@ -1287,60 +1292,46 @@ namespace def
 
 	public:
 
-		template <typename T>
-		void Draw(vec2d_basic<T> pos, const Pixel& p = WHITE);
+		void Draw(vi2d pos, const Pixel& p = WHITE);
 		virtual void Draw(int32_t x, int32_t y, const Pixel& p = WHITE);
 
-		template <typename T>
-		void DrawLine(vec2d_basic<T> pos1, vec2d_basic<T> pos2, const Pixel& p = WHITE);
+		void DrawLine(vi2d pos1, vi2d pos2, const Pixel& p = WHITE);
 		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
-		template <typename T>
-		void DrawTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p = WHITE);
+		void DrawTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p = WHITE);
 		virtual void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
 
-		template <typename T>
-		void FillTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p = WHITE);
+		void FillTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p = WHITE);
 		virtual void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
 
-		template <typename T>
-		void DrawRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p = WHITE);
+		void DrawRectangle(vi2d pos, vi2d size, const Pixel& p = WHITE);
 		virtual void DrawRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
-		template <typename T>
-		void FillRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p = WHITE);
+		void FillRectangle(vi2d pos, vi2d size, const Pixel& p = WHITE);
 		virtual void FillRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
-		template <typename T>
-		void DrawCircle(vec2d_basic<T> pos, int32_t radius, const Pixel& p = WHITE);
+		void DrawCircle(vi2d pos, int32_t radius, const Pixel& p = WHITE);
 		virtual void DrawCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
 
-		template <typename T>
-		void FillCircle(vec2d_basic<T> pos, int32_t radius, const Pixel& p = WHITE);
+		void FillCircle(vi2d pos, int32_t radius, const Pixel& p = WHITE);
 		virtual void FillCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
 
-		template <typename T>
-		void DrawSprite(vec2d_basic<T> pos, Sprite* sprite);
+		void DrawSprite(vi2d pos, Sprite* sprite);
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* sprite);
 
-		template <typename T>
-		void DrawPartialSprite(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Sprite* sprite);
-		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx1, int32_t fy1, int32_t fx2, int32_t fy2, Sprite* sprite);
+		void DrawPartialSprite(vi2d pos, vi2d fpos, vi2d fsize, Sprite* sprite);
+		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsizex, int32_t fsizey, Sprite* sprite);
 
-		template <typename T>
-		void DrawTexture(vec2d_basic<T> pos, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
+		void DrawTexture(vi2d pos, Texture* tex, vf2d scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
 		virtual void DrawTexture(float x, float y, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
-		template <typename T>
-		void DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* tex, vec2d_basic<float> scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
+		void DrawPartialTexture(vi2d pos, vi2d fpos, vi2d fsize, Texture* tex, vf2d scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
 		virtual void DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
 
-		template <typename T>
-		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vec2d_basic<T> pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vf2d pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
-
-		template <typename T>
-		void DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p = WHITE);
+		
+		void DrawString(vi2d pos, const std::string& text, const Pixel& p = WHITE);
 		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE);
 
 		virtual void Clear(const Pixel& p);
@@ -1360,7 +1351,12 @@ namespace def
 		int32_t GetScreenWidth();
 		int32_t GetScreenHeight();
 
-		float GetWheelDelta();
+		void Translate(int32_t x, int32_t y);
+		void Translate(const def::vi2d& trans);
+
+		void Scale(float x, float y);
+		void Scale(const def::vf2d& scale);
+
 		bool FullScreenEnabled();
 		bool VSyncEnabled();
 
@@ -1376,10 +1372,8 @@ namespace def
 
 	void def::GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
 	{
-		if (x < 0 || y < 0 || x >= GetScreenWidth() || y >= GetScreenHeight())
-			return;
-
-		m_pScreen[y * GetScreenWidth() + x] = p;
+		if (x >= 0 && y >= 0 && x < GetScreenWidth() && y < GetScreenHeight())
+			m_pScreen[y * GetScreenWidth() + x] = p;
 	}
 
 	void def::GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p)
@@ -1851,8 +1845,8 @@ namespace def
 		if (!sprite->IsOk())
 			return;
 
-		for (int i = fx, x1 = 0; i < fsx; i++, x1++)
-			for (int j = fy, y1 = 0; j < fsy; j++, y1++)
+		for (int i = fx, x1 = 0; i < fx + fsx; i++, x1++)
+			for (int j = fy, y1 = 0; j < fy + fsy; j++, y1++)
 			{
 				def::Pixel p = sprite->GetPixel(i, j);
 
@@ -2034,9 +2028,26 @@ namespace def
 		return m_nScreenHeight;
 	}
 
-	float GameEngine::GetWheelDelta()
+	void GameEngine::Translate(int32_t x, int32_t y)
 	{
-		return m_fWheelDelta;
+		m_vTrans.x = x;
+		m_vTrans.y = y;
+	}
+
+	void GameEngine::Translate(const def::vi2d& trans)
+	{
+		Translate(trans.x, trans.y);
+	}
+
+	void GameEngine::Scale(float x, float y)
+	{
+		m_vScale.x = x;
+		m_vScale.y = y;
+	}
+
+	void GameEngine::Scale(const def::vf2d& scale)
+	{
+		Scale(scale.x, scale.y);
 	}
 
 	bool GameEngine::FullScreenEnabled()
@@ -2086,86 +2097,72 @@ namespace def
 		return m_glWindow;
 	}
 
-	template<typename T>
-	void GameEngine::Draw(vec2d_basic<T> pos, const Pixel& p)
+	void GameEngine::Draw(vi2d pos, const Pixel& p)
 	{
 		Draw(pos.x, pos.y, p);
 	}
 
-	template<typename T>
-	void GameEngine::DrawLine(vec2d_basic<T> pos1, vec2d_basic<T> pos2, const Pixel& p)
+	void GameEngine::DrawLine(vi2d pos1, vi2d pos2, const Pixel& p)
 	{
 		DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, p);
 	}
 
-	template<typename T>
-	void GameEngine::DrawTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p)
+	void GameEngine::DrawTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p)
 	{
 		DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
 	}
 
-	template<typename T>
-	void GameEngine::FillTriangle(vec2d_basic<T> pos1, vec2d_basic<T> pos2, vec2d_basic<T> pos3, const Pixel& p)
+	void GameEngine::FillTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p)
 	{
 		FillTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
 	}
 
-	template<typename T>
-	void GameEngine::DrawRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p)
+	void GameEngine::DrawRectangle(vi2d pos, vi2d size, const Pixel& p)
 	{
 		DrawRectangle(pos.x, pos.y, size.x, size.y, p);
 	}
 
-	template<typename T>
-	void GameEngine::FillRectangle(vec2d_basic<T> pos, vec2d_basic<T> size, const Pixel& p)
+	void GameEngine::FillRectangle(vi2d pos, vi2d size, const Pixel& p)
 	{
 		FillRectangle(pos.x, pos.y, size.x, size.y, p);
 	}
 
-	template<typename T>
-	void GameEngine::DrawCircle(vec2d_basic<T> pos, int32_t r, const Pixel& p)
+	void GameEngine::DrawCircle(vi2d pos, int32_t r, const Pixel& p)
 	{
 		DrawCircle(pos.x, pos.y, r, p);
 	}
 
-	template<typename T>
-	void GameEngine::FillCircle(vec2d_basic<T> pos, int32_t r, const Pixel& p)
+	void GameEngine::FillCircle(vi2d pos, int32_t r, const Pixel& p)
 	{
 		FillCircle(pos.x, pos.y, r, p);
 	}
 
-	template<typename T>
-	void GameEngine::DrawSprite(vec2d_basic<T> pos, Sprite* spr)
+	void GameEngine::DrawSprite(vi2d pos, Sprite* spr)
 	{
 		DrawSprite(pos.x, pos.y, spr);
 	}
 
-	template<typename T>
-	void GameEngine::DrawPartialSprite(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Sprite* spr)
+	void GameEngine::DrawPartialSprite(vi2d pos, vi2d fpos, vi2d fsize, Sprite* spr)
 	{
-		DrawPartialSprite(pos.x, pos.y, fpos.x, fpos.y, fpos.x, fpos.y, fsize.x, fsize.y);
+		DrawPartialSprite(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, spr);
 	}
 
-	template<typename T>
-	void GameEngine::DrawTexture(vec2d_basic<T> pos, Texture* Texture, vec2d_basic<float> scale, def::Pixel tint)
+	void GameEngine::DrawTexture(vi2d pos, Texture* Texture, vf2d scale, def::Pixel tint)
 	{
 		DrawTexture(pos.x, pos.y, Texture, scale.x, scale.y, tint);
 	}
 
-	template<typename T>
-	void GameEngine::DrawPartialTexture(vec2d_basic<T> pos, vec2d_basic<T> fpos, vec2d_basic<T> fsize, Texture* Texture, vec2d_basic<float> scale, def::Pixel tint)
+	void GameEngine::DrawPartialTexture(vi2d pos, vi2d fpos, vi2d fsize, Texture* Texture, vf2d scale, def::Pixel tint)
 	{
 		DrawPartialTexture(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, Texture, scale.x, scale.y, tint);
 	}
 
-	template<typename T>
-	void GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vec2d_basic<T> pos, float r, float s, const Pixel& p)
+	void GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vf2d pos, float r, float s, const Pixel& p)
 	{
 		DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p);
 	}
 
-	template<typename T>
-	void GameEngine::DrawString(vec2d_basic<T> pos, const std::string& text, const Pixel& p)
+	void GameEngine::DrawString(vi2d pos, const std::string& text, const Pixel& p)
 	{
 		DrawString(pos.x, pos.y, text, p);
 	}
