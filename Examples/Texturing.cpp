@@ -114,7 +114,8 @@ public:
 	}
 
 private:
-	SampleMode sample;
+	SampleMode sampleMode;
+	WrapMode wrapMode;
 
 protected:
 	bool OnUserCreate() override
@@ -127,10 +128,22 @@ protected:
 	bool OnUserUpdate(float fDeltaTime) override
 	{
 		if (GetKey(def::Key::K1).bPressed)
-			sample = SampleMode::Point;
+			sampleMode = SampleMode::Point;
 
 		if (GetKey(def::Key::K2).bPressed)
-			sample = SampleMode::BiLinear;
+			sampleMode = SampleMode::BiLinear;
+
+		if (GetKey(def::Key::K3).bPressed)
+			wrapMode = WrapMode::None;
+
+		if (GetKey(def::Key::K4).bPressed)
+			wrapMode = WrapMode::Clamp;
+
+		if (GetKey(def::Key::K5).bPressed)
+			wrapMode = WrapMode::Mirror;
+
+		if (GetKey(def::Key::K6).bPressed)
+			wrapMode = WrapMode::Repeat;
 
 		for (int x = 0; x < GetScreenWidth(); x++)
 			for (int y = 0; y < GetScreenHeight(); y++)
@@ -140,7 +153,7 @@ protected:
 					(float)y / (float)GetScreenHeight()
 				};
 
-				def::Pixel p = Sample(texDemo, vSample, sample, WrapMode::None);
+				def::Pixel p = Sample(texDemo, vSample, sampleMode, wrapMode);
 				Draw(x, y, p);
 			}
 
