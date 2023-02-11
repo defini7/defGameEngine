@@ -11,7 +11,8 @@ public:
 
 	enum class SampleMode : uint8_t
 	{
-		Point
+		Point,
+		BiLinear
 	};
 
 	enum class WrapMode : uint8_t
@@ -21,7 +22,7 @@ public:
 		Mirror,
 		Clamp
 	};
-	
+
 	def::Texture* texDemo;
 
 	def::Pixel Sample(def::Texture* tex, def::vf2d& uv, SampleMode sample = SampleMode::Point, WrapMode wrap = WrapMode::None)
@@ -37,7 +38,23 @@ public:
 			out = GetPixel(tex, vFilePos, wrap);
 		}
 		break;
-		
+
+		case SampleMode::BiLinear:
+		{
+			def::vf2d vRatio = uv - uv.floor();
+			def::vf2d vInverted = def::vf2d(1.0f, 1.0f) - vRatio;
+
+			def::Pixel p0 = GetPixel(tex, vFilePos + def::vi2d(0, 0), wrap);
+			def::Pixel p1 = GetPixel(tex, vFilePos + def::vi2d(1, 0), wrap);
+			def::Pixel p2 = GetPixel(tex, vFilePos + def::vi2d(0, 1), wrap);
+			def::Pixel p3 = GetPixel(tex, vFilePos + def::vi2d(1, 1), wrap);
+
+			out.r = (p0.r * vInverted.x + p1.r * vRatio.x) * vInverted.y + (p2.r * vInverted.x + p3.r * vRatio.x) * vRatio.y;
+			out.g = (p0.g * vInverted.x + p1.g * vRatio.x) * vInverted.y + (p2.g * vInverted.x + p3.g * vRatio.x) * vRatio.y;
+			out.b = (p0.b * vInverted.x + p1.b * vRatio.x) * vInverted.y + (p2.b * vInverted.x + p3.b * vRatio.x) * vRatio.y;
+		}
+		break;
+
 		}
 
 		return out;
@@ -96,16 +113,25 @@ public:
 		return out;
 	}
 
+private:
+	SampleMode sample;
+
 protected:
 	bool OnUserCreate() override
 	{
-		texDemo = new def::Texture("udxs_building1.png");
-		
+		texDemo = new def::Texture("land.jpg");
+
 		return true;
 	}
 
 	bool OnUserUpdate(float fDeltaTime) override
 	{
+		if (GetKey(def::Key::K1).bPressed)
+			sample = SampleMode::Point;
+
+		if (GetKey(def::Key::K2).bPressed)
+			sample = SampleMode::BiLinear;
+
 		for (int x = 0; x < GetScreenWidth(); x++)
 			for (int y = 0; y < GetScreenHeight(); y++)
 			{
@@ -114,7 +140,7 @@ protected:
 					(float)y / (float)GetScreenHeight()
 				};
 
-				def::Pixel p = Sample(texDemo, vSample, SampleMode::Point, WrapMode::None);
+				def::Pixel p = Sample(texDemo, vSample, sample, WrapMode::None);
 				Draw(x, y, p);
 			}
 
