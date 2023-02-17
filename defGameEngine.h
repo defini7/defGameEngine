@@ -269,10 +269,10 @@ namespace def
 		vec2d_basic<T> operator-(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x - v.x, this->y - v.y); }
 		vec2d_basic<T> operator*(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x * v.x, this->y * v.y); }
 		vec2d_basic<T> operator/(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x / v.x, this->y / v.y); }
-		vec2d_basic<T> operator+(const T& v)				{ return vec2d_basic<T>(this->x + v, this->y + v); }
-		vec2d_basic<T> operator-(const T& v)				{ return vec2d_basic<T>(this->x - v, this->y - v); }
-		vec2d_basic<T> operator*(const T& v)				{ return vec2d_basic<T>(this->x * v, this->y * v); }
-		vec2d_basic<T> operator/(const T& v)				{ return vec2d_basic<T>(this->x / v, this->y / v); }
+		vec2d_basic<T> operator+(const T& v) { return vec2d_basic<T>(this->x + v, this->y + v); }
+		vec2d_basic<T> operator-(const T& v) { return vec2d_basic<T>(this->x - v, this->y - v); }
+		vec2d_basic<T> operator*(const T& v) { return vec2d_basic<T>(this->x * v, this->y * v); }
+		vec2d_basic<T> operator/(const T& v) { return vec2d_basic<T>(this->x / v, this->y / v); }
 
 		vec2d_basic<T>& operator+=(const vec2d_basic<T>& v)
 		{
@@ -332,32 +332,44 @@ namespace def
 
 		bool operator==(const vec2d_basic<T>& v) { return this->x == v.x && this->y == v.y; }
 		bool operator!=(const vec2d_basic<T>& v) { return this->x != v.x || this->y != v.y; }
-		bool operator<(const vec2d_basic<T>& v)  { return this->x < v.x && this->y < v.y; }
-		bool operator>(const vec2d_basic<T>& v)  { return this->x > v.x && this->y > v.y; }
+		bool operator<(const vec2d_basic<T>& v) { return this->x < v.x&& this->y < v.y; }
+		bool operator>(const vec2d_basic<T>& v) { return this->x > v.x && this->y > v.y; }
 		bool operator<=(const vec2d_basic<T>& v) { return this->x <= v.x && this->y <= v.y; }
 		bool operator>=(const vec2d_basic<T>& v) { return this->x >= v.x && this->y >= v.y; }
 
 		friend vec2d_basic<T> operator*(const float& lhs, const vec2d_basic<T>& rhs)
-		{ return vec2d_basic<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y)); }
+		{
+			return vec2d_basic<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y));
+		}
 
 		friend vec2d_basic<T> operator * (const double& lhs, const vec2d_basic<T>& rhs)
-		{ return vec2d_basic<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y)); }
+		{
+			return vec2d_basic<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y));
+		}
 
 		friend vec2d_basic<T> operator * (const int& lhs, const vec2d_basic<T>& rhs)
-		{ return vec2d_basic<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y)); }
+		{
+			return vec2d_basic<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y));
+		}
 
 		friend vec2d_basic<T> operator / (const float& lhs, const vec2d_basic<T>& rhs)
-		{ return vec2d_basic<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y)); }
+		{
+			return vec2d_basic<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y));
+		}
 
 		friend vec2d_basic<T> operator / (const double& lhs, const vec2d_basic<T>& rhs)
-		{ return vec2d_basic<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y)); }
+		{
+			return vec2d_basic<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y));
+		}
 
 		friend vec2d_basic<T> operator / (const int& lhs, const vec2d_basic<T>& rhs)
-		{ return vec2d_basic<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y)); }
+		{
+			return vec2d_basic<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y));
+		}
 
 		operator vec2d_basic<int>()	   const { return { static_cast<int32_t>(this->x),  static_cast<int32_t>(this->y) }; }
-		operator vec2d_basic<float>()  const { return { static_cast<float>(this->x),	static_cast<float>(this->y)	  }; }
-		operator vec2d_basic<double>() const { return { static_cast<double>(this->x),	static_cast<double>(this->y)  }; }
+		operator vec2d_basic<float>()  const { return { static_cast<float>(this->x),	static_cast<float>(this->y) }; }
+		operator vec2d_basic<double>() const { return { static_cast<double>(this->x),	static_cast<double>(this->y) }; }
 
 		vec2d_basic<T> clamp(const vec2d_basic<T>& start, const vec2d_basic<T>& end) const
 		{
@@ -378,17 +390,17 @@ namespace def
 		float dot(vec2d_basic<T> v) { return this->x * v.x + this->y * v.y; }
 		float length() { return sqrtf(dot(*this)); }
 
-		T mag()  { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
+		T mag() { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
 		T mag2() { return static_cast<T>(this->x * this->x + this->y * this->y); }
 
-		vec2d_basic<T> norm()	 { float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
-		vec2d_basic<T> abs()	 { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
-		vec2d_basic<T> perp()	 { return vec2d_basic<T>(-this->y, this->x); }
-		vec2d_basic<T> floor()	 { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
-		vec2d_basic<T> ceil()	 { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
-		vec2d_basic<T> cart()	 { return vec2d_basic<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
-		vec2d_basic<T> polar()	 { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
-		vec2d_basic<T>& ref()	 { return *this; }
+		vec2d_basic<T> norm() { float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
+		vec2d_basic<T> abs() { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
+		vec2d_basic<T> perp() { return vec2d_basic<T>(-this->y, this->x); }
+		vec2d_basic<T> floor() { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
+		vec2d_basic<T> ceil() { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
+		vec2d_basic<T> cart() { return vec2d_basic<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
+		vec2d_basic<T> polar() { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
+		vec2d_basic<T>& ref() { return *this; }
 
 		operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
 	};
@@ -1049,9 +1061,6 @@ namespace def
 			if (m_bDirtyPixel)
 				glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-			std::string title = "github.com/defini7 - " + m_sAppName;
-			glfwSetWindowTitle(m_glWindow, title.c_str());
-
 			std::string data =
 				"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
 				"O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400"
@@ -1221,7 +1230,7 @@ namespace def
 
 					m_nMouseOldState[i] = m_nMouseNewState[i];
 				}
-				
+
 				double dMouseX, dMouseY;
 
 				glfwGetCursorPos(m_glWindow, &dMouseX, &dMouseY);
@@ -1245,7 +1254,7 @@ namespace def
 
 				glTranslatef((float)m_vTrans.x, (float)m_vTrans.y, 0.0f);
 				glScalef(m_vScale.x, m_vScale.y, 1.0f);
-				
+
 				if (m_nPixelWidth + m_nPixelHeight == 2) glBegin(GL_POINTS);
 				else									 glBegin(GL_QUADS);
 
@@ -1254,7 +1263,7 @@ namespace def
 					{
 						const def::Pixel& p = m_pScreen[y * m_nScreenWidth + x];
 						glColor4ub(p.r, p.g, p.b, p.a);
-						
+
 						// Some optimization
 						if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
 							glVertex2i(x, y);
@@ -1272,7 +1281,7 @@ namespace def
 							glVertex2i(nTopLeftX, nTopRightY);
 						}
 					}
-				
+
 				glEnd();
 				glPopMatrix();
 
@@ -1330,7 +1339,7 @@ namespace def
 
 		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vf2d pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
-		
+
 		void DrawString(vi2d pos, const std::string& text, const Pixel& p = WHITE);
 		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE);
 
@@ -2088,7 +2097,7 @@ namespace def
 
 		if (bMaximized)
 			f |= WS_MAXIMIZED;
-		
+
 		return static_cast<WindowState>(f);
 	}
 
