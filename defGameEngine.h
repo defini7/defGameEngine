@@ -460,19 +460,19 @@ namespace def
 		uint8_t a;
 
 		template <typename T>
-		friend Pixel operator+(const Pixel& lhs, uint8_t rhs) { return Pixel(uint8_t(lhs.r + rhs), uint8_t(lhs.g + rhs), uint8_t(lhs.b + rhs), lhs.a); }
+		friend Pixel operator+(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r + rhs), uint8_t((T)lhs.g + rhs), uint8_t((T)lhs.b + rhs), lhs.a); }
 
 		template <typename T>
-		friend Pixel operator-(const Pixel& lhs, uint8_t rhs) { return Pixel(uint8_t(lhs.r - rhs), uint8_t(lhs.g - rhs), uint8_t(lhs.b - rhs), lhs.a); }
+		friend Pixel operator-(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r - rhs), uint8_t((T)lhs.g - rhs), uint8_t((T)lhs.b - rhs), lhs.a); }
 
 		template <typename T>
-		friend Pixel operator*(const Pixel& lhs, uint8_t rhs) { return Pixel(uint8_t(lhs.r * rhs), uint8_t(lhs.g * rhs), uint8_t(lhs.b * rhs), lhs.a); }
+		friend Pixel operator*(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r * rhs), uint8_t((T)lhs.g * rhs), uint8_t((T)lhs.b * rhs), lhs.a); }
 
 		template <typename T>
-		friend Pixel operator/(const Pixel& lhs, uint8_t rhs) { return Pixel(uint8_t(lhs.r / rhs), uint8_t(lhs.g / rhs), uint8_t((T)rhs.b / rhs), lhs.a); }
+		friend Pixel operator/(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r / rhs), uint8_t((T)lhs.g / rhs), uint8_t((T)rhs.b / rhs), lhs.a); }
 
 		template <typename T>
-		friend Pixel operator+=(const Pixel& lhs, uint8_t rhs)
+		friend Pixel operator+=(const Pixel& lhs, T rhs)
 		{
 			lhs.r += rhs;
 			lhs.g += rhs;
@@ -482,7 +482,7 @@ namespace def
 		}
 
 		template <typename T>
-		friend Pixel operator-=(const Pixel& lhs, uint8_t rhs)
+		friend Pixel operator-=(const Pixel& lhs, T rhs)
 		{
 			lhs.r -= rhs;
 			lhs.g -= rhs;
@@ -492,7 +492,7 @@ namespace def
 		}
 
 		template <typename T>
-		friend Pixel operator*=(const Pixel& lhs, uint8_t rhs)
+		friend Pixel operator*=(const Pixel& lhs, T rhs)
 		{
 			lhs.r *= rhs;
 			lhs.g *= rhs;
@@ -502,7 +502,7 @@ namespace def
 		}
 
 		template <typename T>
-		friend Pixel operator/=(const Pixel& lhs, uint8_t rhs)
+		friend Pixel operator/=(const Pixel& lhs, T rhs)
 		{
 			lhs.r /= rhs;
 			lhs.g /= rhs;
@@ -536,8 +536,8 @@ namespace def
 			return lhs / rhs;
 		}
 
-		friend bool operator==(Pixel& lhs, Pixel& rhs) { return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b; }
-		friend bool operator!=(Pixel& lhs, Pixel& rhs) { return lhs.r != rhs.r || lhs.g != rhs.g || lhs.b != rhs.b; }
+		friend bool operator==(const Pixel& lhs, const Pixel& rhs) { return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b; }
+		friend bool operator!=(const Pixel& lhs, const Pixel& rhs) { return lhs.r != rhs.r || lhs.g != rhs.g || lhs.b != rhs.b; }
 	};
 
 	def::Pixel PixelF(float r, float g, float b)
@@ -622,6 +622,11 @@ namespace def
 		~Sprite()
 		{
 			stbi_image_free(m_pData);
+		}
+
+		Sprite* S()
+		{
+			return this;
 		}
 
 	private:
