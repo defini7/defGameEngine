@@ -3,13 +3,15 @@
 #define DGE_PANANDZOOM
 #include "DGE_PanAndZoom.h"
 
-class TextureSampling : public def::GameEngine
+class CustomTexture
 {
 public:
-	TextureSampling()
+	CustomTexture(const std::string& sFileName, const def::vf2d& vBorderStart, const def::vf2d& vBorderSize)
 	{
-		SetTitle("Texture Sampling");
-		ShowFPS();
+		m_Spr = std::make_unique<def::Sprite>(sFileName);
+
+		m_vBorderStart = vBorderStart;
+		m_vBorderSize = vBorderSize;
 	}
 
 	enum class SampleMode : uint8_t
@@ -26,33 +28,33 @@ public:
 		Clamp
 	};
 
-	def::Pixel Sample(def::Sprite* tex, def::vf2d& uv, SampleMode sample = SampleMode::Point, WrapMode wrap = WrapMode::None)
+	def::Pixel Sample(def::vf2d& uv, SampleMode sample = SampleMode::Point, WrapMode wrap = WrapMode::None)
 	{
-		def::Pixel out = def::WHITE;
+		def::Pixel out = def::DARK_BLUE;
 
-		def::vi2d vFilePos = uv * GetScreenSize();
+		def::vf2d vFilePos = m_vBorderStart + uv * m_vBorderSize;
 
 		switch (sample)
 		{
 		case SampleMode::Point:
 		{
-			out = GetPixel(tex, vFilePos, wrap);
+			out = GetPixel(vFilePos, wrap);
 		}
 		break;
 
 		case SampleMode::BiLinear:
 		{
-			def::vf2d vRatio = uv - uv.floor();
-			def::vf2d vInverted = def::vf2d(1.0f, 1.0f) - vRatio;
+			def::vf2d vOffset = vFilePos - vFilePos.floor();
 
-			def::Pixel p0 = GetPixel(tex, vFilePos + def::vi2d(0, 0), wrap);
-			def::Pixel p1 = GetPixel(tex, vFilePos + def::vi2d(1, 0), wrap);
-			def::Pixel p2 = GetPixel(tex, vFilePos + def::vi2d(0, 1), wrap);
-			def::Pixel p3 = GetPixel(tex, vFilePos + def::vi2d(1, 1), wrap);
+			def::Pixel pTL = GetPixel(vFilePos + def::vi2d(0, 0), wrap);
+			def::Pixel pTR = GetPixel(vFilePos + def::vi2d(1, 0), wrap);
+			def::Pixel pBL = GetPixel(vFilePos + def::vi2d(0, 1), wrap);
+			def::Pixel pBR = GetPixel(vFilePos + def::vi2d(1, 1), wrap);
 
-			out.r = (p0.r * vInverted.x + p1.r * vRatio.x) * vInverted.y + (p2.r * vInverted.x + p3.r * vRatio.x) * vRatio.y;
-			out.g = (p0.g * vInverted.x + p1.g * vRatio.x) * vInverted.y + (p2.g * vInverted.x + p3.g * vRatio.x) * vRatio.y;
-			out.b = (p0.b * vInverted.x + p1.b * vRatio.x) * vInverted.y + (p2.b * vInverted.x + p3.b * vRatio.x) * vRatio.y;
+			def::Pixel pTop = pTR * vOffset.x + pTL * (1.0f - vOffset.x);
+			def::Pixel pBottom = pBR * vOffset.x + pBL * (1.0f - vOffset.x);
+
+			out = pBottom * vOffset.y + pTop * (1.0f - vOffset.y);
 		}
 		break;
 
@@ -61,16 +63,16 @@ public:
 		return out;
 	}
 
-	def::Pixel GetPixel(def::Sprite* tex, const def::vi2d& pos, WrapMode wrap = WrapMode::None)
+	def::Pixel GetPixel(const def::vi2d& pos, WrapMode wrap = WrapMode::None)
 	{
-		def::Pixel out = def::WHITE;
+		def::Pixel out = def::DARK_BLUE;
 
 		switch (wrap)
 		{
 		case WrapMode::None:
 		{
-			if (pos.x >= 0 && pos.y >= 0 && pos.x < tex->GetWidth() && pos.y < tex->GetHeight())
-				out = tex->GetPixel(pos.x, pos.y);
+			if (pos.x >= 0 && pos.y >= 0 && pos.x < m_Spr->GetWidth() && pos.y < m_Spr->GetHeight())
+				out = m_Spr->GetPixel(pos.x, pos.y);
 		}
 		break;
 
@@ -78,10 +80,10 @@ public:
 		{
 			def::vi2d vFilePos;
 
-			vFilePos.x = pos.x % tex->GetWidth();
-			vFilePos.y = pos.y % tex->GetHeight();
+			vFilePos.x = pos.x % m_Spr->GetWidth();
+			vFilePos.y = pos.y % m_Spr->GetHeight();
 
-			out = tex->GetPixel(vFilePos.x, vFilePos.y);
+			out = m_Spr->GetPixel(vFilePos.x, vFilePos.y);
 		}
 		break;
 
@@ -89,23 +91,23 @@ public:
 		{
 			def::vi2d vQueue, vMirrored;
 
-			vQueue.x = pos.x / tex->GetWidth();
-			vQueue.y = pos.y / tex->GetHeight();
+			vQueue.x = pos.x / m_Spr->GetWidth();
+			vQueue.y = pos.y / m_Spr->GetHeight();
 
-			vMirrored.x = pos.x % tex->GetWidth();
-			vMirrored.y = pos.y % tex->GetHeight();
+			vMirrored.x = pos.x % m_Spr->GetWidth();
+			vMirrored.y = pos.y % m_Spr->GetHeight();
 
-			if (vQueue.x % 2 == 0) vMirrored.x = tex->GetWidth() - vMirrored.x - 1;
-			if (vQueue.y % 2 == 0) vMirrored.y = tex->GetHeight() - vMirrored.y - 1;
+			if (vQueue.x % 2 == 0) vMirrored.x = m_Spr->GetWidth() - vMirrored.x - 1;
+			if (vQueue.y % 2 == 0) vMirrored.y = m_Spr->GetHeight() - vMirrored.y - 1;
 
-			out = tex->GetPixel(vMirrored.x, vMirrored.y);
+			out = m_Spr->GetPixel(vMirrored.x, vMirrored.y);
 		}
 		break;
 
 		case WrapMode::Clamp:
 		{
-			def::vi2d vClamped = pos.clamp({ 0, 0 }, tex->GetSize() - 1);
-			out = tex->GetPixel(vClamped.x, vClamped.y);
+			def::vi2d vClamped = pos.clamp({ 0, 0 }, m_Spr->GetSize() - 1);
+			out = m_Spr->GetPixel(vClamped.x, vClamped.y);
 		}
 		break;
 
@@ -114,56 +116,121 @@ public:
 		return out;
 	}
 
-private:
-	SampleMode sampleMode;
-	WrapMode wrapMode;
+	def::vi2d GetSize() const
+	{
+		return m_Spr->GetSize();
+	}
 
+private:
+
+	def::vf2d m_vBorderStart;
+	def::vf2d m_vBorderSize;
+
+	std::unique_ptr<def::Sprite> m_Spr;
+
+};
+
+class TextureSampling : public def::GameEngine
+{
+public:
+	TextureSampling()
+	{
+		SetTitle("Texture Sampling");
+		ShowFPS();
+	}
+
+	
+
+	
+
+private:
 	def::PanAndZoom pz;
 
-	std::unique_ptr<def::Sprite> sprDemo;
+	std::unique_ptr<CustomTexture> tex1;
+	std::unique_ptr<CustomTexture> tex2;
+
+	CustomTexture::SampleMode sampleMode;
+	CustomTexture::WrapMode wrapMode;
 
 protected:
 	bool OnUserCreate() override
 	{
 		pz.Initialize();
 
-		sprDemo = std::make_unique<def::Sprite>("land.png");
+		tex1 = std::make_unique<CustomTexture>("land.jpg", def::vf2d(0, 0), def::vf2d(1280, 960));
+		tex2 = std::make_unique<CustomTexture>("perlin0.jpg", def::vf2d(0, 0), def::vf2d(1280, 960));
 
-		pz.SetScale(sprDemo->GetSize());
+		pz.SetScale(def::vf2d(1280, 960));
 
 		return true;
 	}
 
-	bool OnUserUpdate(float fDeltaTime) override
+	void DrawCustomTexture(std::unique_ptr<CustomTexture>& texture)
 	{
-		if (GetKey(def::Key::K1).bPressed)
-			sampleMode = SampleMode::Point;
-
-		if (GetKey(def::Key::K2).bPressed)
-			sampleMode = SampleMode::BiLinear;
-
-		if (GetKey(def::Key::K3).bPressed)
-			wrapMode = WrapMode::None;
-
-		if (GetKey(def::Key::K4).bPressed)
-			wrapMode = WrapMode::Clamp;
-
-		if (GetKey(def::Key::K5).bPressed)
-			wrapMode = WrapMode::Mirror;
-
-		if (GetKey(def::Key::K6).bPressed)
-			wrapMode = WrapMode::Repeat;
-
-		pz.Handle(this);
-
 		for (int x = 0; x < GetScreenWidth(); x++)
 			for (int y = 0; y < GetScreenHeight(); y++)
 			{
 				def::vf2d vSample = pz.ScreenToWorld({ x, y });
 
-				def::Pixel p = Sample(sprDemo.get(), vSample, sampleMode, wrapMode);
+				def::Pixel p = texture.get()->Sample(vSample, sampleMode, wrapMode);
 				Draw(x, y, p);
 			}
+	}
+
+	template <typename T>
+	T Mix(T x, T y, float a)
+	{
+		return x * (1.0f - a) + y * a;
+	}
+
+	void DrawMixedCustomTexture(std::unique_ptr<CustomTexture>& texture1, std::unique_ptr<CustomTexture>& texture2)
+	{
+		for (int x = 0; x < GetScreenWidth(); x++)
+			for (int y = 0; y < GetScreenHeight(); y++)
+			{
+				def::vf2d vSample = pz.ScreenToWorld({ x, y });
+
+				def::Pixel p1 = texture1.get()->Sample(vSample, sampleMode, wrapMode);
+				def::Pixel p2 = texture2.get()->Sample(vSample, sampleMode, wrapMode);
+
+				def::Pixel mixed;
+				mixed.r = Mix(p1.r, p2.r, 0.5f);
+				mixed.g = Mix(p1.g, p2.g, 0.5f);
+				mixed.b = Mix(p1.b, p2.b, 0.5f);
+
+				Draw(x, y, mixed);
+			}
+	}
+
+	bool OnUserUpdate(float fDeltaTime) override
+	{
+		if (GetKey(def::Key::K1).bPressed)
+			sampleMode = CustomTexture::SampleMode::Point;
+
+		if (GetKey(def::Key::K2).bPressed)
+			sampleMode = CustomTexture::SampleMode::BiLinear;
+
+		if (GetKey(def::Key::K3).bPressed)
+			wrapMode = CustomTexture::WrapMode::None;
+
+		if (GetKey(def::Key::K4).bPressed)
+			wrapMode = CustomTexture::WrapMode::Clamp;
+
+		if (GetKey(def::Key::K5).bPressed)
+			wrapMode = CustomTexture::WrapMode::Mirror;
+
+		if (GetKey(def::Key::K6).bPressed)
+			wrapMode = CustomTexture::WrapMode::Repeat;
+
+		pz.Handle(this);
+
+		/*DrawCustomTexture(tex1);
+		DrawCustomTexture(tex2);*/
+
+		DrawMixedCustomTexture(tex1, tex2);
+
+		DrawString(8, 8, "Sample mode: Point - 1, BiLinear - 2");
+		DrawString(8, 16, "Wrap mode: None - 3, Clamp - 4, Mirror - 5, Repeat - 6");
 
 		return true;
 	}
