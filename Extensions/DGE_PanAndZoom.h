@@ -57,8 +57,10 @@ namespace def
 			return (def::vf2d)vScreen / m_vScale + m_vOffset;
 		}
 
-		void Initialize(const def::vf2d& vScale = { 1.0f, 1.0f }, const def::vf2d& vOffset = { 0.0f, 0.0f })
+		void Initialize(def::GameEngine* dge, const def::vf2d& vScale = { 1.0f, 1.0f }, const def::vf2d& vOffset = { 0.0f, 0.0f })
 		{
+			pDge = dge;
+
 			m_vScale = vScale;
 			m_vOffset = vOffset;
 		}
@@ -83,10 +85,8 @@ namespace def
 			m_vOffset = vOffset;
 		}
 
-	    void Handle(def::GameEngine* dge)
+		void Handle()
 		{
-			pDge = dge;
-
 			def::vf2d vMouse = pDge->GetMouse();
 
 			if (pDge->GetMouse(2).bPressed)
@@ -135,28 +135,28 @@ namespace def
 					Draw(x + i, y + j, sprite->GetPixel(i, j));
 		}
 
-		void DrawCircle(int32_t x, int32_t y, int32_t r, const def::Pixel& p)
+		void DrawCircle(float x, float y, float r, const def::Pixel& p)
 		{
 			def::vi2d pos = WorldToScreen(def::vf2d(x, y));
-			pDge->DrawCircle(pos.x, pos.y, r * m_vScale.x, p);
+			pDge->DrawCircle(pos, r * m_vScale.x, p);
 		}
 
-		void FillCircle(int32_t x, int32_t y, int32_t r, const def::Pixel& p)
+		void FillCircle(float x, float y, float r, const def::Pixel& p)
 		{
 			def::vi2d pos = WorldToScreen(def::vf2d(x, y));
-			pDge->FillCircle(pos.x, pos.y, r * m_vScale.x, p);
+			pDge->FillCircle(pos, r * m_vScale.x, p);
 		}
 
-		void DrawRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const def::Pixel& p)
+		void DrawRectangle(float x, float y, float sx, float sy, const def::Pixel& p)
 		{
 			def::vi2d pos = WorldToScreen(def::vf2d(x, y));
-			pDge->DrawRectangle(pos.x, pos.y, sx * m_vScale.x, sy * m_vScale.y, p);
+			pDge->DrawRectangle(pos, def::vi2d(sx * m_vScale.x, sy * m_vScale.y), p);
 		}
 
-		void FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const def::Pixel& p)
+		void FillRectangle(float x, float y, float sx, float sy, const def::Pixel& p)
 		{
 			def::vi2d pos = WorldToScreen(def::vf2d(x, y));
-			pDge->FillRectangle(pos.x, pos.y, sx * m_vScale.x, sy * m_vScale.y, p);
+			pDge->FillRectangle(pos, def::vi2d(sx * m_vScale.x, sy * m_vScale.y), p);
 		}
 
 	};
