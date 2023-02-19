@@ -3,15 +3,17 @@
 #define DGE_PANANDZOOM
 #include "DGE_PanAndZoom.h"
 
+const def::Pixel g_pBackground = def::DARK_CYAN;
+
 class CustomTexture
 {
 public:
-	CustomTexture(const std::string& sFileName, const def::vf2d& vBorderStart, const def::vf2d& vBorderSize)
+	CustomTexture(const std::string& fileName, const def::vf2d& borderStart, const def::vf2d& borderSize)
 	{
-		m_Spr = std::make_unique<def::Sprite>(sFileName);
+		m_Spr = std::make_unique<def::Sprite>(fileName);
 
-		m_vBorderStart = vBorderStart;
-		m_vBorderSize = vBorderSize;
+		vBorderStart = borderStart;
+		vBorderSize = borderSize;
 	}
 
 	enum class SampleMode : uint8_t
@@ -30,9 +32,9 @@ public:
 
 	def::Pixel Sample(def::vf2d& uv, SampleMode sample = SampleMode::Point, WrapMode wrap = WrapMode::None)
 	{
-		def::Pixel out = def::DARK_BLUE;
+		def::Pixel out = g_pBackground;
 
-		def::vf2d vFilePos = m_vBorderStart + uv * m_vBorderSize;
+		def::vf2d vFilePos = vBorderStart + uv * vBorderSize;
 
 		switch (sample)
 		{
@@ -65,7 +67,7 @@ public:
 
 	def::Pixel GetPixel(const def::vi2d& pos, WrapMode wrap = WrapMode::None)
 	{
-		def::Pixel out = def::DARK_BLUE;
+		def::Pixel out = g_pBackground;
 
 		switch (wrap)
 		{
@@ -121,11 +123,11 @@ public:
 		return m_Spr->GetSize();
 	}
 
+public:
+	def::vf2d vBorderStart;
+	def::vf2d vBorderSize;
+
 private:
-
-	def::vf2d m_vBorderStart;
-	def::vf2d m_vBorderSize;
-
 	std::unique_ptr<def::Sprite> m_Spr;
 
 };
@@ -139,9 +141,9 @@ public:
 		ShowFPS();
 	}
 
-	
 
-	
+
+
 
 private:
 	def::PanAndZoom pz;
@@ -155,7 +157,7 @@ private:
 protected:
 	bool OnUserCreate() override
 	{
-		pz.Initialize();
+		pz.Initialize(this);
 
 		tex1 = std::make_unique<CustomTexture>("land.jpg", def::vf2d(0, 0), def::vf2d(1280, 960));
 		tex2 = std::make_unique<CustomTexture>("perlin0.jpg", def::vf2d(0, 0), def::vf2d(1280, 960));
@@ -183,7 +185,7 @@ protected:
 		return x * (1.0f - a) + y * a;
 	}
 
-	void DrawMixedCustomTexture(std::unique_ptr<CustomTexture>& texture1, std::unique_ptr<CustomTexture>& texture2)
+	void DrawMixedCustomTexture(std::unique_ptr<CustomTexture>& texture1, std::unique_ptr<CustomTexture>& texture2, float force = 0.5f)
 	{
 		for (int x = 0; x < GetScreenWidth(); x++)
 			for (int y = 0; y < GetScreenHeight(); y++)
@@ -194,9 +196,9 @@ protected:
 				def::Pixel p2 = texture2.get()->Sample(vSample, sampleMode, wrapMode);
 
 				def::Pixel mixed;
-				mixed.r = Mix(p1.r, p2.r, 0.5f);
-				mixed.g = Mix(p1.g, p2.g, 0.5f);
-				mixed.b = Mix(p1.b, p2.b, 0.5f);
+				mixed.r = Mix(p1.r, p2.r, force);
+				mixed.g = Mix(p1.g, p2.g, force);
+				mixed.b = Mix(p1.b, p2.b, force);
 
 				Draw(x, y, mixed);
 			}
@@ -222,13 +224,15 @@ protected:
 		if (GetKey(def::Key::K6).bPressed)
 			wrapMode = CustomTexture::WrapMode::Repeat;
 
-		pz.Handle(this);
+		pz.Handle();
 
-		/*DrawCustomTexture(tex1);
-		DrawCustomTexture(tex2);*/
+		//DrawCustomTexture(tex1);
+		DrawCustomTexture(tex2);
 
-		DrawMixedCustomTexture(tex1, tex2);
+		//DrawMixedCustomTexture(tex1, tex2);
 
+		pz.DrawRectangle(0.0f, 0.0f, 1.0f, 1.0f, def::WHITE);
+		
 		DrawString(8, 8, "Sample mode: Point - 1, BiLinear - 2");
 		DrawString(8, 16, "Wrap mode: None - 3, Clamp - 4, Mirror - 5, Repeat - 6");
 
