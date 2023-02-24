@@ -1180,6 +1180,9 @@ namespace def
 			for (int i = 0; i < 512; i++)
 				m_nKeyNewState[i] = 0;
 
+			std::string title = "github.com/defini7 - " + m_sAppName;
+			glfwSetWindowTitle(m_glWindow, title.c_str());
+
 			while (m_bAppRunning)
 			{
 				tp2 = std::chrono::system_clock::now();
@@ -1245,7 +1248,7 @@ namespace def
 
 				if (m_bShowFPS)
 				{
-					std::string title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
+					title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
 					glfwSetWindowTitle(m_glWindow, title.c_str());
 				}
 
