@@ -65,7 +65,6 @@ private:
 
 	enum class Filter
 	{
-		None,
 		Threshold,
 		Motion,
 		Convolution,
@@ -75,7 +74,7 @@ private:
 		Median
 	};
 
-	Filter filter = Filter::None;
+	Filter filter;
 
 	float fThreshold = 0.5f;
 	float fLowPass = 0.1f;
@@ -171,25 +170,16 @@ protected:
 				input.pixels[i] = (float)col.c[1] / 255.0f;
 			}
 
-		if (GetKey(def::Key::K1).bPressed) filter = Filter::None;
-		if (GetKey(def::Key::K2).bPressed) filter = Filter::Threshold;
-		if (GetKey(def::Key::K3).bPressed) filter = Filter::Motion;
-		if (GetKey(def::Key::K4).bPressed) filter = Filter::Convolution;
-		if (GetKey(def::Key::K5).bPressed) filter = Filter::LowPass;
-		if (GetKey(def::Key::K6).bPressed) filter = Filter::Sobel;
-		if (GetKey(def::Key::K7).bPressed) filter = Filter::Median;
-		if (GetKey(def::Key::K8).bPressed) filter = Filter::Adaptive;
+		if (GetKey(def::Key::K1).bPressed) filter = Filter::Threshold;
+		if (GetKey(def::Key::K2).bPressed) filter = Filter::Motion;
+		if (GetKey(def::Key::K3).bPressed) filter = Filter::Convolution;
+		if (GetKey(def::Key::K4).bPressed) filter = Filter::LowPass;
+		if (GetKey(def::Key::K5).bPressed) filter = Filter::Sobel;
+		if (GetKey(def::Key::K6).bPressed) filter = Filter::Median;
+		if (GetKey(def::Key::K7).bPressed) filter = Filter::Adaptive;
 
 		switch (filter)
 		{
-		case Filter::None:
-		{
-			for (int x = 0; x < FRAME_WIDTH; x++)
-				for (int y = 0; y < FRAME_HEIGHT; y++)
-					output.set(x, y, input.get(x, y));
-		}
-		break;
-
 		case Filter::Threshold:
 		{
 			if (GetKey(def::Key::Z).bHeld) fThreshold -= 0.1f * fDeltaTime;
@@ -242,8 +232,7 @@ protected:
 			for (int x = 0; x < FRAME_WIDTH; x++)
 				for (int y = 0; y < FRAME_HEIGHT; y++)
 				{
-					float fDist = input.get(x, y) - output.get(x, y);
-					fDist *= fLowPass;
+					float fDist = (input.get(x, y) - output.get(x, y)) * fLowPass;
 					output.set(x, y, fDist + output.get(x, y));
 				}
 		}
@@ -301,7 +290,7 @@ protected:
 						for (int j = -2; j <= 2; j++)
 							col.push_back(input.get(x + i, y + j));
 
-					std::sort(col.begin(), col.end(), std::greater<float>());
+					std::sort(col.begin(), col.end(), [](float c1, float c2) { return c2 < c1; });
 
 					output.set(x, y, col[4]);
 				}
@@ -318,10 +307,6 @@ protected:
 
 		switch (filter)
 		{
-		case Filter::None:
-			DrawString(50, 300, "Filter: None");
-		break;
-
 		case Filter::Threshold:
 		{
 			DrawString(50, 300, "Filter: Threshold");
@@ -370,14 +355,13 @@ protected:
 		}
 
 		DrawString(500, 300, "Available filters: ");
-		DrawString(500, 316, "1) None");
-		DrawString(500, 332, "2) Threshold");
-		DrawString(500, 348, "3) Motion");
-		DrawString(500, 364, "4) Convolution");
-		DrawString(500, 380, "5) LowPass");
-		DrawString(500, 396, "6) Adaptive");
-		DrawString(500, 412, "7) Sobel");
-		DrawString(500, 428, "8) Median");
+		DrawString(500, 316, "1) Threshold");
+		DrawString(500, 332, "2) Motion");
+		DrawString(500, 348, "3) Convolution");
+		DrawString(500, 364, "4) LowPass");
+		DrawString(500, 380, "5) Sobel");
+		DrawString(500, 396, "6) Median");
+		DrawString(500, 412, "7) Adaptive");
 
 		return true;
 	}
