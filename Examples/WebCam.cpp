@@ -2,6 +2,7 @@
 #include "escapi.h"
 
 #include <algorithm>
+#include <array>
 
 constexpr int FRAME_WIDTH = 320;
 constexpr int FRAME_HEIGHT = 240;
@@ -284,15 +285,15 @@ protected:
 			for (int x = 0; x < FRAME_WIDTH; x++)
 				for (int y = 0; y < FRAME_HEIGHT; y++)
 				{
-					std::vector<float> col;
+					std::array<float, 25> col;
 
-					for (int i = -2; i <= 2; i++)
-						for (int j = -2; j <= 2; j++)
-							col.push_back(input.get(x + i, y + j));
+					for (int i = 0; i < 5; i++)
+						for (int j = 0; j < 5; j++)
+							col[j * 5 + i] = input.get(x + i - 2, y + j - 2);
 
 					std::sort(col.begin(), col.end(), [](float c1, float c2) { return c2 < c1; });
 
-					output.set(x, y, col[4]);
+					output.set(x, y, col[12]);
 				}
 
 		}
@@ -316,9 +317,7 @@ protected:
 		break;
 
 		case Filter::Motion:
-		{
 			DrawString(50, 300, "Filter: Motion");
-		}
 		break;
 
 		case Filter::Convolution:
