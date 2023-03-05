@@ -84,12 +84,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#pragma warning(disable:4996)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
 #ifdef _WIN32
 
-#if defined(_MSVC_LANG) && !defined(_CRT_SECURE_NO_WARNINGS)
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
@@ -899,7 +900,7 @@ namespace def
 		void Load(const std::string& filename)
 		{
 			spr = std::make_unique<Sprite>(filename);
-			tex = std::make_unique<Texture>(spr);
+			tex = std::make_unique<Texture>(spr.get());
 		}
 	};
 
