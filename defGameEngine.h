@@ -61,12 +61,8 @@
 	{
 		Sample demo;
 
-		def::rcode err = demo.Construct(256, 240, 4, 4);
-
-		if (err.ok)
+		if (demo.Construct(256, 240, 4, 4))
 			demo.Run();
-		else
-			std::cerr << err.info << "\n";
 
 		return 0;
 	}
@@ -87,6 +83,9 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #ifdef _WIN32
 
@@ -258,21 +257,21 @@ namespace def
 		T x = (T)0;
 		T y = (T)0;
 
-		vec2d_basic<T>& operator=(const vec2d_basic<T>& v)
+		vec2d_basic<T> operator=(const vec2d_basic<T>& v)
 		{
 			this->x = v.x;
 			this->y = v.y;
 			return *this;
 		}
 
-		vec2d_basic<T> operator+(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x + v.x, this->y + v.y); }
-		vec2d_basic<T> operator-(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x - v.x, this->y - v.y); }
-		vec2d_basic<T> operator*(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x * v.x, this->y * v.y); }
-		vec2d_basic<T> operator/(const vec2d_basic<T>& v) { return vec2d_basic<T>(this->x / v.x, this->y / v.y); }
-		vec2d_basic<T> operator+(const T& v) { return vec2d_basic<T>(this->x + v, this->y + v); }
-		vec2d_basic<T> operator-(const T& v) { return vec2d_basic<T>(this->x - v, this->y - v); }
-		vec2d_basic<T> operator*(const T& v) { return vec2d_basic<T>(this->x * v, this->y * v); }
-		vec2d_basic<T> operator/(const T& v) { return vec2d_basic<T>(this->x / v, this->y / v); }
+		friend vec2d_basic<T> operator+(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return vec2d_basic<T>(v1.x + v2.x, v1.y + v2.y); }
+		friend vec2d_basic<T> operator-(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return vec2d_basic<T>(v1.x - v2.x, v1.y - v2.y); }
+		friend vec2d_basic<T> operator*(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return vec2d_basic<T>(v1.x * v2.x, v1.y * v2.y); }
+		friend vec2d_basic<T> operator/(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return vec2d_basic<T>(v1.x / v2.x, v1.y / v2.y); }
+		friend vec2d_basic<T> operator+(const vec2d_basic<T>& v1, const T& v2) { return vec2d_basic<T>(v1.x + v2, v1.y + v2); }
+		friend vec2d_basic<T> operator-(const vec2d_basic<T>& v1, const T& v2) { return vec2d_basic<T>(v1.x - v2, v1.y - v2); }
+		friend vec2d_basic<T> operator*(const vec2d_basic<T>& v1, const T& v2) { return vec2d_basic<T>(v1.x * v2, v1.y * v2); }
+		friend vec2d_basic<T> operator/(const vec2d_basic<T>& v1, const T& v2) { return vec2d_basic<T>(v1.x / v2, v1.y / v2); }
 
 		vec2d_basic<T>& operator+=(const vec2d_basic<T>& v)
 		{
@@ -330,12 +329,12 @@ namespace def
 			return *this;
 		}
 
-		bool operator==(const vec2d_basic<T>& v) { return this->x == v.x && this->y == v.y; }
-		bool operator!=(const vec2d_basic<T>& v) { return this->x != v.x || this->y != v.y; }
-		bool operator<(const vec2d_basic<T>& v) { return this->x < v.x&& this->y < v.y; }
-		bool operator>(const vec2d_basic<T>& v) { return this->x > v.x && this->y > v.y; }
-		bool operator<=(const vec2d_basic<T>& v) { return this->x <= v.x && this->y <= v.y; }
-		bool operator>=(const vec2d_basic<T>& v) { return this->x >= v.x && this->y >= v.y; }
+		friend bool operator==(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x == v2.x && v1.y == v2.y; }
+		friend bool operator!=(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x != v2.x || v1.y != v2.y; }
+		friend bool operator<(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x < v2.x && v1.y < v2.y; }
+		friend bool operator>(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x > v2.x && v1.y > v2.y; }
+		friend bool operator<=(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
+		friend bool operator>=(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
 
 		friend vec2d_basic<T> operator*(const float& lhs, const vec2d_basic<T>& rhs)
 		{
@@ -387,17 +386,20 @@ namespace def
 			return temp;
 		}
 
-		float dot(vec2d_basic<T> v) { return this->x * v.x + this->y * v.y; }
+		float dot(const vec2d_basic<T>& v) { return this->x * v.x + this->y * v.y; }
 		float length() { return sqrtf(dot(*this)); }
 
 		T mag() { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
 		T mag2() { return static_cast<T>(this->x * this->x + this->y * this->y); }
+
+		float man(const vec2d_basic<T>& v) { return std::abs(this->x - v.x) + std::abs(this->y - v.y); }
 
 		vec2d_basic<T> norm() { float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
 		vec2d_basic<T> abs() { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
 		vec2d_basic<T> perp() { return vec2d_basic<T>(-this->y, this->x); }
 		vec2d_basic<T> floor() { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
 		vec2d_basic<T> ceil() { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
+		vec2d_basic<T> round() { return vec2d_basic<T>(std::round(this->x), std::round(this->y)); }
 		vec2d_basic<T> cart() { return vec2d_basic<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
 		vec2d_basic<T> polar() { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
 		vec2d_basic<T>& ref() { return *this; }
@@ -601,32 +603,23 @@ namespace def
 	{
 	public:
 		Sprite() = default;
-		Sprite(int32_t w, int32_t h)
+		Sprite(int32_t nWidth, int32_t nHeight)
 		{
-			if (w > 0 && h > 0)
-				Create(w, h);
+			if (nWidth > 0 && nHeight > 0)
+				Create(nWidth, nHeight);
 		}
 
-		Sprite(const std::string& filename)
+		Sprite(const std::string& sFilename)
 		{
-			m_sFilename = filename;
+			rcode rc = Load(sFilename);
 
-			rcode rc = LoadSprite();
-
-			if (!rc.ok)
+			if (!rc)
 				std::cerr << rc.info << "\n";
-
-			m_bOk = rc.ok;
 		}
 
 		~Sprite()
 		{
-			stbi_image_free(m_pData);
-		}
-
-		Sprite* S()
-		{
-			return this;
+			stbi_image_free(m_data);
 		}
 
 	private:
@@ -634,33 +627,31 @@ namespace def
 		int32_t m_nHeight;
 		int32_t m_nChannels;
 
-		std::string m_sFilename;
-
-		uint8_t* m_pData;
-
-		bool m_bOk = true;
+		uint8_t* m_data = nullptr;
 
 	public:
-		void Create(int32_t w, int32_t h)
+		void Create(int32_t nWidth, int32_t nHeight)
 		{
-			m_nWidth = w;
-			m_nHeight = h;
+			if (m_data != nullptr) delete[] m_data;
+
+			m_nWidth = nWidth;
+			m_nHeight = nHeight;
 
 			m_nChannels = 4;
 
-			m_pData = new uint8_t[w * h * m_nChannels];
+			m_data = new uint8_t[nWidth * nHeight * m_nChannels];
 
-			for (int i = 0; i < w * h * m_nChannels; i++)
-				m_pData[i] = 0;
+			for (int i = 0; i < nWidth * nHeight * m_nChannels; i++)
+				m_data[i] = 0;
 		}
 
-		rcode LoadSprite()
+		rcode Load(const std::string& sFilename)
 		{
 			rcode rc(false);
 
-			m_pData = stbi_load(m_sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 0);
+			m_data = stbi_load(sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 0);
 
-			if (!m_pData)
+			if (!m_data)
 			{
 				rc.info = "stb_image: ";
 				rc.info += stbi_failure_reason();
@@ -669,6 +660,32 @@ namespace def
 
 			rc.ok = true;
 			return rc;
+		}
+
+		enum class FileType
+		{
+			BMP, PNG, JPG, TGA, TGA_RLE
+		};
+
+		rcode Save(const std::string& sFilename, FileType fType)
+		{
+			int err;
+
+			switch (fType)
+			{
+			case FileType::BMP: err = stbi_write_bmp(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data); break;
+			case FileType::PNG: err = stbi_write_png(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data, m_nWidth * m_nChannels); break;
+			case FileType::JPG: err = stbi_write_jpg(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data, 100); break;
+			case FileType::TGA: err = stbi_write_tga(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data); break;
+			case FileType::TGA_RLE:
+			{
+				stbi_write_tga_with_rle = 1;
+				err = stbi_write_tga(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data);
+				stbi_write_tga_with_rle = 0;
+			}
+			break;
+
+			}
 		}
 
 		uint32_t GetWidth() const
@@ -686,22 +703,14 @@ namespace def
 			return vi2d(m_nWidth, m_nHeight);
 		}
 
-		std::string GetFilename() const
-		{
-			return m_sFilename;
-		}
-
-		bool IsOk()
-		{
-			return m_bOk;
-		}
-
 		void SetPixel(int32_t x, int32_t y, const Pixel& p)
 		{
-			m_pData[m_nChannels * (y * m_nWidth + x) + 0] = p.r;
-			m_pData[m_nChannels * (y * m_nWidth + x) + 1] = p.g;
-			m_pData[m_nChannels * (y * m_nWidth + x) + 2] = p.b;
-			m_pData[m_nChannels * (y * m_nWidth + x) + 3] = p.a;
+			size_t i = m_nChannels * (y * m_nWidth + x);
+
+			m_data[i + 0] = p.r;
+			m_data[i + 1] = p.g;
+			m_data[i + 2] = p.b;
+			m_data[i + 3] = p.a;
 		}
 
 		Pixel GetPixel(int32_t x, int32_t y)
@@ -709,11 +718,13 @@ namespace def
 			if (x < 0 || y < 0 || x >= m_nWidth || y >= m_nHeight)
 				return BLACK;
 
+			size_t i = m_nChannels * (y * m_nWidth + x);
+
 			Pixel p = Pixel(
-				m_pData[m_nChannels * (y * m_nWidth + x) + 0],
-				m_pData[m_nChannels * (y * m_nWidth + x) + 1],
-				m_pData[m_nChannels * (y * m_nWidth + x) + 2],
-				m_pData[m_nChannels * (y * m_nWidth + x) + 3]
+				m_data[i + 0],
+				m_data[i + 1],
+				m_data[i + 2],
+				m_data[i + 3]
 			);
 
 			return p;
@@ -721,13 +732,13 @@ namespace def
 
 		uint8_t* GetPixelData()
 		{
-			return m_pData;
+			return m_data;
 		}
 
 		void SetPixelData(uint8_t* data)
 		{
 			for (int i = 0; i < m_nWidth * m_nHeight * m_nChannels; i++)
-				m_pData[i] = data[i];
+				m_data[i] = data[i];
 		}
 
 		void SetPixelData(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
@@ -735,10 +746,10 @@ namespace def
 			for (int i = 0; i < m_nWidth; i++)
 				for (int j = 0; j < m_nHeight; j++)
 				{
-					m_pData[m_nChannels * (j * m_nWidth + i) + 0] = r;
-					m_pData[m_nChannels * (j * m_nWidth + i) + 1] = g;
-					m_pData[m_nChannels * (j * m_nWidth + i) + 2] = b;
-					m_pData[m_nChannels * (j * m_nWidth + i) + 3] = a;
+					m_data[m_nChannels * (j * m_nWidth + i) + 0] = r;
+					m_data[m_nChannels * (j * m_nWidth + i) + 1] = g;
+					m_data[m_nChannels * (j * m_nWidth + i) + 2] = b;
+					m_data[m_nChannels * (j * m_nWidth + i) + 3] = a;
 				}
 		}
 
@@ -782,7 +793,8 @@ namespace def
 	private:
 		void Construct()
 		{
-			LoadTexture(m_sprInstance->GetPixelData());
+			rcode rc = Load(m_sprInstance->GetPixelData());
+			if (!rc) std::cerr << rc.info << std::endl;
 
 			m_fUVScaleX = 1.0f / (float)m_sprInstance->GetWidth();
 			m_fUVScaleY = 1.0f / (float)m_sprInstance->GetHeight();
@@ -797,7 +809,7 @@ namespace def
 		float m_fUVScaleY;
 
 	public:
-		void LoadTexture(uint8_t* pixel_data)
+		rcode Load(uint8_t* pixel_data)
 		{
 			GLenum nFormat = 0;
 
@@ -808,10 +820,7 @@ namespace def
 			}
 
 			if (nFormat == 0)
-			{
-				std::cerr << "Invalid number of channels for " << m_sprInstance->GetFilename() << std::endl;
-				abort();
-			}
+				return rcode(false, "Invalid number of channels");
 
 			glGenTextures(1, &m_nTexId);
 			glBindTexture(GL_TEXTURE_2D, m_nTexId);
@@ -836,6 +845,8 @@ namespace def
 			);
 
 			glBindTexture(GL_TEXTURE_2D, 0);
+
+			return rcode(true);
 		}
 
 		void SetTexId(uint32_t id)
@@ -882,26 +893,13 @@ namespace def
 			Load(filename);
 		}
 
-		~Graphic()
+		std::unique_ptr<Texture> tex;
+		std::unique_ptr<Sprite> spr;
+
+		void Load(const std::string& filename)
 		{
-			delete tex;
-			delete spr;
-		}
-
-		Texture* tex;
-		Sprite* spr;
-
-		bool Load(const std::string& filename)
-		{
-			spr = new Sprite(filename);
-
-			if (spr->IsOk())
-			{
-				tex = new Texture(spr);
-				return true;
-			}
-
-			return false;
+			spr = std::make_unique<Sprite>(filename);
+			tex = std::make_unique<Texture>(spr);
 		}
 	};
 
@@ -1389,8 +1387,8 @@ namespace def
 
 	void def::GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
 	{
-		if (x >= 0 && y >= 0 && x < GetScreenWidth() && y < GetScreenHeight())
-			m_pScreen[y * GetScreenWidth() + x] = p;
+		if (x >= 0 && y >= 0 && x < m_nScreenWidth && y < m_nScreenHeight)
+			m_pScreen[y * m_nScreenWidth + x] = p;
 	}
 
 	void def::GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p)
@@ -1841,9 +1839,6 @@ namespace def
 		if (sprite == nullptr)
 			return;
 
-		if (!sprite->IsOk())
-			return;
-
 		for (int i = 0; i < sprite->GetWidth(); i++)
 			for (int j = 0; j < sprite->GetHeight(); j++)
 			{
@@ -1859,9 +1854,6 @@ namespace def
 		if (sprite == nullptr)
 			return;
 
-		if (!sprite->IsOk())
-			return;
-
 		for (int i = fx, x1 = 0; i < fx + fsx; i++, x1++)
 			for (int j = fy, y1 = 0; j < fy + fsy; j++, y1++)
 			{
@@ -1875,9 +1867,6 @@ namespace def
 	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
 	{
 		if (tex == nullptr)
-			return;
-
-		if (!tex->Spr()->IsOk())
 			return;
 
 		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
@@ -1906,9 +1895,6 @@ namespace def
 	void GameEngine::DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
 	{
 		if (tex == nullptr)
-			return;
-
-		if (!tex->Spr()->IsOk())
 			return;
 
 		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
