@@ -34,7 +34,7 @@ constexpr int nMapHeight = 3;
 
 constexpr int nCellSize = 16;
 
-template <typename T, T junkValue>
+template <typename T>
 struct Map
 {
 	Map() = default;
@@ -48,17 +48,13 @@ struct Map
 			values[y * nMapWidth + x] = value;
 	}
 
-	T& get(int x, int y)
+	T* get(int x, int y)
 	{
 		if (x >= 0 && y >= 0 && x < nMapWidth && y < nMapHeight)
-			return values[y * nMapWidth + x];
+			return &values[y * nMapWidth + x];
 
-		m_junk = junkValue;
-		return m_junk;
+		return nullptr;
 	}
-
-private:
-	T m_junk;
 };
 
 class SlidingPuzzle : public def::GameEngine
@@ -70,7 +66,7 @@ public:
 	}
 
 private:
-	Map<int, -1> map;
+	Map<int> map;
 
 	def::vi2d vMapSize = { nMapWidth, nMapHeight };
 	def::vi2d vCellSize = { nCellSize, nCellSize };
@@ -102,17 +98,17 @@ public:
 		{
 			def::vi2d vCellPos = GetMouse() / vCellSize;
 
-			if (vCellPos < vMapSize && vCellPos > def::vi2d(-1, -1))
+			if (vCellPos < vMapSize && vCellPos >= def::vi2d(0, 0))
 			{
-				int& nValueOld = map.get(vCellPos.x, vCellPos.y);
+				int* pValueOld = map.get(vCellPos.x, vCellPos.y);
 
 				auto check = [&](int ox, int oy)
 				{
-					int& nValueNew = map.get(vCellPos.x + ox, vCellPos.y + oy);
-					if (nValueNew == 0)
+					int* pValueNew = map.get(vCellPos.x + ox, vCellPos.y + oy);
+					if (pValueNew != nullptr && *pValueNew == 0)
 					{
-						nValueNew = nValueOld;
-						nValueOld = 0;
+						*pValueNew = *pValueOld;
+						*pValueOld = 0;
 
 						return true;
 					}
