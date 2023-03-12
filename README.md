@@ -30,7 +30,7 @@ Linux:
 - В поле ``Дополнительные каталоги библиотек`` вы должны вписать полный путь до одной из папок ``lib``.
 
 2. Linux G++:
-```g++ <файл>.cpp -o <файл> -std=c++14 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -fsanitize=undefined -fno-sanitize-recover```.
+- ```g++ <файл>.cpp -o <файл> -std=c++14 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -fsanitize=undefined -fno-sanitize-recover```.
 
 На этом все!
 
