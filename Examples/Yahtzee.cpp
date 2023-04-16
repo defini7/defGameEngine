@@ -74,8 +74,9 @@ public:
 		if (GetKey(def::Key::SPACE).bPressed)
 		{
 			std::generate(
-				vecDices.begin(), vecDices.end(),
-				[n=0]() { return (rand() % 6) + 1; }
+				vecDices.begin(),
+				vecDices.end(),
+				[]() { return (rand() % 6) + 1; }
 			);
 
 			std::sort(vecDices.begin(), vecDices.end());
@@ -117,23 +118,25 @@ public:
 
 		auto LongestSequence = [](const std::vector<uint8_t>& v)
 		{
-			size_t nCurrentSeq = 1;
-			size_t nMaxSeq = 1;
+			size_t nCurrentSequence = 1;
+			size_t nMaxSequence = 1;
 			
 			for (size_t i = 1; i < v.size(); i++)
 			{
 				if (v[i - 1] == (v[i] - 1))
-					nCurrentSeq++;
+				{
+					nCurrentSequence++;
+				}
 				else
 				{
 					if (v[i] != v[i - 1])
-						nCurrentSeq = 1;
+						nCurrentSequence = 1;
 				}
 
-				nMaxSeq = std::max(nMaxSeq, nCurrentSeq);
+				nMaxSequence = std::max(nMaxSequence, nCurrentSequence);
 			}
 
-			return nMaxSeq;
+			return nMaxSequence;
 		};
 
 		nLowStraight = (LongestSequence(vecDices) == 4) ? 30 : 0;
@@ -143,29 +146,29 @@ public:
 		Clear(def::DARK_GREEN);
 
 		def::vi2d vPos = { -58, 10 };
-		for (auto& face : vecDices) DrawFace(face, vPos += def::vi2d(68, 0));
+		for (const auto& face : vecDices) DrawFace(face, vPos += def::vi2d(68, 0));
 
 		vPos = { 10, 64 };
 
 		std::vector<std::pair<std::string, int>> vecScoreTable =
 		{
-			{ "Ones", nOnes },
-			{ "Twos", nTwos },
-			{ "Threes", nThrees },
-			{ "Fours", nFours },
-			{ "Fives", nFives },
-			{ "Sixes", nSixes },
-			{ "3-of-a-Kind", nThreeOfAKind },
-			{ "4-of-a-Kind", nFourOfAKind },
-			{ "Full House", nFullHouse },
-			{ "Low Straight", nLowStraight },
+			{ "Ones         ", nOnes },
+			{ "Twos         ", nTwos },
+			{ "Threes       ", nThrees },
+			{ "Fours        ", nFours },
+			{ "Fives        ", nFives },
+			{ "Sixes        ", nSixes },
+			{ "3-of-a-Kind  ", nThreeOfAKind },
+			{ "4-of-a-Kind  ", nFourOfAKind },
+			{ "Full House   ", nFullHouse },
+			{ "Low Straight ", nLowStraight },
 			{ "High Straight", nHighStraight },
-			{ "Yahtzee", nYahtzee },
-			{ "Chance", nChance }
+			{ "Yahtzee      ", nYahtzee },
+			{ "Chance       ", nChance }
 		};
 
 		def::vi2d vOffset = { 0, 0 };
-		for (const auto& score : vecScoreTable) DrawString(vPos + (vOffset += def::vi2d(0, 16)), score.first + ": " + std::to_string(score.second));
+		for (const auto& score : vecScoreTable) DrawString(vPos + (vOffset += def::vi2d(0, 16)), score.first + " : " + std::to_string(score.second));
 
 		return true;
 	}
