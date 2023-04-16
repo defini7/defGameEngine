@@ -1752,13 +1752,13 @@ namespace def
 
 	void def::GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
 	{
-		for (int i = 0; i <= sx; i++)
+		for (int i = 0; i < sx; i++)
 		{
 			Draw(x + i, y, p);
 			Draw(x + i, y + sy, p);
 		}
 
-		for (int j = 0; j <= sy; j++)
+		for (int j = 0; j < sy; j++)
 		{
 			Draw(x, y + j, p);
 			Draw(x + sx, y + j, p);
@@ -1767,8 +1767,8 @@ namespace def
 
 	void def::GameEngine::FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
 	{
-		for (int i = x; i <= x + sx; i++)
-			for (int j = y; j <= y + sy; j++)
+		for (int i = x; i < x + sx; i++)
+			for (int j = y; j < y + sy; j++)
 				Draw(i, j, p);
 	}
 
