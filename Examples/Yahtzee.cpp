@@ -3,8 +3,7 @@
 #include <array>
 #include <numeric>
 #include <algorithm>
-
-#define X(i, n) sPatterns[i] = n
+#include <set>
 
 class Example : public def::GameEngine
 {
@@ -12,48 +11,57 @@ public:
 	Example()
 	{
 		SetTitle("Example");
-		ShowFPS();
 	}
 
 private:
-	std::array<std::string, 6> sPatterns;
+	std::vector<uint8_t> vecDices;
 
-	std::vector<int> vecDices;
+	void DrawFace(
+		const uint8_t nFace,
+		const def::vi2d& vPos,
+		const def::vi2d& vSize = { 64, 64 },
+		const int nRad = 8,
+		const def::Pixel& pixDot = def::WHITE,
+		const def::Pixel& pixBackground = def::DARK_RED
+	)
+	{
+		def::vi2d vTL = vPos;
+		def::vi2d vTR = vPos + def::vi2d(vSize.x, 0);
+		def::vi2d vLM = vPos + def::vi2d(0, vSize.y / 2);
+		def::vi2d vBL = vPos + def::vi2d(0, vSize.y);
+		def::vi2d vBR = vPos + vSize;
+		def::vi2d vRM = vPos + def::vi2d(vSize.x, vSize.y / 2);
+		def::vi2d vM = vPos + vSize / 2;
+
+		FillRectangle(vPos, vSize, pixBackground);
+
+		if (std::set<uint8_t>{ 2, 3, 4, 5, 6 }.count(nFace) > 0)
+		{
+			FillCircle(vTL + def::vi2d(nRad + 1, nRad + 1), nRad, pixDot);
+			FillCircle(vBR + def::vi2d(-nRad - 2, -nRad - 2), nRad, pixDot);
+		}
+
+		if (std::set<uint8_t>{ 4, 5, 6 }.count(nFace) > 0)
+		{
+			FillCircle(vTR + def::vi2d(-nRad - 2, nRad + 1), nRad, pixDot);
+			FillCircle(vBL + def::vi2d(nRad + 1, -nRad - 2), nRad, pixDot);
+		}
+
+		if (std::set<uint8_t>{ 6 }.count(nFace) > 0)
+		{
+			FillCircle(vLM + def::vi2d(nRad + 1, 1), nRad, pixDot);
+			FillCircle(vRM + def::vi2d(-nRad - 2, 1), nRad, pixDot);
+		}
+
+		if (std::set<uint8_t>{ 1, 3, 5 }.count(nFace) > 0)
+			FillCircle(vM, nRad, pixDot);
+			
+	}
 
 public:
 	bool OnUserCreate() override
 	{
 		srand(time(0));
-
-		X(0, "ooo"
-			"oxo"
-			"ooo"
-		);
-
-		X(1, "oox"
-			"ooo"
-			"xoo"
-		);
-
-		X(2, "oox"
-			"oxo"
-			"xoo"
-		);
-
-		X(3, "xox"
-			"ooo"
-			"xox"
-		);
-
-		X(4, "xox"
-			"oxo"
-			"xox"
-		);
-
-		X(5, "xox"
-			"xox"
-			"xox"
-		);
 
 		vecDices.resize(5);
 		for (auto& dice : vecDices) dice = 1;
@@ -65,45 +73,35 @@ public:
 	{
 		if (GetKey(def::Key::SPACE).bPressed)
 		{
-			auto Roll = [&sPatterns = sPatterns](int& dice)
-			{
-				int nNewPattern = dice;
+			std::generate(
+				vecDices.begin(), vecDices.end(),
+				[n=0]() { return (rand() % 6) + 1; }
+			);
 
-				do
-				{
-					nNewPattern = (rand() % sPatterns.size()) + 1;
-				} while (nNewPattern == dice);
-
-				dice = nNewPattern;
-			};
-
-			for (auto& dice : vecDices) Roll(dice);
+			std::sort(vecDices.begin(), vecDices.end());
 		}
 
-		std::vector<std::pair<std::string, int>> vecScores =
+		uint8_t nOnes, nTwos, nThrees, nFours, nFives, nSixes, nThreeOfAKind, nFourOfAKind, nFullHouse, nLowStraight, nHighStraight, nYahtzee, nChance;
+
+		nOnes = std::count(vecDices.begin(), vecDices.end(), 1);
+		nTwos = std::count(vecDices.begin(), vecDices.end(), 2);
+		nThrees = std::count(vecDices.begin(), vecDices.end(), 3);
+		nFours = std::count(vecDices.begin(), vecDices.end(), 4);
+		nFives = std::count(vecDices.begin(), vecDices.end(), 5);
+		nSixes = std::count(vecDices.begin(), vecDices.end(), 6);
+		nChance = std::accumulate(vecDices.begin(), vecDices.end(), 0);
+
+		std::vector<uint8_t> vecValues =
 		{
-			{ "Ones", std::count(vecDices.begin(), vecDices.end(), 1) },
-			{ "Twos", std::count(vecDices.begin(), vecDices.end(), 2) },
-			{ "Threes", std::count(vecDices.begin(), vecDices.end(), 3) },
-			{ "Fours", std::count(vecDices.begin(), vecDices.end(), 4) },
-			{ "Fives", std::count(vecDices.begin(), vecDices.end(), 5) },
-			{ "Sixes", std::count(vecDices.begin(), vecDices.end(), 6) },
-			{ "3-of-a-Kind", 0 },
-			{ "4-of-a-Kind", 0 },
-			{ "Full House", 0 },
-			{ "Low Straight", 0 },
-			{ "High Straight", 0 },
-			{ "Yahtzee", 0 },
-			{ "Chance", 0 }
+			nOnes,
+			nTwos,
+			nThrees,
+			nFours,
+			nFives,
+			nSixes
 		};
 
-		// Chance
-		vecScores.back().second = std::accumulate(vecDices.begin(), vecDices.end(), 0);
-
-		std::vector<int> vecValues;
-		for (size_t i = 0; i < 6; i++) vecValues.push_back(vecScores[i].second);
-
-		auto Match = [&](const std::vector<int>& v, int kind)
+		auto Match = [&](const std::vector<uint8_t>& v, uint8_t kind)
 		{
 			bool bResult = false;
 
@@ -113,34 +111,22 @@ public:
 			return bResult;
 		};
 
-		// 3-of-a-Kind, 4-of-a-Kind
-		for (int i = 0; i < 2; i++)
+		nThreeOfAKind = Match(vecValues, 3) ? nChance : 0;
+		nFourOfAKind = Match(vecValues, 4) ? nChance : 0;
+		nFullHouse = Match(vecValues, 3) && Match(vecValues, 2) ? nChance : 0;
+
+		auto LongestSequence = [](const std::vector<uint8_t>& v)
 		{
-			if (Match(vecValues, 3 + i))
-				vecScores[6 + i].second = vecScores.back().second;
-		}
-
-		// Full House
-		if (Match(vecValues, 3) && Match(vecValues, 2))
-			vecScores[8].second = vecScores.back().second;
-
-
-
-		auto LongestSequence = [](const std::vector<int>& v)
-		{
-			std::vector<int> vecSorted(v);
-			std::sort(vecSorted.begin(), vecSorted.end());
-
 			size_t nCurrentSeq = 1;
 			size_t nMaxSeq = 1;
-
-			for (int i = 1; i < vecSorted.size(); i++)
+			
+			for (size_t i = 1; i < v.size(); i++)
 			{
-				if (vecSorted[i - 1] == (vecSorted[i] - 1))
+				if (v[i - 1] == (v[i] - 1))
 					nCurrentSeq++;
 				else
 				{
-					if (vecSorted[i] != vecSorted[i - 1])
+					if (v[i] != v[i - 1])
 						nCurrentSeq = 1;
 				}
 
@@ -150,47 +136,36 @@ public:
 			return nMaxSeq;
 		};
 
-		// Low Straight
-		if (LongestSequence(vecDices) == 4)
-			vecScores[9].second = 30;
-
-		// High Straight
-		if (LongestSequence(vecDices) == 5)
-			vecScores[10].second = 40;
-
-		// Yahtzee
-		if (Match(vecValues, 5))
-			vecScores[11].second = 50;
+		nLowStraight = (LongestSequence(vecDices) == 4) ? 30 : 0;
+		nHighStraight = (LongestSequence(vecDices) == 5) ? 40 : 0;
+		nYahtzee = (Match(vecValues, 5)) ? 50 : 0;
 
 		Clear(def::DARK_GREEN);
 
-		def::vi2d vPos = { 1, 1 };
-		for (auto& dice : vecDices)
+		def::vi2d vPos = { -58, 10 };
+		for (auto& face : vecDices) DrawFace(face, vPos += def::vi2d(68, 0));
+
+		vPos = { 10, 64 };
+
+		std::vector<std::pair<std::string, int>> vecScoreTable =
 		{
-			int i = 0;
-			for (const auto& c : sPatterns[dice - 1])
-			{
-				def::vi2d pos = def::vi2d(i % 3, i / 3);
-				def::vi2d size = { 9, 9 };
-
-				char c = sPatterns[dice - 1][pos.y * 3 + pos.x];
-
-				pos += vPos;
-				FillRectangle(pos * size, size, def::DARK_RED);
-
-				if (c == 'x')
-					FillCircle(pos * size + size / 2, size.x / 2 - 1, def::WHITE);
-
-				i++;
-			}
-
-			vPos.x += 4;
-		}
-
-		vPos += def::vi2d(-8, 32);
+			{ "Ones", nOnes },
+			{ "Twos", nTwos },
+			{ "Threes", nThrees },
+			{ "Fours", nFours },
+			{ "Fives", nFives },
+			{ "Sixes", nSixes },
+			{ "3-of-a-Kind", nThreeOfAKind },
+			{ "4-of-a-Kind", nFourOfAKind },
+			{ "Full House", nFullHouse },
+			{ "Low Straight", nLowStraight },
+			{ "High Straight", nHighStraight },
+			{ "Yahtzee", nYahtzee },
+			{ "Chance", nChance }
+		};
 
 		def::vi2d vOffset = { 0, 0 };
-		for (const auto& score : vecScores) DrawString(vPos + (vOffset += def::vi2d(0, 16)), score.first + ": " + std::to_string(score.second));
+		for (const auto& score : vecScoreTable) DrawString(vPos + (vOffset += def::vi2d(0, 16)), score.first + ": " + std::to_string(score.second));
 
 		return true;
 	}
@@ -199,9 +174,7 @@ public:
 int main()
 {
 	Example demo;
-  
-	if (demo.Construct(256, 240, 4, 4))
+	if (demo.Construct(400, 300, 2, 2))
 		demo.Run();
-  
 	return 0;
 }
