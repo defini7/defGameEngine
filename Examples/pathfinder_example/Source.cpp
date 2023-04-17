@@ -1,6 +1,5 @@
 #include "defGameEngine.h"
 
-#define DGE_PATHFINDER
 #include "DGE_PathFinder.h"
 
 using namespace def;
@@ -16,24 +15,24 @@ public:
 private:
 	DGE_PathFinder pathFinder;
 
+	static float Distance(sNode* n1, sNode* n2)
+	{
+		return sqrtf((n1->nPosX - n2->nPosX) * (n1->nPosX - n2->nPosX) + (n1->nPosY - n2->nPosY) * (n1->nPosY - n2->nPosY));
+	}
+
+	static float Heuristic(sNode* n1, sNode* n2)
+	{
+		return Distance(n1, n2);
+	}
+
 protected:
 	bool OnUserCreate() override
 	{
 		pathFinder.ConstructMap(16, 16);
 		pathFinder.SetNodes(1, 8, 14, 8);
 
-		auto distance = [&](sNode* n1, sNode* n2)
-		{
-			return sqrtf((n1->nPosX - n2->nPosX) * (n1->nPosX - n2->nPosX) + (n1->nPosY - n2->nPosY) * (n1->nPosY - n2->nPosY));
-		};
-
-		auto heuristic = [distance](sNode* n1, sNode* n2)
-		{
-			return distance(n1, n2);
-		};
-
 		pathFinder.ClearMap();
-		pathFinder.FindPath(distance, heuristic);
+		pathFinder.FindPath(&Distance, &Heuristic);
 
 		return true;
 	}
@@ -65,18 +64,8 @@ protected:
 							nodes[p].bObstacle = !nodes[p].bObstacle;
 					}
 
-					auto distance = [&](sNode* n1, sNode* n2)
-					{
-						return sqrtf((n1->nPosX - n2->nPosX) * (n1->nPosX - n2->nPosX) + (n1->nPosY - n2->nPosY) * (n1->nPosY - n2->nPosY));
-					};
-
-					auto heuristic = [distance](sNode* n1, sNode* n2)
-					{
-						return distance(n1, n2);
-					};
-
 					pathFinder.ClearMap();
-					pathFinder.FindPath(distance, heuristic);
+					pathFinder.FindPath(&Distance, &Heuristic);
 				}
 		}
 
