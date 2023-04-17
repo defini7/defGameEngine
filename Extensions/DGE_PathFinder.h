@@ -28,12 +28,11 @@
 ***/
 #pragma endregion
 
-#ifdef DGE_PATHFINDER
-
 #pragma region includes
 
 #include <list>
 #include <cmath>
+#include <functional>
 
 #pragma endregion
 
@@ -154,7 +153,7 @@ namespace def
 			if (nStartX < 0 || nStartX >= m_nMapWidth || nGoalX < 0 || nGoalX >= m_nMapWidth ||
 				nStartY < 0 || nStartY >= m_nMapHeight || nGoalY < 0 || nGoalY >= m_nMapHeight)
 				return false;
-			
+
 			m_nodeStart = &m_nodeNodes[nStartY * m_nMapWidth + nStartX];
 			m_nodeGoal = &m_nodeNodes[nGoalY * m_nMapWidth + nGoalX];
 
@@ -201,7 +200,7 @@ namespace def
 			return m_nMapHeight;
 		}
 
-		void FindPath(const std::function<float(sNode*, sNode*)>& dist, const std::function<float(sNode*, sNode*)>& heuristic)
+		void FindPath(float (*dist)(sNode*, sNode*), float (*heuristic)(sNode*, sNode*))
 		{
 			sNode* current = m_nodeStart;
 			m_nodeStart->fLocalGoal = 0.0f;
@@ -247,5 +246,3 @@ namespace def
 
 	};
 }
-
-#endif
