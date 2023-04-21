@@ -1,10 +1,5 @@
 #include "defGameEngine.h"
 
-struct mat2x2
-{
-	float m[2][2];
-};
-
 class Mode7 : public def::GameEngine
 {
 public:
@@ -60,7 +55,17 @@ public:
 				def::Pixel pixKart = sprKart->GetPixel(vPixel.x % sprKart->GetWidth(), vPixel.y % sprKart->GetHeight());
 				def::Pixel pixSky = sprSky->GetPixel(vPixel.x % sprSky->GetWidth(), vPixel.y % sprSky->GetHeight());
 
-				Draw(vScreen, pixKart);
+				//float fShade = std::min(std::max(1.5f * (abs(fWindowZ) / (GetScreenHeight() / 2)), 0.0f), 1.0f);
+
+				//pixKart.r = (float)pixKart.r * fShade;
+				//pixKart.g = (float)pixKart.g * fShade;
+				//pixKart.b = (float)pixKart.b * fShade;
+
+				//pixSky.r = (float)pixSky.r * fShade;
+				//pixSky.g = (float)pixSky.g * fShade;
+				//pixSky.b = (float)pixSky.b * fShade;
+
+				Draw(def::vf2d(vScreen.x, vScreen.y), pixKart);
 				Draw(def::vf2d(vScreen.x, GetScreenHeight() - vScreen.y - 1), pixSky);
 			}
 		}
