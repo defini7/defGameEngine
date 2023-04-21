@@ -1,0 +1,88 @@
+#include "defGameEngine.h"
+
+struct mat2x2
+{
+	float m[2][2];
+};
+
+class Mode7 : public def::GameEngine
+{
+public:
+	Mode7()
+	{
+		SetTitle("Mode7");
+		ShowFPS();
+	}
+
+private:
+	def::Sprite* sprKart = nullptr;
+	def::Sprite* sprSky = nullptr;
+
+public:
+	bool OnUserCreate() override
+	{
+		sprKart = new def::Sprite("kart.png");
+		sprSky = new def::Sprite("sky.png");
+
+		return true;
+	}
+
+	bool OnUserUpdate(float fDeltaTime) override
+	{
+		if (GetKey(def::Key::UP).bHeld) vScale += 10.0f * fDeltaTime;
+		if (GetKey(def::Key::DOWN).bHeld) vScale -= 10.0f * fDeltaTime;
+
+		if (GetKey(def::Key::LEFT).bHeld) fTheta -= fDeltaTime;
+		if (GetKey(def::Key::RIGHT).bHeld) fTheta += fDeltaTime;
+
+		def::vf2d vVelocity = { 0.0f, 0.0f };
+
+		if (GetKey(def::Key::W).bHeld) vVelocity += def::vf2d(-sin(fTheta), cos(fTheta));
+		if (GetKey(def::Key::A).bHeld) vVelocity += def::vf2d(cos(fTheta), sin(fTheta));
+		if (GetKey(def::Key::S).bHeld) vVelocity += def::vf2d(sin(fTheta), -cos(fTheta));
+		if (GetKey(def::Key::D).bHeld) vVelocity += def::vf2d(-cos(fTheta), -sin(fTheta));
+
+		vCamera += vVelocity * fDeltaTime;
+
+		def::vf2d vScreen;
+		for (vScreen.x = 0; vScreen.x < GetScreenWidth(); vScreen.x++)
+		{
+			for (vScreen.y = GetScreenHeight() / 2; vScreen.y < GetScreenHeight(); vScreen.y++)
+			{
+				def::vf2d vWindow = def::vf2d(GetScreenSize()) / 2.0f + vScreen * def::vf2d(-1.0f, 1.0f);
+				float fWindowZ = vScreen.y - GetScreenHeight() / 2;
+
+				float fRotatedX = vWindow.x * cos(fTheta) - vWindow.y * sin(fTheta);
+				float fRotatedY = vWindow.x * sin(fTheta) + vWindow.y * cos(fTheta);
+				
+				def::vi2d vPixel = (def::vf2d(fRotatedX, fRotatedY) / fWindowZ + vCamera) * vScale;
+
+				def::Pixel pixKart = sprKart->GetPixel(vPixel.x % sprKart->GetWidth(), vPixel.y % sprKart->GetHeight());
+				def::Pixel pixSky = sprSky->GetPixel(vPixel.x % sprSky->GetWidth(), vPixel.y % sprSky->GetHeight());
+
+				Draw(vScreen, pixKart);
+				Draw(def::vf2d(vScreen.x, GetScreenHeight() - vScreen.y - 1), pixSky);
+			}
+		}
+
+		for (int x = 0; x < GetScreenWidth(); x++) Draw(x, GetScreenHeight() / 2, def::CYAN);
+
+		return true;
+	}
+
+private:
+	def::vf2d vCamera = { 0.0f, 0.0f };
+	def::vf2d vScale = { 100.0f, 100.0f };
+	float fTheta = 0.0f;
+
+};
+
+int main()
+{
+	Mode7 app;
+
+	if (app.Construct(256, 240, 4, 4))
+		app.Run();
+
+	return 0;
+}
