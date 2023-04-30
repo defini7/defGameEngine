@@ -412,7 +412,12 @@ bool LoadFromObjectFile(mesh& m, const std::string& sObjFilename, bool bHasTextu
 					char c = s.get();
 					if (c == ' ' || c == '/')
 					{
-						if (tokens[nTokenCount].size() > 0)
+						if (nTokenCount > 0)
+						{
+							if (tokens[nTokenCount].size() > 0)
+								nTokenCount++;
+						}
+						else
 							nTokenCount++;
 					}
 					else
