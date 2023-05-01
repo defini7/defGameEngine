@@ -1,6 +1,7 @@
 #include "defGameEngine.h"
 
 using namespace std;
+using namespace def;
 
 class Mario : public def::GameEngine
 {
@@ -8,45 +9,38 @@ public:
 	Mario()
 	{
 		SetTitle("Mario");
+		ShowFPS();
 	}
 
 private:
-	int nMapWidth = 16;
-	int nMapHeight = 8;
-
-	int nTileWidth = 32;
-	int nTileHeight = 32;
+	vi2d vMapSize = { 16, 8 };
+	vi2d vTileSize = { 32, 32 };
 
 	string sMap;
 
-	float fPlayerX = 1.0f;
-	float fPlayerY = 1.0f;
-
-	float fOffsetX = 0.0f;
-	float fOffsetY = 0.0f;
-
-	float fVelocityX = 0.0f;
-	float fVelocityY = 0.0f;
+	vf2d vPlayerPos = { 1.0f, 1.0f };
+	vf2d vPlayerVel = { 0.0f, 0.0f };
 
 	bool bPlayerOnGround = false;
 
 	def::Sprite* sprMario = nullptr;
-
 	int nGraphicID = 0;
 
+	int nScore = 0;
+
 protected:
-	char GetTile(int x, int y)
+	char GetTile(const vi2d& p)
 	{
-		if (x >= 0 && y >= 0 && x < nMapWidth && y < nMapHeight)
-			return sMap[y * nMapWidth + x];
+		if (p.x >= 0 && p.y >= 0 && p.x < vMapSize.x && p.y < vMapSize.y)
+			return sMap[p.y * vMapSize.x + p.x];
 
 		return ' ';
 	}
 
-	void SetTile(int x, int y, char c)
+	void SetTile(const vi2d& p, char c)
 	{
-		if (x >= 0 && y >= 0 && x < nMapWidth && y < nMapHeight)
-			sMap[y * nMapWidth + x] = c;
+		if (p.x >= 0 && p.y >= 0 && p.x < vMapSize.x && p.y < vMapSize.y)
+			sMap[p.y * vMapSize.x + p.x] = c;
 	}
 
 	virtual bool OnUserCreate() override
@@ -55,8 +49,8 @@ protected:
 		sMap += ".....ooo........";
 		sMap += "................";
 		sMap += "..xxxxxxxx...xxx";
-		sMap += ".........x...x..";
-		sMap += ".........x..xx..";
+		sMap += "..########...###";
+		sMap += "..########..x###";
 		sMap += "................";
 		sMap += "xxxxxxxxxxxxxxxx";
 
@@ -71,150 +65,153 @@ protected:
 		{
 			if (GetKey(def::Key::UP).bHeld)
 			{
-				fVelocityY = -6.0f;
-				nGraphicID = (fVelocityX >= 0.0f) ? 2 : 3;
+				vPlayerVel.y = -6.0f;
+				nGraphicID = (vPlayerVel.x >= 0.0f) ? 2 : 3;
 			}
 
 			if (GetKey(def::Key::DOWN).bHeld)
-				fVelocityY = 6.0f;
+				vPlayerVel.y = 6.0f;
 
 			if (GetKey(def::Key::LEFT).bHeld)
 			{
-				fVelocityX += (bPlayerOnGround ? -25.0f : -15.0f) * fDeltaTime;
+				vPlayerVel.x += (bPlayerOnGround ? -25.0f : -15.0f) * fDeltaTime;
 				if (bPlayerOnGround) nGraphicID = 1;
 			}
 
 			if (GetKey(def::Key::RIGHT).bHeld)
 			{
-				fVelocityX += (bPlayerOnGround ? 25.0f : 15.0f) * fDeltaTime;
+				vPlayerVel.x += (bPlayerOnGround ? 25.0f : 15.0f) * fDeltaTime;
 				if (bPlayerOnGround) nGraphicID = 0;
 			}
 
 			if (GetKey(def::Key::SPACE).bPressed)
 			{
-				if (fVelocityY == 0.0f)
-					fVelocityY = -12.0f;
+				if (vPlayerVel.y == 0.0f)
+					vPlayerVel.y = -12.0f;
 
-				nGraphicID = (fVelocityX >= 0.0f) ? 2 : 3;
+				nGraphicID = (vPlayerVel.x >= 0.0f) ? 2 : 3;
 			}
 		}
 
-		fVelocityY += 20.0f * fDeltaTime;
+		vPlayerVel.y += 20.0f * fDeltaTime;
 
 		if (bPlayerOnGround)
 		{
-			fVelocityX += -3.0f * fVelocityX * fDeltaTime;
-			if (fabs(fVelocityX) < 0.01f) fVelocityX = 0.0f;
+			vPlayerVel.x += -3.0f * vPlayerVel.x * fDeltaTime;
+			if (fabs(vPlayerVel.x) < 0.01f) vPlayerVel.x = 0.0f;
 		}
 
-		if (fVelocityX > 10.0f)
-			fVelocityX = 10.0f;
+		if (vPlayerVel.x > 10.0f)
+			vPlayerVel.x = 10.0f;
 
-		if (fVelocityX < -10.0f)
-			fVelocityX = -10.0f;
+		if (vPlayerVel.x < -10.0f)
+			vPlayerVel.x = -10.0f;
 
-		if (fVelocityY > 100.0f)
-			fVelocityY = 100.0f;
+		if (vPlayerVel.y > 100.0f)
+			vPlayerVel.y = 100.0f;
 
-		if (fVelocityY < -100.0f)
-			fVelocityY = -100.0f;
+		if (vPlayerVel.y < -100.0f)
+			vPlayerVel.y = -100.0f;
 
-		float fNewPlayerX = fPlayerX + fVelocityX * fDeltaTime;
-		float fNewPlayerY = fPlayerY + fVelocityY * fDeltaTime;
+		vf2d vNewPlayerPos = vPlayerPos + vPlayerVel * fDeltaTime;
 
-		if (GetTile(fNewPlayerX + 0.0f, fNewPlayerY + 0.0f) == 'o')
-			SetTile(fNewPlayerX + 0.0f, fNewPlayerY + 0.0f, '.');
-
-		if (GetTile(fNewPlayerX + 0.0f, fNewPlayerY + 1.0f) == 'o')
-			SetTile(fNewPlayerX + 0.0f, fNewPlayerY + 1.0f, '.');
-
-		if (GetTile(fNewPlayerX + 1.0f, fNewPlayerY + 0.0f) == 'o')
-			SetTile(fNewPlayerX + 1.0f, fNewPlayerY + 0.0f, '.');
-
-		if (GetTile(fNewPlayerX + 1.0f, fNewPlayerY + 1.0f) == 'o')
-			SetTile(fNewPlayerX + 1.0f, fNewPlayerY + 1.0f, '.');
-
-		if (fVelocityX <= 0.0f)
+		if (GetTile(vNewPlayerPos) == 'o')
 		{
-			if (GetTile(fNewPlayerX + 0.0f, fPlayerY + 0.0f) != '.' || GetTile(fNewPlayerX + 0.0f, fPlayerY + 0.9f) != '.')
+			SetTile(vNewPlayerPos, '.');
+			nScore++;
+		}
+
+		if (GetTile(vNewPlayerPos + vf2d(0.0f, 1.0f)) == 'o')
+		{
+			SetTile(vNewPlayerPos + vf2d(0.0f, 1.0f), '.');
+			nScore++;
+		}
+
+		if (GetTile(vNewPlayerPos + vf2d(1.0f, 0.0f)) == 'o')
+		{
+			SetTile(vNewPlayerPos + vf2d(1.0f, 0.0f), '.');
+			nScore++;
+		}
+
+		if (GetTile(vNewPlayerPos + vf2d(1.0f, 1.0f)) == 'o')
+		{
+			SetTile(vNewPlayerPos + vf2d(1.0f, 1.0f), '.');
+			nScore++;
+		}
+
+		if (vPlayerVel.x <= 0.0f)
+		{
+			if (GetTile(vi2d(vNewPlayerPos.x + 0.0f, vPlayerPos.y + 0.0f)) != '.' || GetTile(vi2d(vNewPlayerPos.x + 0.0f, vPlayerPos.y + 0.9f)) != '.')
 			{
-				fNewPlayerX = (int)fNewPlayerX + 1.0f;
-				fVelocityX = 0.0f;
+				vNewPlayerPos.x = (float)((int)vNewPlayerPos.x) + 1.0f;
+				vPlayerVel.x = 0.0f;
 			}
 		}
 		else
 		{
-			if (GetTile(fNewPlayerX + 1.0f, fPlayerY + 0.0f) != '.' || GetTile(fNewPlayerX + 1.0f, fPlayerY + 0.9f) != '.')
+			if (GetTile(vi2d(vNewPlayerPos.x + 1.0f, vPlayerPos.y + 0.0f)) != '.' || GetTile(vi2d(vNewPlayerPos.x + 1.0f, vPlayerPos.y + 0.9f)) != '.')
 			{
-				fNewPlayerX = (int)fNewPlayerX;
-				fVelocityX = 0.0f;
+				vNewPlayerPos.x = (float)((int)vNewPlayerPos.x);
+				vPlayerVel.x = 0.0f;
 			}
 		}
 
 		bPlayerOnGround = false;
-		if (fVelocityY <= 0.0f)
+		if (vPlayerVel.y <= 0.0f)
 		{
-			if (GetTile(fNewPlayerX + 0.0f, fNewPlayerY + 0.0f) != '.' || GetTile(fNewPlayerX + 0.9f, fNewPlayerY + 0.0f) != '.')
+			if (GetTile(vNewPlayerPos) != '.' || GetTile(vNewPlayerPos + vf2d(0.9f, 0.0f)) != '.')
 			{
-				fNewPlayerY = (int)fNewPlayerY + 1.0f;
-				fVelocityY = 0.0f;
+				vNewPlayerPos.y = (float)((int)vNewPlayerPos.y) + 1.0f;
+				vPlayerVel.y = 0.0f;
 			}
 		}
 		else
 		{
-			if (GetTile(fNewPlayerX + 0.0f, fNewPlayerY + 1.0f) != '.' || GetTile(fNewPlayerX + 0.9f, fNewPlayerY + 1.0f) != '.')
+			if (GetTile(vNewPlayerPos + vf2d(0.0f, 1.0f)) != '.' || GetTile(vNewPlayerPos + vf2d(0.9f, 1.0f)) != '.')
 			{
-				fNewPlayerY = (int)fNewPlayerY;
-				fVelocityY = 0.0f;
+				vNewPlayerPos.y = (float)((int)vNewPlayerPos.y);
+				vPlayerVel.y = 0.0f;
 				bPlayerOnGround = true;
 			}
 		}
 
-		fPlayerX = fNewPlayerX;
-		fPlayerY = fNewPlayerY;
+		vPlayerPos = vNewPlayerPos;
 
-		int nVisibleTilesX = GetScreenWidth() / nTileWidth;
-		int nVisibleTilesY = GetScreenHeight() / nTileHeight;
+		vi2d vVisibleTiles = GetScreenSize() / vTileSize;
 
-		float fOffsetX = fPlayerX - (float)nVisibleTilesX * 0.5f;
-		float fOffsetY = fPlayerY - (float)nVisibleTilesY * 0.5f;
+		vf2d vOffset = vPlayerPos - (vf2d)vVisibleTiles * 0.5f;
 
-		if (fOffsetX < 0.0f) fOffsetX = 0.0f;
-		if (fOffsetY < 0.0f) fOffsetY = 0.0f;
+		vOffset = vOffset.max({ 0.0f, 0.0f });
+		vOffset = vOffset.min(vMapSize - vVisibleTiles);
 
-		if (fOffsetX > nMapWidth - nVisibleTilesX)  fOffsetX = (float)(nMapWidth - nVisibleTilesX);
-		if (fOffsetY > nMapHeight - nVisibleTilesY) fOffsetY = (float)(nMapHeight - nVisibleTilesY);
+		vf2d vTileOffset = (vOffset - (vf2d)(vi2d)vOffset) * (vf2d)vTileSize;
 
-		float fTileOffsetX = (fOffsetX - (int)fOffsetX) * (float)nTileWidth;
-		float fTileOffsetY = (fOffsetY - (int)fOffsetY) * (float)nTileHeight;
-
-		for (int j = -1; j < nVisibleTilesY + 1; j++)
+		vi2d vTile;
+		for (vTile.y = -1; vTile.y < vVisibleTiles.y + 1; vTile.y++)
 		{
-			for (int i = -1; i < nVisibleTilesX + 1; i++)
+			for (vTile.x = -1; vTile.x < vVisibleTiles.x + 1; vTile.x++)
 			{
-				char tile = GetTile(i + (int)fOffsetX, j + (int)fOffsetY);
+				char tile = GetTile(vTile + (vi2d)vOffset);
 
-				int x = (int)((float)(i * nTileWidth) - fTileOffsetX);
-				int y = (int)((float)(j * nTileHeight) - fTileOffsetY);
+				vi2d p = vf2d(vTile * vTileSize) - vTileOffset;
 
 				switch (tile)
 				{
-				case '.': FillRectangle(x, y, nTileWidth, nTileHeight, def::CYAN);	break;
-				case 'x': FillRectangle(x, y, nTileWidth, nTileHeight, def::RED);	break;
-				case ' ': FillRectangle(x, y, nTileWidth, nTileHeight, def::BLACK); break;
+				case '.': FillRectangle(p, vTileSize, def::CYAN);  break;
+				case ' ': FillRectangle(p, vTileSize, def::BLACK); break;
 				case 'o':
-					FillRectangle(x, y, nTileWidth, nTileHeight, def::CYAN);
-					DrawPartialSprite(x, y, 4 * nTileWidth, 0, nTileWidth, nTileHeight, sprMario);
+					FillRectangle(p, vTileSize, def::CYAN);
+					DrawPartialSprite(p, { 4 * vTileSize.x, 0 }, vTileSize, sprMario);
 					break;
+				case 'x': DrawPartialSprite(p, { 5 * vTileSize.x, 0 }, vTileSize, sprMario); break;
+				case '#': DrawPartialSprite(p, { 6 * vTileSize.x, 0 }, vTileSize, sprMario); break;
 				}
 			}
 		}
 
-		int nPlayerX = (int)((fPlayerX - fOffsetX) * (float)nTileWidth);
-		int nPlayerY = (int)((fPlayerY - fOffsetY) * (float)nTileHeight);
+		DrawPartialSprite((vPlayerPos - vOffset) * (vf2d)vTileSize, { vTileSize.x * nGraphicID, 0 }, vTileSize, sprMario);
 
-		//FillRectangle(nPlayerX, nPlayerY, nTileWidth, nTileHeight, def::DARK_BLUE);
-		DrawPartialSprite(nPlayerX, nPlayerY, nTileWidth * nGraphicID, 0, nTileWidth, nTileHeight, sprMario);
+		DrawString(2, 2, "Score: " + to_string(nScore));
 
 		return true;
 	}
