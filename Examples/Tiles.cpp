@@ -24,8 +24,9 @@ private:
 	bool bPlayerOnGround = false;
 
 	def::Sprite* sprMario = nullptr;
-	int nGraphicID = 0;
+	def::Sprite* sprBackground = nullptr;
 
+	int nGraphicID = 0;
 	int nScore = 0;
 
 protected:
@@ -55,6 +56,7 @@ protected:
 		sMap += "xxxxxxxxxxxxxxxx";
 
 		sprMario = new def::Sprite("mario.png");
+		sprBackground = new def::Sprite("sky.png");
 
 		return true;
 	}
@@ -177,8 +179,9 @@ protected:
 
 		vPlayerPos = vNewPlayerPos;
 
-		vi2d vVisibleTiles = GetScreenSize() / vTileSize;
+		DrawSprite(0, 0, sprBackground);
 
+		vi2d vVisibleTiles = GetScreenSize() / vTileSize;
 		vf2d vOffset = vPlayerPos - (vf2d)vVisibleTiles * 0.5f;
 
 		vOffset = vOffset.max({ 0.0f, 0.0f });
@@ -197,12 +200,8 @@ protected:
 
 				switch (tile)
 				{
-				case '.': FillRectangle(p, vTileSize, def::CYAN);  break;
 				case ' ': FillRectangle(p, vTileSize, def::BLACK); break;
-				case 'o':
-					FillRectangle(p, vTileSize, def::CYAN);
-					DrawPartialSprite(p, { 4 * vTileSize.x, 0 }, vTileSize, sprMario);
-					break;
+				case 'o': DrawPartialSprite(p, { 4 * vTileSize.x, 0 }, vTileSize, sprMario); break;
 				case 'x': DrawPartialSprite(p, { 5 * vTileSize.x, 0 }, vTileSize, sprMario); break;
 				case '#': DrawPartialSprite(p, { 6 * vTileSize.x, 0 }, vTileSize, sprMario); break;
 				}
