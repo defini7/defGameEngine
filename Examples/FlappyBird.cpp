@@ -1,5 +1,8 @@
 #include "defGameEngine.h"
 
+using namespace std;
+using namespace def;
+
 class Sample : public def::GameEngine
 {
 public:
@@ -39,7 +42,7 @@ protected:
 		return true;
 	}
 
-	bool RectVsRect(def::vf2d& vPos1, def::vf2d& vSize1, def::vf2d& vPos2, def::vf2d& vSize2)
+	bool RectVsRect(const def::vf2d& vPos1, const def::vf2d& vSize1, const def::vf2d& vPos2, const def::vf2d& vSize2)
 	{
 		return vPos1 < vPos2 + vSize2 && vPos1 + vSize1 + 1 > vPos2;
 	}
@@ -85,7 +88,7 @@ protected:
 
 		Clear(def::BLACK);
 
-		bAlive = (vPosition >= def::vf2d(0.0f, 0.0f) && vPosition < GetScreenSize<float>());
+		bAlive = (vPosition >= vf2d(0.0f, 0.0f) && vPosition < (vf2d)GetScreenSize());
 
 		if (GetKey(def::Key::SPACE).bPressed)
 		{
@@ -116,46 +119,31 @@ protected:
 			listSections.push_back(x);
 		}
 
-		FillRectangle(def::vi2d(vPosition), vSize, def::ORANGE);
+		FillRectangle(vPosition, vSize, def::ORANGE);
 
 		int nSection = 0;
 		for (auto s : listSections)
 		{
 			if (s != 0)
 			{
-				int nBottomX = int((float)nSection * fSectionWidth + 10.0f - fLevelPosition);
-				int nBottomY = GetScreenHeight() - s + 20;
+				vi2d vBottom = { int((float)nSection * fSectionWidth + 10.0f - fLevelPosition), GetScreenHeight() - s + 20 };
+				vi2d vBottomSize = { int((float)nSection * fSectionWidth + 15.0f - fLevelPosition) - vBottom.x + 20, GetScreenHeight() - vBottom.y };
+				vi2d vTop = { int((float)nSection * fSectionWidth + 10.0f - fLevelPosition), 0 };
+				vi2d vTopSize = { int((float)nSection * fSectionWidth + 15.0f - fLevelPosition) - vTop.x + 20, GetScreenHeight() - s - vTop.y - 35 };
 
-				int nBottomSizeX = int((float)nSection * fSectionWidth + 15.0f - fLevelPosition) - nBottomX + 20;
-				int nBottomSizeY = GetScreenHeight() - nBottomY;
+				FillRectangle(vTop, vTopSize, def::GREEN);
+				FillRectangle(vBottom, vBottomSize, def::GREEN);
 
-				int nTopX = int((float)nSection * fSectionWidth + 10.0f - fLevelPosition);
-				int nTopY = 0;
+				bool bCollideTop = RectVsRect(vTop, vTopSize, vPosition, vSize);
+				bool bCollideBottom = RectVsRect(vBottom, vBottomSize, vPosition, vSize);
 
-				int nTopSizeX = int((float)nSection * fSectionWidth + 15.0f - fLevelPosition) - nTopX + 20;
-				int nTopSizeY = (GetScreenHeight() - s - 15) - nTopY - 20;
-
-				FillRectangle(nTopX, nTopY, nTopSizeX, nTopSizeY, def::GREEN);
-				FillRectangle(nBottomX, nBottomY, nBottomSizeX, nBottomSizeY, def::GREEN);
-
-				bool bCollideTop = RectVsRect(
-					def::vf2d(nTopX, nTopY).ref(), def::vf2d(nTopSizeX, nTopSizeY).ref(),
-					vPosition, def::vf2d(vSize).ref()
-				);
-
-				bool bCollideBottom = RectVsRect(
-					def::vf2d(nBottomX, nBottomY).ref(), def::vf2d(nBottomSizeX, nBottomSizeY).ref(),
-					vPosition, def::vf2d(vSize).ref()
-				);
-
-				if (bCollideTop || bCollideBottom)
-					bAlive = false;
+				bAlive = !(bCollideTop || bCollideBottom);
 			}
 
 			nSection++;
 		}
 
-		DrawString(10, 10, "Score: " + std::to_string(nScore), def::WHITE);
+		DrawString(10, 10, "Score: " + to_string(nScore), def::WHITE);
 
 		return true;
 	}
@@ -163,14 +151,14 @@ protected:
 private:
 	float fGravity;
 
-	def::vf2d vPosition;
-	def::vi2d vSize;
+	vf2d vPosition;
+	vi2d vSize;
 
-	def::vf2d vVelocity;
-	def::vf2d vAcceleration;
+	vf2d vVelocity;
+	vf2d vAcceleration;
 
 	float fSectionWidth;
-	std::list<int> listSections;
+	list<int> listSections;
 	float fLevelPosition;
 
 	int nObstacleCount;
@@ -185,12 +173,8 @@ int main()
 {
 	Sample demo;
 
-	def::rcode err = demo.Construct(800, 256, 2, 2);
-
-	if (err.ok)
+	if (demo.Construct(800, 256, 2, 2))
 		demo.Run();
-	else
-		std::cerr << err.info << "\n";
 
 	return 0;
 }
