@@ -143,7 +143,7 @@ protected:
 		lua_register(script, "SetTile", wrap_SetTile);
 		lua_register(script, "GetTile", wrap_GetTile);
 
-		if (CheckLua(script, luaL_dofile(script, "Tiles.lua")))
+		if (CheckLua(script, luaL_dofile(script, "main.lua")))
 		{
 			lua_getglobal(script, "LoadLevel");
 			if (lua_isfunction(script, -1))
@@ -192,25 +192,19 @@ protected:
 		lua_getglobal(script, "BACKGROUND_FILE");
 		sprBackground = new def::Sprite(lua_tostring(script, -1));
 
-		auto LoadVi2d = [script=script](vi2d& v, const char* name)
+		lua_getglobal(script, "TILE_SIZE");
+		if (lua_istable(script, -1))
 		{
-			lua_getglobal(script, name);
-			if (lua_istable(script, -1))
-			{
-				lua_getfield(script, -1, "x");
-				v.x = lua_tonumber(script, -1);
+			lua_getfield(script, -1, "x");
+			vTileSize.x = lua_tonumber(script, -1);
 
-				lua_pop(script, 1);
+			lua_pop(script, 1);
 
-				lua_getfield(script, -1, "y");
-				v.y = lua_tonumber(script, -1);
+			lua_getfield(script, -1, "y");
+			vTileSize.y = lua_tonumber(script, -1);
 
-				lua_pop(script, 1);
-			}
-		};
-
-		LoadVi2d(vTileSize, "TILE_SIZE");
-		LoadVi2d(vLevelSize, "LEVEL_SIZE");
+			lua_pop(script, 1);
+		}
 
 		return true;
 	}
