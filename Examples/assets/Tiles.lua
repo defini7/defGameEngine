@@ -9,7 +9,6 @@ local lookup =
 }
 
 TILE_SIZE = {x=32, y=32}
-LEVEL_SIZE = {x=16, y=8}
 
 SPRITES_FILE = "mario.png"
 BACKGROUND_FILE = "sky.png"
@@ -17,7 +16,7 @@ BACKGROUND_FILE = "sky.png"
 function LoadLevel(host, level)
 
 	map = ""
-	size = {w=16, h=8}
+	size = {}
 
 	if level == 1 then
 
@@ -31,14 +30,16 @@ function LoadLevel(host, level)
 		"................"..
 		"xxxxxxxxxxxxxxxx"
 
+		size = {x=16, y=8}
+
 	end
 
-	CreateLevel(host, size.w, size.h)
+	CreateLevel(host, size.x, size.y)
 
-	for y = 1, size.h do
-		for x = 1, size.w do
+	for y = 1, size.y do
+		for x = 1, size.x do
 
-			i = (y - 1) * size.w + x
+			i = (y - 1) * size.x + x
 			c = string.sub(map, i, i)
 
 			SetTile(host, x-1, y-1, lookup[c])
