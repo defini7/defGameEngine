@@ -1,7 +1,30 @@
 #include "defGameEngine.h"
 
+#include <unordered_map>
+
+extern "C"
+{
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+}
+
+#ifdef _WIN32
+#pragma comment(lib, "liblua54.a")
+#endif
+
 using namespace std;
 using namespace def;
+
+bool CheckLua(lua_State* L, int r)
+{
+	if (r != LUA_OK)
+	{
+		std::cerr << lua_tostring(L, -1) << std::endl;
+		return false;
+	}
+	return true;
+}
 
 class Mario : public def::GameEngine
 {
@@ -12,11 +35,33 @@ public:
 		ShowFPS();
 	}
 
+	~Mario()
+	{
+		lua_close(script);
+
+		delete sprMario;
+		delete sprBackground;
+	}
+
 private:
-	vi2d vMapSize = { 16, 8 };
+	lua_State* script;
+
+	vi2d vLevelSize = { 16, 8 };
 	vi2d vTileSize = { 32, 32 };
 
-	string sMap;
+	enum class TileType
+	{
+		Empty,
+		Coin,
+		Grass,
+		Dirt
+	};
+
+	static constexpr size_t TILES_SIZE = 4;
+
+	vector<TileType> vecLevel;
+
+	unordered_map<TileType, vi2d> mapSpriteFileOffsets;
 
 	vf2d vPlayerPos = { 1.0f, 1.0f };
 	vf2d vPlayerVel = { 0.0f, 0.0f };
@@ -30,33 +75,142 @@ private:
 	int nScore = 0;
 
 protected:
-	char GetTile(const vi2d& p)
+	void CreateLevel(const vi2d& levelSize)
 	{
-		if (p.x >= 0 && p.y >= 0 && p.x < vMapSize.x && p.y < vMapSize.y)
-			return sMap[p.y * vMapSize.x + p.x];
-
-		return ' ';
+		vLevelSize = levelSize;
+		vecLevel.clear();
+		vecLevel.resize(vLevelSize.x * vLevelSize.y);
 	}
 
-	void SetTile(const vi2d& p, char c)
+	static int wrap_CreateLevel(lua_State* L)
 	{
-		if (p.x >= 0 && p.y >= 0 && p.x < vMapSize.x && p.y < vMapSize.y)
-			sMap[p.y * vMapSize.x + p.x] = c;
+		if (lua_gettop(L) != 3) return -1;
+
+		Mario* obj = static_cast<Mario*>(lua_touserdata(L, 1));
+		vi2d mapSize = vi2d(lua_tointeger(L, 2), lua_tointeger(L, 3));
+
+		obj->CreateLevel(mapSize);
+
+		return 0;
+	}
+
+	void SetTile(const vi2d& p, TileType tile)
+	{
+		if (p >= vi2d(0, 0) && p < vLevelSize)
+			vecLevel[p.y * vLevelSize.x + p.x] = tile;
+	}
+
+	static int wrap_SetTile(lua_State* L)
+	{
+		if (lua_gettop(L) != 4) return -1;
+
+		Mario* obj = static_cast<Mario*>(lua_touserdata(L, 1));
+		vi2d mapPos = vi2d(lua_tointeger(L, 2), lua_tointeger(L, 3));
+		int tile = lua_tointeger(L, 4);
+
+		obj->SetTile(mapPos, (TileType)tile);
+
+		return 0;
+	}
+
+	TileType GetTile(const vi2d& p)
+	{
+		if (p >= vi2d(0, 0) && p < vLevelSize)
+			return vecLevel[p.y * vLevelSize.x + p.x];
+
+		return TileType::Empty;
+	}
+
+	static int wrap_GetTile(lua_State* L)
+	{
+		if (lua_gettop(L) != 3) return -1;
+
+		Mario* obj = static_cast<Mario*>(lua_touserdata(L, 1));
+		vi2d mapPos = vi2d(lua_tointeger(L, 2), lua_tointeger(L, 3));
+
+		int tile = (int)obj->GetTile(mapPos);
+		lua_pushinteger(L, tile);
+
+		return 1;
 	}
 
 	virtual bool OnUserCreate() override
 	{
-		sMap += "........xxxxxxxx";
-		sMap += ".....ooo........";
-		sMap += "................";
-		sMap += "..xxxxxxxx...xxx";
-		sMap += "..########...###";
-		sMap += "..########..x###";
-		sMap += "................";
-		sMap += "xxxxxxxxxxxxxxxx";
+		script = luaL_newstate();
+		luaL_openlibs(script);
 
-		sprMario = new def::Sprite("mario.png");
-		sprBackground = new def::Sprite("sky.png");
+		lua_register(script, "CreateLevel", wrap_CreateLevel);
+		lua_register(script, "SetTile", wrap_SetTile);
+		lua_register(script, "GetTile", wrap_GetTile);
+
+		if (CheckLua(script, luaL_dofile(script, "Tiles.lua")))
+		{
+			lua_getglobal(script, "LoadLevel");
+			if (lua_isfunction(script, -1))
+			{
+				lua_pushlightuserdata(script, this);
+				lua_pushnumber(script, 1);
+
+				if (!CheckLua(script, lua_pcall(script, 2, 1, 0)))
+					return false;
+			}
+
+			for (int tile = 0; tile < TILES_SIZE; tile++)
+			{
+				lua_getglobal(script, "LoadSprite");
+				if (lua_isfunction(script, -1))
+				{
+					lua_pushlightuserdata(script, this);
+					lua_pushnumber(script, tile);
+
+					if (!CheckLua(script, lua_pcall(script, 2, 1, 0)))
+						return false;
+
+					if (lua_istable(script, -1))
+					{
+						vi2d filePos;
+
+						lua_getfield(script, -1, "x");
+						filePos.x = lua_tonumber(script, -1);
+
+						lua_pop(script, 1);
+
+						lua_getfield(script, -1, "y");
+						filePos.y = lua_tonumber(script, -1);
+
+						lua_pop(script, 1);
+
+						mapSpriteFileOffsets[(TileType)tile] = filePos;
+					}
+				}
+			}
+		}
+
+		lua_getglobal(script, "SPRITES_FILE");
+		sprMario = new def::Sprite(lua_tostring(script, -1));
+
+		lua_getglobal(script, "BACKGROUND_FILE");
+		sprBackground = new def::Sprite(lua_tostring(script, -1));
+
+		auto LoadVi2d = [script=script](vi2d& v, const char* name)
+		{
+			lua_getglobal(script, name);
+			if (lua_istable(script, -1))
+			{
+				lua_getfield(script, -1, "x");
+				v.x = lua_tonumber(script, -1);
+
+				lua_pop(script, 1);
+
+				lua_getfield(script, -1, "y");
+				v.y = lua_tonumber(script, -1);
+
+				lua_pop(script, 1);
+			}
+		};
+
+		LoadVi2d(vTileSize, "TILE_SIZE");
+		LoadVi2d(vLevelSize, "LEVEL_SIZE");
 
 		return true;
 	}
@@ -117,33 +271,33 @@ protected:
 
 		vf2d vNewPlayerPos = vPlayerPos + vPlayerVel * fDeltaTime;
 
-		if (GetTile(vNewPlayerPos) == 'o')
+		if (GetTile(vNewPlayerPos) == TileType::Coin)
 		{
-			SetTile(vNewPlayerPos, '.');
+			SetTile(vNewPlayerPos, TileType::Empty);
 			nScore++;
 		}
 
-		if (GetTile(vNewPlayerPos + vf2d(0.0f, 1.0f)) == 'o')
+		if (GetTile(vNewPlayerPos + vf2d(0.0f, 1.0f)) == TileType::Coin)
 		{
-			SetTile(vNewPlayerPos + vf2d(0.0f, 1.0f), '.');
+			SetTile(vNewPlayerPos + vf2d(0.0f, 1.0f), TileType::Empty);
 			nScore++;
 		}
 
-		if (GetTile(vNewPlayerPos + vf2d(1.0f, 0.0f)) == 'o')
+		if (GetTile(vNewPlayerPos + vf2d(1.0f, 0.0f)) == TileType::Coin)
 		{
-			SetTile(vNewPlayerPos + vf2d(1.0f, 0.0f), '.');
+			SetTile(vNewPlayerPos + vf2d(1.0f, 0.0f), TileType::Empty);
 			nScore++;
 		}
 
-		if (GetTile(vNewPlayerPos + vf2d(1.0f, 1.0f)) == 'o')
+		if (GetTile(vNewPlayerPos + vf2d(1.0f, 1.0f)) == TileType::Coin)
 		{
-			SetTile(vNewPlayerPos + vf2d(1.0f, 1.0f), '.');
+			SetTile(vNewPlayerPos + vf2d(1.0f, 1.0f), TileType::Empty);
 			nScore++;
 		}
 
 		if (vPlayerVel.x <= 0.0f)
 		{
-			if (GetTile(vi2d(vNewPlayerPos.x + 0.0f, vPlayerPos.y + 0.0f)) != '.' || GetTile(vi2d(vNewPlayerPos.x + 0.0f, vPlayerPos.y + 0.9f)) != '.')
+			if (GetTile(vi2d(vNewPlayerPos.x + 0.0f, vPlayerPos.y + 0.0f)) != TileType::Empty || GetTile(vi2d(vNewPlayerPos.x + 0.0f, vPlayerPos.y + 0.9f)) != TileType::Empty)
 			{
 				vNewPlayerPos.x = (float)((int)vNewPlayerPos.x) + 1.0f;
 				vPlayerVel.x = 0.0f;
@@ -151,7 +305,7 @@ protected:
 		}
 		else
 		{
-			if (GetTile(vi2d(vNewPlayerPos.x + 1.0f, vPlayerPos.y + 0.0f)) != '.' || GetTile(vi2d(vNewPlayerPos.x + 1.0f, vPlayerPos.y + 0.9f)) != '.')
+			if (GetTile(vi2d(vNewPlayerPos.x + 1.0f, vPlayerPos.y + 0.0f)) != TileType::Empty || GetTile(vi2d(vNewPlayerPos.x + 1.0f, vPlayerPos.y + 0.9f)) != TileType::Empty)
 			{
 				vNewPlayerPos.x = (float)((int)vNewPlayerPos.x);
 				vPlayerVel.x = 0.0f;
@@ -161,7 +315,7 @@ protected:
 		bPlayerOnGround = false;
 		if (vPlayerVel.y <= 0.0f)
 		{
-			if (GetTile(vNewPlayerPos) != '.' || GetTile(vNewPlayerPos + vf2d(0.9f, 0.0f)) != '.')
+			if (GetTile(vNewPlayerPos) != TileType::Empty || GetTile(vNewPlayerPos + vf2d(0.9f, 0.0f)) != TileType::Empty)
 			{
 				vNewPlayerPos.y = (float)((int)vNewPlayerPos.y) + 1.0f;
 				vPlayerVel.y = 0.0f;
@@ -169,7 +323,7 @@ protected:
 		}
 		else
 		{
-			if (GetTile(vNewPlayerPos + vf2d(0.0f, 1.0f)) != '.' || GetTile(vNewPlayerPos + vf2d(0.9f, 1.0f)) != '.')
+			if (GetTile(vNewPlayerPos + vf2d(0.0f, 1.0f)) != TileType::Empty || GetTile(vNewPlayerPos + vf2d(0.9f, 1.0f)) != TileType::Empty)
 			{
 				vNewPlayerPos.y = (float)((int)vNewPlayerPos.y);
 				vPlayerVel.y = 0.0f;
@@ -185,7 +339,7 @@ protected:
 		vf2d vOffset = vPlayerPos - (vf2d)vVisibleTiles * 0.5f;
 
 		vOffset = vOffset.max({ 0.0f, 0.0f });
-		vOffset = vOffset.min(vMapSize - vVisibleTiles);
+		vOffset = vOffset.min(vLevelSize - vVisibleTiles);
 
 		vf2d vTileOffset = (vOffset - (vf2d)(vi2d)vOffset) * (vf2d)vTileSize;
 
@@ -194,17 +348,12 @@ protected:
 		{
 			for (vTile.x = -1; vTile.x < vVisibleTiles.x + 1; vTile.x++)
 			{
-				char tile = GetTile(vTile + (vi2d)vOffset);
+				TileType tile = GetTile(vTile + (vi2d)vOffset);
 
 				vi2d p = vf2d(vTile * vTileSize) - vTileOffset;
 
-				switch (tile)
-				{
-				case ' ': FillRectangle(p, vTileSize, def::BLACK); break;
-				case 'o': DrawPartialSprite(p, { 4 * vTileSize.x, 0 }, vTileSize, sprMario); break;
-				case 'x': DrawPartialSprite(p, { 5 * vTileSize.x, 0 }, vTileSize, sprMario); break;
-				case '#': DrawPartialSprite(p, { 6 * vTileSize.x, 0 }, vTileSize, sprMario); break;
-				}
+				if (tile != TileType::Empty)
+					DrawPartialSprite(p, mapSpriteFileOffsets[tile], vTileSize, sprMario);
 			}
 		}
 
