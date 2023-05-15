@@ -31,6 +31,7 @@
 #pragma region sample
 /**
 * Example:
+	#define DGE_APPLICATION
 	#include "defGameEngine.h"
 
 	class Sample : public def::GameEngine
@@ -49,8 +50,8 @@
 
 		bool OnUserUpdate(float fDeltaTime) override
 		{
-			for (int i = 0; i < GetScreenWidth(); i++)
-				for (int j = 0; j < GetScreenHeight(); j++)
+			for (int i = 0; i < ScreenWidth(); i++)
+				for (int j = 0; j < ScreenHeight(); j++)
 					Draw(i, j, def::RandomPixel());
 
 			return true;
@@ -78,6 +79,7 @@
 #include <vector>
 #include <cmath>
 #include <list>
+#include <memory>
 
 #include <GLFW/glfw3.h>
 
@@ -241,10 +243,6 @@ namespace def
 		unsigned int MENU = 348;
 	}
 
-	// Pi constant
-	const float PI = 2.0f * acosf(0.0f);
-
-	// Basic 2d vector implementation for convenient usage
 	template <typename T>
 	struct vec2d_basic
 	{
@@ -395,6 +393,9 @@ namespace def
 
 		float man(const vec2d_basic<T>& v) { return std::abs(this->x - v.x) + std::abs(this->y - v.y); }
 
+		vec2d_basic<T> max(const vec2d_basic<T>& v) { return vec2d_basic<T>(std::max(this->x, v.x), std::max(this->y, v.y)); }
+		vec2d_basic<T> min(const vec2d_basic<T>& v) { return vec2d_basic<T>(std::min(this->x, v.x), std::min(this->y, v.y)); }
+
 		vec2d_basic<T> norm() { float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
 		vec2d_basic<T> abs() { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
 		vec2d_basic<T> perp() { return vec2d_basic<T>(-this->y, this->x); }
@@ -412,33 +413,17 @@ namespace def
 	typedef vec2d_basic<float> vf2d;
 	typedef vec2d_basic<double> vd2d;
 
-	// Holds information about error
 	struct rcode
 	{
 		rcode() = default;
-
-		rcode(bool bOk)
-		{
-			ok = bOk;
-			info = "ok";
-		}
-
-		rcode(bool bOk, const std::string& sInfo)
-		{
-			ok = bOk;
-			info = sInfo;
-		}
-
-		operator bool()
-		{
-			return ok;
-		}
+		rcode(bool bOk) : ok(bOk), info("ok") {}
+		rcode(bool bOk, const std::string& sInfo) : ok(bOk), info(sInfo) {}
+		operator bool() { return ok; }
 
 		bool ok;
 		std::string info;
 	};
 
-	// Holds 3 possible states of each key
 	struct KeyState
 	{
 		bool bHeld;
@@ -449,18 +434,9 @@ namespace def
 	struct Pixel
 	{
 		Pixel() = default;
-		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca = 255U)
-		{
-			r = cr;
-			g = cg;
-			b = cb;
-			a = ca;
-		}
+		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca = 255U) : r(cr), g(cg), b(cb), a(ca) {}
 
-		uint8_t r;
-		uint8_t g;
-		uint8_t b;
-		uint8_t a;
+		uint8_t r, g, b, a;
 
 		template <typename T>
 		friend Pixel operator+(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r + rhs), uint8_t((T)lhs.g + rhs), uint8_t((T)lhs.b + rhs), lhs.a); }
@@ -475,17 +451,16 @@ namespace def
 		friend Pixel operator/(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r / rhs), uint8_t((T)lhs.g / rhs), uint8_t((T)rhs.b / rhs), lhs.a); }
 
 		template <typename T>
-		friend Pixel operator+=(const Pixel& lhs, T rhs)
+		friend Pixel& operator+=(const Pixel& lhs, T rhs)
 		{
 			lhs.r += rhs;
 			lhs.g += rhs;
 			lhs.b += rhs;
-
 			return lhs;
 		}
 
 		template <typename T>
-		friend Pixel operator-=(const Pixel& lhs, T rhs)
+		friend Pixel& operator-=(const Pixel& lhs, T rhs)
 		{
 			lhs.r -= rhs;
 			lhs.g -= rhs;
@@ -495,7 +470,7 @@ namespace def
 		}
 
 		template <typename T>
-		friend Pixel operator*=(const Pixel& lhs, T rhs)
+		friend Pixel& operator*=(const Pixel& lhs, T rhs)
 		{
 			lhs.r *= rhs;
 			lhs.g *= rhs;
@@ -505,7 +480,7 @@ namespace def
 		}
 
 		template <typename T>
-		friend Pixel operator/=(const Pixel& lhs, T rhs)
+		friend Pixel& operator/=(const Pixel& lhs, T rhs)
 		{
 			lhs.r /= rhs;
 			lhs.g /= rhs;
@@ -519,25 +494,10 @@ namespace def
 		friend Pixel operator*(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r * rhs.r, lhs.g * rhs.g, lhs.b * rhs.b, lhs.a); }
 		friend Pixel operator/(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r / rhs.r, lhs.g / rhs.g, lhs.b / rhs.b, lhs.a); }
 
-		friend Pixel operator+=(const Pixel& lhs, const Pixel& rhs)
-		{
-			return lhs + rhs;
-		}
-
-		friend Pixel operator-=(const Pixel& lhs, const Pixel& rhs)
-		{
-			return lhs - rhs;
-		}
-
-		friend Pixel operator*=(const Pixel& lhs, const Pixel& rhs)
-		{
-			return lhs * rhs;
-		}
-
-		friend Pixel operator/=(const Pixel& lhs, const Pixel& rhs)
-		{
-			return lhs / rhs;
-		}
+		friend Pixel operator+=(const Pixel& lhs, const Pixel& rhs) { return lhs + rhs; }
+		friend Pixel operator-=(const Pixel& lhs, const Pixel& rhs) { return lhs - rhs; }
+		friend Pixel operator*=(const Pixel& lhs, const Pixel& rhs) { return lhs * rhs; }
+		friend Pixel operator/=(const Pixel& lhs, const Pixel& rhs) { return lhs / rhs; }
 
 		friend bool operator==(const Pixel& lhs, const Pixel& rhs) { return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b; }
 		friend bool operator!=(const Pixel& lhs, const Pixel& rhs) { return lhs.r != rhs.r || lhs.g != rhs.g || lhs.b != rhs.b; }
@@ -548,7 +508,6 @@ namespace def
 		return def::Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f));
 	}
 
-	// Standart colors for convenient usage
 	static Pixel BLACK(0, 0, 0, 0),
 		DARK_BLUE(0, 55, 218, 255),
 		DARK_GREEN(19, 161, 14, 255),
@@ -583,105 +542,77 @@ namespace def
 		return Pixel(rand() % 256, rand() % 256, rand() % 256, bRandomAlpha ? rand() % 256 : 255);
 	}
 
-	// Converts byte (0 - 255) to float (0.0f - 1.0f)
-	float Byte2Float(uint8_t b)
-	{
-		return (float)b / 255.0f;
-	}
-
-	// Converts float (0.0f - 1.0f) to byte (0 - 255)
-	uint8_t Float2Byte(float f)
-	{
-		return uint8_t(f * 255.0f);
-	}
-
-
-	/********************************
-	* @ SPRITE CLASS IMPLEMENTATION *
-	********************************/
+	float   Byte2Float(uint8_t b) { return (float)b / 255.0f;	}
+	uint8_t Float2Byte(float f)	  { return uint8_t(f * 255.0f); }
 
 	class Sprite
 	{
 	public:
 		Sprite() = default;
-		Sprite(int32_t nWidth, int32_t nHeight)
+		Sprite(int32_t width, int32_t height)
 		{
-			if (nWidth > 0 && nHeight > 0)
-				Create(nWidth, nHeight);
+			if (width > 0 && height > 0)
+				Create(width, height);
 		}
 
 		Sprite(const std::string& sFilename)
 		{
 			rcode rc = Load(sFilename);
-
-			if (!rc)
-				std::cerr << rc.info << "\n";
+			if (!rc) std::cerr << rc.info << "\n";
 		}
 
 		~Sprite()
 		{
-			stbi_image_free(m_data);
+			if (pPixelData != nullptr)
+				delete[] pPixelData;
 		}
 
-	private:
-		int32_t m_nWidth;
-		int32_t m_nHeight;
-		int32_t m_nChannels;
+	public:
+		int32_t nWidth;
+		int32_t nHeight;
+		int32_t nChannels;
 
-		uint8_t* m_data = nullptr;
+		uint8_t* pPixelData = nullptr;
 
 	public:
-		void Create(int32_t nWidth, int32_t nHeight)
+		void Create(const int32_t width, const int32_t height, const int32_t channels = 4)
 		{
-			if (m_data != nullptr) delete[] m_data;
+			if (pPixelData != nullptr) delete[] pPixelData;
 
-			m_nWidth = nWidth;
-			m_nHeight = nHeight;
+			nWidth = width;
+			nHeight = height;
+			nChannels = channels;
 
-			m_nChannels = 4;
-
-			m_data = new uint8_t[nWidth * nHeight * m_nChannels];
-
-			for (int i = 0; i < nWidth * nHeight * m_nChannels; i++)
-				m_data[i] = 0;
+			pPixelData = new uint8_t[nWidth * nHeight * nChannels];
+			memset(pPixelData, 0, nWidth * nHeight * nChannels * sizeof(uint8_t));
 		}
 
 		rcode Load(const std::string& sFilename)
 		{
-			rcode rc(false);
+			pPixelData = stbi_load(sFilename.c_str(), &nWidth, &nHeight, &nChannels, 0);
 
-			m_data = stbi_load(sFilename.c_str(), &m_nWidth, &m_nHeight, &m_nChannels, 0);
+			if (!pPixelData)
+				return rcode(false, "stb_image: " + std::string(stbi_failure_reason()));
 
-			if (!m_data)
-			{
-				rc.info = "stb_image: ";
-				rc.info += stbi_failure_reason();
-				return rc;
-			}
-
-			rc.ok = true;
-			return rc;
+			return rcode(true);
 		}
 
-		enum class FileType
-		{
-			BMP, PNG, JPG, TGA, TGA_RLE
-		};
+		enum class FileType { BMP, PNG, JPG, TGA, TGA_RLE };
 
-		rcode Save(const std::string& sFilename, FileType fType)
+		rcode Save(const std::string& sFilename, const FileType fType)
 		{
 			int err;
 
 			switch (fType)
 			{
-			case FileType::BMP: err = stbi_write_bmp(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data); break;
-			case FileType::PNG: err = stbi_write_png(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data, m_nWidth * m_nChannels); break;
-			case FileType::JPG: err = stbi_write_jpg(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data, 100); break;
-			case FileType::TGA: err = stbi_write_tga(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data); break;
+			case FileType::BMP: err = stbi_write_bmp(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData); break;
+			case FileType::PNG: err = stbi_write_png(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData, nWidth * nChannels); break;
+			case FileType::JPG: err = stbi_write_jpg(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData, 100); break;
+			case FileType::TGA: err = stbi_write_tga(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData); break;
 			case FileType::TGA_RLE:
 			{
 				stbi_write_tga_with_rle = 1;
-				err = stbi_write_tga(sFilename.c_str(), m_nWidth, m_nHeight, m_nChannels, m_data);
+				err = stbi_write_tga(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData);
 				stbi_write_tga_with_rle = 0;
 			}
 			break;
@@ -689,142 +620,107 @@ namespace def
 			}
 		}
 
-		uint32_t GetWidth() const
+		void SetPixel(const int32_t x, const int32_t y, const Pixel& p)
 		{
-			return m_nWidth;
+			size_t i = nChannels * (y * nWidth + x);
+
+			pPixelData[i]	 = p.r;
+			pPixelData[i + 1] = p.g;
+			pPixelData[i + 2] = p.b;
+			pPixelData[i + 3] = p.a;
 		}
 
-		uint32_t GetHeight() const
+		Pixel GetPixel(const int32_t x, const int32_t y)
 		{
-			return m_nHeight;
-		}
+			size_t i = nChannels * (y * nWidth + x);
 
-		vi2d GetSize() const
-		{
-			return vi2d(m_nWidth, m_nHeight);
-		}
-
-		void SetPixel(int32_t x, int32_t y, const Pixel& p)
-		{
-			size_t i = m_nChannels * (y * m_nWidth + x);
-
-			m_data[i + 0] = p.r;
-			m_data[i + 1] = p.g;
-			m_data[i + 2] = p.b;
-			m_data[i + 3] = p.a;
-		}
-
-		Pixel GetPixel(int32_t x, int32_t y)
-		{
-			if (x < 0 || y < 0 || x >= m_nWidth || y >= m_nHeight)
-				return BLACK;
-
-			size_t i = m_nChannels * (y * m_nWidth + x);
-
-			Pixel p = Pixel(
-				m_data[i + 0],
-				m_data[i + 1],
-				m_data[i + 2],
-				m_data[i + 3]
+			return Pixel(
+				pPixelData[i],
+				pPixelData[i + 1],
+				pPixelData[i + 2],
+				pPixelData[i + 3]
 			);
-
-			return p;
 		}
 
-		uint8_t* GetPixelData()
+		void SetPixelData(const uint8_t* data)
 		{
-			return m_data;
+			memcpy(pPixelData, data, nWidth * nHeight * nChannels * sizeof(uint8_t));
 		}
 
-		void SetPixelData(uint8_t* data)
+		void SetPixelData(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a = 255)
 		{
-			for (int i = 0; i < m_nWidth * m_nHeight * m_nChannels; i++)
-				m_data[i] = data[i];
-		}
-
-		void SetPixelData(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
-		{
-			for (int i = 0; i < m_nWidth; i++)
-				for (int j = 0; j < m_nHeight; j++)
+			for (int i = 0; i < nWidth; i++)
+				for (int j = 0; j < nHeight; j++)
 				{
-					m_data[m_nChannels * (j * m_nWidth + i) + 0] = r;
-					m_data[m_nChannels * (j * m_nWidth + i) + 1] = g;
-					m_data[m_nChannels * (j * m_nWidth + i) + 2] = b;
-					m_data[m_nChannels * (j * m_nWidth + i) + 3] = a;
+					size_t idx = nChannels * (j * nWidth + i);
+					pPixelData[idx]	   = r;
+					pPixelData[idx + 1] = g;
+					pPixelData[idx + 2] = b;
+					pPixelData[idx + 3] = a;
 				}
 		}
 
-		int GetChannels()
+		Pixel Sample(const float x, const float y)
 		{
-			return m_nChannels;
-		}
-
-		Pixel Sample(float x, float y)
-		{
-			int32_t sx = std::min(int32_t(x * (float)m_nWidth), m_nWidth - 1);
-			int32_t sy = std::min(int32_t(y * (float)m_nHeight), m_nHeight - 1);
-			return GetPixel(sx, sy);
+			return GetPixel(
+				std::min(int32_t(x * (float)nWidth), nWidth - 1),
+				std::min(int32_t(y * (float)nHeight), nHeight - 1)
+			);
 		}
 	};
-
-	/************************************
-	* @ END SPRITE CLASS IMPLEMENTATION *
-	************************************/
-
-
-	/*********************************
-	* @ TEXTURE CLASS IMPLEMENTATION *
-	*********************************/
 
 	class Texture
 	{
 	public:
-		Texture(Sprite* spr)
+		Texture(Sprite* pSprite)
 		{
-			m_sprInstance = std::unique_ptr<Sprite>(spr);
-			Construct();
+			Construct(pSprite, false);
 		}
 
-		Texture(const std::string& filename)
+		Texture(const std::string& sFileName)
 		{
-			m_sprInstance = std::make_unique<def::Sprite>(filename);
-			Construct();
+			Construct(new Sprite(sFileName), true);
 		}
 
 	private:
-		void Construct()
+		void Construct(Sprite* pSprite, bool bDeleteSprite)
 		{
-			rcode rc = Load(m_sprInstance->GetPixelData());
+			rcode rc = Load(pSprite);
 			if (!rc) std::cerr << rc.info << std::endl;
 
-			m_fUVScaleX = 1.0f / (float)m_sprInstance->GetWidth();
-			m_fUVScaleY = 1.0f / (float)m_sprInstance->GetHeight();
+			fUVScaleX = 1.0f / (float)pSprite->nWidth;
+			fUVScaleY = 1.0f / (float)pSprite->nHeight;
+
+			nWidth = pSprite->nWidth;
+			nHeight = pSprite->nHeight;
+
+			if (bDeleteSprite) delete pSprite;
 		}
 
-	private:
-		std::unique_ptr<Sprite> m_sprInstance;
+	public:
+		GLuint nTexId;
 
-		GLuint m_nTexId;
+		float fUVScaleX;
+		float fUVScaleY;
 
-		float m_fUVScaleX;
-		float m_fUVScaleY;
+		int32_t nWidth;
+		int32_t nHeight;
 
 	public:
-		rcode Load(uint8_t* pixel_data)
+		rcode Load(Sprite* pSprite)
 		{
 			GLenum nFormat = 0;
 
-			switch (m_sprInstance->GetChannels())
+			switch (pSprite->nChannels)
 			{
 			case 3: nFormat = GL_RGB; break;
 			case 4: nFormat = GL_RGBA; break;
 			}
 
-			if (nFormat == 0)
-				return rcode(false, "Invalid number of channels");
+			if (nFormat == 0) return rcode(false, "Invalid number of channels");
 
-			glGenTextures(1, &m_nTexId);
-			glBindTexture(GL_TEXTURE_2D, m_nTexId);
+			glGenTextures(1, &nTexId);
+			glBindTexture(GL_TEXTURE_2D, nTexId);
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -837,81 +733,74 @@ namespace def
 				GL_TEXTURE_2D,
 				0,
 				nFormat,
-				m_sprInstance->GetWidth(),
-				m_sprInstance->GetHeight(),
+				pSprite->nWidth,
+				pSprite->nHeight,
 				0,
 				nFormat,
 				GL_UNSIGNED_BYTE,
-				pixel_data
+				pSprite->pPixelData
 			);
 
 			glBindTexture(GL_TEXTURE_2D, 0);
-
 			return rcode(true);
 		}
 
-		void SetTexId(uint32_t id)
+		void Update(Sprite* pSprite)
 		{
-			m_nTexId = id;
-		}
-
-		uint32_t GetTexId()
-		{
-			return m_nTexId;
-		}
-
-		Sprite* Spr()
-		{
-			return m_sprInstance.get();
-		}
-
-		float GetUVScaleX()
-		{
-			return m_fUVScaleX;
-		}
-
-		float GetUVScaleY()
-		{
-			return m_fUVScaleY;
+			glBindTexture(GL_TEXTURE_2D, nTexId);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pSprite->nWidth, pSprite->nHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pSprite->pPixelData);
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	};
-
-	/*************************************
-	* @ END TEXTURE CLASS IMPLEMENTATION *
-	*************************************/
-
-
-	/**********************************
-	* @ GRAPHIC STRUCT IMPLEMENTATION *
-	**********************************/
 
 	struct Graphic
 	{
 		Graphic() = default;
+		Graphic(const std::string& sFileName)				 { Load(sFileName); }
+		Graphic(const int32_t nWidth, const int32_t nHeight) { Load(nWidth, nHeight); }
 
-		Graphic(const std::string& filename)
+		~Graphic()
 		{
-			Load(filename);
+			if (pTexture != nullptr) delete pTexture;
+			if (pSprite != nullptr)  delete pSprite;
 		}
 
-		std::unique_ptr<Texture> tex;
-		std::unique_ptr<Sprite> spr;
+		Texture* pTexture = nullptr;
+		Sprite* pSprite = nullptr;
 
-		void Load(const std::string& filename)
+		void Load(const std::string& sFileName)
 		{
-			spr = std::make_unique<Sprite>(filename);
-			tex = std::make_unique<Texture>(spr.get());
+			pSprite = new Sprite(sFileName);
+			pTexture = new Texture(pSprite);
 		}
+
+		void Load(const int32_t nWidth, const int32_t nHeight)
+		{
+			pSprite = new Sprite(nWidth, nHeight);
+			pTexture = new Texture(pSprite);
+		}
+
+		void UpdateTexture() { pTexture->Update(pSprite); }
 	};
 
-	/**************************************
-	* @ END GRAPHIC STRUCT IMPLEMENTATION *
-	**************************************/
+	enum TextureStructure : int32_t
+	{
+		DEFAULT,
+		FAN,
+		STRIP
+	};
 
+	struct TextureInstance
+	{
+		Texture* tex = nullptr;
 
-	/******************************************
-	* @ MAIN GAME ENGINE CLASS IMPLEMENTATION *
-	******************************************/
+		int32_t structure = TextureStructure::FAN;
+		int32_t points = 0;
+
+		std::vector<Pixel> tint;
+		std::vector<vf2d> vert;
+		std::vector<vf2d> uv;
+	};
 
 	class GameEngine
 	{
@@ -919,8 +808,17 @@ namespace def
 		GameEngine()
 		{
 			m_sAppName = "Undefined";
-
 			m_bCustomIcon = false;
+			m_vMouse = { -1, -1 };
+
+			m_Window = nullptr;
+			m_Monitor = nullptr;
+
+			m_sprIcon = nullptr;
+			m_sprFont = nullptr;
+
+			m_pDrawTarget = nullptr;
+			m_pixTint = { 255, 255, 255, 255 };
 		}
 
 		virtual ~GameEngine()
@@ -930,31 +828,25 @@ namespace def
 
 	private:
 		std::string m_sAppName;
-		std::string m_sIconFileName;
+		std::string m_sIconName;
 
-		uint32_t m_nScreenWidth;
-		uint32_t m_nScreenHeight;
+		vi2d m_vWindowSize;
+		vi2d m_vScreenSize;
+		vf2d m_vInvScreenSize;
+		vi2d m_vPixelSize;
 
-		uint32_t m_nPixelWidth;
-		uint32_t m_nPixelHeight;
-
-		uint32_t m_nWindowWidth;
-		uint32_t m_nWindowHeight;
-
-		GLFWwindow* m_glWindow = nullptr;
-		GLFWmonitor* m_glMonitor = nullptr;
+		GLFWwindow* m_Window;
+		GLFWmonitor* m_Monitor;
 
 		bool m_bAppRunning;
-
 		bool m_bFullScreen;
 		bool m_bVSync;
-
 		bool m_bCustomIcon;
-
 		bool m_bShowFPS;
+		bool m_bDirtyPixel;
 
-		KeyState m_keys[512];
-		KeyState m_mouse[5];
+		KeyState m_Keys[512];
+		KeyState m_Mouse[5];
 
 		bool m_nKeyOldState[512];
 		bool m_nKeyNewState[512];
@@ -962,352 +854,29 @@ namespace def
 		bool m_nMouseOldState[5];
 		bool m_nMouseNewState[5];
 
-		int32_t m_nMouseX = -1;
-		int32_t m_nMouseY = -1;
+		vi2d m_vMouse;
 
-		float m_fDeltaTime;
+		Sprite* m_sprIcon;
+		Sprite* m_sprFont;
 
-		Sprite* m_sprIcon = nullptr;
-		Sprite* m_sprFont = nullptr;
-
-		bool m_bDirtyPixel;
-
-		def::Pixel* m_pScreen = nullptr;
-
-		def::vi2d m_vTrans = { 0.0f, 0.0f };
-		def::vf2d m_vScale = { 1.0f, 1.0f };
+		Graphic* m_pScreen;
+		Graphic* m_pDrawTarget;
+		std::vector<TextureInstance> m_vecTextures;
+		Pixel m_pixTint;
 
 	public:
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 
-		virtual bool OnBeforeUserCreate() { return true; }
-		virtual bool OnAfterUserCreate() { return true; }
-
-		virtual bool OnBeforeUserUpdate(float fDeltaTime) { return true; }
-		virtual bool OnAfterUserUpdate(float fDeltaTime) { return true; }
-
-		rcode Construct(uint32_t nScreenWidth, uint32_t nScreenHeight, uint32_t nPixelWidth, uint32_t nPixelHeight, bool bFullScreen = false, bool bVSync = false, bool bDirtyPixel = false)
-		{
-			if (nScreenWidth < 0 || nScreenHeight < 0)
-				return rcode(false, "Width or height less than zero");
-
-			if (!glfwInit())
-				return rcode(false, "Could not init GLFW!");
-
-			m_nScreenWidth = nScreenWidth;
-			m_nScreenHeight = nScreenHeight;
-
-			m_nPixelWidth = nPixelWidth;
-			m_nPixelHeight = nPixelHeight;
-
-			m_nWindowWidth = m_nScreenWidth * m_nPixelWidth;
-			m_nWindowHeight = m_nScreenHeight * m_nPixelHeight;
-
-			m_bFullScreen = bFullScreen;
-			m_bVSync = bVSync;
-
-			m_bDirtyPixel = bDirtyPixel;
-
-			m_glMonitor = glfwGetPrimaryMonitor();
-
-			if (!m_glMonitor)
-			{
-				Destroy();
-				return rcode(false, "No monitors were found!");
-			}
-
-			const GLFWvidmode* vm = glfwGetVideoMode(m_glMonitor);
-
-			// On some laptops with integrated graphics VSync does not work at all!
-			if (m_bVSync)
-			{
-				glfwSwapInterval(1);
-				glfwWindowHint(GLFW_REFRESH_RATE, vm->refreshRate);
-			}
-			else
-				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
-
-			if (m_bFullScreen)
-			{
-				m_nScreenWidth = vm->width / m_nPixelWidth;
-				m_nScreenHeight = vm->height / m_nPixelHeight;
-
-				m_nWindowWidth = vm->width;
-				m_nWindowHeight = vm->height;
-
-				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, "", m_glMonitor, NULL);
-
-				glfwSetWindowMonitor(m_glWindow, m_glMonitor,
-					0, 0, m_nWindowWidth, m_nWindowHeight, vm->refreshRate);
-			}
-			else
-				m_glWindow = glfwCreateWindow(m_nWindowWidth, m_nWindowHeight, "", NULL, NULL);
-
-			if (!m_glWindow)
-			{
-				const char* err;
-				glfwGetError(&err);
-				Destroy();
-				return rcode(false, err);
-			}
-
-			m_pScreen = new Pixel[m_nScreenWidth * m_nScreenHeight];
-			Clear(def::BLACK);
-
-			glfwMakeContextCurrent(m_glWindow);
-
-			glViewport(0, 0, m_nWindowWidth, m_nWindowHeight);
-			glOrtho(0.0, (double)m_nWindowWidth, (double)m_nWindowHeight, 0.0, -1.0, 1.0);
-
-			glEnable(GL_TEXTURE_2D);
-
-			if (m_bDirtyPixel)
-				glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-			std::string data =
-				"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
-				"O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400"
-				"Of80001oOg<7O7moBGT7O7lABET024@aBEd714AiOdl717a_=TH013Q>00000000"
-				"720D000V?V5oB3Q_HdUoE7a9@DdDE4A9@DmoE4A;Hg]oM4Aj8S4D84@`00000000"
-				"OaPT1000Oa`^13P1@AI[?g`1@A=[OdAoHgljA4Ao?WlBA7l1710007l100000000"
-				"ObM6000oOfMV?3QoBDD`O7a0BDDH@5A0BDD<@5A0BGeVO5ao@CQR?5Po00000000"
-				"Oc``000?Ogij70PO2D]??0Ph2DUM@7i`2DTg@7lh2GUj?0TO0C1870T?00000000"
-				"70<4001o?P<7?1QoHg43O;`h@GT0@:@LB@d0>:@hN@L0@?aoN@<0O7ao0000?000"
-				"OcH0001SOglLA7mg24TnK7ln24US>0PL24U140PnOgl0>7QgOcH0K71S0000A000"
-				"00H00000@Dm1S007@DUSg00?OdTnH7YhOfTL<7Yh@Cl0700?@Ah0300700000000"
-				"<008001QL00ZA41a@6HnI<1i@FHLM81M@@0LG81?O`0nC?Y7?`0ZA7Y300080000"
-				"O`082000Oh0827mo6>Hn?Wmo?6HnMb11MP08@C11H`08@FP0@@0004@000000000"
-				"00P00001Oab00003OcKP0006@6=PMgl<@440MglH@000000`@000001P00000000"
-				"Ob@8@@00Ob@8@Ga13R@8Mga172@8?PAo3R@827QoOb@820@0O`0007`0000007P0"
-				"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
-				"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
-
-			m_sprFont = new Sprite(128, 48);
-			int px = 0, py = 0;
-
-			for (size_t b = 0; b < 1024; b += 4)
-			{
-				uint32_t sym1 = (uint32_t)data[b + 0] - 48;
-				uint32_t sym2 = (uint32_t)data[b + 1] - 48;
-				uint32_t sym3 = (uint32_t)data[b + 2] - 48;
-				uint32_t sym4 = (uint32_t)data[b + 3] - 48;
-				uint32_t r = sym1 << 18 | sym2 << 12 | sym3 << 6 | sym4;
-
-				for (int i = 0; i < 24; i++)
-				{
-					int k = r & (1 << i) ? 255 : 0;
-					m_sprFont->SetPixel(px, py, Pixel(k, k, k, k));
-					if (++py == 48) { px++; py = 0; }
-				}
-			}
-
-			if (m_bCustomIcon)
-			{
-				m_sprIcon = new def::Sprite(m_sIconFileName);
-
-				GLFWimage img;
-
-				img.width = m_sprIcon->GetWidth();
-				img.height = m_sprIcon->GetHeight();
-
-				img.pixels = m_sprIcon->GetPixelData();
-
-				glfwSetWindowIcon(m_glWindow, 1, &img);
-			}
-
-			return rcode(true);
-		}
-
-		void Run()
-		{
-			m_bAppRunning = true;
-			AppThread();
-		}
+		rcode Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen = false, bool bVSync = false, bool bDirtyPixel = false);
+		void Run();
 
 	private:
-		void Destroy()
-		{
-			if (m_pScreen)
-				delete[] m_pScreen;
-
-			if (m_sprFont)
-				delete m_sprFont;
-
-			if (m_sprIcon)
-				delete m_sprIcon;
-
-			glfwDestroyWindow(m_glWindow);
-			glfwTerminate();
-		}
-
-		bool AppThread()
-		{
-			if (!OnBeforeUserCreate())
-			{
-				m_bAppRunning = false;
-				return false;
-			}
-
-			if (!OnUserCreate())
-			{
-				m_bAppRunning = false;
-				return false;
-			}
-
-			if (!OnAfterUserCreate())
-			{
-				m_bAppRunning = false;
-				return false;
-			}
-
-			auto tp1 = std::chrono::system_clock::now();
-			auto tp2 = tp1;
-
-			for (int i = 0; i < 512; i++)
-				m_keys[i] = { false, false, false };
-
-			for (int i = 0; i < 5; i++)
-				m_mouse[i] = { false, false, false };
-
-			for (int i = 0; i < 512; i++)
-				m_nKeyOldState[i] = 0;
-
-			for (int i = 0; i < 5; i++)
-				m_nMouseOldState[i] = 0;
-
-			for (int i = 0; i < 512; i++)
-				m_nKeyNewState[i] = 0;
-
-			std::string title = "github.com/defini7 - " + m_sAppName;
-			glfwSetWindowTitle(m_glWindow, title.c_str());
-
-			while (m_bAppRunning)
-			{
-				tp2 = std::chrono::system_clock::now();
-				m_fDeltaTime = std::chrono::duration<float>(tp2 - tp1).count();
-				tp1 = tp2;
-
-				m_bAppRunning = !glfwWindowShouldClose(m_glWindow);
-
-				for (int i = 0; i < 512; i++)
-				{
-					m_nKeyNewState[i] = glfwGetKey(m_glWindow, i);
-
-					m_keys[i].bPressed = false;
-					m_keys[i].bReleased = false;
-
-					if (m_nKeyNewState[i] != m_nKeyOldState[i])
-					{
-						if (m_nKeyNewState[i])
-						{
-							m_keys[i].bPressed = !m_keys[i].bHeld;
-							m_keys[i].bHeld = true;
-						}
-						else
-						{
-							m_keys[i].bReleased = true;
-							m_keys[i].bHeld = false;
-						}
-					}
-
-					m_nKeyOldState[i] = m_nKeyNewState[i];
-				}
-
-				for (int i = 0; i < 5; i++)
-				{
-					m_nMouseNewState[i] = glfwGetMouseButton(m_glWindow, i);
-
-					m_mouse[i].bPressed = false;
-					m_mouse[i].bReleased = false;
-
-					if (m_nMouseNewState[i] != m_nMouseOldState[i])
-					{
-						if (m_nMouseNewState[i])
-						{
-							m_mouse[i].bPressed = true;
-							m_mouse[i].bHeld = true;
-						}
-						else
-						{
-							m_mouse[i].bReleased = true;
-							m_mouse[i].bHeld = false;
-						}
-					}
-
-					m_nMouseOldState[i] = m_nMouseNewState[i];
-				}
-
-				double dMouseX, dMouseY;
-
-				glfwGetCursorPos(m_glWindow, &dMouseX, &dMouseY);
-
-				m_nMouseX = (int)dMouseX / m_nPixelWidth;
-				m_nMouseY = (int)dMouseY / m_nPixelHeight;
-
-				if (m_bShowFPS)
-				{
-					title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / m_fDeltaTime));
-					glfwSetWindowTitle(m_glWindow, title.c_str());
-				}
-
-				if (!OnBeforeUserUpdate(m_fDeltaTime))
-					m_bAppRunning = false;
-
-				glPushMatrix();
-
-				if (!OnUserUpdate(m_fDeltaTime))
-					m_bAppRunning = false;
-
-				glTranslatef((float)m_vTrans.x, (float)m_vTrans.y, 0.0f);
-				glScalef(m_vScale.x, m_vScale.y, 1.0f);
-
-				if (m_nPixelWidth + m_nPixelHeight == 2) glBegin(GL_POINTS);
-				else									 glBegin(GL_QUADS);
-
-				for (uint32_t x = 0; x < m_nScreenWidth; x++)
-					for (uint32_t y = 0; y < m_nScreenHeight; y++)
-					{
-						const def::Pixel& p = m_pScreen[y * m_nScreenWidth + x];
-						glColor4ub(p.r, p.g, p.b, p.a);
-
-						// Some optimization
-						if (m_nPixelWidth == 1 && m_nPixelHeight == 1)
-							glVertex2i(x, y);
-						else
-						{
-							int nTopLeftX = x * m_nPixelWidth;
-							int nTopLeftY = y * m_nPixelHeight;
-
-							int nTopRightX = x * m_nPixelWidth + m_nPixelWidth;
-							int nTopRightY = y * m_nPixelHeight + m_nPixelHeight;
-
-							glVertex2i(nTopLeftX, nTopLeftY);
-							glVertex2i(nTopRightX, nTopLeftY);
-							glVertex2i(nTopRightX, nTopRightY);
-							glVertex2i(nTopLeftX, nTopRightY);
-						}
-					}
-
-				glEnd();
-				glPopMatrix();
-
-				if (!OnAfterUserUpdate(m_fDeltaTime))
-					m_bAppRunning = false;
-
-				if (m_bVSync)
-					glfwSwapBuffers(m_glWindow);
-				else
-					glFlush();
-
-				glfwPollEvents();
-			}
-
-			return true;
-		}
+		void Destroy();
+		bool AppThread();
+		void DrawQuad(const Pixel& pixTint);
 
 	public:
-
 		void Draw(vi2d pos, const Pixel& p = WHITE);
 		virtual void Draw(int32_t x, int32_t y, const Pixel& p = WHITE);
 
@@ -1338,14 +907,14 @@ namespace def
 		void DrawPartialSprite(vi2d pos, vi2d fpos, vi2d fsize, Sprite* sprite);
 		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsizex, int32_t fsizey, Sprite* sprite);
 
-		void DrawTexture(vi2d pos, Texture* tex, vf2d scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
-		virtual void DrawTexture(float x, float y, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+		void DrawTexture(vf2d pos, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE, int32_t structure = TextureStructure::FAN);
+		virtual void DrawTexture(float x, float y, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = TextureStructure::FAN);
 
-		void DrawPartialTexture(vi2d pos, vi2d fpos, vi2d fsize, Texture* tex, vf2d scale = { 1.0f, 1.0f }, def::Pixel tint = def::WHITE);
-		virtual void DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x = 1.0f, float scale_y = 1.0f, def::Pixel tint = def::WHITE);
+		void DrawPartialTexture(vf2d pos, Texture* tex, vi2d filePos, vi2d fileSize, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE, int32_t structure = TextureStructure::FAN);
+		virtual void DrawPartialTexture(float x, float y, Texture* tex, float filePosX, float filePosY, float fileSizeX, float fileSizeY, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = TextureStructure::FAN);
 
-		void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vf2d pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
-		virtual void DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		void DrawWireFrameModel(const std::vector<std::pair<float, float>>& vecModelCoordinates, vf2d pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		virtual void DrawWireFrameModel(const std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 
 		void DrawString(vi2d pos, const std::string& text, const Pixel& p = WHITE);
 		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE);
@@ -1357,42 +926,322 @@ namespace def
 
 		vi2d GetMouse();
 
-		int32_t GetMouseX();
-		int32_t GetMouseY();
+		int32_t MouseX();
+		int32_t MouseY();
 
-		void SetTitle(const std::string& title);
+		void SetTitle(const std::string& sTitle);
 
-		vi2d GetScreenSize();
+		vi2d ScreenSize();
 
-		int32_t GetScreenWidth();
-		int32_t GetScreenHeight();
+		int32_t ScreenWidth();
+		int32_t ScreenHeight();
 
-		void Translate(int32_t x, int32_t y);
-		void Translate(const def::vi2d& trans);
+		bool IsFullScreen();
+		bool IsVSync();
 
-		void Scale(float x, float y);
-		void Scale(const def::vf2d& scale);
-
-		bool FullScreenEnabled();
-		bool VSyncEnabled();
-
-		void SetIcon(const std::string& filename);
+		void SetIcon(const std::string& sFileName);
+		void SetDrawTarget(Graphic* pTarget);
+		Graphic* GetDrawTarget();
 
 		WindowState GetWindowState();
-
 		GLFWwindow* GetWindow();
 
-		void ShowFPS(bool show = true);
+		void ShowFPS(bool bShow = true);
+		void DrawTexture(const TextureInstance& tex);
+
+
 
 	};
 
-	void def::GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
+#ifdef DGE_APPLICATION
+#undef DGE_APPLICATION
+
+	void GameEngine::Destroy()
 	{
-		if (x >= 0 && y >= 0 && x < m_nScreenWidth && y < m_nScreenHeight)
-			m_pScreen[y * m_nScreenWidth + x] = p;
+		if (m_pDrawTarget != nullptr) delete m_pDrawTarget;
+		if (m_sprFont != nullptr) delete m_sprFont;
+		if (m_sprIcon != nullptr) delete m_sprIcon;
+
+		glfwDestroyWindow(m_Window);
+		glfwTerminate();
 	}
 
-	void def::GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p)
+	bool GameEngine::AppThread()
+	{
+		if (!OnUserCreate())
+		{
+			m_bAppRunning = false;
+			return false;
+		}
+
+		auto tp1 = std::chrono::system_clock::now();
+		auto tp2 = tp1;
+
+		for (int i = 0; i < 512; i++)
+		{
+			m_Keys[i] = { false, false, false };
+			m_nKeyOldState[i] = 0;
+			m_nKeyNewState[i] = 0;
+		}
+
+		for (int i = 0; i < 5; i++)
+		{
+			m_Mouse[i] = { false, false, false };
+			m_nMouseOldState[i] = 0;
+			m_nMouseNewState[i] = 0;
+		}
+
+		std::string title = "github.com/defini7 - " + m_sAppName;
+		glfwSetWindowTitle(m_Window, title.c_str());
+
+		while (m_bAppRunning)
+		{
+			tp2 = std::chrono::system_clock::now();
+			float fDeltaTime = std::chrono::duration<float>(tp2 - tp1).count();
+			tp1 = tp2;
+
+			m_bAppRunning = !glfwWindowShouldClose(m_Window);
+
+			for (int i = 0; i < 512; i++)
+			{
+				m_nKeyNewState[i] = glfwGetKey(m_Window, i);
+
+				m_Keys[i].bPressed = false;
+				m_Keys[i].bReleased = false;
+
+				if (m_nKeyNewState[i] != m_nKeyOldState[i])
+				{
+					if (m_nKeyNewState[i])
+					{
+						m_Keys[i].bPressed = !m_Keys[i].bHeld;
+						m_Keys[i].bHeld = true;
+					}
+					else
+					{
+						m_Keys[i].bReleased = true;
+						m_Keys[i].bHeld = false;
+					}
+				}
+
+				m_nKeyOldState[i] = m_nKeyNewState[i];
+			}
+
+			for (int i = 0; i < 5; i++)
+			{
+				m_nMouseNewState[i] = glfwGetMouseButton(m_Window, i);
+
+				m_Mouse[i].bPressed = false;
+				m_Mouse[i].bReleased = false;
+
+				if (m_nMouseNewState[i] != m_nMouseOldState[i])
+				{
+					if (m_nMouseNewState[i])
+					{
+						m_Mouse[i].bPressed = true;
+						m_Mouse[i].bHeld = true;
+					}
+					else
+					{
+						m_Mouse[i].bReleased = true;
+						m_Mouse[i].bHeld = false;
+					}
+				}
+
+				m_nMouseOldState[i] = m_nMouseNewState[i];
+			}
+
+			double dMouseX, dMouseY;
+			glfwGetCursorPos(m_Window, &dMouseX, &dMouseY);
+
+			m_vMouse = vi2d(dMouseX, dMouseY) / m_vPixelSize;
+
+			if (!OnUserUpdate(fDeltaTime))
+				m_bAppRunning = false;
+
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+			m_pDrawTarget->UpdateTexture();
+			glBindTexture(GL_TEXTURE_2D, m_pDrawTarget->pTexture->nTexId);
+
+			DrawQuad(m_pixTint);
+
+			for (const auto& tex : m_vecTextures) DrawTexture(tex);
+			m_vecTextures.clear();
+
+			if (m_bVSync) glfwSwapBuffers(m_Window);
+			else		  glFlush();
+
+			glfwPollEvents();
+
+			if (m_bShowFPS)
+			{
+				title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / fDeltaTime));
+				glfwSetWindowTitle(m_Window, title.c_str());
+			}
+		}
+
+		return true;
+	}
+
+	void GameEngine::DrawTexture(const TextureInstance& ti)
+	{
+		if (ti.tex == nullptr) glBindTexture(GL_TEXTURE_2D, 0);
+		else				   glBindTexture(GL_TEXTURE_2D, ti.tex->nTexId);
+
+		switch (ti.structure)
+		{
+		case TextureStructure::DEFAULT: glBegin(GL_TRIANGLES);		break;
+		case TextureStructure::FAN:		glBegin(GL_TRIANGLE_FAN);	break;
+		case TextureStructure::STRIP:	glBegin(GL_TRIANGLE_STRIP);	break;
+		}
+
+		for (int32_t i = 0; i < ti.points; i++)
+		{
+			glColor4ub(ti.tint[i].r, ti.tint[i].g, ti.tint[i].b, ti.tint[i].a);
+			glTexCoord2f(ti.uv[i].x, ti.uv[i].y);
+			glVertex2f(ti.vert[i].x, ti.vert[i].y);
+		}
+
+		glEnd();
+	}
+
+	void GameEngine::DrawQuad(const Pixel& pixTint)
+	{
+		glBegin(GL_QUADS);
+		glColor4ub(pixTint.r, pixTint.g, pixTint.b, pixTint.a);
+		glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, -1.0f);
+		glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, 1.0f);
+		glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f, 1.0f);
+		glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f, -1.0f);
+		glEnd();
+	}
+
+	void GameEngine::Run()
+	{
+		m_bAppRunning = true;
+		AppThread();
+	}
+
+	rcode GameEngine::Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen, bool bVSync, bool bDirtyPixel)
+	{
+		if (glfwInit() == 0) return rcode(false, "Could not init GLFW");
+
+		m_vWindowSize = { nScreenWidth * nPixelWidth, nScreenHeight * nPixelHeight };
+		m_vScreenSize = { nScreenWidth, nScreenHeight };
+		m_vInvScreenSize = 1.0f / vf2d(m_vScreenSize);
+		m_vPixelSize = { nPixelWidth, nPixelHeight };
+
+		m_bFullScreen = bFullScreen;
+		m_bVSync = bVSync;
+
+		m_bDirtyPixel = bDirtyPixel;
+
+		m_Monitor = glfwGetPrimaryMonitor();
+		if (!m_Monitor) return rcode(false, "No monitors were found");
+
+		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
+		if (!videoMode) return rcode(false, "Failed to get video mode");
+
+		// On some laptops with integrated graphics VSync does not work at all!
+		if (m_bVSync)
+		{
+			glfwSwapInterval(1);
+			glfwWindowHint(GLFW_REFRESH_RATE, videoMode->refreshRate);
+		}
+		else
+		{
+			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
+		}
+
+		if (m_bFullScreen)
+		{
+			m_vWindowSize = vi2d(videoMode->width, videoMode->height);
+			m_vScreenSize = m_vWindowSize / m_vPixelSize;
+
+			m_Window = glfwCreateWindow(m_vWindowSize.x, m_vWindowSize.y, "", m_Monitor, NULL);
+
+			glfwSetWindowMonitor(m_Window, m_Monitor,
+				0, 0, m_vWindowSize.x, m_vWindowSize.y, videoMode->refreshRate);
+		}
+		else
+		{
+			m_Window = glfwCreateWindow(m_vWindowSize.x, m_vWindowSize.y, "", NULL, NULL);
+		}
+
+		if (!m_Window) return rcode(false, "Failed to create window");
+
+		glfwMakeContextCurrent(m_Window);
+		glViewport(0, 0, m_vWindowSize.x, m_vWindowSize.y);
+
+		glEnable(GL_TEXTURE_2D);
+		if (!m_bDirtyPixel) glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+		
+		m_pScreen = new Graphic(m_vScreenSize.x, m_vScreenSize.y);
+		m_pDrawTarget = m_pScreen;
+		Clear(def::BLACK);
+
+		std::string data =
+			"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
+			"O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400"
+			"Of80001oOg<7O7moBGT7O7lABET024@aBEd714AiOdl717a_=TH013Q>00000000"
+			"720D000V?V5oB3Q_HdUoE7a9@DdDE4A9@DmoE4A;Hg]oM4Aj8S4D84@`00000000"
+			"OaPT1000Oa`^13P1@AI[?g`1@A=[OdAoHgljA4Ao?WlBA7l1710007l100000000"
+			"ObM6000oOfMV?3QoBDD`O7a0BDDH@5A0BDD<@5A0BGeVO5ao@CQR?5Po00000000"
+			"Oc``000?Ogij70PO2D]??0Ph2DUM@7i`2DTg@7lh2GUj?0TO0C1870T?00000000"
+			"70<4001o?P<7?1QoHg43O;`h@GT0@:@LB@d0>:@hN@L0@?aoN@<0O7ao0000?000"
+			"OcH0001SOglLA7mg24TnK7ln24US>0PL24U140PnOgl0>7QgOcH0K71S0000A000"
+			"00H00000@Dm1S007@DUSg00?OdTnH7YhOfTL<7Yh@Cl0700?@Ah0300700000000"
+			"<008001QL00ZA41a@6HnI<1i@FHLM81M@@0LG81?O`0nC?Y7?`0ZA7Y300080000"
+			"O`082000Oh0827mo6>Hn?Wmo?6HnMb11MP08@C11H`08@FP0@@0004@000000000"
+			"00P00001Oab00003OcKP0006@6=PMgl<@440MglH@000000`@000001P00000000"
+			"Ob@8@@00Ob@8@Ga13R@8Mga172@8?PAo3R@827QoOb@820@0O`0007`0000007P0"
+			"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
+			"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
+
+		m_sprFont = new Sprite(128, 48);
+		int px = 0, py = 0;
+
+		for (size_t b = 0; b < 1024; b += 4)
+		{
+			uint32_t sym1 = (uint32_t)data[b + 0] - 48;
+			uint32_t sym2 = (uint32_t)data[b + 1] - 48;
+			uint32_t sym3 = (uint32_t)data[b + 2] - 48;
+			uint32_t sym4 = (uint32_t)data[b + 3] - 48;
+			uint32_t r = sym1 << 18 | sym2 << 12 | sym3 << 6 | sym4;
+
+			for (int i = 0; i < 24; i++)
+			{
+				int k = r & (1 << i) ? 255 : 0;
+				m_sprFont->SetPixel(px, py, Pixel(k, k, k, k));
+				if (++py == 48) { px++; py = 0; }
+			}
+		}
+
+		if (m_bCustomIcon)
+		{
+			m_sprIcon = new def::Sprite(m_sIconName);
+
+			GLFWimage img;
+			img.width = m_sprIcon->nWidth;
+			img.height = m_sprIcon->nHeight;
+			img.pixels = m_sprIcon->pPixelData;
+			glfwSetWindowIcon(m_Window, 1, &img);
+		}
+
+		return rcode(true);
+	}
+
+	void GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
+	{
+		if (x >= 0 && y >= 0 && x < m_pDrawTarget->pSprite->nWidth && y < m_pDrawTarget->pSprite->nHeight)
+			m_pDrawTarget->pSprite->SetPixel(x, y, p);
+	}
+
+	void GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p)
 	{
 		int32_t x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
 
@@ -1479,14 +1328,14 @@ namespace def
 		}
 	}
 
-	void def::GameEngine::DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p)
+	void GameEngine::DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p)
 	{
 		DrawLine(x1, y1, x2, y2, p);
 		DrawLine(x2, y2, x3, y3, p);
 		DrawLine(x3, y3, x1, y1, p);
 	}
 
-	void def::GameEngine::FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p)
+	void GameEngine::FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p)
 	{
 		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, p); };
 
@@ -1498,12 +1347,11 @@ namespace def
 		int32_t signx1, signx2, dx1, dy1, dx2, dy2;
 		int32_t e1, e2;
 
-		// Sort vertices
 		if (y1 > y2) { std::swap(y1, y2); std::swap(x1, x2); }
 		if (y1 > y3) { std::swap(y1, y3); std::swap(x1, x3); }
 		if (y2 > y3) { std::swap(y2, y3); std::swap(x2, x3); }
 
-		t1x = t2x = x1; y = y1;   // Starting points
+		t1x = t2x = x1; y = y1;
 		dx1 = (int32_t)(x2 - x1);
 
 		if (dx1 < 0)
@@ -1512,10 +1360,11 @@ namespace def
 			signx1 = -1;
 		}
 		else
+		{
 			signx1 = 1;
+		}
 
 		dy1 = (int32_t)(y2 - y1);
-
 		dx2 = (int32_t)(x3 - x1);
 
 		if (dx2 < 0)
@@ -1524,27 +1373,26 @@ namespace def
 			signx2 = -1;
 		}
 		else
+		{
 			signx2 = 1;
+		}
 
 		dy2 = (int32_t)(y3 - y1);
 
 		if (dy1 > dx1)
-		{   // swap values
+		{
 			std::swap(dx1, dy1);
 			changed1 = true;
 		}
+
 		if (dy2 > dx2)
-		{   // swap values
+		{
 			std::swap(dy2, dx2);
 			changed2 = true;
 		}
 
 		e2 = (int32_t)(dx2 >> 1);
-
-		// Flat top, just process the second half
-		if (y1 == y2)
-			goto next;
-
+		if (y1 == y2)  goto next;
 		e1 = (int32_t)(dx1 >> 1);
 
 		for (int i = 0; i < dx1;)
@@ -1561,7 +1409,6 @@ namespace def
 				maxx = t1x;
 			}
 
-			// process first line until y value is about to change
 			while (i < dx1)
 			{
 				i++;
@@ -1582,9 +1429,8 @@ namespace def
 				else
 					t1x += signx1;
 			}
-			// Move line
+
 		next1:
-			// process second line until y value is about to change
 			while (1)
 			{
 				e2 += dy2;
@@ -1601,6 +1447,7 @@ namespace def
 				else
 					t2x += signx2;
 			}
+
 		next2:
 			if (minx > t1x)
 				minx = t1x;
@@ -1614,25 +1461,19 @@ namespace def
 			if (maxx < t2x)
 				maxx = t2x;
 
-			drawline(minx, maxx, y);    // Draw line from min to max points found on the y
-			// Now increase y
-			if (!changed1)
-				t1x += signx1;
+			drawline(minx, maxx, y);
+			if (!changed1) t1x += signx1;
 
 			t1x += t1xp;
-
-			if (!changed2)
-				t2x += signx2;
+			if (!changed2) t2x += signx2;
 
 			t2x += t2xp;
 			y += 1;
 
-			if (y == y2)
-				break;
-
+			if (y == y2) break;
 		}
+		
 	next:
-		// Second half
 		dx1 = (int32_t)(x3 - x2);
 
 		if (dx1 < 0)
@@ -1641,18 +1482,22 @@ namespace def
 			signx1 = -1;
 		}
 		else
+		{
 			signx1 = 1;
+		}
 
 		dy1 = (int32_t)(y3 - y2);
 		t1x = x2;
 
 		if (dy1 > dx1)
-		{   // swap values
+		{
 			std::swap(dy1, dx1);
 			changed1 = true;
 		}
 		else
+		{
 			changed1 = false;
+		}
 
 		e1 = (int32_t)(dx1 >> 1);
 
@@ -1672,7 +1517,6 @@ namespace def
 				maxx = t1x;
 			}
 
-			// process first line until y value is about to change
 			while (i < dx1)
 			{
 				e1 += dy1;
@@ -1694,11 +1538,10 @@ namespace def
 				else
 					t1x += signx1;
 
-				if (i < dx1)
-					i++;
+				if (i < dx1) i++;
 			}
+
 		next3:
-			// process second line until y value is about to change
 			while (t2x != x3)
 			{
 				e2 += dy2;
@@ -1718,39 +1561,27 @@ namespace def
 				else
 					t2x += signx2;
 			}
+
 		next4:
-
-			if (minx > t1x)
-				minx = t1x;
-
-			if (minx > t2x)
-				minx = t2x;
-
-			if (maxx < t1x)
-				maxx = t1x;
-
-			if (maxx < t2x)
-				maxx = t2x;
+			if (minx > t1x) minx = t1x;
+			if (minx > t2x) minx = t2x;
+			if (maxx < t1x) maxx = t1x;
+			if (maxx < t2x) maxx = t2x;
 
 			drawline(minx, maxx, y);
-
-			if (!changed1)
-				t1x += signx1;
+			if (!changed1) t1x += signx1;
 
 			t1x += t1xp;
-
-			if (!changed2)
-				t2x += signx2;
+			if (!changed2) t2x += signx2;
 
 			t2x += t2xp;
 			y += 1;
 
-			if (y > y3)
-				return;
+			if (y > y3) return;
 		}
 	}
 
-	void def::GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
+	void GameEngine::DrawRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
 	{
 		for (int i = 0; i < sx; i++)
 		{
@@ -1763,62 +1594,47 @@ namespace def
 			Draw(x, y + j, p);
 			Draw(x + sx, y + j, p);
 		}
+
+		Draw(x + sx, y + sy, p);
 	}
 
-	void def::GameEngine::FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
+	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
 	{
 		for (int i = x; i < x + sx; i++)
 			for (int j = y; j < y + sy; j++)
 				Draw(i, j, p);
 	}
 
-	void def::GameEngine::DrawCircle(int32_t x, int32_t y, int32_t r, const Pixel& p)
+	void GameEngine::DrawCircle(int32_t x, int32_t y, int32_t r, const Pixel& p)
 	{
-		if (!r) return;
-
 		int32_t x1 = 0;
 		int32_t y1 = r;
 		float p1 = 3.0f - 2.0f * (float)r;
 
 		while (y1 >= x1)
 		{
-			Draw(x - x1, y - y1, p);	// upper left left
-			Draw(x - y1, y - x1, p);	// upper upper left
-			Draw(x + y1, y - x1, p);	// upper upper right
-			Draw(x + x1, y - y1, p);	// upper right right
-			Draw(x - x1, y + y1, p);	// lower left left
-			Draw(x - y1, y + x1, p);	// lower lower left
-			Draw(x + y1, y + x1, p);	// lower lower right
-			Draw(x + x1, y + y1, p);	// lower right right
+			Draw(x - x1, y - y1, p);
+			Draw(x - y1, y - x1, p);
+			Draw(x + y1, y - x1, p);
+			Draw(x + x1, y - y1, p);
+			Draw(x - x1, y + y1, p);
+			Draw(x - y1, y + x1, p);
+			Draw(x + y1, y + x1, p);
+			Draw(x + x1, y + y1, p);
 
-			if (p1 < 0)
-			{
-				p1 += 4 * x1 + 6;
-
-				x1++;
-			}
-			else
-			{
-				p1 += 4 * (x1 - y1) + 10;
-
-				x1++;
-				y1--;
-			}
+			p1 += 4 * ((p1 < 0) ? (x1++ + 6) : ((x1++ - y1--) + 10));
 		}
 	}
 
 	void def::GameEngine::FillCircle(int32_t x, int32_t y, int32_t r, const Pixel& p)
 	{
-		if (!r) return;
-
 		int32_t x1 = 0;
 		int32_t y1 = r;
 		int32_t p1 = 3 - 2 * r;
 
 		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny)
 		{
-			for (int i = sx; i <= ex; i++)
-				Draw(i, ny, p);
+			for (int i = sx; i <= ex; i++) Draw(i, ny, p);
 		};
 
 		while (y1 >= x1)
@@ -1828,146 +1644,113 @@ namespace def
 			drawline(x - x1, x + x1, y + y1);
 			drawline(x - y1, x + y1, y + x1);
 
-			if (p1 < 0)
-				p1 += 4 * x1++ + 6;
-			else
-				p1 += 4 * (x1++ - y1--) + 10;
+			p1 += 4 * ((p1 < 0) ? (x1++ + 6) : ((x1++ - y1--) + 10));
 		}
 	}
 
 	void def::GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* sprite)
 	{
-		if (sprite == nullptr)
-			return;
-
-		for (int i = 0; i < sprite->GetWidth(); i++)
-			for (int j = 0; j < sprite->GetHeight(); j++)
-			{
-				def::Pixel p = sprite->GetPixel(i, j);
-
-				if ((float)p.a / 255.0f > 0.1f)
-					Draw(x + i, y + j, p);
-			}
+		for (int i = 0; i < sprite->nWidth; i++)
+			for (int j = 0; j < sprite->nHeight; j++)
+				Draw(x + i, y + j, sprite->GetPixel(i, j));
 	}
 
 	void def::GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* sprite)
 	{
-		if (sprite == nullptr)
-			return;
-
 		for (int i = fx, x1 = 0; i < fx + fsx; i++, x1++)
 			for (int j = fy, y1 = 0; j < fy + fsy; j++, y1++)
-			{
-				def::Pixel p = sprite->GetPixel(i, j);
-
-				if ((float)p.a / 255.0f > 0.1f)
-					Draw(x + x1, y + y1, sprite->GetPixel(i, j));
-			}
+				Draw(x + x1, y + y1, sprite->GetPixel(i, j));
 	}
 
-	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
+	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scaleX, float scaleY, const Pixel& tint, int32_t structure)
 	{
-		if (tex == nullptr)
-			return;
+		vf2d vScreenPos =
+		{
+			(x * m_vInvScreenSize.x) * 2.0f - 1.0f,
+			((y * m_vInvScreenSize.y) * 2.0f - 1.0f) * -1.0f
+		};
 
-		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
+		vf2d vScreenSize =
+		{
+			vScreenPos.x + (2.0f * (float(tex->nWidth) * (1.0f / (float)ScreenWidth()))) * scaleX,
+			vScreenPos.y - (2.0f * (float(tex->nHeight) * (1.0f / (float)ScreenHeight()))) * scaleY
+		};
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		TextureInstance ti;
+		ti.tex = tex;
+		ti.points = 4;
+		ti.structure = structure;
+		ti.tint = { tint, tint, tint, tint };
+		ti.vert = { vScreenPos, { vScreenPos.x, vScreenSize.y }, vScreenSize, { vScreenSize.x, vScreenPos.y } };
+		ti.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
 
-		glColor4ub(tint.r, tint.g, tint.b, tint.a);
-
-		glBindTexture(GL_TEXTURE_2D, tex->GetTexId());
-
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 1.0f); glVertex2f(x / scale_x, y / scale_y + tex->Spr()->GetHeight());
-		glTexCoord2f(1.0f, 1.0f); glVertex2f(x / scale_x + tex->Spr()->GetWidth(), y / scale_y + tex->Spr()->GetHeight());
-		glTexCoord2f(1.0f, 0.0f); glVertex2f(x / scale_x + tex->Spr()->GetWidth(), y / scale_y);
-		glTexCoord2f(0.0f, 0.0f); glVertex2f(x / scale_x, y / scale_y);
-		glEnd();
-
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-		glDisable(GL_BLEND);
-
-		glEnd();
+		m_vecTextures.push_back(ti);
 	}
 
-	void GameEngine::DrawPartialTexture(float x, float y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Texture* tex, float scale_x, float scale_y, def::Pixel tint)
+	void GameEngine::DrawPartialTexture(float x, float y, Texture* tex, float filePosX, float filePosY, float fileSizeX, float fileSizeY, float scaleX, float scaleY, const Pixel& tint, int32_t structure)
 	{
-		if (tex == nullptr)
-			return;
+		vf2d vScreenSpacePos =
+		{
+			  (x * m_vInvScreenSize.x) * 2.0f - 1.0f,
+			-((y * m_vInvScreenSize.y) * 2.0f - 1.0f)
+		};
 
-		glScalef(scale_x * (float)m_nPixelWidth, scale_y * (float)m_nPixelHeight, 1.0f);
+		vf2d vScreenSpaceSize =
+		{
+			  ((x + fileSizeX * scaleX) * m_vInvScreenSize.x) * 2.0f - 1.0f,
+			-(((y + fileSizeY * scaleY) * m_vInvScreenSize.y) * 2.0f - 1.0f)
+		};
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		vf2d vQuantisedPos = ((vScreenSpacePos * vf2d(m_vWindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_vWindowSize);
+		vf2d vQuantisedSize = ((vScreenSpaceSize * vf2d(m_vWindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_vWindowSize);
 
-		glColor4ub(tint.r, tint.g, tint.b, tint.a);
+		vf2d tl = (vf2d(filePosX, filePosY) + vf2d(0.0001f, 0.0001f)) * vf2d(tex->fUVScaleX, tex->fUVScaleY);
+		vf2d br = (vf2d(filePosX, filePosY) + vf2d(fileSizeX, fileSizeY) - vf2d(0.0001f, 0.0001f)) * vf2d(tex->fUVScaleX, tex->fUVScaleY);
 
-		glBindTexture(GL_TEXTURE_2D, tex->GetTexId());
-
-		float us = tex->GetUVScaleX();
-		float vs = tex->GetUVScaleY();
-
-		x /= scale_x;
-		y /= scale_y;
-
-		glBegin(GL_QUADS);
-		glTexCoord2f((float)fx * us, (float)fy * vs);				glVertex2f(x, y);
-		glTexCoord2f((float)fx * us, float(fy + fsy) * vs);			glVertex2f(x, y + fsy);
-		glTexCoord2f(float(fx + fsx) * us, float(fy + fsy) * vs);	glVertex2f(x + fsx, y + fsy);
-		glTexCoord2f(float(fx + fsx) * us, (float)fy * vs);			glVertex2f(x + fsx, y);
-		glEnd();
-
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-		glDisable(GL_BLEND);
-
-		glEnd();
+		TextureInstance ti;
+		ti.tex = tex;
+		ti.points = 4;
+		ti.structure = structure;
+		ti.tint = { tint, tint, tint, tint };
+		ti.vert = { { vQuantisedPos.x, vQuantisedPos.y }, { vQuantisedPos.x, vQuantisedSize.y }, { vQuantisedSize.x, vQuantisedSize.y }, { vQuantisedSize.x, vQuantisedPos.y } };
+		ti.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
+		m_vecTextures.push_back(ti);
 	}
 
-	void def::GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r, float s, const Pixel& p)
+	void GameEngine::DrawWireFrameModel(const std::vector<std::pair<float, float>>& modelCoordinates, float x, float y, float r, float s, const Pixel& p)
 	{
-		// pair.first = x coordinate
-		// pair.second = y coordinate
+		int32_t verts = modelCoordinates.size();
 
-		// Create translated model vector of coordinate pairs
-		std::vector<std::pair<float, float>> vecTransformedCoordinates;
-		int32_t verts = vecModelCoordinates.size();
-		vecTransformedCoordinates.resize(verts);
+		std::vector<std::pair<float, float>> vecCoordinates;
+		vecCoordinates.resize(verts);
 
-		// Rotate
 		for (int i = 0; i < verts; i++)
 		{
-			vecTransformedCoordinates[i].first = vecModelCoordinates[i].first * cosf(r) - vecModelCoordinates[i].second * sinf(r);
-			vecTransformedCoordinates[i].second = vecModelCoordinates[i].first * sinf(r) + vecModelCoordinates[i].second * cosf(r);
+			vecCoordinates[i].first = modelCoordinates[i].first * cosf(r) - modelCoordinates[i].second * sinf(r);
+			vecCoordinates[i].second = modelCoordinates[i].first * sinf(r) + modelCoordinates[i].second * cosf(r);
 		}
 
-		// Scale
 		for (int i = 0; i < verts; i++)
 		{
-			vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first * s;
-			vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second * s;
+			vecCoordinates[i].first = vecCoordinates[i].first * s;
+			vecCoordinates[i].second = vecCoordinates[i].second * s;
 		}
 
-		// Translate
 		for (int i = 0; i < verts; i++)
 		{
-			vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first + x;
-			vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second + y;
+			vecCoordinates[i].first = vecCoordinates[i].first + x;
+			vecCoordinates[i].second = vecCoordinates[i].second + y;
 		}
 
-		// Draw Closed Polygon
 		for (int i = 0; i < verts + 1; i++)
 		{
 			int32_t j = (i + 1);
-			DrawLine((int32_t)vecTransformedCoordinates[i % verts].first, (int32_t)vecTransformedCoordinates[i % verts].second,
-				(int32_t)vecTransformedCoordinates[j % verts].first, (int32_t)vecTransformedCoordinates[j % verts].second, p);
+			DrawLine((int32_t)vecCoordinates[i % verts].first, (int32_t)vecCoordinates[i % verts].second,
+				(int32_t)vecCoordinates[j % verts].first, (int32_t)vecCoordinates[j % verts].second, p);
 		}
 	}
 
-	void def::GameEngine::DrawString(int32_t x, int32_t y, const std::string& s, const Pixel& p)
+	void GameEngine::DrawString(int32_t x, int32_t y, const std::string& s, const Pixel& p)
 	{
 		int32_t sx = 0;
 		int32_t sy = 0;
@@ -1996,193 +1779,96 @@ namespace def
 		}
 	}
 
-	void def::GameEngine::Clear(const Pixel& p)
+	void GameEngine::Clear(const Pixel& p)
 	{
-		for (int32_t i = 0; i < m_nScreenWidth * m_nScreenHeight; i++)
-			m_pScreen[i] = p;
+		for (int32_t x = 0; x < m_pDrawTarget->pSprite->nWidth; x++)
+			for (int32_t y = 0; y < m_pDrawTarget->pSprite->nHeight; y++)
+				m_pDrawTarget->pSprite->SetPixel(x, y, p);
 	}
 
-	KeyState GameEngine::GetKey(uint32_t k)
-	{
-		return m_keys[k];
-	}
+	KeyState GameEngine::GetKey(uint32_t k) { return m_Keys[k]; }
+	KeyState GameEngine::GetMouse(uint32_t k) { return m_Mouse[k]; }
 
-	KeyState GameEngine::GetMouse(uint32_t k)
-	{
-		return m_mouse[k];
-	}
+	int32_t GameEngine::MouseX() { return m_vMouse.x; }
+	int32_t GameEngine::MouseY() { return m_vMouse.y; }
 
-	int32_t GameEngine::GetMouseX()
-	{
-		return m_nMouseX;
-	}
+	int32_t GameEngine::ScreenWidth() { return m_vScreenSize.x; }
+	int32_t GameEngine::ScreenHeight() { return m_vScreenSize.y; }
 
-	int32_t GameEngine::GetMouseY()
-	{
-		return m_nMouseY;
-	}
+	bool GameEngine::IsFullScreen() { return m_bFullScreen; }
+	bool GameEngine::IsVSync() { return m_bVSync; }
 
-	int32_t GameEngine::GetScreenWidth()
+	void GameEngine::SetIcon(const std::string& sFilename)
 	{
-		return m_nScreenWidth;
-	}
-
-	int32_t GameEngine::GetScreenHeight()
-	{
-		return m_nScreenHeight;
-	}
-
-	void GameEngine::Translate(int32_t x, int32_t y)
-	{
-		m_vTrans.x = x;
-		m_vTrans.y = y;
-	}
-
-	void GameEngine::Translate(const def::vi2d& trans)
-	{
-		Translate(trans.x, trans.y);
-	}
-
-	void GameEngine::Scale(float x, float y)
-	{
-		m_vScale.x = x;
-		m_vScale.y = y;
-	}
-
-	void GameEngine::Scale(const def::vf2d& scale)
-	{
-		Scale(scale.x, scale.y);
-	}
-
-	bool GameEngine::FullScreenEnabled()
-	{
-		return m_bFullScreen;
-	}
-
-	bool GameEngine::VSyncEnabled()
-	{
-		return m_bVSync;
-	}
-
-	void GameEngine::SetIcon(const std::string& filename)
-	{
-		m_sIconFileName = filename;
+		m_sIconName = sFilename;
 		m_bCustomIcon = true;
 	}
 
-	void GameEngine::SetTitle(const std::string& title)
+	void GameEngine::SetDrawTarget(Graphic* pTarget)
 	{
-		m_sAppName = title;
+		m_pDrawTarget = pTarget ? pTarget : m_pScreen;
 	}
 
-	void GameEngine::ShowFPS(bool show)
-	{
-		m_bShowFPS = show;
-	}
+	Graphic* GameEngine::GetDrawTarget() { return m_pDrawTarget; }
+
+	void GameEngine::SetTitle(const std::string& sTitle) { m_sAppName = sTitle; }
+	void GameEngine::ShowFPS(bool bShow) { m_bShowFPS = bShow; }
 
 	WindowState GameEngine::GetWindowState()
 	{
-		bool bFocused = glfwGetWindowAttrib(m_glWindow, GLFW_FOCUSED);
-		bool bMaximized = glfwGetWindowAttrib(m_glWindow, GLFW_MAXIMIZED);
-
 		int f = WS_NONE;
-
-		if (bFocused)
-			f |= WS_FOCUSED;
-
-		if (bMaximized)
-			f |= WS_MAXIMIZED;
-
+		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED)) f |= WS_FOCUSED;
+		if (glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED)) f |= WS_MAXIMIZED;
 		return static_cast<WindowState>(f);
 	}
 
-	GLFWwindow* GameEngine::GetWindow()
-	{
-		return m_glWindow;
-	}
+	GLFWwindow* GameEngine::GetWindow() { return m_Window; }
 
 	void GameEngine::Draw(vi2d pos, const Pixel& p)
-	{
-		Draw(pos.x, pos.y, p);
-	}
+	{ Draw(pos.x, pos.y, p); }
 
 	void GameEngine::DrawLine(vi2d pos1, vi2d pos2, const Pixel& p)
-	{
-		DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, p);
-	}
+	{ DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, p); }
 
 	void GameEngine::DrawTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p)
-	{
-		DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
-	}
+	{ DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p); }
 
 	void GameEngine::FillTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p)
-	{
-		FillTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
-	}
+	{ FillTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p); }
 
 	void GameEngine::DrawRectangle(vi2d pos, vi2d size, const Pixel& p)
-	{
-		DrawRectangle(pos.x, pos.y, size.x, size.y, p);
-	}
+	{ DrawRectangle(pos.x, pos.y, size.x, size.y, p); }
 
 	void GameEngine::FillRectangle(vi2d pos, vi2d size, const Pixel& p)
-	{
-		FillRectangle(pos.x, pos.y, size.x, size.y, p);
-	}
+	{ FillRectangle(pos.x, pos.y, size.x, size.y, p); }
 
 	void GameEngine::DrawCircle(vi2d pos, int32_t r, const Pixel& p)
-	{
-		DrawCircle(pos.x, pos.y, r, p);
-	}
+	{ DrawCircle(pos.x, pos.y, r, p); }
 
 	void GameEngine::FillCircle(vi2d pos, int32_t r, const Pixel& p)
-	{
-		FillCircle(pos.x, pos.y, r, p);
-	}
+	{ FillCircle(pos.x, pos.y, r, p); }
 
 	void GameEngine::DrawSprite(vi2d pos, Sprite* spr)
-	{
-		DrawSprite(pos.x, pos.y, spr);
-	}
+	{ DrawSprite(pos.x, pos.y, spr); }
 
 	void GameEngine::DrawPartialSprite(vi2d pos, vi2d fpos, vi2d fsize, Sprite* spr)
-	{
-		DrawPartialSprite(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, spr);
-	}
+	{ DrawPartialSprite(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, spr); }
 
-	void GameEngine::DrawTexture(vi2d pos, Texture* Texture, vf2d scale, def::Pixel tint)
-	{
-		DrawTexture(pos.x, pos.y, Texture, scale.x, scale.y, tint);
-	}
+	void GameEngine::DrawTexture(vf2d pos, Texture* tex, vf2d scale, const Pixel& tint, int32_t structure)
+	{ DrawTexture(pos.x, pos.y, tex, scale.x, scale.y, tint, structure); }
 
-	void GameEngine::DrawPartialTexture(vi2d pos, vi2d fpos, vi2d fsize, Texture* Texture, vf2d scale, def::Pixel tint)
-	{
-		DrawPartialTexture(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, Texture, scale.x, scale.y, tint);
-	}
+	void GameEngine::DrawPartialTexture(vf2d pos, Texture* tex, vi2d filePos, vi2d fileSize, vf2d scale, const Pixel& tint, int32_t structure)
+	{ DrawPartialTexture(pos.x, pos.y, tex, filePos.x, filePos.y, fileSize.x, fileSize.y, scale.x, scale.y, tint, structure); }
 
-	void GameEngine::DrawWireFrameModel(std::vector<std::pair<float, float>>& vecModelCoordinates, vf2d pos, float r, float s, const Pixel& p)
-	{
-		DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p);
-	}
+	void GameEngine::DrawWireFrameModel(const std::vector<std::pair<float, float>>& vecModelCoordinates, vf2d pos, float r, float s, const Pixel& p)
+	{ DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p); }
 
 	void GameEngine::DrawString(vi2d pos, const std::string& text, const Pixel& p)
-	{
-		DrawString(pos.x, pos.y, text, p);
-	}
+	{ DrawString(pos.x, pos.y, text, p); }
 
-	vi2d GameEngine::GetScreenSize()
-	{
-		return vi2d(m_nScreenWidth, m_nScreenHeight);
-	}
+	vi2d GameEngine::ScreenSize() { return m_vScreenSize; }
+	vi2d GameEngine::GetMouse() { return m_vMouse; }
 
-	vi2d GameEngine::GetMouse()
-	{
-		return vi2d(m_nMouseX, m_nMouseY);
-	}
-
-	/******************************************
-	* @ MAIN GAME ENGINE CLASS IMPLEMENTATION *
-	******************************************/
+#endif
 
 }
