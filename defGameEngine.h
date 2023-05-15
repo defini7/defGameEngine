@@ -549,10 +549,10 @@ namespace def
 	{
 	public:
 		Sprite() = default;
-		Sprite(int32_t width, int32_t height)
+		Sprite(int32_t width, int32_t height, int32_t channels = 4)
 		{
-			if (width > 0 && height > 0)
-				Create(width, height);
+			if (width > 0 && height > 0 && channels > 0)
+				Create(width, height, channels);
 		}
 
 		Sprite(const std::string& sFilename)
@@ -589,10 +589,9 @@ namespace def
 
 		rcode Load(const std::string& sFilename)
 		{
-			pPixelData = stbi_load(sFilename.c_str(), &nWidth, &nHeight, &nChannels, 0);
-
-			if (!pPixelData)
-				return rcode(false, "stb_image: " + std::string(stbi_failure_reason()));
+			nChannels = 4;
+			pPixelData = stbi_load(sFilename.c_str(), &nWidth, &nHeight, nullptr, nChannels);
+			if (!pPixelData) return rcode(false, "stb_image: " + std::string(stbi_failure_reason()));
 
 			return rcode(true);
 		}
@@ -622,24 +621,34 @@ namespace def
 
 		void SetPixel(const int32_t x, const int32_t y, const Pixel& p)
 		{
-			size_t i = nChannels * (y * nWidth + x);
+			if (x >= 0 && y >= 0 && x < nWidth && y < nHeight)
+			{
+				size_t i = nChannels * (y * nWidth + x);
 
-			pPixelData[i]	 = p.r;
-			pPixelData[i + 1] = p.g;
-			pPixelData[i + 2] = p.b;
-			pPixelData[i + 3] = p.a;
+				pPixelData[i] = p.r;
+				pPixelData[i + 1] = p.g;
+				pPixelData[i + 2] = p.b;
+				pPixelData[i + 3] = p.a;
+			}
 		}
 
 		Pixel GetPixel(const int32_t x, const int32_t y)
 		{
-			size_t i = nChannels * (y * nWidth + x);
+			if (x >= 0 && y >= 0 && x < nWidth && y < nHeight)
+			{
+				size_t i = nChannels * (y * nWidth + x);
 
-			return Pixel(
-				pPixelData[i],
-				pPixelData[i + 1],
-				pPixelData[i + 2],
-				pPixelData[i + 3]
-			);
+				return Pixel(
+					pPixelData[i],
+					pPixelData[i + 1],
+					pPixelData[i + 2],
+					pPixelData[i + 3]
+				);
+			}
+			else
+			{
+				return BLACK;
+			}
 		}
 
 		void SetPixelData(const uint8_t* data)
