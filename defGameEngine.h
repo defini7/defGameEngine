@@ -436,6 +436,13 @@ namespace def
 		Pixel() = default;
 		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca = 255U) : r(cr), g(cg), b(cb), a(ca) {}
 
+		enum PixelMode
+		{
+			DEFAULT,
+			ALPHA,
+			MASK
+		};
+
 		uint8_t r, g, b, a;
 
 		template <typename T>
@@ -619,7 +626,7 @@ namespace def
 			}
 		}
 
-		void SetPixel(const int32_t x, const int32_t y, const Pixel& p)
+		bool SetPixel(const int32_t x, const int32_t y, const Pixel& p)
 		{
 			if (x >= 0 && y >= 0 && x < nWidth && y < nHeight)
 			{
@@ -629,7 +636,11 @@ namespace def
 				pPixelData[i + 1] = p.g;
 				pPixelData[i + 2] = p.b;
 				pPixelData[i + 3] = p.a;
+
+				return true;
 			}
+
+			return false;
 		}
 
 		Pixel GetPixel(const int32_t x, const int32_t y)
@@ -873,6 +884,8 @@ namespace def
 		std::vector<TextureInstance> m_vecTextures;
 		Pixel m_pixTint;
 
+		int32_t m_nPixelMode = Pixel::DEFAULT;
+
 	public:
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
@@ -886,8 +899,8 @@ namespace def
 		void DrawQuad(const Pixel& pixTint);
 
 	public:
-		void Draw(vi2d pos, const Pixel& p = WHITE);
-		virtual void Draw(int32_t x, int32_t y, const Pixel& p = WHITE);
+		bool Draw(vi2d pos, const Pixel& p = WHITE);
+		virtual bool Draw(int32_t x, int32_t y, const Pixel& p = WHITE);
 
 		void DrawLine(vi2d pos1, vi2d pos2, const Pixel& p = WHITE);
 		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
@@ -958,7 +971,8 @@ namespace def
 		void ShowFPS(bool bShow = true);
 		void DrawTexture(const TextureInstance& tex);
 
-
+		void SetPixelMode(int32_t nPixelMode);
+		int32_t GetPixelMode();
 
 	};
 
@@ -1244,10 +1258,34 @@ namespace def
 		return rcode(true);
 	}
 
-	void GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
+	bool GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
 	{
-		if (x >= 0 && y >= 0 && x < m_pDrawTarget->pSprite->nWidth && y < m_pDrawTarget->pSprite->nHeight)
-			m_pDrawTarget->pSprite->SetPixel(x, y, p);
+		if (!m_pDrawTarget) return false;
+
+		Sprite* target = m_pDrawTarget->pSprite;
+
+		if (m_nPixelMode == Pixel::DEFAULT)
+		{
+			return target->SetPixel(x, y, p);
+		}
+
+		if (m_nPixelMode == Pixel::MASK)
+		{
+			if (p.a == 255) return target->SetPixel(x, y, p);
+		}
+
+		if (m_nPixelMode == Pixel::ALPHA)
+		{
+			Pixel d = target->GetPixel(x, y);
+			float a = (float)(p.a / 255.0f);
+			float c = 1.0f - a;
+			float r = a * (float)p.r + c * (float)d.r;
+			float g = a * (float)p.g + c * (float)d.g;
+			float b = a * (float)p.b + c * (float)d.b;
+			return target->SetPixel(x, y, Pixel((uint8_t)r, (uint8_t)g, (uint8_t)b));
+		}
+
+		return false;
 	}
 
 	void GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p)
@@ -1833,7 +1871,10 @@ namespace def
 
 	GLFWwindow* GameEngine::GetWindow() { return m_Window; }
 
-	void GameEngine::Draw(vi2d pos, const Pixel& p)
+	void GameEngine::SetPixelMode(int32_t nPixelMode) { m_nPixelMode = nPixelMode; }
+	int32_t GameEngine::GetPixelMode() { return m_nPixelMode; }
+
+	bool GameEngine::Draw(vi2d pos, const Pixel& p)
 	{ Draw(pos.x, pos.y, p); }
 
 	void GameEngine::DrawLine(vi2d pos1, vi2d pos2, const Pixel& p)
