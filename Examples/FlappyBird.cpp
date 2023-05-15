@@ -1,3 +1,4 @@
+#define DGE_APPLICATION
 #include "defGameEngine.h"
 
 using namespace std;
@@ -15,7 +16,7 @@ protected:
 	bool OnUserCreate() override
 	{
 		listSections = { 0, 0, 0, 0 };
-		fSectionWidth = (float)GetScreenWidth() / float(listSections.size() - 1);
+		fSectionWidth = (float)ScreenWidth() / float(listSections.size() - 1);
 
 		fLevelPosition = 0.0f;
 
@@ -23,7 +24,7 @@ protected:
 		nMaxObstacleCount = 4;
 
 		vPosition.x = 5;
-		vPosition.y = GetScreenHeight() / 2;
+		vPosition.y = ScreenHeight() / 2;
 
 		vAcceleration.x = 0.0f;
 		vAcceleration.y = 0.0f;
@@ -50,7 +51,7 @@ protected:
 	void ResetGame()
 	{
 		listSections = { 0, 0, 0, 0 };
-		fSectionWidth = (float)GetScreenWidth() / float(listSections.size() - 1);
+		fSectionWidth = (float)ScreenWidth() / float(listSections.size() - 1);
 
 		fLevelPosition = 0.0f;
 
@@ -58,7 +59,7 @@ protected:
 		nMaxObstacleCount = 4;
 
 		vPosition.x = 5;
-		vPosition.y = GetScreenHeight() / 2;
+		vPosition.y = ScreenHeight() / 2;
 
 		vAcceleration.x = 0.0f;
 		vAcceleration.y = 0.0f;
@@ -82,13 +83,13 @@ protected:
 			if (GetKey(def::Key::SPACE).bPressed)
 				ResetGame();
 
-			DrawString(GetScreenWidth() / 2 - GetScreenWidth() / 5, GetScreenHeight() / 2, "\t\tGame Over!\nPress Space to try again!", def::WHITE);
+			DrawString(ScreenWidth() / 2 - ScreenWidth() / 5, ScreenHeight() / 2, "\t\tGame Over!\nPress Space to try again!", def::WHITE);
 			return true;
 		}
 
 		Clear(def::BLACK);
 
-		bAlive = (vPosition >= vf2d(0.0f, 0.0f) && vPosition < (vf2d)GetScreenSize());
+		bAlive = (vPosition >= vf2d(0.0f, 0.0f) && vPosition < (vf2d)ScreenSize());
 
 		if (GetKey(def::Key::SPACE).bPressed)
 		{
@@ -111,7 +112,7 @@ protected:
 			fLevelPosition -= fSectionWidth;
 			listSections.pop_front();
 
-			int x = rand() % (GetScreenHeight() - 20);
+			int x = rand() % (ScreenHeight() - 20);
 
 			if (x <= 0) x = 0;
 			else nScore++;
@@ -126,10 +127,10 @@ protected:
 		{
 			if (s != 0)
 			{
-				vi2d vBottom = { int((float)nSection * fSectionWidth + 10.0f - fLevelPosition), GetScreenHeight() - s + 20 };
-				vi2d vBottomSize = { int((float)nSection * fSectionWidth + 15.0f - fLevelPosition) - vBottom.x + 20, GetScreenHeight() - vBottom.y };
+				vi2d vBottom = { int((float)nSection * fSectionWidth + 10.0f - fLevelPosition), ScreenHeight() - s + 20 };
+				vi2d vBottomSize = { int((float)nSection * fSectionWidth + 15.0f - fLevelPosition) - vBottom.x + 20, ScreenHeight() - vBottom.y };
 				vi2d vTop = { int((float)nSection * fSectionWidth + 10.0f - fLevelPosition), 0 };
-				vi2d vTopSize = { int((float)nSection * fSectionWidth + 15.0f - fLevelPosition) - vTop.x + 20, GetScreenHeight() - s - vTop.y - 35 };
+				vi2d vTopSize = { int((float)nSection * fSectionWidth + 15.0f - fLevelPosition) - vTop.x + 20, ScreenHeight() - s - vTop.y - 35 };
 
 				FillRectangle(vTop, vTopSize, def::GREEN);
 				FillRectangle(vBottom, vBottomSize, def::GREEN);
