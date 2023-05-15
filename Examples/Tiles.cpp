@@ -1,3 +1,4 @@
+#define DGE_APPLICATION
 #include "defGameEngine.h"
 
 #include <unordered_map>
@@ -329,7 +330,7 @@ protected:
 
 		DrawSprite(0, 0, sprBackground);
 
-		vi2d vVisibleTiles = GetScreenSize() / vTileSize;
+		vi2d vVisibleTiles = ScreenSize() / vTileSize;
 		vf2d vOffset = vPlayerPos - (vf2d)vVisibleTiles * 0.5f;
 
 		vOffset = vOffset.max({ 0.0f, 0.0f });
