@@ -29,6 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define DGE_APPLICATION
 #include "defGameEngine.h"
 
 #pragma warning(disable : 4996)
@@ -190,7 +191,7 @@ typedef vec3d_basic<double> vd3d;
 struct mat4x4
 {
 	mat4x4() = default;
-	mat4x4(float* &mat)
+	mat4x4(float*& mat)
 	{
 		for (int x = 0; x < 4; x++)
 			for (int y = 0; y < 4; y++)
@@ -463,6 +464,12 @@ public:
 		ShowFPS();
 	}
 
+	~Engine3D()
+	{
+		delete[] pDepthBuffer;
+		delete sprTex;
+	}
+
 private:
 	mesh meshCube;
 	mat4x4 matProj;
@@ -722,10 +729,10 @@ protected:
 					tex_v = (1.0f - t) * tex_sv + t * tex_ev;
 					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
 
-					if (tex_w > pDepthBuffer[i * GetScreenWidth() + j])
+					if (tex_w > pDepthBuffer[i * ScreenWidth() + j])
 					{
 						Draw(j, i, tex->Sample(tex_u / tex_w, tex_v / tex_w));
-						pDepthBuffer[i * GetScreenWidth() + j] = tex_w;
+						pDepthBuffer[i * ScreenWidth() + j] = tex_w;
 					}
 
 					t += tstep;
@@ -784,10 +791,10 @@ protected:
 					tex_v = (1.0f - t) * tex_sv + t * tex_ev;
 					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
 
-					if (tex_w > pDepthBuffer[i * GetScreenWidth() + j])
+					if (tex_w > pDepthBuffer[i * ScreenWidth() + j])
 					{
 						Draw(j, i, tex->Sample(tex_u / tex_w, tex_v / tex_w));
-						pDepthBuffer[i * GetScreenWidth() + j] = tex_w;
+						pDepthBuffer[i * ScreenWidth() + j] = tex_w;
 					}
 
 					t += tstep;
@@ -799,14 +806,14 @@ protected:
 
 	bool OnUserCreate() override
 	{
-		pDepthBuffer = new float[GetScreenWidth() * GetScreenHeight()];
+		pDepthBuffer = new float[ScreenWidth() * ScreenHeight()];
 
 		sprTex = new def::Sprite("castle.png");
 
 		if (!LoadFromObjectFile(meshCube, "castle.obj", true))
 			return false;
 
-		matProj.projection(90.0f, (float)GetScreenHeight() / (float)GetScreenWidth(), 0.1f, 1000.0f);
+		matProj.projection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
 
 		return true;
 	}
@@ -931,21 +938,21 @@ protected:
 					triProjected.p[1] = triProjected.p[1] + vOffsetView;
 					triProjected.p[2] = triProjected.p[2] + vOffsetView;
 
-					triProjected.p[0].x *= 0.5f * (float)GetScreenWidth();
-					triProjected.p[0].y *= 0.5f * (float)GetScreenHeight();
-					triProjected.p[1].x *= 0.5f * (float)GetScreenWidth();
-					triProjected.p[1].y *= 0.5f * (float)GetScreenHeight();
-					triProjected.p[2].x *= 0.5f * (float)GetScreenWidth();
-					triProjected.p[2].y *= 0.5f * (float)GetScreenHeight();
+					triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
+					triProjected.p[1].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[1].y *= 0.5f * (float)ScreenHeight();
+					triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 
 					vecTrianglesToRaster.push_back(triProjected);
 				}
 			}
 		}
 
-		Clear(def::BLACK);
+		Clear(def::CYAN);
 
-		for (int i = 0; i < GetScreenWidth() * GetScreenHeight(); i++)
+		for (int i = 0; i < ScreenWidth() * ScreenHeight(); i++)
 			pDepthBuffer[i] = 0.0f;
 
 		for (auto& triToRaster : vecTrianglesToRaster)
@@ -969,9 +976,9 @@ protected:
 					switch (p)
 					{
 					case 0:	nTrisToAdd = ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, t, clipped[0], clipped[1]);								break;
-					case 1:	nTrisToAdd = ClipAgainstPlane({ 0.0f, (float)GetScreenHeight() - 1.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, t, clipped[0], clipped[1]);	break;
+					case 1:	nTrisToAdd = ClipAgainstPlane({ 0.0f, (float)ScreenHeight() - 1.0f, 0.0f }, { 0.0f, -1.0f, 0.0f }, t, clipped[0], clipped[1]);	break;
 					case 2:	nTrisToAdd = ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, t, clipped[0], clipped[1]);								break;
-					case 3:	nTrisToAdd = ClipAgainstPlane({ (float)GetScreenWidth(), 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, t, clipped[0], clipped[1]);	break;
+					case 3:	nTrisToAdd = ClipAgainstPlane({ (float)ScreenWidth(), 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, t, clipped[0], clipped[1]);	break;
 					}
 
 					for (int i = 0; i < nTrisToAdd; i++)
