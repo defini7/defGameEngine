@@ -1,3 +1,4 @@
+#define DGE_APPLICATION
 #include "defGameEngine.h"
 
 #define DGE_PANANDZOOM
@@ -48,10 +49,10 @@ public:
 		{
 			def::vf2d vOffset = vFilePos - vFilePos.floor();
 
-			def::Pixel pTL = GetPixel(vFilePos + def::vi2d(0, 0), wrap);
-			def::Pixel pTR = GetPixel(vFilePos + def::vi2d(1, 0), wrap);
-			def::Pixel pBL = GetPixel(vFilePos + def::vi2d(0, 1), wrap);
-			def::Pixel pBR = GetPixel(vFilePos + def::vi2d(1, 1), wrap);
+			def::Pixel pTL = GetPixel(vFilePos + def::vf2d(0, 0), wrap);
+			def::Pixel pTR = GetPixel(vFilePos + def::vf2d(1, 0), wrap);
+			def::Pixel pBL = GetPixel(vFilePos + def::vf2d(0, 1), wrap);
+			def::Pixel pBR = GetPixel(vFilePos + def::vf2d(1, 1), wrap);
 
 			def::Pixel pTop = pTR * vOffset.x + pTL * (1.0f - vOffset.x);
 			def::Pixel pBottom = pBR * vOffset.x + pBL * (1.0f - vOffset.x);
@@ -73,7 +74,7 @@ public:
 		{
 		case WrapMode::None:
 		{
-			if (pos.x >= 0 && pos.y >= 0 && pos.x < m_Spr->GetWidth() && pos.y < m_Spr->GetHeight())
+			if (pos.x >= 0 && pos.y >= 0 && pos.x < m_Spr->nWidth && pos.y < m_Spr->nHeight)
 				out = m_Spr->GetPixel(pos.x, pos.y);
 		}
 		break;
@@ -82,8 +83,8 @@ public:
 		{
 			def::vi2d vFilePos;
 
-			vFilePos.x = pos.x % m_Spr->GetWidth();
-			vFilePos.y = pos.y % m_Spr->GetHeight();
+			vFilePos.x = pos.x % m_Spr->nWidth;
+			vFilePos.y = pos.y % m_Spr->nHeight;
 
 			out = m_Spr->GetPixel(vFilePos.x, vFilePos.y);
 		}
@@ -93,14 +94,14 @@ public:
 		{
 			def::vi2d vQueue, vMirrored;
 
-			vQueue.x = pos.x / m_Spr->GetWidth();
-			vQueue.y = pos.y / m_Spr->GetHeight();
+			vQueue.x = pos.x / m_Spr->nWidth;
+			vQueue.y = pos.y / m_Spr->nHeight;
 
-			vMirrored.x = pos.x % m_Spr->GetWidth();
-			vMirrored.y = pos.y % m_Spr->GetHeight();
+			vMirrored.x = pos.x % m_Spr->nWidth;
+			vMirrored.y = pos.y % m_Spr->nHeight;
 
-			if (vQueue.x % 2 == 0) vMirrored.x = m_Spr->GetWidth() - vMirrored.x - 1;
-			if (vQueue.y % 2 == 0) vMirrored.y = m_Spr->GetHeight() - vMirrored.y - 1;
+			if (vQueue.x % 2 == 0) vMirrored.x = m_Spr->nWidth - vMirrored.x - 1;
+			if (vQueue.y % 2 == 0) vMirrored.y = m_Spr->nHeight - vMirrored.y - 1;
 
 			out = m_Spr->GetPixel(vMirrored.x, vMirrored.y);
 		}
@@ -108,7 +109,7 @@ public:
 
 		case WrapMode::Clamp:
 		{
-			def::vi2d vClamped = pos.clamp({ 0, 0 }, m_Spr->GetSize() - 1);
+			def::vi2d vClamped = pos.clamp({ 0, 0 }, { m_Spr->nWidth - 1, m_Spr->nHeight - 1 });
 			out = m_Spr->GetPixel(vClamped.x, vClamped.y);
 		}
 		break;
@@ -120,7 +121,7 @@ public:
 
 	def::vi2d GetSize() const
 	{
-		return m_Spr->GetSize();
+		return { m_Spr->nWidth, m_Spr->nHeight };
 	}
 
 public:
@@ -169,8 +170,8 @@ protected:
 
 	void DrawCustomTexture(std::unique_ptr<CustomTexture>& texture)
 	{
-		for (int x = 0; x < GetScreenWidth(); x++)
-			for (int y = 0; y < GetScreenHeight(); y++)
+		for (int x = 0; x < ScreenWidth(); x++)
+			for (int y = 0; y < ScreenHeight(); y++)
 			{
 				def::vf2d vSample = pz.ScreenToWorld({ x, y });
 
@@ -187,8 +188,8 @@ protected:
 
 	void DrawMixedCustomTexture(std::unique_ptr<CustomTexture>& texture1, std::unique_ptr<CustomTexture>& texture2, float force = 0.5f)
 	{
-		for (int x = 0; x < GetScreenWidth(); x++)
-			for (int y = 0; y < GetScreenHeight(); y++)
+		for (int x = 0; x < ScreenWidth(); x++)
+			for (int y = 0; y < ScreenHeight(); y++)
 			{
 				def::vf2d vSample = pz.ScreenToWorld({ x, y });
 
@@ -232,7 +233,7 @@ protected:
 		//DrawMixedCustomTexture(tex1, tex2);
 
 		pz.DrawRectangle(0.0f, 0.0f, 1.0f, 1.0f, def::WHITE);
-		
+
 		DrawString(8, 8, "Sample mode: Point - 1, BiLinear - 2");
 		DrawString(8, 16, "Wrap mode: None - 3, Clamp - 4, Mirror - 5, Repeat - 6");
 
