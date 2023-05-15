@@ -1,3 +1,4 @@
+#define DGE_APPLICATION
 #include "defGameEngine.h"
 
 #include <algorithm>
