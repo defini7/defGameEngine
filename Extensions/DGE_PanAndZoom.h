@@ -127,11 +127,8 @@ namespace def
 			if (sprite == nullptr)
 				return;
 
-			if (!sprite->IsOk())
-				return;
-
-			for (int i = 0; i < sprite->GetWidth(); i++)
-				for (int j = 0; j < sprite->GetHeight(); j++)
+			for (int i = 0; i < sprite->nWidth; i++)
+				for (int j = 0; j < sprite->nHeight; j++)
 					Draw(x + i, y + j, sprite->GetPixel(i, j));
 		}
 
