@@ -860,7 +860,6 @@ namespace def
 		bool m_bAppRunning;
 		bool m_bFullScreen;
 		bool m_bVSync;
-		bool m_bShowFPS;
 		bool m_bDirtyPixel;
 
 		KeyState m_Keys[512];
@@ -936,6 +935,9 @@ namespace def
 
 		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
 
+		void DrawRotatedTexture(vf2d pos, float r, Texture* tex, vf2d center = { 0.0f, 0.0f }, vf2d scale = { 1.0f, 1.0f }, const Pixel & tint = WHITE, int32_t structure = Texture::FAN);
+		virtual void DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
+
 		void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, vf2d pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 		virtual void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 
@@ -969,7 +971,6 @@ namespace def
 		WindowState GetWindowState();
 		GLFWwindow* GetWindow();
 
-		void ShowFPS(bool bShow = true);
 		void DrawTexture(const TextureInstance& tex);
 
 		void SetPixelMode(int32_t nPixelMode);
@@ -1103,16 +1104,12 @@ namespace def
 
 			glfwPollEvents();
 
-			if (m_bShowFPS)
+			m_fTickTimer += fDeltaTime;
+			if (m_fTickTimer >= 1.0f)
 			{
-				m_fTickTimer += fDeltaTime;
-
-				if (m_fTickTimer >= 1.0f)
-				{
-					sTitle = "github.com/defini7 - defGameEngine - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / fDeltaTime));
-					glfwSetWindowTitle(m_Window, sTitle.c_str());
-					m_fTickTimer = 0.0f;
-				}
+				sTitle = "github.com/defini7 - defGameEngine - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / fDeltaTime));
+				glfwSetWindowTitle(m_Window, sTitle.c_str());
+				m_fTickTimer = 0.0f;
 			}
 		}
 
@@ -1487,6 +1484,7 @@ namespace def
 					else
 						goto next2;
 				}
+
 				if (changed2)
 					break;
 				else
@@ -1494,17 +1492,10 @@ namespace def
 			}
 
 		next2:
-			if (minx > t1x)
-				minx = t1x;
-
-			if (minx > t2x)
-				minx = t2x;
-
-			if (maxx < t1x)
-				maxx = t1x;
-
-			if (maxx < t2x)
-				maxx = t2x;
+			if (minx > t1x) minx = t1x;
+			if (minx > t2x) minx = t2x;
+			if (maxx < t1x) maxx = t1x;
+			if (maxx < t2x) maxx = t2x;
 
 			drawline(minx, maxx, y);
 			if (!changed1) t1x += signx1;
@@ -1575,7 +1566,9 @@ namespace def
 						break;
 					}
 					else
-						goto next3;
+					{
+						goto next3;			
+					}
 				}
 
 				if (changed1)
@@ -1762,6 +1755,38 @@ namespace def
 		m_vecTextures.push_back(ti);
 	}
 
+	void GameEngine::DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint, int32_t structure)
+	{
+		vf2d vScreenPos =
+		{
+			((x - centerX * scaleX * (float)tex->nWidth) * m_vInvScreenSize.x) * 2.0f - 1.0f,
+			(((y - centerY * scaleY * (float)tex->nHeight) * m_vInvScreenSize.y) * 2.0f - 1.0f) * -1.0f
+		};
+
+		vf2d vScreenSize =
+		{
+			vScreenPos.x + (2.0f * (float(tex->nWidth) * (1.0f / (float)ScreenWidth()))) * scaleX,
+			vScreenPos.y - (2.0f * (float(tex->nHeight) * (1.0f / (float)ScreenHeight()))) * scaleY
+		};
+
+		TextureInstance ti;
+		ti.tex = tex;
+		ti.points = 4;
+		ti.structure = structure;
+		ti.tint = { tint, tint, tint, tint };
+		ti.vert = { vScreenPos, { vScreenPos.x, vScreenSize.y }, vScreenSize, { vScreenSize.x, vScreenPos.y } };
+		ti.uv = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } };
+
+		for (auto& v : ti.vert)
+		{
+			vf2d _v = v;
+			v.x = _v.x * cos(r) - _v.y * sin(r);
+			v.y = _v.x * sin(r) + _v.y * cos(r);
+		}
+
+		m_vecTextures.push_back(ti);
+	}
+
 	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint, int32_t structure)
 	{
 		TextureInstance di;
@@ -1898,7 +1923,6 @@ namespace def
 	Graphic* GameEngine::GetDrawTarget() { return m_pDrawTarget; }
 
 	void GameEngine::SetTitle(const std::string& sTitle) { m_sAppName = sTitle; }
-	void GameEngine::ShowFPS(bool bShow) { m_bShowFPS = bShow; }
 
 	WindowState GameEngine::GetWindowState()
 	{
@@ -1948,6 +1972,9 @@ namespace def
 
 	void GameEngine::DrawPartialTexture(vf2d pos, vi2d filePos, vi2d fileSize, Texture* tex, vf2d scale, const Pixel& tint, int32_t structure)
 	{ DrawPartialTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, tex, scale.x, scale.y, tint, structure); }
+
+	void GameEngine::DrawRotatedTexture(vf2d pos, float r, Texture* tex, vf2d center, vf2d scale, const Pixel& tint, int32_t structure)
+	{ DrawRotatedTexture(pos.x, pos.y, r, tex, center.x, center.y, scale.x, scale.y, tint, structure); }
 
 	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, vf2d pos, float r, float s, const Pixel& p)
 	{ DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p); }
