@@ -110,14 +110,6 @@
 
 namespace def
 {
-	// 3 possible states of window
-	enum WindowState
-	{
-		WS_NONE,
-		WS_MAXIMIZED,
-		WS_FOCUSED
-	};
-
 	// Keyboard keys constants for convenient usage
 	namespace Key
 	{
@@ -510,9 +502,9 @@ namespace def
 		friend bool operator!=(const Pixel& lhs, const Pixel& rhs) { return lhs.r != rhs.r || lhs.g != rhs.g || lhs.b != rhs.b; }
 	};
 
-	def::Pixel PixelF(float r, float g, float b)
+	Pixel PixelF(float r, float g, float b)
 	{
-		return def::Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f));
+		return Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f));
 	}
 
 	static Pixel BLACK(0, 0, 0, 0),
@@ -702,6 +694,13 @@ namespace def
 			Construct(new Sprite(sFileName), true);
 		}
 
+		enum TextureStructure : int32_t
+		{
+			DEFAULT,
+			FAN,
+			STRIP
+		};
+
 	private:
 		void Construct(Sprite* pSprite, bool bDeleteSprite)
 		{
@@ -803,18 +802,18 @@ namespace def
 		void UpdateTexture() { pTexture->Update(pSprite); }
 	};
 
-	enum TextureStructure : int32_t
+	enum class WindowState
 	{
-		DEFAULT,
-		FAN,
-		STRIP
+		NONE,
+		MAXIMIZED,
+		FOCUSED
 	};
 
 	struct TextureInstance
 	{
 		Texture* tex = nullptr;
 
-		int32_t structure = TextureStructure::FAN;
+		int32_t structure = Texture::FAN;
 		int32_t points = 0;
 
 		std::vector<Pixel> tint;
@@ -828,17 +827,18 @@ namespace def
 		GameEngine()
 		{
 			m_sAppName = "Undefined";
-			m_bCustomIcon = false;
 			m_vMouse = { -1, -1 };
 
 			m_Window = nullptr;
 			m_Monitor = nullptr;
 
-			m_sprIcon = nullptr;
 			m_sprFont = nullptr;
 
 			m_pDrawTarget = nullptr;
 			m_pixTint = { 255, 255, 255, 255 };
+
+			m_nPixelMode = Pixel::DEFAULT;
+			m_fTickTimer = 0.0f;
 		}
 
 		virtual ~GameEngine()
@@ -848,7 +848,6 @@ namespace def
 
 	private:
 		std::string m_sAppName;
-		std::string m_sIconName;
 
 		vi2d m_vWindowSize;
 		vi2d m_vScreenSize;
@@ -861,7 +860,6 @@ namespace def
 		bool m_bAppRunning;
 		bool m_bFullScreen;
 		bool m_bVSync;
-		bool m_bCustomIcon;
 		bool m_bShowFPS;
 		bool m_bDirtyPixel;
 
@@ -876,7 +874,6 @@ namespace def
 
 		vi2d m_vMouse;
 
-		Sprite* m_sprIcon;
 		Sprite* m_sprFont;
 
 		Graphic* m_pScreen;
@@ -884,7 +881,9 @@ namespace def
 		std::vector<TextureInstance> m_vecTextures;
 		Pixel m_pixTint;
 
-		int32_t m_nPixelMode = Pixel::DEFAULT;
+		int32_t m_nPixelMode;
+
+		float m_fTickTimer;
 
 	public:
 		virtual bool OnUserCreate() = 0;
@@ -929,14 +928,16 @@ namespace def
 		void DrawPartialSprite(vi2d pos, vi2d fpos, vi2d fsize, Sprite* sprite);
 		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsizex, int32_t fsizey, Sprite* sprite);
 
-		void DrawTexture(vf2d pos, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE, int32_t structure = TextureStructure::FAN);
-		virtual void DrawTexture(float x, float y, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = TextureStructure::FAN);
+		void DrawTexture(vf2d pos, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
+		virtual void DrawTexture(float x, float y, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
 
-		void DrawPartialTexture(vf2d pos, Texture* tex, vi2d filePos, vi2d fileSize, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE, int32_t structure = TextureStructure::FAN);
-		virtual void DrawPartialTexture(float x, float y, Texture* tex, float filePosX, float filePosY, float fileSizeX, float fileSizeY, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = TextureStructure::FAN);
+		void DrawPartialTexture(vf2d pos, vi2d filePos, vi2d fileSize, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
+		virtual void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
 
-		void DrawWireFrameModel(const std::vector<std::pair<float, float>>& vecModelCoordinates, vf2d pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
-		virtual void DrawWireFrameModel(const std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
+
+		void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, vf2d pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		virtual void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 
 		void DrawString(vi2d pos, const std::string& text, const Pixel& p = WHITE);
 		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE);
@@ -974,6 +975,10 @@ namespace def
 		void SetPixelMode(int32_t nPixelMode);
 		int32_t GetPixelMode();
 
+		void ClearBuffer(const Pixel& p);
+
+		void SetTint(const Pixel& p);
+
 	};
 
 #ifdef DGE_APPLICATION
@@ -983,7 +988,6 @@ namespace def
 	{
 		if (m_pDrawTarget != nullptr) delete m_pDrawTarget;
 		if (m_sprFont != nullptr) delete m_sprFont;
-		if (m_sprIcon != nullptr) delete m_sprIcon;
 
 		glfwDestroyWindow(m_Window);
 		glfwTerminate();
@@ -1014,8 +1018,8 @@ namespace def
 			m_nMouseNewState[i] = 0;
 		}
 
-		std::string title = "github.com/defini7 - " + m_sAppName;
-		glfwSetWindowTitle(m_Window, title.c_str());
+		std::string sTitle = "github.com/defini7 - defGameEngine - " + m_sAppName + " - FPS: 0";
+		glfwSetWindowTitle(m_Window, sTitle.c_str());
 
 		while (m_bAppRunning)
 		{
@@ -1081,8 +1085,7 @@ namespace def
 			if (!OnUserUpdate(fDeltaTime))
 				m_bAppRunning = false;
 
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
+			ClearBuffer(BLACK);
 
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1102,8 +1105,14 @@ namespace def
 
 			if (m_bShowFPS)
 			{
-				title = "github.com/defini7 - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / fDeltaTime));
-				glfwSetWindowTitle(m_Window, title.c_str());
+				m_fTickTimer += fDeltaTime;
+
+				if (m_fTickTimer >= 1.0f)
+				{
+					sTitle = "github.com/defini7 - defGameEngine - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / fDeltaTime));
+					glfwSetWindowTitle(m_Window, sTitle.c_str());
+					m_fTickTimer = 0.0f;
+				}
 			}
 		}
 
@@ -1117,9 +1126,9 @@ namespace def
 
 		switch (ti.structure)
 		{
-		case TextureStructure::DEFAULT: glBegin(GL_TRIANGLES);		break;
-		case TextureStructure::FAN:		glBegin(GL_TRIANGLE_FAN);	break;
-		case TextureStructure::STRIP:	glBegin(GL_TRIANGLE_STRIP);	break;
+		case Texture::DEFAULT: glBegin(GL_TRIANGLES);		break;
+		case Texture::FAN:		glBegin(GL_TRIANGLE_FAN);	break;
+		case Texture::STRIP:	glBegin(GL_TRIANGLE_STRIP);	break;
 		}
 
 		for (int32_t i = 0; i < ti.points; i++)
@@ -1205,7 +1214,7 @@ namespace def
 		
 		m_pScreen = new Graphic(m_vScreenSize.x, m_vScreenSize.y);
 		m_pDrawTarget = m_pScreen;
-		Clear(def::BLACK);
+		Clear(BLACK);
 
 		std::string data =
 			"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
@@ -1238,21 +1247,10 @@ namespace def
 
 			for (int i = 0; i < 24; i++)
 			{
-				int k = r & (1 << i) ? 255 : 0;
+				uint8_t k = (r & (1 << i)) ? 255 : 0;
 				m_sprFont->SetPixel(px, py, Pixel(k, k, k, k));
 				if (++py == 48) { px++; py = 0; }
 			}
-		}
-
-		if (m_bCustomIcon)
-		{
-			m_sprIcon = new def::Sprite(m_sIconName);
-
-			GLFWimage img;
-			img.width = m_sprIcon->nWidth;
-			img.height = m_sprIcon->nHeight;
-			img.pixels = m_sprIcon->pPixelData;
-			glfwSetWindowIcon(m_Window, 1, &img);
 		}
 
 		return rcode(true);
@@ -1673,7 +1671,7 @@ namespace def
 		}
 	}
 
-	void def::GameEngine::FillCircle(int32_t x, int32_t y, int32_t r, const Pixel& p)
+	void GameEngine::FillCircle(int32_t x, int32_t y, int32_t r, const Pixel& p)
 	{
 		int32_t x1 = 0;
 		int32_t y1 = r;
@@ -1695,14 +1693,14 @@ namespace def
 		}
 	}
 
-	void def::GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* sprite)
+	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* sprite)
 	{
 		for (int i = 0; i < sprite->nWidth; i++)
 			for (int j = 0; j < sprite->nHeight; j++)
 				Draw(x + i, y + j, sprite->GetPixel(i, j));
 	}
 
-	void def::GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* sprite)
+	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* sprite)
 	{
 		for (int i = fx, x1 = 0; i < fx + fsx; i++, x1++)
 			for (int j = fy, y1 = 0; j < fy + fsy; j++, y1++)
@@ -1734,7 +1732,7 @@ namespace def
 		m_vecTextures.push_back(ti);
 	}
 
-	void GameEngine::DrawPartialTexture(float x, float y, Texture* tex, float filePosX, float filePosY, float fileSizeX, float fileSizeY, float scaleX, float scaleY, const Pixel& tint, int32_t structure)
+	void GameEngine::DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX, float scaleY, const Pixel& tint, int32_t structure)
 	{
 		vf2d vScreenSpacePos =
 		{
@@ -1764,36 +1762,72 @@ namespace def
 		m_vecTextures.push_back(ti);
 	}
 
-	void GameEngine::DrawWireFrameModel(const std::vector<std::pair<float, float>>& modelCoordinates, float x, float y, float r, float s, const Pixel& p)
+	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint, int32_t structure)
+	{
+		TextureInstance di;
+		di.tex = tex;
+		di.structure = structure;
+		di.points = 4;
+		di.tint = { tint, tint, tint, tint };
+		di.vert.resize(di.points);
+		di.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+
+		float rd = ((points[2].x - points[0].x) * (points[3].y - points[1].y) - (points[3].x - points[1].x) * (points[2].y - points[0].y));
+		
+		if (rd != 0.0f)
+		{
+			rd = 1.0f / rd;
+
+			float rn = ((points[3].x - points[1].x) * (points[0].y - points[1].y) - (points[3].y - points[1].y) * (points[0].x - points[1].x)) * rd;
+			float sn = ((points[2].x - points[0].x) * (points[0].y - points[1].y) - (points[2].y - points[0].y) * (points[0].x - points[1].x)) * rd;
+			
+			vf2d center;
+			if (!(rn < 0.0f || rn > 1.0f || sn < 0.0f || sn > 1.0f)) center = points[0] + rn * (points[2] - points[0]);
+
+			float d[4];
+			for (int i = 0; i < 4; i++)	d[i] = (points[i] - center).mag();
+
+			for (int i = 0; i < 4; i++)
+			{
+				float q = d[i] == 0.0f ? 1.0f : (d[i] + d[(i + 2) & 3]) / d[(i + 2) & 3];
+				di.uv[i] *= q;
+				di.vert[i] = { (points[i].x * m_vInvScreenSize.x) * 2.0f - 1.0f, ((points[i].y * m_vInvScreenSize.y) * 2.0f - 1.0f) * -1.0f };
+			}
+
+			m_vecTextures.push_back(di);
+		}
+	}
+
+	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& p)
 	{
 		int32_t verts = modelCoordinates.size();
 
-		std::vector<std::pair<float, float>> vecCoordinates;
+		std::vector<vf2d> vecCoordinates;
 		vecCoordinates.resize(verts);
 
 		for (int i = 0; i < verts; i++)
 		{
-			vecCoordinates[i].first = modelCoordinates[i].first * cosf(r) - modelCoordinates[i].second * sinf(r);
-			vecCoordinates[i].second = modelCoordinates[i].first * sinf(r) + modelCoordinates[i].second * cosf(r);
+			vecCoordinates[i].x = modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r);
+			vecCoordinates[i].y = modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r);
 		}
 
 		for (int i = 0; i < verts; i++)
 		{
-			vecCoordinates[i].first = vecCoordinates[i].first * s;
-			vecCoordinates[i].second = vecCoordinates[i].second * s;
+			vecCoordinates[i].x = vecCoordinates[i].x * s;
+			vecCoordinates[i].y = vecCoordinates[i].y * s;
 		}
 
 		for (int i = 0; i < verts; i++)
 		{
-			vecCoordinates[i].first = vecCoordinates[i].first + x;
-			vecCoordinates[i].second = vecCoordinates[i].second + y;
+			vecCoordinates[i].x = vecCoordinates[i].x + x;
+			vecCoordinates[i].y = vecCoordinates[i].y + y;
 		}
 
 		for (int i = 0; i < verts + 1; i++)
 		{
 			int32_t j = (i + 1);
-			DrawLine((int32_t)vecCoordinates[i % verts].first, (int32_t)vecCoordinates[i % verts].second,
-				(int32_t)vecCoordinates[j % verts].first, (int32_t)vecCoordinates[j % verts].second, p);
+			DrawLine((int32_t)vecCoordinates[i % verts].x, (int32_t)vecCoordinates[i % verts].y,
+				(int32_t)vecCoordinates[j % verts].x, (int32_t)vecCoordinates[j % verts].y, p);
 		}
 	}
 
@@ -1847,8 +1881,13 @@ namespace def
 
 	void GameEngine::SetIcon(const std::string& sFilename)
 	{
-		m_sIconName = sFilename;
-		m_bCustomIcon = true;
+		Sprite sprIcon(sFilename);
+
+		GLFWimage img;
+		img.width = sprIcon.nWidth;
+		img.height = sprIcon.nHeight;
+		img.pixels = sprIcon.pPixelData;
+		glfwSetWindowIcon(m_Window, 1, &img);
 	}
 
 	void GameEngine::SetDrawTarget(Graphic* pTarget)
@@ -1863,9 +1902,9 @@ namespace def
 
 	WindowState GameEngine::GetWindowState()
 	{
-		int f = WS_NONE;
-		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED)) f |= WS_FOCUSED;
-		if (glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED)) f |= WS_MAXIMIZED;
+		int32_t f = static_cast<int32_t>(WindowState::NONE);
+		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED)) f |= static_cast<int32_t>(WindowState::FOCUSED);
+		if (glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED)) f |= static_cast<int32_t>(WindowState::MAXIMIZED);
 		return static_cast<WindowState>(f);
 	}
 
@@ -1875,7 +1914,7 @@ namespace def
 	int32_t GameEngine::GetPixelMode() { return m_nPixelMode; }
 
 	bool GameEngine::Draw(vi2d pos, const Pixel& p)
-	{ Draw(pos.x, pos.y, p); }
+	{ return Draw(pos.x, pos.y, p); }
 
 	void GameEngine::DrawLine(vi2d pos1, vi2d pos2, const Pixel& p)
 	{ DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, p); }
@@ -1907,10 +1946,10 @@ namespace def
 	void GameEngine::DrawTexture(vf2d pos, Texture* tex, vf2d scale, const Pixel& tint, int32_t structure)
 	{ DrawTexture(pos.x, pos.y, tex, scale.x, scale.y, tint, structure); }
 
-	void GameEngine::DrawPartialTexture(vf2d pos, Texture* tex, vi2d filePos, vi2d fileSize, vf2d scale, const Pixel& tint, int32_t structure)
-	{ DrawPartialTexture(pos.x, pos.y, tex, filePos.x, filePos.y, fileSize.x, fileSize.y, scale.x, scale.y, tint, structure); }
+	void GameEngine::DrawPartialTexture(vf2d pos, vi2d filePos, vi2d fileSize, Texture* tex, vf2d scale, const Pixel& tint, int32_t structure)
+	{ DrawPartialTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, tex, scale.x, scale.y, tint, structure); }
 
-	void GameEngine::DrawWireFrameModel(const std::vector<std::pair<float, float>>& vecModelCoordinates, vf2d pos, float r, float s, const Pixel& p)
+	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, vf2d pos, float r, float s, const Pixel& p)
 	{ DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p); }
 
 	void GameEngine::DrawString(vi2d pos, const std::string& text, const Pixel& p)
@@ -1918,6 +1957,17 @@ namespace def
 
 	vi2d GameEngine::ScreenSize() { return m_vScreenSize; }
 	vi2d GameEngine::GetMouse() { return m_vMouse; }
+
+	void GameEngine::ClearBuffer(const Pixel& p)
+	{
+		glClearColor(p.r / 255.0f, p.g / 255.0f, p.b / 255.0f, p.a / 255.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+
+	void GameEngine::SetTint(const Pixel& p)
+	{
+		m_pixTint = p;
+	}
 
 #endif
 
