@@ -1647,7 +1647,7 @@ namespace def
 	{
 		int32_t x1 = 0;
 		int32_t y1 = r;
-		float p1 = 3.0f - 2.0f * (float)r;
+		int32_t p1 = 3 - 2 * r;
 
 		while (y1 >= x1)
 		{
@@ -1660,7 +1660,8 @@ namespace def
 			Draw(x + y1, y + x1, p);
 			Draw(x + x1, y + y1, p);
 
-			p1 += 4 * ((p1 < 0) ? (x1++ + 6) : ((x1++ - y1--) + 10));
+			if (p1 < 0) p1 += 4 * x1++ + 6;
+			else p1 += 4 * (x1++ - y1--) + 10;
 		}
 	}
 
@@ -1682,7 +1683,8 @@ namespace def
 			drawline(x - x1, x + x1, y + y1);
 			drawline(x - y1, x + y1, y + x1);
 
-			p1 += 4 * ((p1 < 0) ? (x1++ + 6) : ((x1++ - y1--) + 10));
+			if (p1 < 0) p1 += 4 * x1++ + 6;
+			else p1 += 4 * (x1++ - y1--) + 10;
 		}
 	}
 
