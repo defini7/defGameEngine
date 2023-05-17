@@ -1,8 +1,6 @@
 #define DGE_APPLICATION
 #include "defGameEngine.h"
 
-#include <thread>
-
 using namespace std;
 
 class CellularAutomata : public def::GameEngine
