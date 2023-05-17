@@ -1,3 +1,4 @@
+#define DGE_APPLICATION
 #include "defGameEngine.h"
 
 #include <array>
@@ -55,7 +56,7 @@ private:
 
 		if (std::set<uint8_t>{ 1, 3, 5 }.count(nFace) > 0)
 			FillCircle(vM, nRad, pixDot);
-			
+
 	}
 
 public:
@@ -120,7 +121,7 @@ public:
 		{
 			size_t nCurrentSequence = 1;
 			size_t nMaxSequence = 1;
-			
+
 			for (size_t i = 1; i < v.size(); i++)
 			{
 				if (v[i - 1] == (v[i] - 1))
