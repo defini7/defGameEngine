@@ -838,6 +838,8 @@ namespace def
 			m_pixTint = { 255, 255, 255, 255 };
 
 			m_nPixelMode = Pixel::DEFAULT;
+			m_nTextureStructure = Texture::FAN;
+
 			m_fTickTimer = 0.0f;
 		}
 
@@ -881,6 +883,7 @@ namespace def
 		Pixel m_pixTint;
 
 		int32_t m_nPixelMode;
+		int32_t m_nTextureStructure;
 
 		float m_fTickTimer;
 
@@ -927,16 +930,16 @@ namespace def
 		void DrawPartialSprite(vi2d pos, vi2d fpos, vi2d fsize, Sprite* sprite);
 		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsizex, int32_t fsizey, Sprite* sprite);
 
-		void DrawTexture(vf2d pos, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
-		virtual void DrawTexture(float x, float y, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
+		void DrawTexture(vf2d pos, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		virtual void DrawTexture(float x, float y, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		void DrawPartialTexture(vf2d pos, vi2d filePos, vi2d fileSize, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
-		virtual void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
+		void DrawPartialTexture(vf2d pos, vi2d filePos, vi2d fileSize, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		virtual void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
+		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint = WHITE);
 
-		void DrawRotatedTexture(vf2d pos, float r, Texture* tex, vf2d center = { 0.0f, 0.0f }, vf2d scale = { 1.0f, 1.0f }, const Pixel & tint = WHITE, int32_t structure = Texture::FAN);
-		virtual void DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE, int32_t structure = Texture::FAN);
+		void DrawRotatedTexture(vf2d pos, float r, Texture* tex, vf2d center = { 0.0f, 0.0f }, vf2d scale = { 1.0f, 1.0f }, const Pixel & tint = WHITE);
+		virtual void DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
 		void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, vf2d pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 		virtual void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
@@ -965,6 +968,7 @@ namespace def
 		bool IsVSync();
 
 		void SetIcon(const std::string& sFileName);
+
 		void SetDrawTarget(Graphic* pTarget);
 		Graphic* GetDrawTarget();
 
@@ -975,6 +979,9 @@ namespace def
 
 		void SetPixelMode(int32_t nPixelMode);
 		int32_t GetPixelMode();
+
+		void SetTextureStructure(int32_t nTextureStructure);
+		int32_t GetTextureStructure(int32_t nTextureStructure);
 
 		void ClearBuffer(const Pixel& p);
 
@@ -1702,7 +1709,7 @@ namespace def
 				Draw(x + x1, y + y1, sprite->GetPixel(i, j));
 	}
 
-	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scaleX, float scaleY, const Pixel& tint, int32_t structure)
+	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scaleX, float scaleY, const Pixel& tint)
 	{
 		vf2d vScreenPos =
 		{
@@ -1719,7 +1726,7 @@ namespace def
 		TextureInstance ti;
 		ti.tex = tex;
 		ti.points = 4;
-		ti.structure = structure;
+		ti.structure = m_nTextureStructure;
 		ti.tint = { tint, tint, tint, tint };
 		ti.vert = { vScreenPos, { vScreenPos.x, vScreenSize.y }, vScreenSize, { vScreenSize.x, vScreenPos.y } };
 		ti.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
@@ -1727,7 +1734,7 @@ namespace def
 		m_vecTextures.push_back(ti);
 	}
 
-	void GameEngine::DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX, float scaleY, const Pixel& tint, int32_t structure)
+	void GameEngine::DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX, float scaleY, const Pixel& tint)
 	{
 		vf2d vScreenSpacePos =
 		{
@@ -1750,19 +1757,19 @@ namespace def
 		TextureInstance ti;
 		ti.tex = tex;
 		ti.points = 4;
-		ti.structure = structure;
+		ti.structure = m_nTextureStructure;
 		ti.tint = { tint, tint, tint, tint };
 		ti.vert = { { vQuantisedPos.x, vQuantisedPos.y }, { vQuantisedPos.x, vQuantisedSize.y }, { vQuantisedSize.x, vQuantisedSize.y }, { vQuantisedSize.x, vQuantisedPos.y } };
 		ti.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
 		m_vecTextures.push_back(ti);
 	}
 
-	void GameEngine::DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint, int32_t structure)
+	void GameEngine::DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
 	{
 		TextureInstance ti;
 		ti.tex = tex;
 		ti.points = 4;
-		ti.structure = structure;
+		ti.structure = m_nTextureStructure;
 		ti.tint = { tint, tint, tint, tint };
 
 		vf2d vCenter = vf2d(centerX, centerY);
@@ -1788,11 +1795,11 @@ namespace def
 		m_vecTextures.push_back(ti);
 	}
 
-	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint, int32_t structure)
+	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint)
 	{
 		TextureInstance di;
 		di.tex = tex;
-		di.structure = structure;
+		di.structure = m_nTextureStructure;
 		di.points = 4;
 		di.tint = { tint, tint, tint, tint };
 		di.vert.resize(di.points);
@@ -1938,6 +1945,9 @@ namespace def
 	void GameEngine::SetPixelMode(int32_t nPixelMode) { m_nPixelMode = nPixelMode; }
 	int32_t GameEngine::GetPixelMode() { return m_nPixelMode; }
 
+	void GameEngine::SetTextureStructure(int32_t nTextureStructure) { m_nTextureStructure = nTextureStructure; }
+	int32_t GameEngine::GetTextureStructure(int32_t nTextureStructure) { return m_nTextureStructure; }
+
 	bool GameEngine::Draw(vi2d pos, const Pixel& p)
 	{ return Draw(pos.x, pos.y, p); }
 
@@ -1968,14 +1978,14 @@ namespace def
 	void GameEngine::DrawPartialSprite(vi2d pos, vi2d fpos, vi2d fsize, Sprite* spr)
 	{ DrawPartialSprite(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, spr); }
 
-	void GameEngine::DrawTexture(vf2d pos, Texture* tex, vf2d scale, const Pixel& tint, int32_t structure)
-	{ DrawTexture(pos.x, pos.y, tex, scale.x, scale.y, tint, structure); }
+	void GameEngine::DrawTexture(vf2d pos, Texture* tex, vf2d scale, const Pixel& tint)
+	{ DrawTexture(pos.x, pos.y, tex, scale.x, scale.y, tint); }
 
-	void GameEngine::DrawPartialTexture(vf2d pos, vi2d filePos, vi2d fileSize, Texture* tex, vf2d scale, const Pixel& tint, int32_t structure)
-	{ DrawPartialTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, tex, scale.x, scale.y, tint, structure); }
+	void GameEngine::DrawPartialTexture(vf2d pos, vi2d filePos, vi2d fileSize, Texture* tex, vf2d scale, const Pixel& tint)
+	{ DrawPartialTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, tex, scale.x, scale.y, tint); }
 
-	void GameEngine::DrawRotatedTexture(vf2d pos, float r, Texture* tex, vf2d center, vf2d scale, const Pixel& tint, int32_t structure)
-	{ DrawRotatedTexture(pos.x, pos.y, r, tex, center.x, center.y, scale.x, scale.y, tint, structure); }
+	void GameEngine::DrawRotatedTexture(vf2d pos, float r, Texture* tex, vf2d center, vf2d scale, const Pixel& tint)
+	{ DrawRotatedTexture(pos.x, pos.y, r, tex, center.x, center.y, scale.x, scale.y, tint); }
 
 	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, vf2d pos, float r, float s, const Pixel& p)
 	{ DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p); }
