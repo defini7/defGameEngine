@@ -1762,23 +1762,24 @@ namespace def
 		TextureInstance ti;
 		ti.tex = tex;
 		ti.points = 4;
-		ti.vert.resize(ti.points);
 		ti.structure = structure;
 		ti.tint = { tint, tint, tint, tint };
 
 		vf2d vCenter = vf2d(centerX, centerY);
 		vf2d vScale = vf2d(scaleX, scaleY);
-		vf2d vPos = vf2d(x, y);
 
-		ti.vert[0] = (vf2d(0.0f, 0.0f) - vCenter) * vScale;
-		ti.vert[1] = (vf2d(0.0f, float(tex->nHeight)) - vCenter) * vScale;
-		ti.vert[2] = (vf2d(float(tex->nWidth), float(tex->nHeight)) - vCenter) * vScale;
-		ti.vert[3] = (vf2d(float(tex->nWidth), 0.0f) - vCenter) * vScale;
+		ti.vert = {
+			(vf2d(0.0f, 0.0f) - vCenter) * vScale,
+			(vf2d(0.0f, float(tex->nHeight)) - vCenter) * vScale,
+			(vf2d(float(tex->nWidth), float(tex->nHeight)) - vCenter) * vScale,
+			(vf2d(float(tex->nWidth), 0.0f) - vCenter) * vScale
+		};
 
 		float c = cos(r), s = sin(r);
 		for (int i = 0; i < ti.points; i++)
 		{
-			ti.vert[i] = vPos + vf2d(ti.vert[i].x * c - ti.vert[i].y * s, ti.vert[i].x * s + ti.vert[i].y * c);
+			vf2d o = { ti.vert[i].x * c - ti.vert[i].y * s, ti.vert[i].x* s + ti.vert[i].y * c };
+			ti.vert[i] = vf2d(x, y) + o;
 			ti.vert[i] = ti.vert[i] * m_vInvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
 			ti.vert[i].y *= -1.0f;
 		}
