@@ -1759,33 +1759,31 @@ namespace def
 
 	void GameEngine::DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint, int32_t structure)
 	{
-		vf2d vScreenPos =
-		{
-			((x - centerX * scaleX * (float)tex->nWidth) * m_vInvScreenSize.x) * 2.0f - 1.0f,
-			(((y - centerY * scaleY * (float)tex->nHeight) * m_vInvScreenSize.y) * 2.0f - 1.0f) * -1.0f
-		};
-
-		vf2d vScreenSize =
-		{
-			vScreenPos.x + (2.0f * (float(tex->nWidth) * (1.0f / (float)ScreenWidth()))) * scaleX,
-			vScreenPos.y - (2.0f * (float(tex->nHeight) * (1.0f / (float)ScreenHeight()))) * scaleY
-		};
-
 		TextureInstance ti;
 		ti.tex = tex;
 		ti.points = 4;
+		ti.vert.resize(ti.points);
 		ti.structure = structure;
 		ti.tint = { tint, tint, tint, tint };
-		ti.vert = { vScreenPos, { vScreenPos.x, vScreenSize.y }, vScreenSize, { vScreenSize.x, vScreenPos.y } };
-		ti.uv = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } };
 
-		for (auto& v : ti.vert)
+		vf2d vCenter = vf2d(centerX, centerY);
+		vf2d vScale = vf2d(scaleX, scaleY);
+		vf2d vPos = vf2d(x, y);
+
+		ti.vert[0] = (vf2d(0.0f, 0.0f) - vCenter) * vScale;
+		ti.vert[1] = (vf2d(0.0f, float(tex->nHeight)) - vCenter) * vScale;
+		ti.vert[2] = (vf2d(float(tex->nWidth), float(tex->nHeight)) - vCenter) * vScale;
+		ti.vert[3] = (vf2d(float(tex->nWidth), 0.0f) - vCenter) * vScale;
+
+		float c = cos(r), s = sin(r);
+		for (int i = 0; i < ti.points; i++)
 		{
-			vf2d _v = v;
-			v.x = _v.x * cos(r) - _v.y * sin(r);
-			v.y = _v.x * sin(r) + _v.y * cos(r);
+			ti.vert[i] = vPos + vf2d(ti.vert[i].x * c - ti.vert[i].y * s, ti.vert[i].x * s + ti.vert[i].y * c);
+			ti.vert[i] = ti.vert[i] * m_vInvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
+			ti.vert[i].y *= -1.0f;
 		}
 
+		ti.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
 		m_vecTextures.push_back(ti);
 	}
 
