@@ -3,7 +3,7 @@
 #pragma region license
 /***
 *	BSD 3-Clause License
-	Copyright (c) 2021, 2022 Alex
+	Copyright (c) 2021, 2022, 2023 Alex
 	All rights reserved.
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,6 @@
 	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***/
 #pragma endregion
-
-#ifdef DGE_DEARIMGUI
 
 #pragma region includes
 
@@ -57,7 +55,7 @@ namespace def
 		DearImGui() = default;
 
 	public:
-		bool Setup(GLFWwindow* w, ImGuiTheme t, float border_radius = 0.0f)
+		bool Setup(GLFWwindow* window, ImGuiTheme theme, float fBorderRadius = 0.0f)
 		{
 			// Setup Dear ImGui context
 			IMGUI_CHECKVERSION();
@@ -71,7 +69,7 @@ namespace def
 #endif
 
 			// Setup Dear ImGui style
-			switch (t)
+			switch (theme)
 			{
 			case IGT_WHITE: ImGui::StyleColorsLight(); break;
 			case IGT_DARK: ImGui::StyleColorsDark(); break;
@@ -79,7 +77,7 @@ namespace def
 			}
 
 			ImGuiStyle& style = ImGui::GetStyle();
-			style.WindowRounding = border_radius;
+			style.WindowRounding = fBorderRadius;
 
 #ifdef DEF_DEARIMGUI_DOCKING
 			// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
@@ -88,14 +86,14 @@ namespace def
 #endif
 
 			// Setup Platform/Renderer backends
-			if (!ImGui_ImplGlfw_InitForOpenGL(w, true))
+			if (!ImGui_ImplGlfw_InitForOpenGL(window, true))
 				return false;
 
 			if (!ImGui_ImplOpenGL3_Init("#version 150"))
 				return false;
 		}
 
-		void NewFrame()
+		void Update()
 		{
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
@@ -128,5 +126,3 @@ namespace def
 		}
 	};
 }
-
-#endif
