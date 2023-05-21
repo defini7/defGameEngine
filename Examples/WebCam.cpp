@@ -1,3 +1,4 @@
+#define DGE_APPLICATION
 #include "defGameEngine.h"
 #include "escapi.h"
 
@@ -50,7 +51,6 @@ public:
 	WebCam()
 	{
 		SetTitle("Web Cam");
-		ShowFPS();
 	}
 
 private:
@@ -256,7 +256,7 @@ protected:
 							fSum += input.get(x + i, y + j);
 
 					fSum /= 25.0f;
-					output.set(x, y, input.get(x, y) > (fSum* fAdaptive) ? 1.0f : 0.0f);
+					output.set(x, y, input.get(x, y) > (fSum * fAdaptive) ? 1.0f : 0.0f);
 				}
 		}
 		break;
@@ -318,7 +318,7 @@ protected:
 
 		case Filter::Motion:
 			DrawString(50, 300, "Filter: Motion");
-		break;
+			break;
 
 		case Filter::Convolution:
 		{
@@ -345,11 +345,11 @@ protected:
 
 		case Filter::Sobel:
 			DrawString(50, 300, "Filter: Sobel");
-		break;
+			break;
 
 		case Filter::Median:
 			DrawString(50, 300, "Filter: Median");
-		break;
+			break;
 
 		}
 
