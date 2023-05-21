@@ -3,7 +3,7 @@
 #pragma region license
 /***
 *	BSD 3-Clause License
-	Copyright (c) 2021, 2022 Alex
+	Copyright (c) 2021, 2022, 2023 Alex
 	All rights reserved.
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,6 @@
 	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***/
 #pragma endregion
-
-#ifdef DGE_PHYSICS
 
 namespace def
 {
@@ -193,5 +191,3 @@ namespace def
 		}
 	};
 }
-
-#endif
