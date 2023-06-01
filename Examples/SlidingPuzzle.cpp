@@ -116,14 +116,12 @@ public:
 					return false;
 				};
 
-				if (check(-1, 0)) goto out;
-				if (check(0, -1)) goto out;
-				if (check(1, 0)) goto out;
-				if (check(0, 1)) goto out;
+				if (check(-1, 0)) {}
+				else if (check(0, -1)) {}
+				else if (check(1, 0)) {}
+				else if (check(0, 1)) {}
 			}
 		}
-
-	out:
 
 		Clear(def::BLACK);
 
