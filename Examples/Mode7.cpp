@@ -7,7 +7,6 @@ public:
 	Mode7()
 	{
 		SetTitle("Mode7");
-		ShowFPS();
 	}
 
 private:
