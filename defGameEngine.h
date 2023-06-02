@@ -236,10 +236,10 @@ namespace def
 	}
 
 	template <typename T>
-	struct vec2d_basic
+	struct v2d
 	{
-		vec2d_basic() = default;
-		vec2d_basic(T x, T y)
+		v2d() = default;
+		v2d(T x, T y)
 		{
 			this->x = x;
 			this->y = y;
@@ -248,162 +248,158 @@ namespace def
 		T x = (T)0;
 		T y = (T)0;
 
-		vec2d_basic<T> operator=(const vec2d_basic<T>& v)
+		v2d<T> operator=(const v2d<T>& v)
 		{
 			this->x = v.x;
 			this->y = v.y;
 			return *this;
 		}
 
-		friend vec2d_basic<T> operator+(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return vec2d_basic<T>(v1.x + v2.x, v1.y + v2.y); }
-		friend vec2d_basic<T> operator-(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return vec2d_basic<T>(v1.x - v2.x, v1.y - v2.y); }
-		friend vec2d_basic<T> operator*(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return vec2d_basic<T>(v1.x * v2.x, v1.y * v2.y); }
-		friend vec2d_basic<T> operator/(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return vec2d_basic<T>(v1.x / v2.x, v1.y / v2.y); }
-		friend vec2d_basic<T> operator+(const vec2d_basic<T>& v1, const T& v2) { return vec2d_basic<T>(v1.x + v2, v1.y + v2); }
-		friend vec2d_basic<T> operator-(const vec2d_basic<T>& v1, const T& v2) { return vec2d_basic<T>(v1.x - v2, v1.y - v2); }
-		friend vec2d_basic<T> operator*(const vec2d_basic<T>& v1, const T& v2) { return vec2d_basic<T>(v1.x * v2, v1.y * v2); }
-		friend vec2d_basic<T> operator/(const vec2d_basic<T>& v1, const T& v2) { return vec2d_basic<T>(v1.x / v2, v1.y / v2); }
+		friend v2d<T> operator+(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x + v2.x, v1.y + v2.y); }
+		friend v2d<T> operator-(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x - v2.x, v1.y - v2.y); }
+		friend v2d<T> operator*(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x * v2.x, v1.y * v2.y); }
+		friend v2d<T> operator/(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x / v2.x, v1.y / v2.y); }
+		friend v2d<T> operator+(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x + v2, v1.y + v2); }
+		friend v2d<T> operator-(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x - v2, v1.y - v2); }
+		friend v2d<T> operator*(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x * v2, v1.y * v2); }
+		friend v2d<T> operator/(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x / v2, v1.y / v2); }
 
-		vec2d_basic<T>& operator+=(const vec2d_basic<T>& v)
+		v2d<T>& operator+=(const v2d<T>& v)
 		{
 			this->x += v.x;
 			this->y += v.y;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator-=(const vec2d_basic<T>& v)
+		v2d<T>& operator-=(const v2d<T>& v)
 		{
 			this->x -= v.x;
 			this->y -= v.y;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator*=(const vec2d_basic<T>& v)
+		v2d<T>& operator*=(const v2d<T>& v)
 		{
 			this->x *= v.x;
 			this->y *= v.y;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator/=(const vec2d_basic<T>& v)
+		v2d<T>& operator/=(const v2d<T>& v)
 		{
 			this->x /= v.x;
 			this->y /= v.y;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator+=(const T& v)
+		v2d<T>& operator+=(const T& v)
 		{
 			this->x += v;
 			this->y += v;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator-=(const T& v)
+		v2d<T>& operator-=(const T& v)
 		{
 			this->x -= v;
 			this->y -= v;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator*=(const T& v)
+		v2d<T>& operator*=(const T& v)
 		{
 			this->x *= v;
 			this->y *= v;
 			return *this;
 		}
 
-		vec2d_basic<T>& operator/=(const T& v)
+		v2d<T>& operator/=(const T& v)
 		{
 			this->x /= v;
 			this->y /= v;
 			return *this;
 		}
 
-		friend bool operator==(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x == v2.x && v1.y == v2.y; }
-		friend bool operator!=(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x != v2.x || v1.y != v2.y; }
-		friend bool operator<(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x < v2.x && v1.y < v2.y; }
-		friend bool operator>(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x > v2.x && v1.y > v2.y; }
-		friend bool operator<=(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
-		friend bool operator>=(const vec2d_basic<T>& v1, const vec2d_basic<T>& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
+		friend bool operator==(const v2d<T>& v1, const v2d<T>& v2) { return v1.x == v2.x && v1.y == v2.y; }
+		friend bool operator!=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x != v2.x || v1.y != v2.y; }
+		friend bool operator<(const v2d<T>& v1, const v2d<T>& v2) { return v1.x < v2.x && v1.y < v2.y; }
+		friend bool operator>(const v2d<T>& v1, const v2d<T>& v2) { return v1.x > v2.x && v1.y > v2.y; }
+		friend bool operator<=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
+		friend bool operator>=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
 
-		friend vec2d_basic<T> operator*(const float& lhs, const vec2d_basic<T>& rhs)
+		friend v2d<T> operator*(const float& lhs, const v2d<T>& rhs)
 		{
-			return vec2d_basic<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y));
+			return v2d<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y));
 		}
 
-		friend vec2d_basic<T> operator * (const double& lhs, const vec2d_basic<T>& rhs)
+		friend v2d<T> operator * (const double& lhs, const v2d<T>& rhs)
 		{
-			return vec2d_basic<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y));
+			return v2d<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y));
 		}
 
-		friend vec2d_basic<T> operator * (const int& lhs, const vec2d_basic<T>& rhs)
+		friend v2d<T> operator * (const int& lhs, const v2d<T>& rhs)
 		{
-			return vec2d_basic<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y));
+			return v2d<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y));
 		}
 
-		friend vec2d_basic<T> operator / (const float& lhs, const vec2d_basic<T>& rhs)
+		friend v2d<T> operator / (const float& lhs, const v2d<T>& rhs)
 		{
-			return vec2d_basic<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y));
+			return v2d<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y));
 		}
 
-		friend vec2d_basic<T> operator / (const double& lhs, const vec2d_basic<T>& rhs)
+		friend v2d<T> operator / (const double& lhs, const v2d<T>& rhs)
 		{
-			return vec2d_basic<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y));
+			return v2d<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y));
 		}
 
-		friend vec2d_basic<T> operator / (const int& lhs, const vec2d_basic<T>& rhs)
+		friend v2d<T> operator / (const int& lhs, const v2d<T>& rhs)
 		{
-			return vec2d_basic<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y));
+			return v2d<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y));
 		}
 
-		operator vec2d_basic<int>()	   const { return { static_cast<int32_t>(this->x),  static_cast<int32_t>(this->y) }; }
-		operator vec2d_basic<float>()  const { return { static_cast<float>(this->x),	static_cast<float>(this->y) }; }
-		operator vec2d_basic<double>() const { return { static_cast<double>(this->x),	static_cast<double>(this->y) }; }
+		operator v2d<int>()	   const { return { static_cast<int32_t>(this->x),  static_cast<int32_t>(this->y) }; }
+		operator v2d<float>()  const { return { static_cast<float>(this->x),	static_cast<float>(this->y) }; }
+		operator v2d<double>() const { return { static_cast<double>(this->x),	static_cast<double>(this->y) }; }
 
-		vec2d_basic<T> clamp(const vec2d_basic<T>& start, const vec2d_basic<T>& end) const
+		v2d<T> clamp(const v2d<T>& start, const v2d<T>& end) const
 		{
-			vec2d_basic<T> temp;
-
-			temp.x = this->x;
-			temp.y = this->y;
-
-			if (temp.x < start.x) temp.x = start.x;
-			if (temp.y < start.y) temp.y = start.y;
-
-			if (temp.x > end.x) temp.x = end.x;
-			if (temp.y > end.y) temp.y = end.y;
-
-			return temp;
+			v2d<T> clamped;
+			clamped.x = this->x;
+			clamped.y = this->y;
+			if (clamped.x < start.x) clamped.x = start.x;
+			if (clamped.y < start.y) clamped.y = start.y;
+			if (clamped.x > end.x) clamped.x = end.x;
+			if (clamped.y > end.y) clamped.y = end.y;
+			return clamped;
 		}
 
-		float dot(const vec2d_basic<T>& v) { return this->x * v.x + this->y * v.y; }
+		float dot(const v2d<T>& v) { return this->x * v.x + this->y * v.y; }
 		float length() { return sqrtf(dot(*this)); }
 
 		T mag() { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
 		T mag2() { return static_cast<T>(this->x * this->x + this->y * this->y); }
 
-		float man(const vec2d_basic<T>& v) { return std::abs(this->x - v.x) + std::abs(this->y - v.y); }
+		float man(const v2d<T>& v) { return std::abs(this->x - v.x) + std::abs(this->y - v.y); }
 
-		vec2d_basic<T> max(const vec2d_basic<T>& v) { return vec2d_basic<T>(std::max(this->x, v.x), std::max(this->y, v.y)); }
-		vec2d_basic<T> min(const vec2d_basic<T>& v) { return vec2d_basic<T>(std::min(this->x, v.x), std::min(this->y, v.y)); }
+		v2d<T> max(const v2d<T>& v) { return v2d<T>(std::max(this->x, v.x), std::max(this->y, v.y)); }
+		v2d<T> min(const v2d<T>& v) { return v2d<T>(std::min(this->x, v.x), std::min(this->y, v.y)); }
 
-		vec2d_basic<T> norm() { float n = 1.0f / mag(); return vec2d_basic<T>(this->x * n, this->y * n); }
-		vec2d_basic<T> abs() { return vec2d_basic<T>(std::abs(this->x), std::abs(this->y)); }
-		vec2d_basic<T> perp() { return vec2d_basic<T>(-this->y, this->x); }
-		vec2d_basic<T> floor() { return vec2d_basic<T>(std::floor(this->x), std::floor(this->y)); }
-		vec2d_basic<T> ceil() { return vec2d_basic<T>(std::ceil(this->x), std::ceil(this->y)); }
-		vec2d_basic<T> round() { return vec2d_basic<T>(std::round(this->x), std::round(this->y)); }
-		vec2d_basic<T> cart() { return vec2d_basic<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
-		vec2d_basic<T> polar() { return vec2d_basic<T>(mag(), atan2(this->y, this->x)); }
-		vec2d_basic<T>& ref() { return *this; }
+		v2d<T> norm() { float n = 1.0f / mag(); return v2d<T>(this->x * n, this->y * n); }
+		v2d<T> abs() { return v2d<T>(std::abs(this->x), std::abs(this->y)); }
+		v2d<T> perp() { return v2d<T>(-this->y, this->x); }
+		v2d<T> floor() { return v2d<T>(std::floor(this->x), std::floor(this->y)); }
+		v2d<T> ceil() { return v2d<T>(std::ceil(this->x), std::ceil(this->y)); }
+		v2d<T> round() { return v2d<T>(std::round(this->x), std::round(this->y)); }
+		v2d<T> cart() { return v2d<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
+		v2d<T> polar() { return v2d<T>(mag(), atan2(this->y, this->x)); }
+		v2d<T>& ref() { return *this; }
 
 		operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
 	};
 
-	typedef vec2d_basic<int> vi2d;
-	typedef vec2d_basic<float> vf2d;
-	typedef vec2d_basic<double> vd2d;
+	typedef v2d<int> vi2d;
+	typedef v2d<float> vf2d;
+	typedef v2d<double> vd2d;
 
 	struct rcode
 	{
@@ -425,14 +421,14 @@ namespace def
 
 	struct Pixel
 	{
-		Pixel() = default;
-		Pixel(uint8_t cr, uint8_t cg, uint8_t cb, uint8_t ca = 255U) : r(cr), g(cg), b(cb), a(ca) {}
+		Pixel(uint8_t _r = 0, uint8_t _g = 0, uint8_t _b = 0, uint8_t _a = 255U) : r(_r), g(_g), b(_b), a(_a) {}
 
-		enum PixelMode
+		enum Mode
 		{
 			DEFAULT,
 			ALPHA,
-			MASK
+			MASK,
+			CUSTOM
 		};
 
 		uint8_t r, g, b, a;
@@ -521,7 +517,7 @@ namespace def
 		GREY(200, 200, 200, 255),
 		BLUE(0, 0, 255, 255),
 		GREEN(0, 255, 0, 255),
-		CYAN(58, 150, 221, 255),
+		CYAN(0, 255, 255, 255),
 		RED(255, 0, 0, 255),
 		MAGENTA(180, 0, 158, 255),
 		YELLOW(255, 255, 0, 255),
@@ -541,8 +537,8 @@ namespace def
 		return Pixel(rand() % 256, rand() % 256, rand() % 256, bRandomAlpha ? rand() % 256 : 255);
 	}
 
-	float   Byte2Float(uint8_t b) { return (float)b / 255.0f;	}
-	uint8_t Float2Byte(float f)	  { return uint8_t(f * 255.0f); }
+	float   Byte2Float(uint8_t b) { return (float)b / 255.0f; }
+	uint8_t Float2Byte(float f) { return uint8_t(f * 255.0f); }
 
 	class Sprite
 	{
@@ -665,7 +661,7 @@ namespace def
 				for (int j = 0; j < nHeight; j++)
 				{
 					size_t idx = nChannels * (j * nWidth + i);
-					pPixelData[idx]	   = r;
+					pPixelData[idx] = r;
 					pPixelData[idx + 1] = g;
 					pPixelData[idx + 2] = b;
 					pPixelData[idx + 3] = a;
@@ -775,7 +771,7 @@ namespace def
 	struct Graphic
 	{
 		Graphic() = default;
-		Graphic(const std::string& sFileName)				 { Load(sFileName); }
+		Graphic(const std::string& sFileName) { Load(sFileName); }
 		Graphic(const int32_t nWidth, const int32_t nHeight) { Load(nWidth, nHeight); }
 
 		~Graphic()
@@ -824,29 +820,8 @@ namespace def
 	class GameEngine
 	{
 	public:
-		GameEngine()
-		{
-			m_sAppName = "Undefined";
-			m_vMouse = { -1, -1 };
-
-			m_Window = nullptr;
-			m_Monitor = nullptr;
-
-			m_sprFont = nullptr;
-
-			m_pDrawTarget = nullptr;
-			m_pixTint = { 255, 255, 255, 255 };
-
-			m_nPixelMode = Pixel::DEFAULT;
-			m_nTextureStructure = Texture::FAN;
-
-			m_fTickTimer = 0.0f;
-		}
-
-		virtual ~GameEngine()
-		{
-			Destroy();
-		}
+		GameEngine();
+		virtual ~GameEngine();
 
 	private:
 		std::string m_sAppName;
@@ -887,6 +862,8 @@ namespace def
 
 		float m_fTickTimer;
 
+		Pixel (*m_funcShader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
+
 	public:
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
@@ -900,51 +877,54 @@ namespace def
 		void DrawQuad(const Pixel& pixTint);
 
 	public:
-		bool Draw(vi2d pos, const Pixel& p = WHITE);
-		virtual bool Draw(int32_t x, int32_t y, const Pixel& p = WHITE);
+		bool Draw(const vi2d& pos, Pixel p = WHITE);
+		virtual bool Draw(int32_t x, int32_t y, Pixel p = WHITE);
 
-		void DrawLine(vi2d pos1, vi2d pos2, const Pixel& p = WHITE);
+		void DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& p = WHITE);
 		virtual void DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
-		void DrawTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p = WHITE);
+		void DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& p = WHITE);
 		virtual void DrawTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
 
-		void FillTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p = WHITE);
+		void FillTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& p = WHITE);
 		virtual void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
 
-		void DrawRectangle(vi2d pos, vi2d size, const Pixel& p = WHITE);
+		void DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
 		virtual void DrawRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
-		void FillRectangle(vi2d pos, vi2d size, const Pixel& p = WHITE);
+		void FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
 		virtual void FillRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
 
-		void DrawCircle(vi2d pos, int32_t radius, const Pixel& p = WHITE);
+		void DrawCircle(const vi2d& pos, int32_t radius, const Pixel& p = WHITE);
 		virtual void DrawCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
 
-		void FillCircle(vi2d pos, int32_t radius, const Pixel& p = WHITE);
+		void FillCircle(const vi2d& pos, int32_t radius, const Pixel& p = WHITE);
 		virtual void FillCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
 
-		void DrawSprite(vi2d pos, Sprite* sprite);
+		void DrawSprite(const vi2d& pos, Sprite* sprite);
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* sprite);
 
-		void DrawPartialSprite(vi2d pos, vi2d fpos, vi2d fsize, Sprite* sprite);
-		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsizex, int32_t fsizey, Sprite* sprite);
+		void DrawPartialSprite(const vi2d& pos, const vi2d& fpos, const vi2d& fsize, Sprite* sprite);
+		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsizeX, int32_t fsizeY, Sprite* sprite);
 
-		void DrawTexture(vf2d pos, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		void DrawTexture(const vf2d& pos, Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		virtual void DrawTexture(float x, float y, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		void DrawPartialTexture(vf2d pos, vi2d filePos, vi2d fileSize, Texture* tex, vf2d scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		void DrawPartialTexture(const vf2d& pos, const vi2d& filePos, const vi2d& fileSize, Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		virtual void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
 		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint = WHITE);
 
-		void DrawRotatedTexture(vf2d pos, float r, Texture* tex, vf2d center = { 0.0f, 0.0f }, vf2d scale = { 1.0f, 1.0f }, const Pixel & tint = WHITE);
+		void DrawRotatedTexture(const vf2d& pos, float r, Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		virtual void DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, vf2d pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 		virtual void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 
-		void DrawString(vi2d pos, const std::string& text, const Pixel& p = WHITE);
+		void FillWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		virtual void FillWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+
+		void DrawString(const vi2d& pos, const std::string& text, const Pixel& p = WHITE);
 		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE);
 
 		virtual void Clear(const Pixel& p);
@@ -987,10 +967,33 @@ namespace def
 
 		void SetTint(const Pixel& p);
 
+		void SetShader(Pixel (*func)(const vi2d& vPos, const Pixel& pixPrev, const Pixel& pixCur));
+
 	};
 
 #ifdef DGE_APPLICATION
 #undef DGE_APPLICATION
+
+	GameEngine::GameEngine()
+	{
+		m_sAppName = "Undefined";
+		m_vMouse = { -1, -1 };
+
+		m_Window = nullptr;
+		m_Monitor = nullptr;
+
+		m_sprFont = nullptr;
+
+		m_pDrawTarget = nullptr;
+		m_pixTint = { 255, 255, 255, 255 };
+
+		m_nPixelMode = Pixel::DEFAULT;
+		m_nTextureStructure = Texture::FAN;
+
+		m_fTickTimer = 0.0f;
+	}
+
+	GameEngine::~GameEngine() { Destroy(); }
 
 	void GameEngine::Destroy()
 	{
@@ -1103,7 +1106,7 @@ namespace def
 
 			DrawQuad(m_pixTint);
 
-			for (const auto& tex : m_vecTextures) DrawTexture(tex);
+			for (const auto& t : m_vecTextures) DrawTexture(t);
 			m_vecTextures.clear();
 
 			if (m_bVSync) glfwSwapBuffers(m_Window);
@@ -1215,7 +1218,7 @@ namespace def
 
 		glEnable(GL_TEXTURE_2D);
 		if (!m_bDirtyPixel) glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-		
+
 		m_pScreen = new Graphic(m_vScreenSize.x, m_vScreenSize.y);
 		m_pDrawTarget = m_pScreen;
 		Clear(BLACK);
@@ -1260,23 +1263,27 @@ namespace def
 		return rcode(true);
 	}
 
-	bool GameEngine::Draw(int32_t x, int32_t y, const Pixel& p)
+	bool GameEngine::Draw(int32_t x, int32_t y, Pixel p)
 	{
 		if (!m_pDrawTarget) return false;
-
 		Sprite* target = m_pDrawTarget->pSprite;
 
-		if (m_nPixelMode == Pixel::DEFAULT)
+		if (m_nPixelMode == Pixel::CUSTOM)
+		{
+			return target->SetPixel(x, y, m_funcShader({ x, y }, target->GetPixel(x, y), p));
+		}
+
+		else if (m_nPixelMode == Pixel::DEFAULT)
 		{
 			return target->SetPixel(x, y, p);
 		}
 
-		if (m_nPixelMode == Pixel::MASK)
+		else if (m_nPixelMode == Pixel::MASK)
 		{
 			if (p.a == 255) return target->SetPixel(x, y, p);
 		}
 
-		if (m_nPixelMode == Pixel::ALPHA)
+		else if (m_nPixelMode == Pixel::ALPHA)
 		{
 			Pixel d = target->GetPixel(x, y);
 			float a = (float)(p.a / 255.0f);
@@ -1515,7 +1522,7 @@ namespace def
 
 			if (y == y2) break;
 		}
-		
+
 	next:
 		dx1 = (int32_t)(x3 - x2);
 
@@ -1574,7 +1581,7 @@ namespace def
 					}
 					else
 					{
-						goto next3;			
+						goto next3;
 					}
 				}
 
@@ -1785,7 +1792,7 @@ namespace def
 		float c = cos(r), s = sin(r);
 		for (int i = 0; i < ti.points; i++)
 		{
-			vf2d o = { ti.vert[i].x * c - ti.vert[i].y * s, ti.vert[i].x* s + ti.vert[i].y * c };
+			vf2d o = { ti.vert[i].x * c - ti.vert[i].y * s, ti.vert[i].x * s + ti.vert[i].y * c };
 			ti.vert[i] = vf2d(x, y) + o;
 			ti.vert[i] = ti.vert[i] * m_vInvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
 			ti.vert[i].y *= -1.0f;
@@ -1806,14 +1813,14 @@ namespace def
 		di.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
 
 		float rd = ((points[2].x - points[0].x) * (points[3].y - points[1].y) - (points[3].x - points[1].x) * (points[2].y - points[0].y));
-		
+
 		if (rd != 0.0f)
 		{
 			rd = 1.0f / rd;
 
 			float rn = ((points[3].x - points[1].x) * (points[0].y - points[1].y) - (points[3].y - points[1].y) * (points[0].x - points[1].x)) * rd;
 			float sn = ((points[2].x - points[0].x) * (points[0].y - points[1].y) - (points[2].y - points[0].y) * (points[0].x - points[1].x)) * rd;
-			
+
 			vf2d center;
 			if (!(rn < 0.0f || rn > 1.0f || sn < 0.0f || sn > 1.0f)) center = points[0] + rn * (points[2] - points[0]);
 
@@ -1862,6 +1869,73 @@ namespace def
 			DrawLine((int32_t)vecCoordinates[i % verts].x, (int32_t)vecCoordinates[i % verts].y,
 				(int32_t)vecCoordinates[j % verts].x, (int32_t)vecCoordinates[j % verts].y, p);
 		}
+	}
+
+	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& p)
+	{
+		int32_t verts = modelCoordinates.size();
+
+		std::vector<vf2d> vecCoordinates;
+		vecCoordinates.resize(verts);
+
+		for (int i = 0; i < verts; i++)
+		{
+			vecCoordinates[i].x = modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r);
+			vecCoordinates[i].y = modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r);
+		}
+
+		for (int i = 0; i < verts; i++)
+		{
+			vecCoordinates[i].x = vecCoordinates[i].x * s;
+			vecCoordinates[i].y = vecCoordinates[i].y * s;
+		}
+
+		for (int i = 0; i < verts; i++)
+		{
+			vecCoordinates[i].x = vecCoordinates[i].x + x;
+			vecCoordinates[i].y = vecCoordinates[i].y + y;
+		}
+
+		auto GetAngle = [](const def::vf2d& p1, const def::vf2d& p2)
+		{
+			float fTheta = atan2(p2.y, p2.x) - atan2(p1.y, p1.x);
+			while (fTheta > 3.14159f) fTheta -= 3.14159f * 2.0f;
+			while (fTheta < -3.14159f) fTheta += 3.14159f * 2.0f;
+			return fTheta;
+		};
+
+		auto PointInPolygon = [&](const def::vf2d& p)
+		{
+			float fAngle = 0.0f;
+
+			def::vf2d p1, p2;
+			for (int i = 0; i < verts; i++)
+			{
+				p1 = vecCoordinates[i] - p;
+				p2 = vecCoordinates[(i + 1) % verts] - p;
+				fAngle += GetAngle(p1, p2);
+			}
+
+			return abs(fAngle) < 3.14159f;
+		};
+
+		def::vf2d vMin = vecCoordinates.front();
+		def::vf2d vMax = vecCoordinates.front();
+
+		for (int i = 1; i < verts; i++)
+		{
+			if (vMin.x > vecCoordinates[i].x) vMin.x = vecCoordinates[i].x;
+			if (vMin.y > vecCoordinates[i].y) vMin.y = vecCoordinates[i].y;
+
+			if (vMax.x < vecCoordinates[i].x) vMax.x = vecCoordinates[i].x;
+			if (vMax.y < vecCoordinates[i].y) vMax.y = vecCoordinates[i].y;
+		}
+
+		def::vf2d vPoint;
+		for (vPoint.x = vMin.x; vPoint.x < vMax.x; vPoint.x++)
+			for (vPoint.y = vMin.y; vPoint.y < vMax.y; vPoint.y++)
+				if (PointInPolygon(vPoint))
+					Draw(vPoint, p);
 	}
 
 	void GameEngine::DrawString(int32_t x, int32_t y, const std::string& s, const Pixel& p)
@@ -1948,50 +2022,85 @@ namespace def
 	void GameEngine::SetTextureStructure(int32_t nTextureStructure) { m_nTextureStructure = nTextureStructure; }
 	int32_t GameEngine::GetTextureStructure(int32_t nTextureStructure) { return m_nTextureStructure; }
 
-	bool GameEngine::Draw(vi2d pos, const Pixel& p)
-	{ return Draw(pos.x, pos.y, p); }
+	bool GameEngine::Draw(const vi2d& pos, Pixel p)
+	{
+		return Draw(pos.x, pos.y, p);
+	}
 
-	void GameEngine::DrawLine(vi2d pos1, vi2d pos2, const Pixel& p)
-	{ DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, p); }
+	void GameEngine::DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& p)
+	{
+		DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, p);
+	}
 
-	void GameEngine::DrawTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p)
-	{ DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p); }
+	void GameEngine::DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& p)
+	{
+		DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
+	}
 
-	void GameEngine::FillTriangle(vi2d pos1, vi2d pos2, vi2d pos3, const Pixel& p)
-	{ FillTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p); }
+	void GameEngine::FillTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& p)
+	{
+		FillTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
+	}
 
-	void GameEngine::DrawRectangle(vi2d pos, vi2d size, const Pixel& p)
-	{ DrawRectangle(pos.x, pos.y, size.x, size.y, p); }
+	void GameEngine::DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& p)
+	{
+		DrawRectangle(pos.x, pos.y, size.x, size.y, p);
+	}
 
-	void GameEngine::FillRectangle(vi2d pos, vi2d size, const Pixel& p)
-	{ FillRectangle(pos.x, pos.y, size.x, size.y, p); }
+	void GameEngine::FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& p)
+	{
+		FillRectangle(pos.x, pos.y, size.x, size.y, p);
+	}
 
-	void GameEngine::DrawCircle(vi2d pos, int32_t r, const Pixel& p)
-	{ DrawCircle(pos.x, pos.y, r, p); }
+	void GameEngine::DrawCircle(const vi2d& pos, int32_t r, const Pixel& p)
+	{
+		DrawCircle(pos.x, pos.y, r, p);
+	}
 
-	void GameEngine::FillCircle(vi2d pos, int32_t r, const Pixel& p)
-	{ FillCircle(pos.x, pos.y, r, p); }
+	void GameEngine::FillCircle(const vi2d& pos, int32_t r, const Pixel& p)
+	{
+		FillCircle(pos.x, pos.y, r, p);
+	}
 
-	void GameEngine::DrawSprite(vi2d pos, Sprite* spr)
-	{ DrawSprite(pos.x, pos.y, spr); }
+	void GameEngine::DrawSprite(const vi2d& pos, Sprite* spr)
+	{
+		DrawSprite(pos.x, pos.y, spr);
+	}
 
-	void GameEngine::DrawPartialSprite(vi2d pos, vi2d fpos, vi2d fsize, Sprite* spr)
-	{ DrawPartialSprite(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, spr); }
+	void GameEngine::DrawPartialSprite(const vi2d& pos, const vi2d& fpos, const vi2d& fsize, Sprite* spr)
+	{
+		DrawPartialSprite(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, spr);
+	}
 
-	void GameEngine::DrawTexture(vf2d pos, Texture* tex, vf2d scale, const Pixel& tint)
-	{ DrawTexture(pos.x, pos.y, tex, scale.x, scale.y, tint); }
+	void GameEngine::DrawTexture(const vf2d& pos, Texture* tex, const vf2d& scale, const Pixel& tint)
+	{
+		DrawTexture(pos.x, pos.y, tex, scale.x, scale.y, tint);
+	}
 
-	void GameEngine::DrawPartialTexture(vf2d pos, vi2d filePos, vi2d fileSize, Texture* tex, vf2d scale, const Pixel& tint)
-	{ DrawPartialTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, tex, scale.x, scale.y, tint); }
+	void GameEngine::DrawPartialTexture(const vf2d& pos, const vi2d& filePos, const vi2d& fileSize, Texture* tex, const vf2d& scale, const Pixel& tint)
+	{
+		DrawPartialTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, tex, scale.x, scale.y, tint);
+	}
 
-	void GameEngine::DrawRotatedTexture(vf2d pos, float r, Texture* tex, vf2d center, vf2d scale, const Pixel& tint)
-	{ DrawRotatedTexture(pos.x, pos.y, r, tex, center.x, center.y, scale.x, scale.y, tint); }
+	void GameEngine::DrawRotatedTexture(const vf2d& pos, float r, Texture* tex, const vf2d& center, const vf2d& scale, const Pixel& tint)
+	{
+		DrawRotatedTexture(pos.x, pos.y, r, tex, center.x, center.y, scale.x, scale.y, tint);
+	}
 
-	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, vf2d pos, float r, float s, const Pixel& p)
-	{ DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p); }
+	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, const vf2d& pos, float r, float s, const Pixel& p)
+	{
+		DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p);
+	}
 
-	void GameEngine::DrawString(vi2d pos, const std::string& text, const Pixel& p)
-	{ DrawString(pos.x, pos.y, text, p); }
+	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, const vf2d& pos, float r, float s, const Pixel& p)
+	{
+		FillWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p);
+	}
+
+	void GameEngine::DrawString(const vi2d& pos, const std::string& text, const Pixel& p)
+	{
+		DrawString(pos.x, pos.y, text, p);
+	}
 
 	vi2d GameEngine::ScreenSize() { return m_vScreenSize; }
 	vi2d GameEngine::GetMouse() { return m_vMouse; }
@@ -2005,6 +2114,12 @@ namespace def
 	void GameEngine::SetTint(const Pixel& p)
 	{
 		m_pixTint = p;
+	}
+
+	void GameEngine::SetShader(Pixel(*func)(const vi2d& vPos, const Pixel& pixPrev, const Pixel& pixCur))
+	{
+		m_funcShader = func;
+		m_nPixelMode = m_funcShader ? Pixel::CUSTOM : Pixel::DEFAULT;
 	}
 
 #endif
