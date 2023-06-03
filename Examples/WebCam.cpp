@@ -8,16 +8,16 @@
 constexpr int FRAME_WIDTH = 320;
 constexpr int FRAME_HEIGHT = 240;
 
-struct Frame
+struct frame
 {
 	float* pixels = nullptr;
 
-	Frame()
+	frame()
 	{
 		pixels = new float[FRAME_WIDTH * FRAME_HEIGHT];
 	}
 
-	~Frame()
+	~frame()
 	{
 		delete[] pixels;
 	}
@@ -38,7 +38,7 @@ struct Frame
 		pixels[y * FRAME_WIDTH + x] = p;
 	}
 
-	void operator=(const Frame& f)
+	void operator=(const frame& f)
 	{
 		memcpy(pixels, f.pixels, FRAME_WIDTH * FRAME_HEIGHT * sizeof(float));
 	}
@@ -56,7 +56,7 @@ public:
 private:
 	SimpleCapParams capture;
 
-	Frame input, output, prevInput;
+	frame input, output, prevInput;
 
 	union RGBint
 	{
@@ -126,48 +126,34 @@ private:
 	};
 
 protected:
-	void DrawFrame(Frame& frame, int x, int y)
+	void DrawFrame(frame& f, int x, int y)
 	{
 		for (int i = 0; i < FRAME_WIDTH; i++)
 			for (int j = 0; j < FRAME_HEIGHT; j++)
 			{
-				uint8_t c = (uint8_t)std::min(std::max(0.0f, frame.pixels[j * FRAME_WIDTH + i] * 255.0f), 255.0f);
-
+				uint8_t c = (uint8_t)std::min(std::max(0.0f, f.pixels[j * FRAME_WIDTH + i] * 255.0f), 255.0f);
 				Draw(x + i, y + j, def::Pixel(c, c, c));
 			}
 	}
 
 	bool OnUserCreate() override
 	{
-		if (setupESCAPI() == 0)
-			return false;
-
+		if (setupESCAPI() == 0) return false;
 		capture.mWidth = FRAME_WIDTH;
 		capture.mHeight = FRAME_HEIGHT;
-
 		capture.mTargetBuf = new int[FRAME_WIDTH * FRAME_HEIGHT];
-
-		if (!initCapture(0, &capture))
-			return false;
-
-		return true;
+		return initCapture(0, &capture);
 	}
 
 	bool OnUserUpdate(float fDeltaTime) override
 	{
 		prevInput = input;
-
-		doCapture(0);
-		while (isCaptureDone(0) == 0);
-
+		doCapture(0); while (isCaptureDone(0) == 0);
 		for (int y = 0; y < capture.mHeight; y++)
 			for (int x = 0; x < capture.mWidth; x++)
 			{
 				int i = y * capture.mWidth + x;
-
-				RGBint col;
-				col.rgb = capture.mTargetBuf[i];
-
+				RGBint col; col.rgb = capture.mTargetBuf[i];
 				input.pixels[i] = (float)col.c[1] / 255.0f;
 			}
 
@@ -188,16 +174,16 @@ protected:
 
 			fThreshold = std::min(1.0f, std::max(fThreshold, 0.0f));
 
-			for (int x = 0; x < FRAME_WIDTH; x++)
-				for (int y = 0; y < FRAME_HEIGHT; y++)
+			for (int y = 0; y < FRAME_HEIGHT; y++)
+				for (int x = 0; x < FRAME_WIDTH; x++)
 					output.set(x, y, input.get(x, y) >= fThreshold ? 1.0f : 0.0f);
 		}
 		break;
 
 		case Filter::Motion:
 		{
-			for (int x = 0; x < FRAME_WIDTH; x++)
-				for (int y = 0; y < FRAME_HEIGHT; y++)
+			for (int y = 0; y < FRAME_HEIGHT; y++)
+				for (int x = 0; x < FRAME_WIDTH; x++)
 					output.set(x, y, fabs(input.get(x, y) - prevInput.get(x, y)));
 		}
 		break;
@@ -209,8 +195,8 @@ protected:
 			if (GetKey(def::Key::C).bHeld) fConvoKernel = fConvoSharpenKernel;
 			if (GetKey(def::Key::V).bHeld) fConvoKernel = fConvoBlurKernel;
 
-			for (int x = 0; x < FRAME_WIDTH; x++)
-				for (int y = 0; y < FRAME_HEIGHT; y++)
+			for (int y = 0; y < FRAME_HEIGHT; y++)
+				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
 					float fSum = 0.0f;
 
@@ -230,8 +216,8 @@ protected:
 
 			fLowPass = std::min(1.0f, std::max(fLowPass, 0.0f));
 
-			for (int x = 0; x < FRAME_WIDTH; x++)
-				for (int y = 0; y < FRAME_HEIGHT; y++)
+			for (int y = 0; y < FRAME_HEIGHT; y++)
+				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
 					float fDist = (input.get(x, y) - output.get(x, y)) * fLowPass;
 					output.set(x, y, fDist + output.get(x, y));
@@ -246,8 +232,8 @@ protected:
 
 			fAdaptive = std::min(1.0f, std::max(fAdaptive, 0.5f));
 
-			for (int x = 0; x < FRAME_WIDTH; x++)
-				for (int y = 0; y < FRAME_HEIGHT; y++)
+			for (int y = 0; y < FRAME_HEIGHT; y++)
+				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
 					float fSum = 0.0f;
 
@@ -263,8 +249,8 @@ protected:
 
 		case Filter::Sobel:
 		{
-			for (int x = 0; x < FRAME_WIDTH; x++)
-				for (int y = 0; y < FRAME_HEIGHT; y++)
+			for (int y = 0; y < FRAME_HEIGHT; y++)
+				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
 					float fSumX = 0.0f, fSumY = 0.0f;
 
@@ -282,8 +268,8 @@ protected:
 
 		case Filter::Median:
 		{
-			for (int x = 0; x < FRAME_WIDTH; x++)
-				for (int y = 0; y < FRAME_HEIGHT; y++)
+			for (int y = 0; y < FRAME_HEIGHT; y++)
+				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
 					std::array<float, 25> col;
 
