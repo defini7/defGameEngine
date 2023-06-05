@@ -79,7 +79,7 @@
 #include <vector>
 #include <cmath>
 #include <list>
-#include <memory>
+#include <memory>s
 
 #include <GLFW/glfw3.h>
 
@@ -107,6 +107,13 @@
 #endif
 
 #pragma endregion
+
+#define DGE_ASSERT(expr, msg) \
+	if (!(expr)) \
+	{ \
+		std::cout << msg << std::endl; \
+		exit(1); \
+	}
 
 namespace def
 {
@@ -401,17 +408,6 @@ namespace def
 	typedef v2d<float> vf2d;
 	typedef v2d<double> vd2d;
 
-	struct rcode
-	{
-		rcode() = default;
-		rcode(bool bOk) : ok(bOk), info("ok") {}
-		rcode(bool bOk, const std::string& sInfo) : ok(bOk), info(sInfo) {}
-		operator bool() { return ok; }
-
-		bool ok;
-		std::string info;
-	};
-
 	struct KeyState
 	{
 		bool bHeld;
@@ -552,8 +548,7 @@ namespace def
 
 		Sprite(const std::string& sFilename)
 		{
-			rcode rc = Load(sFilename);
-			if (!rc) std::cerr << rc.info << "\n";
+			Load(sFilename);
 		}
 
 		~Sprite()
@@ -582,18 +577,16 @@ namespace def
 			memset(pPixelData, 0, nWidth * nHeight * nChannels * sizeof(uint8_t));
 		}
 
-		rcode Load(const std::string& sFilename)
+		void Load(const std::string& sFilename)
 		{
 			nChannels = 4;
 			pPixelData = stbi_load(sFilename.c_str(), &nWidth, &nHeight, nullptr, nChannels);
-			if (!pPixelData) return rcode(false, "stb_image: " + std::string(stbi_failure_reason()));
-
-			return rcode(true);
+			DGE_ASSERT(pPixelData, "[stb_image Error] Text: " << stbi_failure_reason())
 		}
 
 		enum class FileType { BMP, PNG, JPG, TGA, TGA_RLE };
 
-		rcode Save(const std::string& sFilename, const FileType type)
+		void Save(const std::string& sFilename, const FileType type)
 		{
 			int err;
 
@@ -613,7 +606,7 @@ namespace def
 
 			}
 
-			return rcode(err, std::to_string(err));
+			DGE_ASSERT(err == 1, "[stb_image_write Error] Code: " << err)
 		}
 
 		bool SetPixel(const int32_t x, const int32_t y, const Pixel& p)
@@ -702,8 +695,7 @@ namespace def
 	private:
 		void Construct(Sprite* pSprite, bool bDeleteSprite)
 		{
-			rcode rc = Load(pSprite);
-			if (!rc) std::cerr << rc.info << std::endl;
+			Load(pSprite);
 
 			fUVScaleX = 1.0f / (float)pSprite->nWidth;
 			fUVScaleY = 1.0f / (float)pSprite->nHeight;
@@ -724,7 +716,7 @@ namespace def
 		int32_t nHeight;
 
 	public:
-		rcode Load(Sprite* pSprite)
+		void Load(Sprite* pSprite)
 		{
 			GLenum nFormat = 0;
 
@@ -734,7 +726,7 @@ namespace def
 			case 4: nFormat = GL_RGBA; break;
 			}
 
-			if (nFormat == 0) return rcode(false, "Invalid number of channels");
+			DGE_ASSERT(nFormat != 0, "[Texture.Load Error] Text: Invalid number of channels")
 
 			glGenTextures(1, &nTexId);
 			glBindTexture(GL_TEXTURE_2D, nTexId);
@@ -759,7 +751,6 @@ namespace def
 			);
 
 			glBindTexture(GL_TEXTURE_2D, 0);
-			return rcode(true);
 		}
 
 		void Update(Sprite* pSprite)
@@ -797,7 +788,7 @@ namespace def
 			pTexture = new Texture(pSprite);
 		}
 
-		rcode Save(const std::string& sFilename, const Sprite::FileType type)
+		void Save(const std::string& sFilename, const Sprite::FileType type)
 		{
 			return pSprite->Save(sFilename, type);
 		}
@@ -875,13 +866,15 @@ namespace def
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 
-		rcode Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen = false, bool bVSync = false, bool bDirtyPixel = false);
+		void Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen = false, bool bVSync = false, bool bDirtyPixel = false);
 		void Run();
 
 	private:
 		void Destroy();
 		bool AppThread();
-		void DrawQuad(const Pixel& pixTint);
+
+		static void DrawQuad(const Pixel& pixTint);
+		static void ErrorCallback(int nErvoid, const char* sDesc);
 
 	public:
 		bool Draw(const vi2d& pos, Pixel p = WHITE);
@@ -1010,6 +1003,8 @@ namespace def
 
 	void GameEngine::Destroy()
 	{
+		SetDrawTarget(m_pScreen);
+
 		if (m_pDrawTarget != nullptr) delete m_pDrawTarget;
 		if (m_sprFont != nullptr) delete m_sprFont;
 
@@ -1178,9 +1173,23 @@ namespace def
 		AppThread();
 	}
 
-	rcode GameEngine::Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen, bool bVSync, bool bDirtyPixel)
+	void GameEngine::ErrorCallback(int nErrCode, const char* sDesc)
 	{
-		if (glfwInit() == 0) return rcode(false, "Could not init GLFW");
+		if (nErrCode != GLFW_INVALID_ENUM)
+		{
+			std::cout << "[GLFW Error] Code: "
+				<< "0x000" << std::hex << nErrCode
+				<< ", text: " << sDesc << std::endl;
+
+			exit(1);
+		}
+	}
+
+	void GameEngine::Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen, bool bVSync, bool bDirtyPixel)
+	{
+		glfwSetErrorCallback(ErrorCallback);
+
+		if (glfwInit() == 0) return;
 
 		m_vWindowSize = { nScreenWidth * nPixelWidth, nScreenHeight * nPixelHeight };
 		m_vScreenSize = { nScreenWidth, nScreenHeight };
@@ -1193,10 +1202,10 @@ namespace def
 		m_bDirtyPixel = bDirtyPixel;
 
 		m_Monitor = glfwGetPrimaryMonitor();
-		if (!m_Monitor) return rcode(false, "No monitors were found");
+		if (!m_Monitor) return;
 
 		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
-		if (!videoMode) return rcode(false, "Failed to get video mode");
+		if (!videoMode) return;
 
 		// On some laptops with integrated graphics VSync does not work at all!
 		if (m_bVSync)
@@ -1215,6 +1224,7 @@ namespace def
 			m_vScreenSize = m_vWindowSize / m_vPixelSize;
 
 			m_Window = glfwCreateWindow(m_vWindowSize.x, m_vWindowSize.y, "", m_Monitor, NULL);
+			if (!m_Window) return;
 
 			glfwSetWindowMonitor(m_Window, m_Monitor,
 				0, 0, m_vWindowSize.x, m_vWindowSize.y, videoMode->refreshRate);
@@ -1222,9 +1232,8 @@ namespace def
 		else
 		{
 			m_Window = glfwCreateWindow(m_vWindowSize.x, m_vWindowSize.y, "", NULL, NULL);
+			if (!m_Window) return;
 		}
-
-		if (!m_Window) return rcode(false, "Failed to create window");
 
 		glfwMakeContextCurrent(m_Window);
 		glViewport(0, 0, m_vWindowSize.x, m_vWindowSize.y);
@@ -1272,8 +1281,6 @@ namespace def
 				if (++py == 48) { px++; py = 0; }
 			}
 		}
-
-		return rcode(true);
 	}
 
 	bool GameEngine::Draw(int32_t x, int32_t y, Pixel p)
