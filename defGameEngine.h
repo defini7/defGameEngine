@@ -322,7 +322,7 @@ namespace def
 
 		friend bool operator==(const v2d<T>& v1, const v2d<T>& v2) { return v1.x == v2.x && v1.y == v2.y; }
 		friend bool operator!=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x != v2.x || v1.y != v2.y; }
-		friend bool operator<(const v2d<T>& v1, const v2d<T>& v2) { return v1.x < v2.x && v1.y < v2.y; }
+		friend bool operator<(const v2d<T>& v1, const v2d<T>& v2) { return v1.x < v2.x&& v1.y < v2.y; }
 		friend bool operator>(const v2d<T>& v1, const v2d<T>& v2) { return v1.x > v2.x && v1.y > v2.y; }
 		friend bool operator<=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
 		friend bool operator>=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
@@ -593,11 +593,11 @@ namespace def
 
 		enum class FileType { BMP, PNG, JPG, TGA, TGA_RLE };
 
-		rcode Save(const std::string& sFilename, const FileType fType)
+		rcode Save(const std::string& sFilename, const FileType type)
 		{
 			int err;
 
-			switch (fType)
+			switch (type)
 			{
 			case FileType::BMP: err = stbi_write_bmp(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData); break;
 			case FileType::PNG: err = stbi_write_png(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData, nWidth * nChannels); break;
@@ -612,6 +612,8 @@ namespace def
 			break;
 
 			}
+
+			return rcode(err, std::to_string(err));
 		}
 
 		bool SetPixel(const int32_t x, const int32_t y, const Pixel& p)
@@ -795,6 +797,11 @@ namespace def
 			pTexture = new Texture(pSprite);
 		}
 
+		rcode Save(const std::string& sFilename, const Sprite::FileType type)
+		{
+			return pSprite->Save(sFilename, type);
+		}
+
 		void UpdateTexture() { pTexture->Update(pSprite); }
 	};
 
@@ -862,7 +869,7 @@ namespace def
 
 		float m_fTickTimer;
 
-		Pixel (*m_funcShader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
+		Pixel(*m_funcShader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
 
 	public:
 		virtual bool OnUserCreate() = 0;
@@ -890,16 +897,22 @@ namespace def
 		virtual void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p = WHITE);
 
 		void DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void DrawRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
+		virtual void DrawRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p = WHITE);
 
 		void FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void FillRectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p = WHITE);
+		virtual void FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p = WHITE);
 
 		void DrawCircle(const vi2d& pos, int32_t radius, const Pixel& p = WHITE);
 		virtual void DrawCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
 
 		void FillCircle(const vi2d& pos, int32_t radius, const Pixel& p = WHITE);
 		virtual void FillCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
+		
+		void DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
+		virtual void DrawEllipse(int x, int y, int sx, int sy, const Pixel& p = def::WHITE);
+
+		void FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
+		virtual void FillEllipse(int x, int y, int sx, int sy, const Pixel& p = def::WHITE);
 
 		void DrawSprite(const vi2d& pos, Sprite* sprite);
 		virtual void DrawSprite(int32_t x, int32_t y, Sprite* sprite);
@@ -967,7 +980,7 @@ namespace def
 
 		void SetTint(const Pixel& p);
 
-		void SetShader(Pixel (*func)(const vi2d& vPos, const Pixel& pixPrev, const Pixel& pixCur));
+		void SetShader(Pixel(*func)(const vi2d& vPos, const Pixel& pixPrev, const Pixel& pixCur));
 
 	};
 
@@ -1702,6 +1715,126 @@ namespace def
 		}
 	}
 
+	void GameEngine::DrawEllipse(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
+	{
+		int x1 = x + sx;
+		int y1 = y + sy;
+
+		int a = abs(x1 - x);
+		int b = abs(y1 - y);
+		int b1 = b & 1;
+
+		int dx = 4 * (1 - a) * b * b;
+		int dy = 4 * (b1 + 1) * a * a;
+
+		int err = dx + dy + b1 * a * a;
+
+		if (x > x1)
+		{
+			x = x1;
+			x1 += a;
+		}
+
+		if (y > y1) y = y1;
+
+		y += (b + 1) / 2;
+		y1 = y - b1;
+
+		a *= 8 * a;
+		b1 = 8 * b * b;
+
+		do
+		{
+			Draw(x1, y, p);
+			Draw(x, y, p);
+			Draw(x, y1, p);
+			Draw(x1, y1, p);
+			int e2 = 2 * err;
+			if (e2 <= dy)
+			{
+				y++;
+				y1--;
+				err += dy += a;
+			}
+			if (e2 >= dx || 2 * err > dy)
+			{
+				x++;
+				x1--;
+				err += dx += b1;
+			}
+		} while (x <= x1);
+
+		while (y - y1 < b)
+		{
+			Draw(x - 1, y, p);
+			Draw(x1 + 1, y++, p);
+			Draw(x - 1, y1, p);
+			Draw(x1 + 1, y1--, p);
+		}
+	}
+
+	void GameEngine::FillEllipse(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
+	{
+		int x1 = x + sx;
+		int y1 = y + sy;
+
+		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny)
+		{
+			for (int i = sx; i <= ex; i++) Draw(i, ny, p);
+		};
+
+		int a = abs(x1 - x);
+		int b = abs(y1 - y);
+		int b1 = b & 1;
+
+		int dx = 4 * (1 - a) * b * b;
+		int dy = 4 * (b1 + 1) * a * a;
+
+		int err = dx + dy + b1 * a * a;
+
+		if (x > x1)
+		{
+			x = x1;
+			x1 += a;
+		}
+
+		if (y > y1) y = y1;
+
+		y += (b + 1) / 2;
+		y1 = y - b1;
+
+		a *= 8 * a;
+		b1 = 8 * b * b;
+
+		int z = 0;
+
+		do
+		{
+			drawline(x, x1, y);
+			drawline(x, x1, y1);
+
+			int e2 = 2 * err;
+			if (e2 <= dy)
+			{
+				y++;
+				y1--;
+				err += dy += a;
+			}
+			if (e2 >= dx || 2 * err > dy)
+			{
+				x++;
+				x1--;
+				err += dx += b1;
+			}
+		} while (x <= x1);
+
+		while (y - y1 < b)
+		{
+			drawline(x - 1, x1 + 1, y++);
+			drawline(x - 1, x1 + 1, y1--);
+		}
+	}
+
 	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* sprite)
 	{
 		for (int i = 0; i < sprite->nWidth; i++)
@@ -2060,6 +2193,16 @@ namespace def
 	void GameEngine::FillCircle(const vi2d& pos, int32_t r, const Pixel& p)
 	{
 		FillCircle(pos.x, pos.y, r, p);
+	}
+
+	void GameEngine::DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& p)
+	{
+		DrawEllipse(pos.x, pos.y, size.x, size.y, p);
+	}
+
+	void GameEngine::FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& p)
+	{
+		FillEllipse(pos.x, pos.y, size.x, size.y, p);
 	}
 
 	void GameEngine::DrawSprite(const vi2d& pos, Sprite* spr)
