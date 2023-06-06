@@ -62,8 +62,8 @@
 	{
 		Sample demo;
 
-		if (demo.Construct(256, 240, 4, 4))
-			demo.Run();
+		demo.Construct(256, 240, 4, 4);
+		demo.Run();
 
 		return 0;
 	}
