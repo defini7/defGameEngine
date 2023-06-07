@@ -1,6 +1,8 @@
 #define DGE_APPLICATION
 #include "defGameEngine.h"
 
+#include <algorithm>
+
 using namespace std;
 
 class CellularAutomata : public def::GameEngine
@@ -16,6 +18,9 @@ private:
 	bool* state = nullptr;
 
 	float fTicks = 0.0f;
+	float fDelay = 0.0f;
+	
+	std::vector<std::vector<int>> vStateLookup;
 
 private:
 	int GetNeighboursCount(int x, int y)
@@ -28,7 +33,7 @@ private:
 				nCount += output[(y + j) * ScreenWidth() + (x + i)];
 		}
 
-		if (output[y * ScreenWidth() + x] == 1) nCount--;
+		if (output[y * ScreenWidth() + x]) nCount--;
 
 		return nCount;
 	}
@@ -48,7 +53,7 @@ protected:
 		auto set = [&](int x, int y, std::string v)
 		{
 			for (int i = 0; i < v.size(); i++)
-				state[y * ScreenWidth() + (x + i)] = (v[i] == '#') ? true : false;
+				state[y * ScreenWidth() + (x + i)] = (v[i] == '#');
 		};
 
 		set(60, 45, "........................#............");
@@ -61,41 +66,68 @@ protected:
 		set(60, 52, "...........#...#.....................");
 		set(60, 53, "............##.......................");
 
+		vStateLookup =
+		{
+			{ 0, 0, 0, 1, 0, 0, 0, 0, 0 }, // dead
+			{ 0, 0, 1, 1, 0, 0, 0, 0, 0 }  // alive
+		};
+
+		DrawRectangle(0, 0, ScreenWidth() - 1, ScreenHeight() - 1, def::RED);
+		UpdateState();
+
 		return true;
+	}
+
+	void UpdateState()
+	{
+		for (int i = 0; i < ScreenWidth() * ScreenHeight(); i++)
+			output[i] = state[i];
+
+		for (int x = 1; x < ScreenWidth() - 1; x++)
+			for (int y = 1; y < ScreenHeight() - 1; y++)
+			{
+				int nCount = GetNeighboursCount(x, y);
+
+				size_t i = y * ScreenWidth() + x;
+				state[i] = (bool)vStateLookup[output[i]][nCount];
+			}
+	}
+
+	void UpdateBoth(int x, int y, bool v)
+	{
+		size_t i = y * ScreenWidth() + x;
+		state[i] = output[i] = v;
 	}
 
 	bool OnUserUpdate(float fDeltaTime) override
 	{
-		if (GetKey(def::Key::SPACE).bHeld)
-			return true;
+		if (GetKey(def::Key::SPACE).bPressed)
+			UpdateState();
 
-		fTicks += fDeltaTime;
-		if (fTicks > 0.1f)
+		if (GetKey(def::Key::LEFT_SHIFT).bHeld)
 		{
-			fTicks = 0.0f;
-
-			Clear(def::BLACK);
-
-			DrawRectangle(0, 0, ScreenWidth() - 1, ScreenHeight() - 1, def::RED);
-
-			for (int i = 0; i < ScreenWidth() * ScreenHeight(); i++)
-				output[i] = state[i];
-
-			for (int x = 1; x < ScreenWidth() - 1; x++)
-				for (int y = 1; y < ScreenHeight() - 1; y++)
-				{
-					int nCount = GetNeighboursCount(x, y);
-
-					if (output[y * ScreenWidth() + x] == 1)
-						state[y * ScreenWidth() + x] = (nCount == 2 || nCount == 3);
-					else
-						state[y * ScreenWidth() + x] = (nCount == 3);
-
-					if (output[y * ScreenWidth() + x] == 1)
-						Draw(x, y, def::WHITE);
-
-				}
+			if (fTicks >= fDelay)
+			{
+				UpdateState();
+				fTicks = 0.0f;
+			}
+			
+			fTicks += fDeltaTime;
 		}
+
+		if (GetKey(def::Key::LEFT).bHeld) fDelay -= fDeltaTime;
+		if (GetKey(def::Key::RIGHT).bHeld) fDelay += fDeltaTime;
+
+		fDelay = std::clamp(fDelay, 0.0f, 1.0f);
+
+		if (GetMouse(0).bHeld) UpdateBoth(MouseX(), MouseY(), true);
+		if (GetMouse(1).bHeld) UpdateBoth(MouseX(), MouseY(), false);
+
+		for (int x = 1; x < ScreenWidth() - 1; x++)
+			for (int y = 1; y < ScreenHeight() - 1; y++)
+				Draw(x, y, output[y * ScreenWidth() + x] ? def::WHITE : def::BLACK);
+
+		DrawString(2, 2, "Delay = " + std::to_string(fDelay), def::YELLOW);
 
 		return true;
 	}
@@ -107,8 +139,8 @@ int main()
 
 	CellularAutomata game;
 
-	if (game.Construct(160, 100, 8, 8))
-		game.Run();
+	game.Construct(160, 100, 8, 8);
+	game.Run();
 
 	return 0;
 }
