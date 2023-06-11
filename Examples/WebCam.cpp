@@ -356,12 +356,9 @@ protected:
 int main()
 {
 	WebCam demo;
-	def::rcode err = demo.Construct(800, 500, 2, 2);
 
-	if (err.ok)
-		demo.Run();
-	else
-		std::cerr << err.info << "\n";
+	demo.Construct(800, 500, 2, 2);
+	demo.Run();
 
 	return 0;
 }
