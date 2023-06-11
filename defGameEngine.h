@@ -79,8 +79,9 @@
 #include <vector>
 #include <cmath>
 #include <list>
-#include <memory>s
+#include <memory>
 
+// #define GLFW_DLL
 #include <GLFW/glfw3.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -1812,8 +1813,6 @@ namespace def
 
 		a *= 8 * a;
 		b1 = 8 * b * b;
-
-		int z = 0;
 
 		do
 		{
