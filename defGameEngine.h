@@ -79,9 +79,8 @@
 #include <vector>
 #include <cmath>
 #include <list>
-#include <memory>
+#include <memory>s
 
-// #define GLFW_DLL
 #include <GLFW/glfw3.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -1662,10 +1661,10 @@ namespace def
 			Draw(x + i, y + sy, p);
 		}
 
-		for (int j = 0; j < sy; j++)
+		for (int i = 0; i < sy; i++)
 		{
-			Draw(x, y + j, p);
-			Draw(x + sx, y + j, p);
+			Draw(x, y + i, p);
+			Draw(x + sx, y + i, p);
 		}
 
 		Draw(x + sx, y + sy, p);
@@ -1673,9 +1672,9 @@ namespace def
 
 	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
 	{
-		for (int i = x; i < x + sx; i++)
-			for (int j = y; j < y + sy; j++)
-				Draw(i, j, p);
+		for (int i = 0; i <= sx; i++)
+			for (int j = 0; j <= sy; j++)
+				Draw(x + i, y + j, p);
 	}
 
 	void GameEngine::DrawCircle(int32_t x, int32_t y, int32_t r, const Pixel& p)
@@ -1813,6 +1812,8 @@ namespace def
 
 		a *= 8 * a;
 		b1 = 8 * b * b;
+
+		int z = 0;
 
 		do
 		{
