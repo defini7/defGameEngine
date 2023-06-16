@@ -863,6 +863,8 @@ namespace def
 		Pixel(*m_funcShader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
 
 	public:
+		inline static std::vector<std::string> s_vecDropCache;
+
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float fDeltaTime) = 0;
 
@@ -874,7 +876,8 @@ namespace def
 		bool AppThread();
 
 		static void DrawQuad(const Pixel& pixTint);
-		static void ErrorCallback(int nErvoid, const char* sDesc);
+		static void ErrorCallback(int nErrCode, const char* sDesc);
+		static void DropCallback(GLFWwindow* window, int nPathCount, const char* sPaths[]);
 
 	public:
 		bool Draw(const vi2d& pos, Pixel p = WHITE);
@@ -960,6 +963,8 @@ namespace def
 
 		WindowState GetWindowState();
 		GLFWwindow* GetWindow();
+
+		static std::vector<std::string>& GetDropped();
 
 		void DrawTexture(const TextureInstance& tex);
 
@@ -1185,11 +1190,20 @@ namespace def
 		}
 	}
 
+	void GameEngine::DropCallback(GLFWwindow* window, int nPathCount, const char* sPaths[])
+	{
+		s_vecDropCache.clear();
+		s_vecDropCache.reserve(nPathCount);
+
+		for (int i = 0; i < nPathCount; i++)
+			s_vecDropCache.push_back(sPaths[i]);
+	}
+
 	void GameEngine::Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen, bool bVSync, bool bDirtyPixel)
 	{
 		glfwSetErrorCallback(ErrorCallback);
 
-		if (glfwInit() == 0) return;
+		glfwInit();
 
 		m_vWindowSize = { nScreenWidth * nPixelWidth, nScreenHeight * nPixelHeight };
 		m_vScreenSize = { nScreenWidth, nScreenHeight };
@@ -1281,6 +1295,8 @@ namespace def
 				if (++py == 48) { px++; py = 0; }
 			}
 		}
+
+		glfwSetDropCallback(m_Window, DropCallback);
 	}
 
 	bool GameEngine::Draw(int32_t x, int32_t y, Pixel p)
@@ -2155,6 +2171,7 @@ namespace def
 	}
 
 	GLFWwindow* GameEngine::GetWindow() { return m_Window; }
+	std::vector<std::string>& GameEngine::GetDropped() { return s_vecDropCache; }
 
 	void GameEngine::SetPixelMode(int32_t nPixelMode) { m_nPixelMode = nPixelMode; }
 	int32_t GameEngine::GetPixelMode() { return m_nPixelMode; }
