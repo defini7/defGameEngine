@@ -1,6 +1,6 @@
 /*
 * BSD 3-Clause License
-Copyright (c) 2023, Алекс
+Copyright (c) 2023, Alex
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice, this
@@ -23,7 +23,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "defGameEngine.h"
+#define DGE_APPLICATION
+#include "../defGameEngine.h"
 
 #include <array>
 
@@ -145,7 +146,7 @@ public:
 int main()
 {
 	SlidingPuzzle demo;
-	if (demo.Construct(256, 240, 4, 4))
-		demo.Run();
+	demo.Construct(256, 240, 4, 4);
+	demo.Run();
 	return 0;
 }

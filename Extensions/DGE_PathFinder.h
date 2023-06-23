@@ -33,6 +33,7 @@
 #include <list>
 #include <cmath>
 #include <functional>
+#include <vector>
 
 #pragma endregion
 
@@ -50,12 +51,12 @@ namespace def
 		sNode* pParent;
 	};
 
-	class DGE_PathFinder
+	class PathFinder
 	{
 	public:
-		DGE_PathFinder() = default;
+		PathFinder() = default;
 
-		DGE_PathFinder(int nMapWidth, int nMapHeight)
+		PathFinder(int nMapWidth, int nMapHeight)
 		{
 			m_nMapWidth = nMapWidth;
 			m_nMapHeight = nMapHeight;
@@ -63,7 +64,7 @@ namespace def
 			m_nodeNodes = new sNode[m_nMapWidth * m_nMapHeight];
 		}
 
-		~DGE_PathFinder()
+		~PathFinder()
 		{
 			FreeMap();
 		}
@@ -80,169 +81,193 @@ namespace def
 		bool m_bMapFreed = false;
 
 	public:
-		void ClearMap()
-		{
-			for (int x = 0; x < m_nMapWidth; x++)
-				for (int y = 0; y < m_nMapHeight; y++)
-				{
-					int p = y * m_nMapWidth + x;
-					m_nodeNodes[p].bVisited = false;
-					m_nodeNodes[p].fGlobalGoal = INFINITY;
-					m_nodeNodes[p].fLocalGoal = INFINITY;
-					m_nodeNodes[p].pParent = nullptr;
-				}
-		}
+		void ClearMap();
+		bool FreeMap();
+		bool ConstructMap(int nMapWidth, int nMapHeight);
 
-		bool FreeMap()
-		{
-			if (!m_bMapFreed)
-			{
-				delete[] m_nodeNodes;
-				m_bMapFreed = true;
-			}
+		bool SetNodes(int nStartX, int nStartY, int nGoalX, int nGoalY);
+		void SetNodes(sNode* start = nullptr, sNode* goal = nullptr);
 
-			return m_bMapFreed;
-		}
+		sNode* GetStartNode();
+		sNode* GetGoalNode();
+		sNode* GetNodes();
 
-		bool ConstructMap(int nMapWidth, int nMapHeight)
-		{
-			if (nMapWidth <= 0 || nMapHeight <= 0)
-				return false;
+		void ResetNodes();
 
-			FreeMap();
+		int GetMapWidth();
 
-			m_nMapWidth = nMapWidth;
-			m_nMapHeight = nMapHeight;
+		int GetMapHeight();
 
-			m_nodeNodes = new sNode[m_nMapWidth * m_nMapHeight];
-
-			for (int x = 0; x < nMapWidth; x++)
-				for (int y = 0; y < nMapHeight; y++)
-				{
-					int p = y * nMapWidth + x;
-					m_nodeNodes[p].bObstacle = false;
-					m_nodeNodes[p].bVisited = false;
-					m_nodeNodes[p].nPosX = x;
-					m_nodeNodes[p].nPosY = y;
-					m_nodeNodes[p].pParent = nullptr;
-				}
-
-			for (int x = 0; x < nMapWidth; x++)
-				for (int y = 0; y < nMapHeight; y++)
-				{
-					if (y > 0)
-						m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[(y - 1) * nMapWidth + x]);
-
-					if (y < nMapHeight - 1)
-						m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[(y + 1) * nMapWidth + x]);
-
-					if (x > 0)
-						m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[y * nMapWidth + x - 1]);
-
-					if (x < nMapWidth - 1)
-						m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[y * nMapWidth + x + 1]);
-				}
-
-			m_bMapFreed = false;
-
-			return true;
-		}
-
-		bool SetNodes(int nStartX, int nStartY, int nGoalX, int nGoalY)
-		{
-			if (nStartX < 0 || nStartX >= m_nMapWidth || nGoalX < 0 || nGoalX >= m_nMapWidth ||
-				nStartY < 0 || nStartY >= m_nMapHeight || nGoalY < 0 || nGoalY >= m_nMapHeight)
-				return false;
-
-			m_nodeStart = &m_nodeNodes[nStartY * m_nMapWidth + nStartX];
-			m_nodeGoal = &m_nodeNodes[nGoalY * m_nMapWidth + nGoalX];
-
-			return true;
-		}
-
-		void SetNodes(sNode* start = nullptr, sNode* goal = nullptr)
-		{
-			if (start)
-				m_nodeStart = start;
-
-			if (goal)
-				m_nodeGoal = goal;
-		}
-
-		sNode* GetStartNode()
-		{
-			return m_nodeStart;
-		}
-
-		sNode* GetGoalNode()
-		{
-			return m_nodeGoal;
-		}
-
-		void ResetNodes()
-		{
-			m_nodeStart = nullptr;
-			m_nodeGoal = nullptr;
-		}
-
-		sNode* GetNodes()
-		{
-			return m_nodeNodes;
-		}
-
-		int GetMapWidth()
-		{
-			return m_nMapWidth;
-		}
-
-		int GetMapHeight()
-		{
-			return m_nMapHeight;
-		}
-
-		void FindPath(float (*dist)(sNode*, sNode*), float (*heuristic)(sNode*, sNode*))
-		{
-			sNode* current = m_nodeStart;
-			m_nodeStart->fLocalGoal = 0.0f;
-			m_nodeStart->fGlobalGoal = heuristic(m_nodeStart, m_nodeGoal);
-
-			std::list<sNode*> listNodesToTest;
-			listNodesToTest.push_back(m_nodeStart);
-
-			while (!listNodesToTest.empty() && current != m_nodeGoal)
-			{
-				listNodesToTest.sort(
-					[](const sNode* lhs, const sNode* rhs)
-					{
-						return lhs->fGlobalGoal < rhs->fGlobalGoal;
-					}
-				);
-
-				while (!listNodesToTest.empty() && listNodesToTest.front()->bVisited)
-					listNodesToTest.pop_front();
-
-				if (listNodesToTest.empty())
-					break;
-
-				current = listNodesToTest.front();
-				current->bVisited = true;
-
-				for (auto n : current->vecNeighbours)
-				{
-					if (!n->bVisited && !n->bObstacle)
-						listNodesToTest.push_back(n);
-
-					float fPossiblyLowerGoal = current->fLocalGoal + dist(current, n);
-
-					if (fPossiblyLowerGoal < n->fLocalGoal)
-					{
-						n->pParent = current;
-						n->fLocalGoal = fPossiblyLowerGoal;
-						n->fGlobalGoal = n->fLocalGoal + heuristic(n, m_nodeGoal);
-					}
-				}
-			}
-		}
+		void FindPath(float (*dist)(sNode*, sNode*), float (*heuristic)(sNode*, sNode*));
 
 	};
+
+#ifdef DGE_PATHFINDER
+#undef DGE_PATHFINDER
+
+	void PathFinder::ClearMap()
+	{
+		for (int x = 0; x < m_nMapWidth; x++)
+			for (int y = 0; y < m_nMapHeight; y++)
+			{
+				int p = y * m_nMapWidth + x;
+				m_nodeNodes[p].bVisited = false;
+				m_nodeNodes[p].fGlobalGoal = INFINITY;
+				m_nodeNodes[p].fLocalGoal = INFINITY;
+				m_nodeNodes[p].pParent = nullptr;
+			}
+	}
+
+	bool PathFinder::FreeMap()
+	{
+		if (!m_bMapFreed)
+		{
+			delete[] m_nodeNodes;
+			m_bMapFreed = true;
+		}
+
+		return m_bMapFreed;
+	}
+
+	bool PathFinder::ConstructMap(int nMapWidth, int nMapHeight)
+	{
+		if (nMapWidth <= 0 || nMapHeight <= 0)
+			return false;
+
+		FreeMap();
+
+		m_nMapWidth = nMapWidth;
+		m_nMapHeight = nMapHeight;
+
+		m_nodeNodes = new sNode[m_nMapWidth * m_nMapHeight];
+
+		for (int x = 0; x < nMapWidth; x++)
+			for (int y = 0; y < nMapHeight; y++)
+			{
+				int p = y * nMapWidth + x;
+				m_nodeNodes[p].bObstacle = false;
+				m_nodeNodes[p].bVisited = false;
+				m_nodeNodes[p].nPosX = x;
+				m_nodeNodes[p].nPosY = y;
+				m_nodeNodes[p].pParent = nullptr;
+			}
+
+		for (int x = 0; x < nMapWidth; x++)
+			for (int y = 0; y < nMapHeight; y++)
+			{
+				if (y > 0)
+					m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[(y - 1) * nMapWidth + x]);
+
+				if (y < nMapHeight - 1)
+					m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[(y + 1) * nMapWidth + x]);
+
+				if (x > 0)
+					m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[y * nMapWidth + x - 1]);
+
+				if (x < nMapWidth - 1)
+					m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[y * nMapWidth + x + 1]);
+			}
+
+		m_bMapFreed = false;
+
+		return true;
+	}
+
+	bool PathFinder::SetNodes(int nStartX, int nStartY, int nGoalX, int nGoalY)
+	{
+		if (nStartX < 0 || nStartX >= m_nMapWidth || nGoalX < 0 || nGoalX >= m_nMapWidth ||
+			nStartY < 0 || nStartY >= m_nMapHeight || nGoalY < 0 || nGoalY >= m_nMapHeight)
+			return false;
+
+		m_nodeStart = &m_nodeNodes[nStartY * m_nMapWidth + nStartX];
+		m_nodeGoal = &m_nodeNodes[nGoalY * m_nMapWidth + nGoalX];
+
+		return true;
+	}
+
+	void PathFinder::SetNodes(sNode* start, sNode* goal)
+	{
+		if (start)
+			m_nodeStart = start;
+
+		if (goal)
+			m_nodeGoal = goal;
+	}
+
+	sNode* PathFinder::GetStartNode()
+	{
+		return m_nodeStart;
+	}
+
+	sNode* PathFinder::GetGoalNode()
+	{
+		return m_nodeGoal;
+	}
+
+	void PathFinder::ResetNodes()
+	{
+		m_nodeStart = nullptr;
+		m_nodeGoal = nullptr;
+	}
+
+	sNode* PathFinder::GetNodes()
+	{
+		return m_nodeNodes;
+	}
+
+	int PathFinder::GetMapWidth()
+	{
+		return m_nMapWidth;
+	}
+
+	int PathFinder::GetMapHeight()
+	{
+		return m_nMapHeight;
+	}
+
+	void PathFinder::FindPath(float (*dist)(sNode*, sNode*), float (*heuristic)(sNode*, sNode*))
+	{
+		sNode* current = m_nodeStart;
+		m_nodeStart->fLocalGoal = 0.0f;
+		m_nodeStart->fGlobalGoal = heuristic(m_nodeStart, m_nodeGoal);
+
+		std::list<sNode*> listNodesToTest;
+		listNodesToTest.push_back(m_nodeStart);
+
+		while (!listNodesToTest.empty() && current != m_nodeGoal)
+		{
+			listNodesToTest.sort(
+				[](const sNode* lhs, const sNode* rhs)
+				{
+					return lhs->fGlobalGoal < rhs->fGlobalGoal;
+				}
+			);
+
+			while (!listNodesToTest.empty() && listNodesToTest.front()->bVisited)
+				listNodesToTest.pop_front();
+
+			if (listNodesToTest.empty())
+				break;
+
+			current = listNodesToTest.front();
+			current->bVisited = true;
+
+			for (auto n : current->vecNeighbours)
+			{
+				if (!n->bVisited && !n->bObstacle)
+					listNodesToTest.push_back(n);
+
+				float fPossiblyLowerGoal = current->fLocalGoal + dist(current, n);
+
+				if (fPossiblyLowerGoal < n->fLocalGoal)
+				{
+					n->pParent = current;
+					n->fLocalGoal = fPossiblyLowerGoal;
+					n->fGlobalGoal = n->fLocalGoal + heuristic(n, m_nodeGoal);
+				}
+			}
+		}
+	}
+	
+#endif
 }

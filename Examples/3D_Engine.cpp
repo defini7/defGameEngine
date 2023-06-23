@@ -1,7 +1,7 @@
 /*
 * BSD 3-Clause License
 
-Copyright (c) 2023, Алекс
+Copyright (c) 2023, Alex
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "../defGameEngine.h"
 
 #pragma warning(disable : 4996)
 
@@ -461,7 +461,6 @@ public:
 	Engine3D()
 	{
 		SetTitle("3D Engine");
-		ShowFPS();
 	}
 
 	~Engine3D()
@@ -1004,8 +1003,8 @@ int main()
 {
 	Engine3D demo;
 
-	if (demo.Construct(1280, 720, 1, 1))
-		demo.Run();
+	demo.Construct(1280, 720, 1, 1);
+	demo.Run();
 
 	return 0;
 }

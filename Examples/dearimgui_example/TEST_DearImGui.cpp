@@ -1,6 +1,6 @@
 /*
 * BSD 3-Clause License
-Copyright (c) 2023, Алекс
+Copyright (c) 2023, Alex
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice, this
@@ -23,10 +23,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "defGameEngine.h"
+#define DGE_APPLICATION
+#include "../../defGameEngine.h"
 
-#define DGE_PANANDZOOM
-#include "DGE_PanAndZoom.h"
+#define DGE_DEARIMGUI
+#include "../../Extensions/DGE_DearImGui.h"
 
 class Sample : public def::GameEngine
 {
@@ -34,40 +35,54 @@ public:
 	Sample()
 	{
 		SetTitle("Sample");
-		ShowFPS();
+	}
+
+	~Sample()
+	{
+		imgui.Destroy();
 	}
 
 private:
-	def::PanAndZoom pz;
+	float fFactor = 0.0f;
 
 protected:
 	bool OnUserCreate() override
 	{
-		pz.Initialize();
+		imgui.Setup(GetWindow(), def::IGT_DARK);
 
 		return true;
 	}
 
 	bool OnUserUpdate(float fDeltaTime) override
 	{
-		def::HandleInfo hi = pz.Handle(this);
+		imgui.Update();
 
-		DrawCircle(pz.WorldToScreen({ 0, 0 }), hi.vScale.x, def::WHITE);
+		Clear(def::WHITE);
+
+		FillRectangle(10, 10, 50, 50, def::Pixel(
+			uint8_t(255.0f * fFactor), uint8_t(255.0f * fFactor), uint8_t(255.0f * fFactor)
+		));
+
+		ImGui::Begin("Settings");
+		ImGui::SliderFloat("Factor", &fFactor, 0.0f, 1.0f);
+		ImGui::End();
+
+		imgui.Draw();
 
 		return true;
 	}
+
+private:
+	def::DearImGui imgui;
+
 };
 
 int main()
 {
 	Sample demo;
 
-	def::rcode err = demo.Construct(256, 240, 4, 4);
-
-	if (err.ok)
-		demo.Run();
-	else
-		std::cerr << err.info << "\n";
+	demo.Construct(800, 600, 1, 1);
+	demo.Run();
 
 	return 0;
 }
