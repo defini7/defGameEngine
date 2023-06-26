@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Escapi lib
 escapi.*
+
+# Test file
+Test.*

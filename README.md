@@ -1,19 +1,17 @@
 <p align="center"><img src="dge_large_logo.png"></p>
 
 # defGameEngine
-defGameEngine - это игровой движок, доступный на Windows ( > 7 ), Linux
+defGameEngine - это игровой движок, доступный на Windows (>7), Linux и возможно на MacOS
 
 # Установка
 
 Windows:
-
 - Скачать [GLFW](https://www.glfw.org/download.html).
 
 Linux:
 - ```sudo apt-get install xorg libx11-dev libglu1-mesa-dev freeglut3-dev libglu1-mesa libgl1-mesa-glx libgl1-mesa-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev libglew-dev libglfw3-dev```
 
 Для всех платформ:
-
 - Скачать файл [defGameEngine.h](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.h).
 
 # Запуск
@@ -30,13 +28,11 @@ Linux:
 2. Linux G++:
 - ```g++ <файл>.cpp -o <файл> -std=c++14 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -fsanitize=undefined -fno-sanitize-recover```.
 
-На этом все!
-
 # Лицензия
 
 BSD 3-Clause License
 
-Copyright (c) 2022, Alex
+Copyright (c) 2022, 2023 Alex
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

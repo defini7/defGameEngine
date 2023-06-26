@@ -108,12 +108,18 @@
 
 #pragma endregion
 
+#ifndef DGE_ASSERT
 #define DGE_ASSERT(expr, msg) \
 	if (!(expr)) \
 	{ \
 		std::cout << msg << std::endl; \
 		exit(1); \
 	}
+#endif
+
+#ifndef DGE_MIX
+#define DGE_MIX(x, y, f, t) t((float)x * (1.0f - f) + (float)y * f)
+#endif
 
 namespace def
 {
@@ -428,6 +434,17 @@ namespace def
 		};
 
 		uint8_t r, g, b, a;
+
+		Pixel mix(const def::Pixel& rhs, const float factor) const
+		{
+			return
+			{
+				DGE_MIX(r, rhs.r, factor, uint8_t),
+				DGE_MIX(g, rhs.g, factor, uint8_t),
+				DGE_MIX(b, rhs.b, factor, uint8_t),
+				DGE_MIX(a, rhs.a, factor, uint8_t)
+			};
+		}
 
 		template <typename T>
 		friend Pixel operator+(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r + rhs), uint8_t((T)lhs.g + rhs), uint8_t((T)lhs.b + rhs), lhs.a); }

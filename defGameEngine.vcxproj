@@ -131,12 +131,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="escapi.cpp" />
-    <ClCompile Include="examples\WebCam.cpp" />
+    <ClInclude Include="defGameEngine.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="defGameEngine.h" />
-    <ClInclude Include="escapi.h" />
+    <ClCompile Include="Test.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
