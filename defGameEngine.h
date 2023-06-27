@@ -261,21 +261,16 @@ namespace def
 		T x = (T)0;
 		T y = (T)0;
 
-		v2d<T> operator=(const v2d<T>& v)
-		{
-			this->x = v.x;
-			this->y = v.y;
-			return *this;
-		}
-
 		friend v2d<T> operator+(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x + v2.x, v1.y + v2.y); }
 		friend v2d<T> operator-(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x - v2.x, v1.y - v2.y); }
 		friend v2d<T> operator*(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x * v2.x, v1.y * v2.y); }
 		friend v2d<T> operator/(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x / v2.x, v1.y / v2.y); }
+		friend v2d<T> operator%(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x % v2.x, v1.y % v2.y); }
 		friend v2d<T> operator+(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x + v2, v1.y + v2); }
 		friend v2d<T> operator-(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x - v2, v1.y - v2); }
 		friend v2d<T> operator*(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x * v2, v1.y * v2); }
 		friend v2d<T> operator/(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x / v2, v1.y / v2); }
+		friend v2d<T> operator%(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x % v2, v1.y % v2); }
 
 		v2d<T>& operator+=(const v2d<T>& v)
 		{
@@ -330,6 +325,13 @@ namespace def
 		{
 			this->x /= v;
 			this->y /= v;
+			return *this;
+		}
+
+		v2d<T>& operator%=(const T& v)
+		{
+			this->x %= v;
+			this->y %= v;
 			return *this;
 		}
 
@@ -408,6 +410,7 @@ namespace def
 		v2d<T>& ref() { return *this; }
 
 		operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
+		std::string str() { return operator std::string(); }
 	};
 
 	typedef v2d<int> vi2d;
@@ -890,7 +893,7 @@ namespace def
 
 	private:
 		void Destroy();
-		bool AppThread();
+		void AppThread();
 
 		static void DrawQuad(const Pixel& pixTint);
 		static void ErrorCallback(int nErrCode, const char* sDesc);
@@ -1034,13 +1037,10 @@ namespace def
 		glfwTerminate();
 	}
 
-	bool GameEngine::AppThread()
+	void GameEngine::AppThread()
 	{
 		if (!OnUserCreate())
-		{
 			m_bAppRunning = false;
-			return false;
-		}
 
 		auto tp1 = std::chrono::system_clock::now();
 		auto tp2 = tp1;
@@ -1139,8 +1139,10 @@ namespace def
 			for (const auto& t : m_vecTextures) DrawTexture(t);
 			m_vecTextures.clear();
 
-			if (m_bVSync) glfwSwapBuffers(m_Window);
-			else		  glFlush();
+			if (m_bVSync)
+				glfwSwapBuffers(m_Window);
+			else
+				glFlush();
 
 			glfwPollEvents();
 
@@ -1152,8 +1154,6 @@ namespace def
 				m_fTickTimer = 0.0f;
 			}
 		}
-
-		return true;
 	}
 
 	void GameEngine::DrawTexture(const TextureInstance& ti)
@@ -1238,16 +1238,8 @@ namespace def
 		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
 		if (!videoMode) return;
 
-		// On some laptops with integrated graphics VSync does not work at all!
-		if (m_bVSync)
-		{
-			glfwSwapInterval(1);
-			glfwWindowHint(GLFW_REFRESH_RATE, videoMode->refreshRate);
-		}
-		else
-		{
+		if (!m_bVSync)
 			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
-		}
 
 		if (m_bFullScreen)
 		{
@@ -1271,6 +1263,12 @@ namespace def
 
 		glEnable(GL_TEXTURE_2D);
 		if (!m_bDirtyPixel) glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+		if (m_bVSync)
+		{
+			glfwSwapInterval(1);
+			glfwWindowHint(GLFW_REFRESH_RATE, videoMode->refreshRate);
+		}
 
 		m_pScreen = new Graphic(m_vScreenSize.x, m_vScreenSize.y);
 		m_pDrawTarget = m_pScreen;
@@ -1705,8 +1703,8 @@ namespace def
 
 	void GameEngine::FillRectangle(int32_t x, int32_t y, int32_t sx, int32_t sy, const Pixel& p)
 	{
-		for (int i = 0; i <= sx; i++)
-			for (int j = 0; j <= sy; j++)
+		for (int i = 0; i < sx; i++)
+			for (int j = 0; j < sy; j++)
 				Draw(x + i, y + j, p);
 	}
 
