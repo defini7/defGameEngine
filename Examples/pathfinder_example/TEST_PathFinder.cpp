@@ -42,12 +42,12 @@ public:
 private:
 	def::PathFinder pathFinder;
 
-	static float Distance(sNode* n1, sNode* n2)
+	static float Distance(Node* n1, Node* n2)
 	{
-		return sqrtf((n1->nPosX - n2->nPosX) * (n1->nPosX - n2->nPosX) + (n1->nPosY - n2->nPosY) * (n1->nPosY - n2->nPosY));
+		return sqrtf((n1->posX - n2->posX) * (n1->posX - n2->posX) + (n1->posY - n2->posY) * (n1->posY - n2->posY));
 	}
 
-	static float Heuristic(sNode* n1, sNode* n2)
+	static float Heuristic(Node* n1, Node* n2)
 	{
 		return Distance(n1, n2);
 	}
@@ -66,29 +66,29 @@ protected:
 
 	bool OnUserUpdate(float fDeltaTime) override
 	{
-		int nNodeSize = 9;
-		int nNodeBorder = 2;
+		int nodeSize = 9;
+		int nodeBorder = 2;
 
-		int nSelectedNodeX = MouseX() / nNodeSize;
-		int nSelectedNodeY = MouseY() / nNodeSize;
+		int selectedNodeX = MouseX() / nodeSize;
+		int selectedNodeY = MouseY() / nodeSize;
 
-		sNode* nodes = pathFinder.GetNodes();
+		Node* nodes = pathFinder.GetNodes();
 
-		if (GetMouse(0).bReleased)
+		if (GetMouse(0).released)
 		{
-			if (nSelectedNodeX >= 0 && nSelectedNodeX < pathFinder.GetMapWidth())
-				if (nSelectedNodeY >= 0 && nSelectedNodeY < pathFinder.GetMapHeight())
+			if (selectedNodeX >= 0 && selectedNodeX < pathFinder.GetMapWidth())
+				if (selectedNodeY >= 0 && selectedNodeY < pathFinder.GetMapHeight())
 				{
-					int p = nSelectedNodeY * pathFinder.GetMapWidth() + nSelectedNodeX;
+					int p = selectedNodeY * pathFinder.GetMapWidth() + selectedNodeX;
 
-					if (GetKey(L'S').bHeld)
+					if (GetKey(L'S').held)
 						pathFinder.SetNodes(&nodes[p], nullptr);
-					else if (GetKey(L'G').bHeld)
+					else if (GetKey(L'G').held)
 						pathFinder.SetNodes(nullptr, &nodes[p]);
 					else
 					{
 						if (&nodes[p] != pathFinder.GetStartNode() && &nodes[p] != pathFinder.GetGoalNode())
-							nodes[p].bObstacle = !nodes[p].bObstacle;
+							nodes[p].isObstacle = !nodes[p].isObstacle;
 					}
 
 					pathFinder.ClearMap();
@@ -101,11 +101,11 @@ protected:
 		for (int x = 0; x < pathFinder.GetMapWidth(); x++)
 			for (int y = 0; y < pathFinder.GetMapHeight(); y++)
 			{
-				for (auto n : nodes[y * pathFinder.GetMapWidth() + x].vecNeighbours)
+				for (auto n : nodes[y * pathFinder.GetMapWidth() + x].neighbours)
 				{
 					DrawLine(
-						x * nNodeSize + nNodeSize / 2, y * nNodeSize + nNodeSize / 2,
-						n->nPosX * nNodeSize + nNodeSize / 2, n->nPosY * nNodeSize + nNodeSize / 2,
+						x * nodeSize + nodeSize / 2, y * nodeSize + nodeSize / 2,
+						n->posX * nodeSize + nodeSize / 2, n->posY * nodeSize + nodeSize / 2,
 						def::DARK_BLUE
 					);
 				}
@@ -114,18 +114,18 @@ protected:
 		for (int x = 0; x < pathFinder.GetMapWidth(); x++)
 			for (int y = 0; y < pathFinder.GetMapHeight(); y++)
 			{
-				int x1 = x * nNodeSize + nNodeBorder;
-				int y1 = y * nNodeSize + nNodeBorder;
-				int sx1 = ((x + 1) * nNodeSize - nNodeBorder) - x1;
-				int sy1 = ((y + 1) * nNodeSize - nNodeBorder) - y1;
+				int x1 = x * nodeSize + nodeBorder;
+				int y1 = y * nodeSize + nodeBorder;
+				int sx1 = ((x + 1) * nodeSize - nodeBorder) - x1;
+				int sy1 = ((y + 1) * nodeSize - nodeBorder) - y1;
 
-				if (nodes[y * pathFinder.GetMapWidth() + x].bObstacle)
+				if (nodes[y * pathFinder.GetMapWidth() + x].isObstacle)
 					FillRectangle(x1, y1, sx1, sy1, def::WHITE);
 				else if (&nodes[y * pathFinder.GetMapWidth() + x] == pathFinder.GetStartNode())
 					FillRectangle(x1, y1, sx1, sy1, def::GREEN);
 				else if (&nodes[y * pathFinder.GetMapWidth() + x] == pathFinder.GetGoalNode())
 					FillRectangle(x1, y1, sx1, sy1, def::RED);
-				else if (nodes[y * pathFinder.GetMapWidth() + x].bVisited)
+				else if (nodes[y * pathFinder.GetMapWidth() + x].isVisited)
 					FillRectangle(x1, y1, sx1, sy1, def::BLUE);
 				else
 					FillRectangle(x1, y1, sx1, sy1, def::DARK_BLUE);
@@ -133,16 +133,16 @@ protected:
 
 		if (pathFinder.GetGoalNode() != nullptr)
 		{
-			sNode* p = pathFinder.GetGoalNode();
-			while (p->pParent != nullptr)
+			Node* p = pathFinder.GetGoalNode();
+			while (p->parent != nullptr)
 			{
 				DrawLine(
-					p->nPosX * nNodeSize + nNodeSize / 2, p->nPosY * nNodeSize + nNodeSize / 2,
-					p->pParent->nPosX * nNodeSize + nNodeSize / 2, p->pParent->nPosY * nNodeSize + nNodeSize / 2,
+					p->posX * nodeSize + nodeSize / 2, p->posY * nodeSize + nodeSize / 2,
+					p->parent->posX * nodeSize + nodeSize / 2, p->parent->posY * nodeSize + nodeSize / 2,
 					def::YELLOW
 				);
 
-				p = p->pParent;
+				p = p->parent;
 			}
 		}
 

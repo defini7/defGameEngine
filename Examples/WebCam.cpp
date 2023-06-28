@@ -102,48 +102,48 @@ private:
 
 	Filter filter;
 
-	float fThreshold = 0.5f;
-	float fLowPass = 0.1f;
-	float fAdaptive = 0.5f;
+	float threshold = 0.5f;
+	float lowPass = 0.1f;
+	float adaptive = 0.5f;
 
-	float* fConvoKernel = fConvoRidgeKernel;
+	float* convoKernel = convoRidgeKernel;
 
-	float fConvoRidgeKernel[9] =
+	float convoRidgeKernel[9] =
 	{
 		0.0f, -1.0f, 0.0f,
 		-1.0f, 4.0f, -1.0f,
 		0.0f, -1.0f, 0.0f
 	};
 
-	float fConvoEdgeKernel[9] =
+	float convoEdgeKernel[9] =
 	{
 		-1.0f, -1.0f, -1.0f,
 		-1.0f,  8.0f, -1.0f,
 		-1.0f, -1.0f, -1.0f
 	};
 
-	float fConvoSharpenKernel[9] =
+	float convoSharpenKernel[9] =
 	{
 		0.0f, -1.0f, 0.0f,
 		-1.0f, 5.0f, -1.0f,
 		0.0f, -1.0f, 0.0f
 	};
 
-	float fConvoBlurKernel[9] =
+	float convoBlurKernel[9] =
 	{
 		1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f,
 		1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f,
 		1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f
 	};
 
-	float fSobelKernelX[9] =
+	float sobelKernelX[9] =
 	{
 		-1.0f, 0.0f, 1.0f,
 		-2.0f, 0.0f, 2.0f,
 		-1.0f, 0.0f, 1.0f
 	};
 
-	float fSobelKernelY[9] =
+	float sobelKernelY[9] =
 	{
 		-1.0f, -2.0f, -1.0f,
 		0.0f, 0.0f, 0.0f,
@@ -182,26 +182,26 @@ protected:
 				input.pixels[i] = (float)col.c[1] / 255.0f;
 			}
 
-		if (GetKey(def::Key::K1).bPressed) filter = Filter::Threshold;
-		if (GetKey(def::Key::K2).bPressed) filter = Filter::Motion;
-		if (GetKey(def::Key::K3).bPressed) filter = Filter::Convolution;
-		if (GetKey(def::Key::K4).bPressed) filter = Filter::LowPass;
-		if (GetKey(def::Key::K5).bPressed) filter = Filter::Sobel;
-		if (GetKey(def::Key::K6).bPressed) filter = Filter::Median;
-		if (GetKey(def::Key::K7).bPressed) filter = Filter::Adaptive;
+		if (GetKey(def::Key::K1).pressed) filter = Filter::Threshold;
+		if (GetKey(def::Key::K2).pressed) filter = Filter::Motion;
+		if (GetKey(def::Key::K3).pressed) filter = Filter::Convolution;
+		if (GetKey(def::Key::K4).pressed) filter = Filter::LowPass;
+		if (GetKey(def::Key::K5).pressed) filter = Filter::Sobel;
+		if (GetKey(def::Key::K6).pressed) filter = Filter::Median;
+		if (GetKey(def::Key::K7).pressed) filter = Filter::Adaptive;
 
 		switch (filter)
 		{
 		case Filter::Threshold:
 		{
-			if (GetKey(def::Key::Z).bHeld) fThreshold -= 0.1f * fDeltaTime;
-			if (GetKey(def::Key::X).bHeld) fThreshold += 0.1f * fDeltaTime;
+			if (GetKey(def::Key::Z).held) threshold -= 0.1f * fDeltaTime;
+			if (GetKey(def::Key::X).held) threshold += 0.1f * fDeltaTime;
 
-			fThreshold = std::min(1.0f, std::max(fThreshold, 0.0f));
+			threshold = std::min(1.0f, std::max(threshold, 0.0f));
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
-					output.set(x, y, input.get(x, y) >= fThreshold ? 1.0f : 0.0f);
+					output.set(x, y, input.get(x, y) >= threshold ? 1.0f : 0.0f);
 		}
 		break;
 
@@ -215,10 +215,10 @@ protected:
 
 		case Filter::Convolution:
 		{
-			if (GetKey(def::Key::Z).bHeld) fConvoKernel = fConvoRidgeKernel;
-			if (GetKey(def::Key::X).bHeld) fConvoKernel = fConvoEdgeKernel;
-			if (GetKey(def::Key::C).bHeld) fConvoKernel = fConvoSharpenKernel;
-			if (GetKey(def::Key::V).bHeld) fConvoKernel = fConvoBlurKernel;
+			if (GetKey(def::Key::Z).held) convoKernel = convoRidgeKernel;
+			if (GetKey(def::Key::X).held) convoKernel = convoEdgeKernel;
+			if (GetKey(def::Key::C).held) convoKernel = convoSharpenKernel;
+			if (GetKey(def::Key::V).held) convoKernel = convoBlurKernel;
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
@@ -227,7 +227,7 @@ protected:
 
 					for (int i = 0; i < 3; i++)
 						for (int j = 0; j < 3; j++)
-							fSum += input.get(x + i - 1, y + j - 1) * fConvoKernel[j * 3 + i];
+							fSum += input.get(x + i - 1, y + j - 1) * convoKernel[j * 3 + i];
 
 					output.set(x, y, fSum);
 				}
@@ -236,38 +236,38 @@ protected:
 
 		case Filter::LowPass:
 		{
-			if (GetKey(def::Key::Z).bHeld) fLowPass -= 0.1f * fDeltaTime;
-			if (GetKey(def::Key::X).bHeld) fLowPass += 0.1f * fDeltaTime;
+			if (GetKey(def::Key::Z).held) lowPass -= 0.1f * fDeltaTime;
+			if (GetKey(def::Key::X).held) lowPass += 0.1f * fDeltaTime;
 
-			fLowPass = std::min(1.0f, std::max(fLowPass, 0.0f));
+			lowPass = std::min(1.0f, std::max(lowPass, 0.0f));
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
-					float fDist = (input.get(x, y) - output.get(x, y)) * fLowPass;
-					output.set(x, y, fDist + output.get(x, y));
+					float dist = (input.get(x, y) - output.get(x, y)) * lowPass;
+					output.set(x, y, dist + output.get(x, y));
 				}
 		}
 		break;
 
 		case Filter::Adaptive:
 		{
-			if (GetKey(def::Key::Z).bHeld) fAdaptive -= 0.1f * fDeltaTime;
-			if (GetKey(def::Key::X).bHeld) fAdaptive += 0.1f * fDeltaTime;
+			if (GetKey(def::Key::Z).held) adaptive -= 0.1f * fDeltaTime;
+			if (GetKey(def::Key::X).held) adaptive += 0.1f * fDeltaTime;
 
-			fAdaptive = std::min(1.0f, std::max(fAdaptive, 0.5f));
+			adaptive = std::min(1.0f, std::max(adaptive, 0.5f));
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
-					float fSum = 0.0f;
+					float sum = 0.0f;
 
 					for (int i = -2; i <= 2; i++)
 						for (int j = -2; j <= 2; j++)
-							fSum += input.get(x + i, y + j);
+							sum += input.get(x + i, y + j);
 
-					fSum /= 25.0f;
-					output.set(x, y, input.get(x, y) > (fSum * fAdaptive) ? 1.0f : 0.0f);
+					sum /= 25.0f;
+					output.set(x, y, input.get(x, y) > (sum * adaptive) ? 1.0f : 0.0f);
 				}
 		}
 		break;
@@ -277,16 +277,17 @@ protected:
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
-					float fSumX = 0.0f, fSumY = 0.0f;
+					float sumX = 0.0f, sumY = 0.0f;
 
 					for (int i = 0; i < 3; i++)
 						for (int j = 0; j < 3; j++)
 						{
-							fSumX += input.get(x + i - 1, y + j - 1) * fSobelKernelX[j * 3 + i];
-							fSumY += input.get(x + i - 1, y + j - 1) * fSobelKernelY[j * 3 + i];
+							float col = input.get(x + i - 1, y + j - 1);
+							sumX += col * sobelKernelX[j * 3 + i];
+							sumY += col * sobelKernelY[j * 3 + i];
 						}
 
-					output.set(x, y, fabs((fSumX + fSumY) / 2.0f));
+					output.set(x, y, fabs((sumX + sumY) / 2.0f));
 				}
 		}
 		break;
@@ -303,7 +304,6 @@ protected:
 							col[j * 5 + i] = input.get(x + i - 2, y + j - 2);
 
 					std::sort(col.begin(), col.end(), [](float c1, float c2) { return c2 < c1; });
-
 					output.set(x, y, col[12]);
 				}
 
@@ -323,7 +323,7 @@ protected:
 		{
 			DrawString(50, 300, "Filter: Threshold");
 			DrawString(50, 316, "Change threshold value with Z and X keys");
-			DrawString(50, 332, "Current value = " + std::to_string(fThreshold));
+			DrawString(50, 332, "Current value = " + std::to_string(threshold));
 		}
 		break;
 
@@ -342,7 +342,7 @@ protected:
 		{
 			DrawString(50, 300, "Filter: LowPass");
 			DrawString(50, 316, "Change lowpass value with Z and X keys");
-			DrawString(50, 332, "Current value = " + std::to_string(fLowPass));
+			DrawString(50, 332, "Current value = " + std::to_string(lowPass));
 		}
 		break;
 
@@ -350,7 +350,7 @@ protected:
 		{
 			DrawString(50, 300, "Filter: Adaptive Threshold");
 			DrawString(50, 316, "Change adaptive threshold value with Z and X keys");
-			DrawString(50, 332, "Current value = " + std::to_string(fAdaptive));
+			DrawString(50, 332, "Current value = " + std::to_string(adaptive));
 		}
 		break;
 

@@ -35,63 +35,53 @@ public:
 	}
 
 private:
-	def::Sprite* sprKart = nullptr;
-	def::Sprite* sprSky = nullptr;
+	def::Sprite* kart = nullptr;
+	def::Sprite* sky = nullptr;
 
 public:
 	bool OnUserCreate() override
 	{
-		sprKart = new def::Sprite("kart.png");
-		sprSky = new def::Sprite("sky.png");
+		kart = new def::Sprite("kart.png");
+		sky = new def::Sprite("sky.png");
 
 		return true;
 	}
 
-	bool OnUserUpdate(float fDeltaTime) override
+	bool OnUserUpdate(float deltaTime) override
 	{
-		if (GetKey(def::Key::UP).bHeld) vScale += 10.0f * fDeltaTime;
-		if (GetKey(def::Key::DOWN).bHeld) vScale -= 10.0f * fDeltaTime;
+		if (GetKey(def::Key::UP).held) scale += 10.0f * deltaTime;
+		if (GetKey(def::Key::DOWN).held) scale -= 10.0f * deltaTime;
 
-		if (GetKey(def::Key::LEFT).bHeld) fTheta -= fDeltaTime;
-		if (GetKey(def::Key::RIGHT).bHeld) fTheta += fDeltaTime;
+		if (GetKey(def::Key::LEFT).held) theta -= deltaTime;
+		if (GetKey(def::Key::RIGHT).held) theta += deltaTime;
 
-		def::vf2d vVelocity = { 0.0f, 0.0f };
+		def::vf2d velocity = { 0.0f, 0.0f };
 
-		if (GetKey(def::Key::W).bHeld) vVelocity += def::vf2d(-sin(fTheta), cos(fTheta));
-		if (GetKey(def::Key::A).bHeld) vVelocity += def::vf2d(cos(fTheta), sin(fTheta));
-		if (GetKey(def::Key::S).bHeld) vVelocity += def::vf2d(sin(fTheta), -cos(fTheta));
-		if (GetKey(def::Key::D).bHeld) vVelocity += def::vf2d(-cos(fTheta), -sin(fTheta));
+		if (GetKey(def::Key::W).held) velocity += def::vf2d(-sin(theta), cos(theta));
+		if (GetKey(def::Key::A).held) velocity += def::vf2d(cos(theta), sin(theta));
+		if (GetKey(def::Key::S).held) velocity += def::vf2d(sin(theta), -cos(theta));
+		if (GetKey(def::Key::D).held) velocity += def::vf2d(-cos(theta), -sin(theta));
 
-		vCamera += vVelocity * fDeltaTime;
+		camera += velocity * deltaTime;
 
-		def::vf2d vScreen;
-		for (vScreen.x = 0; vScreen.x < ScreenWidth(); vScreen.x++)
+		def::vf2d screen;
+		for (screen.x = 0; screen.x < ScreenWidth(); screen.x++)
 		{
-			for (vScreen.y = ScreenHeight() / 2; vScreen.y < ScreenHeight(); vScreen.y++)
+			for (screen.y = ScreenHeight() / 2; screen.y < ScreenHeight(); screen.y++)
 			{
-				def::vf2d vWindow = def::vf2d(ScreenSize()) / 2.0f + vScreen * def::vf2d(-1.0f, 1.0f);
-				float fWindowZ = vScreen.y - ScreenHeight() / 2;
+				def::vf2d window = def::vf2d(ScreenSize()) / 2.0f + screen * def::vf2d(-1.0f, 1.0f);
+				float windowZ = screen.y - ScreenHeight() / 2;
 
-				float fRotatedX = vWindow.x * cos(fTheta) - vWindow.y * sin(fTheta);
-				float fRotatedY = vWindow.x * sin(fTheta) + vWindow.y * cos(fTheta);
+				float rotatedX = window.x * cos(theta) - window.y * sin(theta);
+				float rotatedY = window.x * sin(theta) + window.y * cos(theta);
 
-				def::vi2d vPixel = (def::vf2d(fRotatedX, fRotatedY) / fWindowZ + vCamera) * vScale;
+				def::vi2d vPixel = (def::vf2d(rotatedX, rotatedY) / windowZ + camera) * scale;
 
-				def::Pixel pixKart = sprKart->GetPixel(vPixel.x % sprKart->nWidth, vPixel.y % sprKart->nHeight);
-				def::Pixel pixSky = sprSky->GetPixel(vPixel.x % sprSky->nWidth, vPixel.y % sprSky->nHeight);
+				def::Pixel kartCol = kart->GetPixel(vPixel.x % kart->width, vPixel.y % kart->height);
+				def::Pixel skyCol = sky->GetPixel(vPixel.x % sky->width, vPixel.y % sky->height);
 
-				//float fShade = std::min(std::max(1.5f * (abs(fWindowZ) / (GetScreenHeight() / 2)), 0.0f), 1.0f);
-
-				//pixKart.r = (float)pixKart.r * fShade;
-				//pixKart.g = (float)pixKart.g * fShade;
-				//pixKart.b = (float)pixKart.b * fShade;
-
-				//pixSky.r = (float)pixSky.r * fShade;
-				//pixSky.g = (float)pixSky.g * fShade;
-				//pixSky.b = (float)pixSky.b * fShade;
-
-				Draw(def::vf2d(vScreen.x, vScreen.y), pixKart);
-				Draw(def::vf2d(vScreen.x, ScreenHeight() - vScreen.y - 1), pixSky);
+				Draw(screen, kartCol);
+				Draw(def::vf2d(screen.x, ScreenHeight() - screen.y - 1), skyCol);
 			}
 		}
 
@@ -101,9 +91,9 @@ public:
 	}
 
 private:
-	def::vf2d vCamera = { 0.0f, 0.0f };
-	def::vf2d vScale = { 100.0f, 100.0f };
-	float fTheta = 0.0f;
+	def::vf2d camera = { 0.0f, 0.0f };
+	def::vf2d scale = { 100.0f, 100.0f };
+	float theta = 0.0f;
 
 };
 

@@ -24,7 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "../defGameEngine.h"
 
 #include <list>
 
@@ -37,12 +37,12 @@ public:
 	}
 
 protected:
-	int record = 0;
-
 	def::vi2d apple;
-	int dir = 0;
-	int score = 0;
+	int dir;
 	bool isDead;
+
+	int score = 0;
+	int record = 0;
 
 	std::list<def::vi2d> snake;
 
@@ -67,6 +67,7 @@ protected:
 		isDead = false;
 
 		apple = worldSize / def::vi2d(4, 2);
+		dir = 0;
 
 		def::vi2d snakePos = worldSize / 2;
 		snake =
@@ -94,17 +95,17 @@ protected:
 	{
 		if (isDead)
 		{
-			if (GetKey(def::Key::SPACE).bPressed)
+			if (GetKey(def::Key::SPACE).pressed)
 				NewGame();
 
 			DrawString(ScreenSize() / def::vi2d(3, 2), "GAME OVER! PRESS SPACE.");
 			return true;
 		}
 
-		if (GetKey(def::Key::A).bPressed) dir = 0;
-		if (GetKey(def::Key::W).bPressed) dir = 1;
-		if (GetKey(def::Key::D).bPressed) dir = 2;
-		if (GetKey(def::Key::S).bPressed) dir = 3;
+		if (GetKey(def::Key::A).pressed) dir = 0;
+		if (GetKey(def::Key::W).pressed) dir = 1;
+		if (GetKey(def::Key::D).pressed) dir = 2;
+		if (GetKey(def::Key::S).pressed) dir = 3;
 
 		if (timer >= delay)
 		{
@@ -163,3 +164,4 @@ int main()
 
 	return 0;
 }
+

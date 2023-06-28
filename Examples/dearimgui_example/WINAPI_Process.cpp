@@ -93,7 +93,7 @@ protected:
 		while (spi->lNextEntryOffset)
 		{
 			if (spi->sImageName.Length > 0)
-				listProcesses.push_back(spi);
+				processes.push_back(spi);
 
 			spi = (PSYSTEM_PROCESS_INFO)((LPBYTE)spi + spi->lNextEntryOffset);
 		}
@@ -110,7 +110,7 @@ protected:
 			ImGui::TableSetupColumn("Name");
 			ImGui::TableHeadersRow();
 
-			for (const auto& p : listProcesses)
+			for (const auto& p : processes)
 			{
 				ImGui::TableNextRow();
 
@@ -136,7 +136,7 @@ private:
 	PVOID buffer;
 	PSYSTEM_PROCESS_INFO spi;
 
-	std::list<PSYSTEM_PROCESS_INFO> listProcesses;
+	std::list<PSYSTEM_PROCESS_INFO> processes;
 
 };
 

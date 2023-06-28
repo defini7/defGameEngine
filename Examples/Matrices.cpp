@@ -91,8 +91,8 @@ protected:
 		Clear(def::BLACK);
 
 		def::vf2d vPos;
-		for (vPos.y = 0; vPos.y < sprDemo->nHeight; vPos.y++)
-			for (vPos.x = 0; vPos.x < sprDemo->nWidth; vPos.x++)
+		for (vPos.y = 0; vPos.y < sprDemo->height; vPos.y++)
+			for (vPos.x = 0; vPos.x < sprDemo->width; vPos.x++)
 			{
 				def::vf2d vScaled;
 				Mat_MultiplyVec(matScaled, vPos, vScaled);

@@ -30,62 +30,62 @@
 
 namespace def
 {
-	struct sShape
+	struct Shape
 	{
-		vf2d vVelocity;
-		vf2d vPos;
+		vf2d velocity;
+		vf2d pos;
 	};
 
-	struct sPoint : sShape {};
+	struct Point : Shape {};
 
-	struct sRectangle : sShape
+	struct Rectangle : Shape
 	{
-		sRectangle() = default;
-		sRectangle(const vf2d& v, const vf2d& p, const vf2d& s);
+		Rectangle() = default;
+		Rectangle(const vf2d& v, const vf2d& p, const vf2d& s);
 
-		vf2d vSize;
+		vf2d size;
 
-		sRectangle* contact[4];
+		Rectangle* contact[4];
 	};
 
-	struct sCircle : sShape
+	struct Circle : Shape
 	{
-		sCircle() = default;
-		sCircle(const vf2d& v, const vf2d& p, float r);
+		Circle() = default;
+		Circle(const vf2d& v, const vf2d& p, float r);
 
-		float fRadius;
+		float radius;
 	};
 
-	struct sLine : sShape
+	struct Line : Shape
 	{
-		sLine() = default;
-		sLine(const vf2d& v, const vf2d& p, const vf2d& s);
+		Line() = default;
+		Line(const vf2d& v, const vf2d& p, const vf2d& s);
 
-		vf2d vSize;
+		vf2d size;
 	};
 
 	class Physics
 	{
 	public:
-		bool PointVsCircle(const sPoint& p, const sCircle& c);
-		bool PointVsRectangle(const sPoint& p, const sRectangle& r);
-		bool RectVsRect(const sRectangle& r1, const sRectangle& r2);
-		bool LineVsRect(const sLine& l, const sRectangle& r, vf2d& contact_point, vf2d& contact_normal, float& t_hit_near);
+		bool PointVsCircle(const Point& p, const Circle& c);
+		bool PointVsRect(const Point& p, const Rectangle& r);
+		bool RectVsRect(const Rectangle& r1, const Rectangle& r2);
+		bool LineVsRect(const Line& l, const Rectangle& r, vf2d& contactPoint, vf2d& contactNormal, float& hitTime);
 
-		bool ResolveLineVsRect(const sLine& l, const sRectangle& r, vf2d& contact_point, vf2d& contact_normal);
-		bool DynamicRectVsRect(const sRectangle& r_dynamic, const float fTimeStep, const sRectangle& r_static,
-			vf2d& contact_point, vf2d& contact_normal, float& contact_time);
-		bool ResolveDynamicRectVsRect(sRectangle& r_dynamic, const float fTimeStep, sRectangle* r_static);
+		bool ResolveLineVsRect(const Line& l, const Rectangle& r, vf2d& contactPoint, vf2d& contactNormal);
+		bool DynamicRectVsRect(const Rectangle& dynamicRect, const float timeStep, const Rectangle& staticRect,
+			vf2d& contactPoint, vf2d& contactNormal, float& contactTime);
+		bool ResolveDynamicRectVsRect(Rectangle& dynamicRect, const float timeStep, Rectangle* staticRect);
 	};
 
 #ifdef DGE_PHYSICS
 #undef DGE_PHYSICS
 
-	sRectangle::sRectangle(const vf2d& v, const vf2d& p, const vf2d& s)
+	Rectangle::Rectangle(const vf2d& v, const vf2d& p, const vf2d& s)
 	{
-		vVelocity = v;
-		vPos = p;
-		vSize = s;
+		velocity = v;
+		pos = p;
+		size = s;
 
 		contact[0] = nullptr;
 		contact[1] = nullptr;
@@ -93,116 +93,116 @@ namespace def
 		contact[3] = nullptr;
 	}
 
-	sCircle::sCircle(const vf2d& v, const vf2d& p, float r)
+	Circle::Circle(const vf2d& v, const vf2d& p, float r)
 	{
-		vVelocity = v;
-		vPos = p;
-		fRadius = r;
+		velocity = v;
+		pos = p;
+		radius = r;
 	}
 
-	sLine::sLine(const vf2d& v, const vf2d& p, const vf2d& s)
+	Line::Line(const vf2d& v, const vf2d& p, const vf2d& s)
 	{
-		vVelocity = v;
-		vPos = p;
-		vSize = s;
+		velocity = v;
+		pos = p;
+		size = s;
 	}
 
-	bool Physics::PointVsCircle(const sPoint& p, const sCircle& c)
+	bool Physics::PointVsCircle(const Point& p, const Circle& c)
 	{
-		return (c.vPos - p.vPos).mag2() <= c.fRadius * c.fRadius;
+		return (c.pos - p.pos).mag2() <= c.radius * c.radius;
 	}
 
-	bool Physics::PointVsRectangle(const sPoint& p, const sRectangle& r)
+	bool Physics::PointVsRect(const Point& p, const Rectangle& r)
 	{
-		return p.vPos > r.vPos - 1 && p.vPos <= r.vPos + r.vSize;
+		return p.pos > r.pos - 1 && p.pos <= r.pos + r.size;
 	}
 
-	bool Physics::RectVsRect(const sRectangle& r1, const sRectangle& r2)
+	bool Physics::RectVsRect(const Rectangle& r1, const Rectangle& r2)
 	{
-		return r1.vPos - 1 < r2.vPos + r2.vSize && r1.vPos + r1.vSize + 1 > r2.vPos;
+		return r1.pos - 1 < r2.pos + r2.size && r1.pos + r1.size + 1 > r2.pos;
 	}
 
-	bool Physics::LineVsRect(const sLine& l, const sRectangle& r, vf2d& contact_point, vf2d& contact_normal, float& t_hit_near)
+	bool Physics::LineVsRect(const Line& l, const Rectangle& r, vf2d& contactPoint, vf2d& contactNormal, float& hitTime)
 	{
-		contact_normal = { 0,0 };
-		contact_point = { 0,0 };
+		contactNormal = { 0,0 };
+		contactPoint = { 0,0 };
 
-		vf2d invdir = vf2d(1.0f, 1.0f) / l.vSize;
+		vf2d invdir = vf2d(1.0f, 1.0f) / l.size;
 
-		vf2d t_near = (r.vPos - l.vPos) * invdir;
-		vf2d t_far = (r.vPos + r.vSize - l.vPos) * invdir;
+		vf2d timeNear = (r.pos - l.pos) * invdir;
+		vf2d timeFar = (r.pos + r.size - l.pos) * invdir;
 
-		if (isnan(t_far.y) || isnan(t_far.x)) return false;
-		if (isnan(t_near.y) || isnan(t_near.x)) return false;
+		if (isnan(timeFar.y) || isnan(timeFar.x)) return false;
+		if (isnan(timeNear.y) || isnan(timeNear.x)) return false;
 
-		if (t_near.x > t_far.x) std::swap(t_near.x, t_far.x);
-		if (t_near.y > t_far.y) std::swap(t_near.y, t_far.y);
+		if (timeNear.x > timeFar.x) std::swap(timeNear.x, timeFar.x);
+		if (timeNear.y > timeFar.y) std::swap(timeNear.y, timeFar.y);
 
-		if (t_near.x > t_far.y || t_near.y > t_far.x) return false;
+		if (timeNear.x > timeFar.y || timeNear.y > timeFar.x) return false;
 
-		t_hit_near = std::max(t_near.x, t_near.y);
+		hitTime = std::max(timeNear.x, timeNear.y);
 
-		float t_hit_far = std::min(t_far.x, t_far.y);
+		float t_hitimeFar = std::min(timeFar.x, timeFar.y);
 
-		if (t_hit_far < 0.0f)
+		if (t_hitimeFar < 0.0f)
 			return false;
 
-		contact_point = l.vPos + l.vSize * t_hit_near;
+		contactPoint = l.pos + l.size * hitTime;
 
-		if (t_near.x > t_near.y)
+		if (timeNear.x > timeNear.y)
 			if (invdir.x < 0)
-				contact_normal = { 1, 0 };
+				contactNormal = { 1, 0 };
 			else
-				contact_normal = { -1, 0 };
-		else if (t_near.x < t_near.y)
+				contactNormal = { -1, 0 };
+		else if (timeNear.x < timeNear.y)
 			if (invdir.y < 0)
-				contact_normal = { 0, 1 };
+				contactNormal = { 0, 1 };
 			else
-				contact_normal = { 0, -1 };
+				contactNormal = { 0, -1 };
 
 		return true;
 	}
 
-	bool Physics::ResolveLineVsRect(const sLine& l, const sRectangle& r, vf2d& contact_point, vf2d& contact_normal)
+	bool Physics::ResolveLineVsRect(const Line& l, const Rectangle& r, vf2d& contactPoint, vf2d& contactNormal)
 	{
-		float t_hit_near;
-		return LineVsRect(l, r, contact_point, contact_normal, t_hit_near) && t_hit_near < 1.0f;
+		float hitTime;
+		return LineVsRect(l, r, contactPoint, contactNormal, hitTime) && hitTime < 1.0f;
 	}
 
-	bool Physics::DynamicRectVsRect(const sRectangle& r_dynamic, const float fTimeStep, const sRectangle& r_static,
-		vf2d& contact_point, vf2d& contact_normal, float& contact_time)
+	bool Physics::DynamicRectVsRect(const Rectangle& dynamicRect, const float timeStep, const Rectangle& staticRect,
+		vf2d& contactPoint, vf2d& contactNormal, float& contact_time)
 	{
-		if (r_dynamic.vVelocity.x == 0 && r_dynamic.vVelocity.y == 0)
+		if (dynamicRect.velocity.x == 0 && dynamicRect.velocity.y == 0)
 			return false;
 
-		sRectangle expanded_target;
+		Rectangle expanded_target;
 
-		expanded_target.vPos = r_static.vPos - r_dynamic.vSize / 2;
-		expanded_target.vSize = r_static.vSize + r_dynamic.vSize;
+		expanded_target.pos = staticRect.pos - dynamicRect.size / 2;
+		expanded_target.size = staticRect.size + dynamicRect.size;
 
-		sLine l;
-		l.vPos = r_dynamic.vPos + r_dynamic.vSize / 2;
-		l.vSize = r_dynamic.vVelocity * fTimeStep;
+		Line l;
+		l.pos = dynamicRect.pos + dynamicRect.size / 2;
+		l.size = dynamicRect.velocity * timeStep;
 
-		if (LineVsRect(l, expanded_target, contact_point, contact_normal, contact_time))
+		if (LineVsRect(l, expanded_target, contactPoint, contactNormal, contact_time))
 			return (contact_time >= 0.0f && contact_time < 1.0f);
 		else
 			return false;
 	}
 
-	bool Physics::ResolveDynamicRectVsRect(sRectangle& r_dynamic, const float fTimeStep, sRectangle* r_static)
+	bool Physics::ResolveDynamicRectVsRect(Rectangle& dynamicRect, const float timeStep, Rectangle* staticRect)
 	{
-		vf2d contact_point, contact_normal;
-		float contact_time = 0.0f;
+		vf2d contactPoint, contactNormal;
+		float contactTime = 0.0f;
 
-		if (DynamicRectVsRect(r_dynamic, fTimeStep, *r_static, contact_point, contact_normal, contact_time))
+		if (DynamicRectVsRect(dynamicRect, timeStep, *staticRect, contactPoint, contactNormal, contactTime))
 		{
-			if (contact_normal.y > 0) r_dynamic.contact[0] = r_static; else nullptr;
-			if (contact_normal.x < 0) r_dynamic.contact[1] = r_static; else nullptr;
-			if (contact_normal.y < 0) r_dynamic.contact[2] = r_static; else nullptr;
-			if (contact_normal.x > 0) r_dynamic.contact[3] = r_static; else nullptr;
+			if (contactNormal.y > 0) dynamicRect.contact[0] = staticRect; else nullptr;
+			if (contactNormal.x < 0) dynamicRect.contact[1] = staticRect; else nullptr;
+			if (contactNormal.y < 0) dynamicRect.contact[2] = staticRect; else nullptr;
+			if (contactNormal.x > 0) dynamicRect.contact[3] = staticRect; else nullptr;
 
-			r_dynamic.vVelocity += contact_normal * r_dynamic.vVelocity.abs() * (1 - contact_time);
+			dynamicRect.velocity += contactNormal * dynamicRect.velocity.abs() * (1 - contactTime);
 
 			return true;
 		}

@@ -819,24 +819,24 @@ protected:
 
 	bool OnUserUpdate(float dt) override
 	{
-		if (GetKey(def::Key::UP).bHeld)
+		if (GetKey(def::Key::UP).held)
 			vCamera.y += 8.0f * dt;
 
-		if (GetKey(def::Key::DOWN).bHeld)
+		if (GetKey(def::Key::DOWN).held)
 			vCamera.y -= 8.0f * dt;
 
 		vf3d vForward = vLookDir * (8.0f * dt);
 
-		if (GetKey(def::Key::W).bHeld)
+		if (GetKey(def::Key::W).held)
 			vCamera = vCamera + vForward;
 
-		if (GetKey(def::Key::S).bHeld)
+		if (GetKey(def::Key::S).held)
 			vCamera = vCamera - vForward;
 
-		if (GetKey(def::Key::A).bHeld)
+		if (GetKey(def::Key::A).held)
 			fYaw += 4.0f * dt;
 
-		if (GetKey(def::Key::D).bHeld)
+		if (GetKey(def::Key::D).held)
 			fYaw -= 4.0f * dt;
 
 		mat4x4 matWorld;

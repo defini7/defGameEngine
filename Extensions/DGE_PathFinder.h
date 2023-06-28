@@ -39,16 +39,16 @@
 
 namespace def
 {
-	struct sNode
+	struct Node
 	{
-		bool bObstacle = false;
-		bool bVisited = false;
-		float fGlobalGoal;
-		float fLocalGoal;
-		int nPosX;
-		int nPosY;
-		std::vector<sNode*> vecNeighbours;
-		sNode* pParent;
+		bool isObstacle = false;
+		bool isVisited = false;
+		float globalGoal;
+		float localGoal;
+		int posX;
+		int posY;
+		std::vector<Node*> neighbours;
+		Node* parent;
 	};
 
 	class PathFinder
@@ -56,12 +56,12 @@ namespace def
 	public:
 		PathFinder() = default;
 
-		PathFinder(int nMapWidth, int nMapHeight)
+		PathFinder(int mapWidth, int mapHeight)
 		{
-			m_nMapWidth = nMapWidth;
-			m_nMapHeight = nMapHeight;
+			m_MapWidth = mapWidth;
+			m_MapHeight = mapHeight;
 
-			m_nodeNodes = new sNode[m_nMapWidth * m_nMapHeight];
+			m_Nodes = new Node[m_MapWidth * m_MapHeight];
 		}
 
 		~PathFinder()
@@ -70,35 +70,33 @@ namespace def
 		}
 
 	private:
-		int m_nMapWidth;
-		int m_nMapHeight;
+		int m_MapWidth;
+		int m_MapHeight;
 
-		sNode* m_nodeNodes;
+		Node* m_Nodes;
 
-		sNode* m_nodeStart;
-		sNode* m_nodeGoal;
+		Node* m_Start;
+		Node* m_Goal;
 
-		bool m_bMapFreed = false;
+		bool m_IsMapFreed = false;
 
 	public:
 		void ClearMap();
 		bool FreeMap();
-		bool ConstructMap(int nMapWidth, int nMapHeight);
+		bool ConstructMap(int mapWidth, int mapHeight);
 
-		bool SetNodes(int nStartX, int nStartY, int nGoalX, int nGoalY);
-		void SetNodes(sNode* start = nullptr, sNode* goal = nullptr);
+		bool SetNodes(int startX, int startY, int goalX, int goalY);
+		void SetNodes(Node* start = nullptr, Node* goal = nullptr);
 
-		sNode* GetStartNode();
-		sNode* GetGoalNode();
-		sNode* GetNodes();
+		Node* GetStartNode();
+		Node* GetGoalNode();
+		Node* GetNodes();
 
 		void ResetNodes();
-
 		int GetMapWidth();
-
 		int GetMapHeight();
 
-		void FindPath(float (*dist)(sNode*, sNode*), float (*heuristic)(sNode*, sNode*));
+		void FindPath(float (*dist)(Node*, Node*), float (*heuristic)(Node*, Node*));
 
 	};
 
@@ -107,163 +105,152 @@ namespace def
 
 	void PathFinder::ClearMap()
 	{
-		for (int x = 0; x < m_nMapWidth; x++)
-			for (int y = 0; y < m_nMapHeight; y++)
+		for (int x = 0; x < m_MapWidth; x++)
+			for (int y = 0; y < m_MapHeight; y++)
 			{
-				int p = y * m_nMapWidth + x;
-				m_nodeNodes[p].bVisited = false;
-				m_nodeNodes[p].fGlobalGoal = INFINITY;
-				m_nodeNodes[p].fLocalGoal = INFINITY;
-				m_nodeNodes[p].pParent = nullptr;
+				int p = y * m_MapWidth + x;
+				m_Nodes[p].isVisited = false;
+				m_Nodes[p].globalGoal = INFINITY;
+				m_Nodes[p].localGoal = INFINITY;
+				m_Nodes[p].parent = nullptr;
 			}
 	}
 
 	bool PathFinder::FreeMap()
 	{
-		if (!m_bMapFreed)
+		if (!m_IsMapFreed)
 		{
-			delete[] m_nodeNodes;
-			m_bMapFreed = true;
+			delete[] m_Nodes;
+			m_IsMapFreed = true;
 		}
 
-		return m_bMapFreed;
+		return m_IsMapFreed;
 	}
 
-	bool PathFinder::ConstructMap(int nMapWidth, int nMapHeight)
+	bool PathFinder::ConstructMap(int mapWidth, int mapHeight)
 	{
-		if (nMapWidth <= 0 || nMapHeight <= 0)
+		if (mapWidth <= 0 || mapHeight <= 0)
 			return false;
 
 		FreeMap();
 
-		m_nMapWidth = nMapWidth;
-		m_nMapHeight = nMapHeight;
+		m_MapWidth = mapWidth;
+		m_MapHeight = mapHeight;
 
-		m_nodeNodes = new sNode[m_nMapWidth * m_nMapHeight];
+		m_Nodes = new Node[mapWidth * mapHeight];
 
-		for (int x = 0; x < nMapWidth; x++)
-			for (int y = 0; y < nMapHeight; y++)
+		for (int x = 0; x < mapWidth; x++)
+			for (int y = 0; y < mapHeight; y++)
 			{
-				int p = y * nMapWidth + x;
-				m_nodeNodes[p].bObstacle = false;
-				m_nodeNodes[p].bVisited = false;
-				m_nodeNodes[p].nPosX = x;
-				m_nodeNodes[p].nPosY = y;
-				m_nodeNodes[p].pParent = nullptr;
+				int p = y * mapWidth + x;
+				m_Nodes[p].isObstacle = false;
+				m_Nodes[p].isVisited = false;
+				m_Nodes[p].posX = x;
+				m_Nodes[p].posY = y;
+				m_Nodes[p].parent = nullptr;
 			}
 
-		for (int x = 0; x < nMapWidth; x++)
-			for (int y = 0; y < nMapHeight; y++)
+		for (int x = 0; x < mapWidth; x++)
+			for (int y = 0; y < mapHeight; y++)
 			{
-				if (y > 0)
-					m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[(y - 1) * nMapWidth + x]);
-
-				if (y < nMapHeight - 1)
-					m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[(y + 1) * nMapWidth + x]);
-
-				if (x > 0)
-					m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[y * nMapWidth + x - 1]);
-
-				if (x < nMapWidth - 1)
-					m_nodeNodes[y * nMapWidth + x].vecNeighbours.push_back(&m_nodeNodes[y * nMapWidth + x + 1]);
+				if (y > 0) m_Nodes[y * mapWidth + x].neighbours.push_back(&m_Nodes[(y - 1) * mapWidth + x]);
+				if (y < mapHeight - 1) m_Nodes[y * mapWidth + x].neighbours.push_back(&m_Nodes[(y + 1) * mapWidth + x]);
+				if (x > 0) m_Nodes[y * mapWidth + x].neighbours.push_back(&m_Nodes[y * mapWidth + x - 1]);
+				if (x < mapWidth - 1) m_Nodes[y * mapWidth + x].neighbours.push_back(&m_Nodes[y * mapWidth + x + 1]);
 			}
 
-		m_bMapFreed = false;
+		m_IsMapFreed = false;
 
 		return true;
 	}
 
 	bool PathFinder::SetNodes(int nStartX, int nStartY, int nGoalX, int nGoalY)
 	{
-		if (nStartX < 0 || nStartX >= m_nMapWidth || nGoalX < 0 || nGoalX >= m_nMapWidth ||
-			nStartY < 0 || nStartY >= m_nMapHeight || nGoalY < 0 || nGoalY >= m_nMapHeight)
+		if (nStartX < 0 || nStartX >= m_MapWidth || nGoalX < 0 || nGoalX >= m_MapWidth ||
+			nStartY < 0 || nStartY >= m_MapHeight || nGoalY < 0 || nGoalY >= m_MapHeight)
 			return false;
 
-		m_nodeStart = &m_nodeNodes[nStartY * m_nMapWidth + nStartX];
-		m_nodeGoal = &m_nodeNodes[nGoalY * m_nMapWidth + nGoalX];
+		m_Start = &m_Nodes[nStartY * m_MapWidth + nStartX];
+		m_Goal = &m_Nodes[nGoalY * m_MapWidth + nGoalX];
 
 		return true;
 	}
 
-	void PathFinder::SetNodes(sNode* start, sNode* goal)
+	void PathFinder::SetNodes(Node* start, Node* goal)
 	{
-		if (start)
-			m_nodeStart = start;
-
-		if (goal)
-			m_nodeGoal = goal;
+		if (start) m_Start = start;
+		if (goal) m_Goal = goal;
 	}
 
-	sNode* PathFinder::GetStartNode()
+	Node* PathFinder::GetStartNode()
 	{
-		return m_nodeStart;
+		return m_Start;
 	}
 
-	sNode* PathFinder::GetGoalNode()
+	Node* PathFinder::GetGoalNode()
 	{
-		return m_nodeGoal;
+		return m_Goal;
 	}
 
 	void PathFinder::ResetNodes()
 	{
-		m_nodeStart = nullptr;
-		m_nodeGoal = nullptr;
+		m_Start = nullptr;
+		m_Goal = nullptr;
 	}
 
-	sNode* PathFinder::GetNodes()
+	Node* PathFinder::GetNodes()
 	{
-		return m_nodeNodes;
+		return m_Nodes;
 	}
 
 	int PathFinder::GetMapWidth()
 	{
-		return m_nMapWidth;
+		return m_MapWidth;
 	}
 
 	int PathFinder::GetMapHeight()
 	{
-		return m_nMapHeight;
+		return m_MapHeight;
 	}
 
-	void PathFinder::FindPath(float (*dist)(sNode*, sNode*), float (*heuristic)(sNode*, sNode*))
+	void PathFinder::FindPath(float (*dist)(Node*, Node*), float (*heuristic)(Node*, Node*))
 	{
-		sNode* current = m_nodeStart;
-		m_nodeStart->fLocalGoal = 0.0f;
-		m_nodeStart->fGlobalGoal = heuristic(m_nodeStart, m_nodeGoal);
+		Node* current = m_Start;
+		m_Start->localGoal = 0.0f;
+		m_Start->globalGoal = heuristic(m_Start, m_Goal);
 
-		std::list<sNode*> listNodesToTest;
-		listNodesToTest.push_back(m_nodeStart);
+		std::list<Node*> nodesToTest;
+		nodesToTest.push_back(m_Start);
 
-		while (!listNodesToTest.empty() && current != m_nodeGoal)
+		while (!nodesToTest.empty() && current != m_Goal)
 		{
-			listNodesToTest.sort(
-				[](const sNode* lhs, const sNode* rhs)
+			nodesToTest.sort(
+				[](const Node* lhs, const Node* rhs)
 				{
-					return lhs->fGlobalGoal < rhs->fGlobalGoal;
+					return lhs->globalGoal < rhs->globalGoal;
 				}
 			);
 
-			while (!listNodesToTest.empty() && listNodesToTest.front()->bVisited)
-				listNodesToTest.pop_front();
+			while (!nodesToTest.empty() && nodesToTest.front()->isVisited)
+				nodesToTest.pop_front();
 
-			if (listNodesToTest.empty())
-				break;
+			if (nodesToTest.empty()) break;
 
-			current = listNodesToTest.front();
-			current->bVisited = true;
+			current = nodesToTest.front();
+			current->isVisited = true;
 
-			for (auto n : current->vecNeighbours)
+			for (auto& n : current->neighbours)
 			{
-				if (!n->bVisited && !n->bObstacle)
-					listNodesToTest.push_back(n);
+				if (!n->isVisited && !n->isObstacle)
+					nodesToTest.push_back(n);
 
-				float fPossiblyLowerGoal = current->fLocalGoal + dist(current, n);
+				float possiblyLowerGoal = current->localGoal + dist(current, n);
 
-				if (fPossiblyLowerGoal < n->fLocalGoal)
+				if (possiblyLowerGoal < n->localGoal)
 				{
-					n->pParent = current;
-					n->fLocalGoal = fPossiblyLowerGoal;
-					n->fGlobalGoal = n->fLocalGoal + heuristic(n, m_nodeGoal);
+					n->parent = current;
+					n->localGoal = possiblyLowerGoal;
+					n->globalGoal = n->localGoal + heuristic(n, m_Goal);
 				}
 			}
 		}

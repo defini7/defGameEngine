@@ -79,7 +79,7 @@
 #include <vector>
 #include <cmath>
 #include <list>
-#include <memory>s
+#include <memory>
 
 #include <GLFW/glfw3.h>
 
@@ -121,296 +121,123 @@
 #define DGE_MIX(x, y, f, t) t((float)x * (1.0f - f) + (float)y * f)
 #endif
 
+#ifndef DGE_MAX
+#define DGE_MAX(x, y) (((x) > (y)) ? (x) : (y)) 
+#endif
+
+#ifndef DGE_MIN
+#define DGE_MIN(x, y) (((x) < (y)) ? (x) : (y)) 
+#endif
+
 namespace def
 {
 	// Keyboard keys constants for convenient usage
 	namespace Key
 	{
-		unsigned int SPACE = 32;
-		unsigned int APOSTROPHE = 39;
-		unsigned int COMMA = 44;
-		unsigned int MINUS = 45;
-		unsigned int PERIOD = 46;
-		unsigned int SLASH = 47;
-		unsigned int K0 = 48;
-		unsigned int K1 = 49;
-		unsigned int K2 = 50;
-		unsigned int K3 = 51;
-		unsigned int K4 = 52;
-		unsigned int K5 = 53;
-		unsigned int K6 = 54;
-		unsigned int K7 = 55;
-		unsigned int K8 = 56;
-		unsigned int K9 = 57;
-		unsigned int SEMICOLON = 59;
-		unsigned int EQUAL = 61;
-		unsigned int A = 65;
-		unsigned int B = 66;
-		unsigned int C = 67;
-		unsigned int D = 68;
-		unsigned int E = 69;
-		unsigned int F = 70;
-		unsigned int G = 71;
-		unsigned int H = 72;
-		unsigned int I = 73;
-		unsigned int J = 74;
-		unsigned int K = 75;
-		unsigned int L = 76;
-		unsigned int M = 77;
-		unsigned int N = 78;
-		unsigned int O = 79;
-		unsigned int P = 80;
-		unsigned int Q = 81;
-		unsigned int R = 82;
-		unsigned int S = 83;
-		unsigned int T = 84;
-		unsigned int U = 85;
-		unsigned int V = 86;
-		unsigned int W = 87;
-		unsigned int X = 88;
-		unsigned int Y = 89;
-		unsigned int Z = 90;
-		unsigned int LEFT_BRACKET = 91; /* [ */
-		unsigned int BACKSLASH = 92; /* \ */
-		unsigned int RIGHT_BRACKET = 93; /* ] */
-		unsigned int GRAVE_ACCENT = 96; /* ` */
-		unsigned int WORLD_1 = 161; /* non-US #1 */
-		unsigned int WORLD_2 = 162; /* non-US #2 */
-		unsigned int ESCAPE = 256;
-		unsigned int ENTER = 257;
-		unsigned int TAB = 258;
-		unsigned int BACKSPACE = 259;
-		unsigned int INSERT = 260;
-		unsigned int DEL = 261;
-		unsigned int RIGHT = 262;
-		unsigned int LEFT = 263;
-		unsigned int DOWN = 264;
-		unsigned int UP = 265;
-		unsigned int PAGE_UP = 266;
-		unsigned int PAGE_DOWN = 267;
-		unsigned int HOME = 268;
-		unsigned int END = 269;
-		unsigned int CAPS_LOCK = 280;
-		unsigned int SCROLL_LOCK = 281;
-		unsigned int NUM_LOCK = 282;
-		unsigned int PRINT_SCREEN = 283;
-		unsigned int PAUSE = 284;
-		unsigned int F1 = 290;
-		unsigned int F2 = 291;
-		unsigned int F3 = 292;
-		unsigned int F4 = 293;
-		unsigned int F5 = 294;
-		unsigned int F6 = 295;
-		unsigned int F7 = 296;
-		unsigned int F8 = 297;
-		unsigned int F9 = 298;
-		unsigned int F10 = 299;
-		unsigned int F11 = 300;
-		unsigned int F12 = 301;
-		unsigned int F13 = 302;
-		unsigned int F14 = 303;
-		unsigned int F15 = 304;
-		unsigned int F16 = 305;
-		unsigned int F17 = 306;
-		unsigned int F18 = 307;
-		unsigned int F19 = 308;
-		unsigned int F20 = 309;
-		unsigned int F21 = 310;
-		unsigned int F22 = 311;
-		unsigned int F23 = 312;
-		unsigned int F24 = 313;
-		unsigned int F25 = 314;
-		unsigned int NP_0 = 320;
-		unsigned int NP_1 = 321;
-		unsigned int NP_2 = 322;
-		unsigned int NP_3 = 323;
-		unsigned int NP_4 = 324;
-		unsigned int NP_5 = 325;
-		unsigned int NP_6 = 326;
-		unsigned int NP_7 = 327;
-		unsigned int NP_8 = 328;
-		unsigned int NP_9 = 329;
-		unsigned int NP_DECIMAL = 330;
-		unsigned int NP_DIVIDE = 331;
-		unsigned int NP_MULTIPLY = 332;
-		unsigned int NP_SUBTRACT = 333;
-		unsigned int NP_ADD = 334;
-		unsigned int NP_ENTER = 335;
-		unsigned int NP_EQUAL = 336;
-		unsigned int LEFT_SHIFT = 340;
-		unsigned int LEFT_CONTROL = 341;
-		unsigned int LEFT_ALT = 342;
-		unsigned int LEFT_SUPER = 343;
-		unsigned int RIGHT_SHIFT = 344;
-		unsigned int RIGHT_CONTROL = 345;
-		unsigned int RIGHT_ALT = 346;
-		unsigned int RIGHT_SUPER = 347;
-		unsigned int MENU = 348;
+		enum Keys : uint32_t
+		{
+			SPACE = 32, APOSTROPHE = 39, COMMA = 44, MINUS, PERIOD, SLASH,
+
+			K0, K1, K2, K3, K4, K5, K6, K7, K8, K9,
+
+			SEMICOLON = 59, EQUAL = 61,
+			
+			A = 65, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S,
+			T, U, V, W, X, Y, Z,
+			
+			LEFT_BRACKET, BACKSLASH, RIGHT_BRACKET,
+			GRAVE_ACCENT = 96, WORLD_1 = 161, WORLD_2 = 162,
+
+			ESCAPE = 256, ENTER, TAB, BACKSPACE, INSERT, DEL, RIGHT, LEFT,
+			DOWN, UP, PAGE_UP, PAGE_DOWN, HOME, END,
+			CAPS_LOCK = 280, SCROLL_LOCK, NUM_LOCK, PRINT_SCREEN, PAUSE,
+
+			F1 = 290, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13,
+			F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25,
+
+			NP_0 = 320, NP_1, NP_2, NP_3, NP_4, NP_5, NP_6, NP_7, NP_8,
+			NP_9, NP_DECIMAL, NP_DIVIDE, NP_MULTIPLY, NP_SUBTRACT, NP_ADD,
+			NP_ENTER, NP_EQUAL,
+
+			LEFT_SHIFT = 340, LEFT_CONTROL, LEFT_ALT, LEFT_SUPER, RIGHT_SHIFT,
+			RIGHT_CONTROL, RIGHT_ALT, RIGHT_SUPER, MENU,
+		};
 	}
 
 	template <typename T>
 	struct v2d
 	{
 		v2d() = default;
-		v2d(T x, T y)
-		{
-			this->x = x;
-			this->y = y;
-		}
+		v2d(const T& x, const T& y);
 
 		T x = (T)0;
 		T y = (T)0;
+
+		friend bool operator==(const v2d<T>& v1, const v2d<T>& v2) { return v1.x == v2.x && v1.y == v2.y; }
+		friend bool operator!=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x != v2.x || v1.y != v2.y; }
+		friend bool operator<(const v2d<T>& v1, const v2d<T>& v2) { return v1.x < v2.x && v1.y < v2.y; }
+		friend bool operator>(const v2d<T>& v1, const v2d<T>& v2) { return v1.x > v2.x && v1.y > v2.y; }
+		friend bool operator<=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
+		friend bool operator>=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
 
 		friend v2d<T> operator+(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x + v2.x, v1.y + v2.y); }
 		friend v2d<T> operator-(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x - v2.x, v1.y - v2.y); }
 		friend v2d<T> operator*(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x * v2.x, v1.y * v2.y); }
 		friend v2d<T> operator/(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x / v2.x, v1.y / v2.y); }
 		friend v2d<T> operator%(const v2d<T>& v1, const v2d<T>& v2) { return v2d<T>(v1.x % v2.x, v1.y % v2.y); }
+
 		friend v2d<T> operator+(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x + v2, v1.y + v2); }
 		friend v2d<T> operator-(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x - v2, v1.y - v2); }
 		friend v2d<T> operator*(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x * v2, v1.y * v2); }
 		friend v2d<T> operator/(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x / v2, v1.y / v2); }
 		friend v2d<T> operator%(const v2d<T>& v1, const T& v2) { return v2d<T>(v1.x % v2, v1.y % v2); }
 
-		v2d<T>& operator+=(const v2d<T>& v)
-		{
-			this->x += v.x;
-			this->y += v.y;
-			return *this;
-		}
+		friend v2d<T> operator*(const float& lhs, const v2d<T>& rhs) { return v2d<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y)); }
+		friend v2d<T> operator*(const double& lhs, const v2d<T>& rhs) { return v2d<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y)); }
+		friend v2d<T> operator*(const int& lhs, const v2d<T>& rhs) { return v2d<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y)); }
+		friend v2d<T> operator/(const float& lhs, const v2d<T>& rhs) { return v2d<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y)); }
+		friend v2d<T> operator/(const double& lhs, const v2d<T>& rhs) { return v2d<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y)); }
+		friend v2d<T> operator/(const int& lhs, const v2d<T>& rhs) { return v2d<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y)); }
 
-		v2d<T>& operator-=(const v2d<T>& v)
-		{
-			this->x -= v.x;
-			this->y -= v.y;
-			return *this;
-		}
+		operator v2d<int>() const { return { static_cast<int32_t>(this->x), static_cast<int32_t>(this->y) }; }
+		operator v2d<float>() const { return { static_cast<float>(this->x),static_cast<float>(this->y) }; }
+		operator v2d<double>() const { return { static_cast<double>(this->x), static_cast<double>(this->y) }; }
 
-		v2d<T>& operator*=(const v2d<T>& v)
-		{
-			this->x *= v.x;
-			this->y *= v.y;
-			return *this;
-		}
+		v2d<T>& operator+=(const v2d<T>& v);
+		v2d<T>& operator-=(const v2d<T>& v);
+		v2d<T>& operator*=(const v2d<T>& v);
+		v2d<T>& operator/=(const v2d<T>& v);
 
-		v2d<T>& operator/=(const v2d<T>& v)
-		{
-			this->x /= v.x;
-			this->y /= v.y;
-			return *this;
-		}
+		v2d<T>& operator+=(const T& v);
+		v2d<T>& operator-=(const T& v);
+		v2d<T>& operator*=(const T& v);
+		v2d<T>& operator/=(const T& v);
+		v2d<T>& operator%=(const T& v);
 
-		v2d<T>& operator+=(const T& v)
-		{
-			this->x += v;
-			this->y += v;
-			return *this;
-		}
+		v2d<T> clamp(const v2d<T>& start, const v2d<T>& end) const;
 
-		v2d<T>& operator-=(const T& v)
-		{
-			this->x -= v;
-			this->y -= v;
-			return *this;
-		}
+		float dot(const v2d<T>& v) const;
+		float length() const;
 
-		v2d<T>& operator*=(const T& v)
-		{
-			this->x *= v;
-			this->y *= v;
-			return *this;
-		}
+		T mag() const;
+		T mag2() const;
 
-		v2d<T>& operator/=(const T& v)
-		{
-			this->x /= v;
-			this->y /= v;
-			return *this;
-		}
+		float man(const v2d<T>& v) const;
 
-		v2d<T>& operator%=(const T& v)
-		{
-			this->x %= v;
-			this->y %= v;
-			return *this;
-		}
+		v2d<T> max(const v2d<T>& v) const;
+		v2d<T> min(const v2d<T>& v) const;
 
-		friend bool operator==(const v2d<T>& v1, const v2d<T>& v2) { return v1.x == v2.x && v1.y == v2.y; }
-		friend bool operator!=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x != v2.x || v1.y != v2.y; }
-		friend bool operator<(const v2d<T>& v1, const v2d<T>& v2) { return v1.x < v2.x&& v1.y < v2.y; }
-		friend bool operator>(const v2d<T>& v1, const v2d<T>& v2) { return v1.x > v2.x && v1.y > v2.y; }
-		friend bool operator<=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
-		friend bool operator>=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
-
-		friend v2d<T> operator*(const float& lhs, const v2d<T>& rhs)
-		{
-			return v2d<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y));
-		}
-
-		friend v2d<T> operator * (const double& lhs, const v2d<T>& rhs)
-		{
-			return v2d<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y));
-		}
-
-		friend v2d<T> operator * (const int& lhs, const v2d<T>& rhs)
-		{
-			return v2d<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y));
-		}
-
-		friend v2d<T> operator / (const float& lhs, const v2d<T>& rhs)
-		{
-			return v2d<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y));
-		}
-
-		friend v2d<T> operator / (const double& lhs, const v2d<T>& rhs)
-		{
-			return v2d<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y));
-		}
-
-		friend v2d<T> operator / (const int& lhs, const v2d<T>& rhs)
-		{
-			return v2d<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y));
-		}
-
-		operator v2d<int>()	   const { return { static_cast<int32_t>(this->x),  static_cast<int32_t>(this->y) }; }
-		operator v2d<float>()  const { return { static_cast<float>(this->x),	static_cast<float>(this->y) }; }
-		operator v2d<double>() const { return { static_cast<double>(this->x),	static_cast<double>(this->y) }; }
-
-		v2d<T> clamp(const v2d<T>& start, const v2d<T>& end) const
-		{
-			v2d<T> clamped;
-			clamped.x = this->x;
-			clamped.y = this->y;
-			if (clamped.x < start.x) clamped.x = start.x;
-			if (clamped.y < start.y) clamped.y = start.y;
-			if (clamped.x > end.x) clamped.x = end.x;
-			if (clamped.y > end.y) clamped.y = end.y;
-			return clamped;
-		}
-
-		float dot(const v2d<T>& v) { return this->x * v.x + this->y * v.y; }
-		float length() { return sqrtf(dot(*this)); }
-
-		T mag() { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
-		T mag2() { return static_cast<T>(this->x * this->x + this->y * this->y); }
-
-		float man(const v2d<T>& v) { return std::abs(this->x - v.x) + std::abs(this->y - v.y); }
-
-		v2d<T> max(const v2d<T>& v) { return v2d<T>(std::max(this->x, v.x), std::max(this->y, v.y)); }
-		v2d<T> min(const v2d<T>& v) { return v2d<T>(std::min(this->x, v.x), std::min(this->y, v.y)); }
-
-		v2d<T> norm() { float n = 1.0f / mag(); return v2d<T>(this->x * n, this->y * n); }
-		v2d<T> abs() { return v2d<T>(std::abs(this->x), std::abs(this->y)); }
-		v2d<T> perp() { return v2d<T>(-this->y, this->x); }
-		v2d<T> floor() { return v2d<T>(std::floor(this->x), std::floor(this->y)); }
-		v2d<T> ceil() { return v2d<T>(std::ceil(this->x), std::ceil(this->y)); }
-		v2d<T> round() { return v2d<T>(std::round(this->x), std::round(this->y)); }
-		v2d<T> cart() { return v2d<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
-		v2d<T> polar() { return v2d<T>(mag(), atan2(this->y, this->x)); }
-		v2d<T>& ref() { return *this; }
-
-		operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
-		std::string str() { return operator std::string(); }
+		v2d<T> norm() const;
+		v2d<T> abs() const;
+		v2d<T> perp() const;
+		v2d<T> floor() const;
+		v2d<T> ceil() const;
+		v2d<T> round() const;
+		v2d<T> cart() const;
+		v2d<T> polar() const;
+		v2d<T>& ref() const;
+		operator std::string() const;
+		std::string str() const;
 	};
 
 	typedef v2d<int> vi2d;
@@ -419,14 +246,14 @@ namespace def
 
 	struct KeyState
 	{
-		bool bHeld;
-		bool bReleased;
-		bool bPressed;
+		bool held;
+		bool released;
+		bool pressed;
 	};
 
 	struct Pixel
 	{
-		Pixel(uint8_t _r = 0, uint8_t _g = 0, uint8_t _b = 0, uint8_t _a = 255U) : r(_r), g(_g), b(_b), a(_a) {}
+		Pixel(const uint8_t r = 0, const uint8_t g = 0, const uint8_t b = 0, const uint8_t a = 255U);
 
 		enum Mode
 		{
@@ -438,86 +265,44 @@ namespace def
 
 		uint8_t r, g, b, a;
 
-		Pixel mix(const def::Pixel& rhs, const float factor) const
-		{
-			return
-			{
-				DGE_MIX(r, rhs.r, factor, uint8_t),
-				DGE_MIX(g, rhs.g, factor, uint8_t),
-				DGE_MIX(b, rhs.b, factor, uint8_t),
-				DGE_MIX(a, rhs.a, factor, uint8_t)
-			};
-		}
+		Pixel mix(const def::Pixel& rhs, const float factor) const;
+		Pixel& clamp();
+		Pixel& ref();
 
-		template <typename T>
-		friend Pixel operator+(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r + rhs), uint8_t((T)lhs.g + rhs), uint8_t((T)lhs.b + rhs), lhs.a); }
+		Pixel operator+(const uint8_t rhs) const;
+		Pixel operator-(const uint8_t rhs) const;
+		Pixel operator*(const uint8_t rhs) const;
+		Pixel operator/(const uint8_t rhs) const;
 
-		template <typename T>
-		friend Pixel operator-(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r - rhs), uint8_t((T)lhs.g - rhs), uint8_t((T)lhs.b - rhs), lhs.a); }
+		Pixel& operator+=(const uint8_t rhs);
+		Pixel& operator-=(const uint8_t rhs);
+		Pixel& operator*=(const uint8_t rhs);
+		Pixel& operator/=(const uint8_t rhs);
 
-		template <typename T>
-		friend Pixel operator*(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r * rhs), uint8_t((T)lhs.g * rhs), uint8_t((T)lhs.b * rhs), lhs.a); }
+		Pixel operator+(const Pixel& rhs) const;
+		Pixel operator-(const Pixel& rhs) const;
+		Pixel operator*(const Pixel& rhs) const;
+		Pixel operator/(const Pixel& rhs) const;
 
-		template <typename T>
-		friend Pixel operator/(const Pixel& lhs, T rhs) { return Pixel(uint8_t((T)lhs.r / rhs), uint8_t((T)lhs.g / rhs), uint8_t((T)rhs.b / rhs), lhs.a); }
+		Pixel& operator+=(const Pixel& rhs);
+		Pixel& operator-=(const Pixel& rhs);
+		Pixel& operator*=(const Pixel& rhs);
+		Pixel& operator/=(const Pixel& rhs);
 
-		template <typename T>
-		friend Pixel& operator+=(const Pixel& lhs, T rhs)
-		{
-			lhs.r += rhs;
-			lhs.g += rhs;
-			lhs.b += rhs;
-			return lhs;
-		}
+		bool operator==(const Pixel& rhs) const;
+		bool operator!=(const Pixel& rhs) const;
+		bool operator>(const Pixel& rhs) const;
+		bool operator<(const Pixel& rhs) const;
+		bool operator>=(const Pixel& rhs) const;
+		bool operator<=(const Pixel& rhs) const;
 
-		template <typename T>
-		friend Pixel& operator-=(const Pixel& lhs, T rhs)
-		{
-			lhs.r -= rhs;
-			lhs.g -= rhs;
-			lhs.b -= rhs;
-
-			return lhs;
-		}
-
-		template <typename T>
-		friend Pixel& operator*=(const Pixel& lhs, T rhs)
-		{
-			lhs.r *= rhs;
-			lhs.g *= rhs;
-			lhs.b *= rhs;
-
-			return lhs;
-		}
-
-		template <typename T>
-		friend Pixel& operator/=(const Pixel& lhs, T rhs)
-		{
-			lhs.r /= rhs;
-			lhs.g /= rhs;
-			lhs.b /= rhs;
-
-			return lhs;
-		}
-
-		friend Pixel operator+(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b, lhs.a); }
-		friend Pixel operator-(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b, lhs.a); }
-		friend Pixel operator*(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r * rhs.r, lhs.g * rhs.g, lhs.b * rhs.b, lhs.a); }
-		friend Pixel operator/(const Pixel& lhs, const Pixel& rhs) { return Pixel(lhs.r / rhs.r, lhs.g / rhs.g, lhs.b / rhs.b, lhs.a); }
-
-		friend Pixel operator+=(const Pixel& lhs, const Pixel& rhs) { return lhs + rhs; }
-		friend Pixel operator-=(const Pixel& lhs, const Pixel& rhs) { return lhs - rhs; }
-		friend Pixel operator*=(const Pixel& lhs, const Pixel& rhs) { return lhs * rhs; }
-		friend Pixel operator/=(const Pixel& lhs, const Pixel& rhs) { return lhs / rhs; }
-
-		friend bool operator==(const Pixel& lhs, const Pixel& rhs) { return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b; }
-		friend bool operator!=(const Pixel& lhs, const Pixel& rhs) { return lhs.r != rhs.r || lhs.g != rhs.g || lhs.b != rhs.b; }
+		bool operator==(const uint8_t rhs) const;
+		bool operator!=(const uint8_t rhs) const;
+		bool operator>(const uint8_t rhs) const;
+		bool operator<(const uint8_t rhs) const;
+		bool operator>=(const uint8_t rhs) const;
+		bool operator<=(const uint8_t rhs) const;
 	};
-
-	Pixel PixelF(float r, float g, float b)
-	{
-		return Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f));
-	}
 
 	static Pixel BLACK(0, 0, 0, 0),
 		DARK_BLUE(0, 55, 218, 255),
@@ -548,163 +333,53 @@ namespace def
 		PURPLE(200, 122, 255, 255),
 		NONE(0, 0, 0, 0);
 
-	Pixel RandomPixel(bool bRandomAlpha = false)
+	Pixel PixelF(float r, float g, float b)
 	{
-		return Pixel(rand() % 256, rand() % 256, rand() % 256, bRandomAlpha ? rand() % 256 : 255);
+		return Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f));
 	}
 
-	float   Byte2Float(uint8_t b) { return (float)b / 255.0f; }
-	uint8_t Float2Byte(float f) { return uint8_t(f * 255.0f); }
+	Pixel RandomPixel(bool isRandomAlpha = false)
+	{
+		return Pixel(rand() % 256, rand() % 256, rand() % 256, isRandomAlpha ? rand() % 256 : 255);
+	}
+
+#define DGE_B2F(v) ((float)v / 255.0f)
+#define DGE_F2B(v) uint8_t(v * 255.0f)
 
 	class Sprite
 	{
 	public:
-		Sprite() = default;
-		Sprite(int32_t width, int32_t height, int32_t channels = 4)
-		{
-			if (width > 0 && height > 0 && channels > 0)
-				Create(width, height, channels);
-		}
-
-		Sprite(const std::string& sFilename)
-		{
-			Load(sFilename);
-		}
-
-		~Sprite()
-		{
-			if (pPixelData != nullptr)
-				delete[] pPixelData;
-		}
-
-	public:
-		int32_t nWidth;
-		int32_t nHeight;
-		int32_t nChannels;
-
-		uint8_t* pPixelData = nullptr;
-
-	public:
-		void Create(const int32_t width, const int32_t height, const int32_t channels = 4)
-		{
-			if (pPixelData != nullptr) delete[] pPixelData;
-
-			nWidth = width;
-			nHeight = height;
-			nChannels = channels;
-
-			pPixelData = new uint8_t[nWidth * nHeight * nChannels];
-			memset(pPixelData, 0, nWidth * nHeight * nChannels * sizeof(uint8_t));
-		}
-
-		void Load(const std::string& sFilename)
-		{
-			nChannels = 4;
-			pPixelData = stbi_load(sFilename.c_str(), &nWidth, &nHeight, nullptr, nChannels);
-			DGE_ASSERT(pPixelData, "[stb_image Error] Text: " << stbi_failure_reason())
-		}
-
 		enum class FileType { BMP, PNG, JPG, TGA, TGA_RLE };
 
-		void Save(const std::string& sFilename, const FileType type)
-		{
-			int err;
+		Sprite() = default;
+		Sprite(const int32_t width, const int32_t height, const int32_t channels = 4);
+		Sprite(const std::string& filename);
+		~Sprite();
 
-			switch (type)
-			{
-			case FileType::BMP: err = stbi_write_bmp(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData); break;
-			case FileType::PNG: err = stbi_write_png(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData, nWidth * nChannels); break;
-			case FileType::JPG: err = stbi_write_jpg(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData, 100); break;
-			case FileType::TGA: err = stbi_write_tga(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData); break;
-			case FileType::TGA_RLE:
-			{
-				stbi_write_tga_with_rle = 1;
-				err = stbi_write_tga(sFilename.c_str(), nWidth, nHeight, nChannels, pPixelData);
-				stbi_write_tga_with_rle = 0;
-			}
-			break;
+	public:
+		int32_t width;
+		int32_t height;
+		int32_t channels;
 
-			}
+		uint8_t* pixelData = nullptr;
 
-			DGE_ASSERT(err == 1, "[stb_image_write Error] Code: " << err)
-		}
+	public:
+		void Create(const int32_t width, const int32_t height, const int32_t channels = 4);
+		void Load(const std::string& filename);
 
-		bool SetPixel(const int32_t x, const int32_t y, const Pixel& p)
-		{
-			if (x >= 0 && y >= 0 && x < nWidth && y < nHeight)
-			{
-				size_t i = nChannels * (y * nWidth + x);
+		void Save(const std::string& filename, const FileType type) const;
 
-				pPixelData[i] = p.r;
-				pPixelData[i + 1] = p.g;
-				pPixelData[i + 2] = p.b;
-				pPixelData[i + 3] = p.a;
+		bool SetPixel(const int32_t x, const int32_t y, const Pixel& p);
+		Pixel GetPixel(const int32_t x, const int32_t y) const;
 
-				return true;
-			}
+		void SetPixelData(const uint8_t* data);
+		void SetPixelData(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a = 255);
 
-			return false;
-		}
-
-		Pixel GetPixel(const int32_t x, const int32_t y)
-		{
-			if (x >= 0 && y >= 0 && x < nWidth && y < nHeight)
-			{
-				size_t i = nChannels * (y * nWidth + x);
-
-				return Pixel(
-					pPixelData[i],
-					pPixelData[i + 1],
-					pPixelData[i + 2],
-					pPixelData[i + 3]
-				);
-			}
-			else
-			{
-				return BLACK;
-			}
-		}
-
-		void SetPixelData(const uint8_t* data)
-		{
-			memcpy(pPixelData, data, nWidth * nHeight * nChannels * sizeof(uint8_t));
-		}
-
-		void SetPixelData(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a = 255)
-		{
-			for (int i = 0; i < nWidth; i++)
-				for (int j = 0; j < nHeight; j++)
-				{
-					size_t idx = nChannels * (j * nWidth + i);
-					pPixelData[idx] = r;
-					pPixelData[idx + 1] = g;
-					pPixelData[idx + 2] = b;
-					pPixelData[idx + 3] = a;
-				}
-		}
-
-		Pixel Sample(const float x, const float y)
-		{
-			return GetPixel(
-				std::min(int32_t(x * (float)nWidth), nWidth - 1),
-				std::min(int32_t(y * (float)nHeight), nHeight - 1)
-			);
-		}
+		Pixel Sample(const float x, const float y) const;
 	};
 
-	class Texture
+	struct Texture
 	{
-	public:
-		Texture(Sprite* pSprite)
-		{
-			Construct(pSprite, false);
-		}
-
-		Texture(const std::string& sFileName)
-		{
-			Construct(new Sprite(sFileName), true);
-		}
-
 		enum TextureStructure : int32_t
 		{
 			DEFAULT,
@@ -712,108 +387,39 @@ namespace def
 			STRIP
 		};
 
+		Texture(Sprite* sprite);
+		Texture(const std::string& fileName);
+
+		GLuint id;
+
+		float UVScaleX;
+		float UVScaleY;
+
+		int width;
+		int height;
+
+		void Load(Sprite* sprite);
+		void Update(Sprite* sprite);
+
 	private:
-		void Construct(Sprite* pSprite, bool bDeleteSprite)
-		{
-			Load(pSprite);
-
-			fUVScaleX = 1.0f / (float)pSprite->nWidth;
-			fUVScaleY = 1.0f / (float)pSprite->nHeight;
-
-			nWidth = pSprite->nWidth;
-			nHeight = pSprite->nHeight;
-
-			if (bDeleteSprite) delete pSprite;
-		}
-
-	public:
-		GLuint nTexId;
-
-		float fUVScaleX;
-		float fUVScaleY;
-
-		int32_t nWidth;
-		int32_t nHeight;
-
-	public:
-		void Load(Sprite* pSprite)
-		{
-			GLenum nFormat = 0;
-
-			switch (pSprite->nChannels)
-			{
-			case 3: nFormat = GL_RGB; break;
-			case 4: nFormat = GL_RGBA; break;
-			}
-
-			DGE_ASSERT(nFormat != 0, "[Texture.Load Error] Text: Invalid number of channels")
-
-			glGenTextures(1, &nTexId);
-			glBindTexture(GL_TEXTURE_2D, nTexId);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glTexImage2D(
-				GL_TEXTURE_2D,
-				0,
-				nFormat,
-				pSprite->nWidth,
-				pSprite->nHeight,
-				0,
-				nFormat,
-				GL_UNSIGNED_BYTE,
-				pSprite->pPixelData
-			);
-
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
-
-		void Update(Sprite* pSprite)
-		{
-			glBindTexture(GL_TEXTURE_2D, nTexId);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pSprite->nWidth, pSprite->nHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pSprite->pPixelData);
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
+		void Construct(Sprite* sprite, bool deleteSprite);
 	};
 
 	struct Graphic
 	{
 		Graphic() = default;
-		Graphic(const std::string& sFileName) { Load(sFileName); }
-		Graphic(const int32_t nWidth, const int32_t nHeight) { Load(nWidth, nHeight); }
+		Graphic(const std::string& fileName);
+		Graphic(const int32_t width, const int32_t height);
 
-		~Graphic()
-		{
-			if (pTexture != nullptr) delete pTexture;
-			if (pSprite != nullptr)  delete pSprite;
-		}
+		~Graphic();
 
-		Texture* pTexture = nullptr;
-		Sprite* pSprite = nullptr;
+		Texture* texture = nullptr;
+		Sprite* sprite = nullptr;
 
-		void Load(const std::string& sFileName)
-		{
-			pSprite = new Sprite(sFileName);
-			pTexture = new Texture(pSprite);
-		}
-
-		void Load(const int32_t nWidth, const int32_t nHeight)
-		{
-			pSprite = new Sprite(nWidth, nHeight);
-			pTexture = new Texture(pSprite);
-		}
-
-		void Save(const std::string& sFilename, const Sprite::FileType type)
-		{
-			return pSprite->Save(sFilename, type);
-		}
-
-		void UpdateTexture() { pTexture->Update(pSprite); }
+		void Load(const std::string& fileName);
+		void Load(const int32_t width, const int32_t height);
+		void Save(const std::string& filename, const Sprite::FileType type) const;
+		void UpdateTexture();
 	};
 
 	enum class WindowState
@@ -842,62 +448,62 @@ namespace def
 		virtual ~GameEngine();
 
 	private:
-		std::string m_sAppName;
+		std::string m_AppName;
 
-		vi2d m_vWindowSize;
-		vi2d m_vScreenSize;
-		vf2d m_vInvScreenSize;
-		vi2d m_vPixelSize;
+		vi2d m_WindowSize;
+		vi2d m_ScreenSize;
+		vf2d m_InvScreenSize;
+		vi2d m_PixelSize;
 
 		GLFWwindow* m_Window;
 		GLFWmonitor* m_Monitor;
 
-		bool m_bAppRunning;
-		bool m_bFullScreen;
-		bool m_bVSync;
-		bool m_bDirtyPixel;
+		bool m_IsAppRunning;
+		bool m_IsFullScreen;
+		bool m_IsVSync;
+		bool m_IsDirtyPixel;
 
 		KeyState m_Keys[512];
 		KeyState m_Mouse[5];
 
-		bool m_nKeyOldState[512];
-		bool m_nKeyNewState[512];
+		bool m_KeyOldState[512];
+		bool m_KeyNewState[512];
 
-		bool m_nMouseOldState[5];
-		bool m_nMouseNewState[5];
+		bool m_MouseOldState[5];
+		bool m_MouseNewState[5];
 
-		vi2d m_vMouse;
+		vi2d m_MousePos;
 
-		Sprite* m_sprFont;
+		Sprite* m_Font;
 
-		Graphic* m_pScreen;
-		Graphic* m_pDrawTarget;
-		std::vector<TextureInstance> m_vecTextures;
-		Pixel m_pixTint;
+		Graphic* m_Screen;
+		Graphic* m_DrawTarget;
+		std::vector<TextureInstance> m_Textures;
+		Pixel m_Tint;
 
-		int32_t m_nPixelMode;
-		int32_t m_nTextureStructure;
+		int32_t m_PixelMode;
+		int32_t m_TextureStructure;
 
-		float m_fTickTimer;
+		float m_TickTimer;
 
-		Pixel(*m_funcShader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
+		Pixel(*m_Shader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
 
 	public:
-		inline static std::vector<std::string> s_vecDropCache;
+		inline static std::vector<std::string> s_DropCache;
 
 		virtual bool OnUserCreate() = 0;
-		virtual bool OnUserUpdate(float fDeltaTime) = 0;
+		virtual bool OnUserUpdate(float deltaTime) = 0;
 
-		void Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen = false, bool bVSync = false, bool bDirtyPixel = false);
+		void Construct(int32_t screenWidth, int32_t screenHeight, int32_t pixelWidth, int32_t pixelHeight, bool isFullScreen = false, bool isVSync = false, bool isDirtyPixel = false);
 		void Run();
 
 	private:
 		void Destroy();
 		void AppThread();
 
-		static void DrawQuad(const Pixel& pixTint);
-		static void ErrorCallback(int nErrCode, const char* sDesc);
-		static void DropCallback(GLFWwindow* window, int nPathCount, const char* sPaths[]);
+		static void DrawQuad(const Pixel& tint);
+		static void ErrorCallback(int errCode, const char* desc);
+		static void DropCallback(GLFWwindow* window, int pathCount, const char* paths[]);
 
 	public:
 		bool Draw(const vi2d& pos, Pixel p = WHITE);
@@ -947,91 +553,516 @@ namespace def
 		void DrawRotatedTexture(const vf2d& pos, float r, Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		virtual void DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
-		virtual void DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 
-		void FillWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
-		virtual void FillWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		virtual void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 
 		void DrawString(const vi2d& pos, const std::string& text, const Pixel& p = WHITE);
 		virtual void DrawString(int32_t x, int32_t y, const std::string& text, const Pixel& p = WHITE);
 
 		virtual void Clear(const Pixel& p);
 
-		KeyState GetKey(uint32_t k);
-		KeyState GetMouse(uint32_t k);
+		KeyState GetKey(uint32_t k) const;
+		KeyState GetMouse(uint32_t k) const;
 
-		vi2d GetMouse();
+		vi2d GetMouse() const;
 
-		int32_t MouseX();
-		int32_t MouseY();
+		int32_t MouseX() const;
+		int32_t MouseY() const;
 
-		void SetTitle(const std::string& sTitle);
+		void SetTitle(const std::string& title);
 
-		vi2d ScreenSize();
+		vi2d ScreenSize() const;
 
-		int32_t ScreenWidth();
-		int32_t ScreenHeight();
+		int32_t ScreenWidth() const;
+		int32_t ScreenHeight() const;
 
-		bool IsFullScreen();
-		bool IsVSync();
+		bool IsFullScreen() const;
+		bool IsVSync() const;
 
-		void SetIcon(const std::string& sFileName);
+		void SetIcon(const std::string& fileName);
 
-		void SetDrawTarget(Graphic* pTarget);
-		Graphic* GetDrawTarget();
+		void SetDrawTarget(Graphic* target);
+		Graphic* GetDrawTarget() const;
 
-		WindowState GetWindowState();
-		GLFWwindow* GetWindow();
+		WindowState GetWindowState() const;
+		GLFWwindow* GetWindow() const;
 
 		static std::vector<std::string>& GetDropped();
 
 		void DrawTexture(const TextureInstance& tex);
 
-		void SetPixelMode(int32_t nPixelMode);
-		int32_t GetPixelMode();
+		void SetPixelMode(int32_t pixelMode);
+		int32_t GetPixelMode() const;
 
-		void SetTextureStructure(int32_t nTextureStructure);
-		int32_t GetTextureStructure(int32_t nTextureStructure);
+		void SetTextureStructure(int32_t textureStructure);
+		int32_t GetTextureStructure() const;
 
 		void ClearBuffer(const Pixel& p);
-
 		void SetTint(const Pixel& p);
 
-		void SetShader(Pixel(*func)(const vi2d& vPos, const Pixel& pixPrev, const Pixel& pixCur));
+		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur));
 
 	};
 
 #ifdef DGE_APPLICATION
 #undef DGE_APPLICATION
 
+	template <class T>
+	v2d<T>::v2d(const T& x, const T& y)
+	{
+		this->x = x;
+		this->y = y;
+	}
+
+	template <class T>
+	v2d<T>& v2d<T>::operator+=(const v2d<T>& v)
+	{
+		this->x += v.x;
+		this->y += v.y;
+		return *this;
+	}
+
+	template <class T>
+	v2d<T>& v2d<T>::operator-=(const v2d<T>& v)
+	{
+		this->x -= v.x;
+		this->y -= v.y;
+		return *this;
+	}
+
+	template <class T>
+	v2d<T>& v2d<T>::operator*=(const v2d<T>& v)
+	{
+		this->x *= v.x;
+		this->y *= v.y;
+		return *this;
+	}
+
+	template <class T>
+	v2d<T>& v2d<T>::operator/=(const v2d<T>& v)
+	{
+		this->x /= v.x;
+		this->y /= v.y;
+		return *this;
+	}
+
+	template <class T>
+	v2d<T>& v2d<T>::operator+=(const T& v)
+	{
+		this->x += v;
+		this->y += v;
+		return *this;
+	}
+
+	template <class T>
+	v2d<T>& v2d<T>::operator-=(const T& v)
+	{
+		this->x -= v;
+		this->y -= v;
+		return *this;
+	}
+
+	template <class T>
+	v2d<T>& v2d<T>::operator*=(const T& v)
+	{
+		this->x *= v;
+		this->y *= v;
+		return *this;
+	}
+
+	template <class T>
+	v2d<T>& v2d<T>::operator/=(const T& v)
+	{
+		this->x /= v;
+		this->y /= v;
+		return *this;
+	}
+
+	template <class T>
+	v2d<T>& v2d<T>::operator%=(const T& v)
+	{
+		this->x %= v;
+		this->y %= v;
+		return *this;
+	}
+	
+	template <class T>
+	v2d<T> v2d<T>::clamp(const v2d<T>& start, const v2d<T>& end) const
+	{
+		v2d<T> clamped;
+		clamped.x = this->x;
+		clamped.y = this->y;
+		if (clamped.x < start.x) clamped.x = start.x;
+		if (clamped.y < start.y) clamped.y = start.y;
+		if (clamped.x > end.x) clamped.x = end.x;
+		if (clamped.y > end.y) clamped.y = end.y;
+		return clamped;
+	}
+
+	template <class T> float v2d<T>::dot(const v2d<T>& v) const { return this->x * v.x + this->y * v.y; }
+	template <class T> float v2d<T>::length() const { return sqrtf(dot(*this)); }
+
+	template <class T> T v2d<T>::mag() const { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
+	template <class T> T v2d<T>::mag2() const { return static_cast<T>(this->x * this->x + this->y * this->y); }
+	template <class T> float v2d<T>::man(const v2d<T>& v) const { return std::abs(this->x - v.x) + std::abs(this->y - v.y); }
+
+	template <class T> v2d<T> v2d<T>::max(const v2d<T>& v) const { return v2d<T>(DGE_MAX(this->x, v.x), DGE_MAX(this->y, v.y)); }
+	template <class T> v2d<T> v2d<T>::min(const v2d<T>& v) const { return v2d<T>(DGE_MIN(this->x, v.x), DGE_MIN(this->y, v.y)); }
+
+	template <class T> v2d<T> v2d<T>::norm() const { float n = 1.0f / mag(); return v2d<T>(this->x * n, this->y * n); }
+	template <class T> v2d<T> v2d<T>::abs() const { return v2d<T>(std::abs(this->x), std::abs(this->y)); }
+	template <class T> v2d<T> v2d<T>::perp() const { return v2d<T>(-this->y, this->x); }
+	template <class T> v2d<T> v2d<T>::floor() const { return v2d<T>(std::floor(this->x), std::floor(this->y)); }
+	template <class T> v2d<T> v2d<T>::ceil() const { return v2d<T>(std::ceil(this->x), std::ceil(this->y)); }
+	template <class T> v2d<T> v2d<T>::round() const { return v2d<T>(std::round(this->x), std::round(this->y)); }
+	template <class T> v2d<T> v2d<T>::cart() const { return v2d<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
+	template <class T> v2d<T> v2d<T>::polar() const { return v2d<T>(mag(), atan2(this->y, this->x)); }
+	template <class T> v2d<T>& v2d<T>::ref() const { return *this; }
+
+	template <class T> v2d<T>::operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
+	template <class T> std::string v2d<T>::str() const { return operator std::string(); }
+
+	Pixel::Pixel(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) : r(r), g(g), b(b), a(a) {}
+
+	Pixel Pixel::mix(const def::Pixel& rhs, const float factor) const
+	{
+		return
+		{
+			DGE_MIX(r, rhs.r, factor, uint8_t),
+			DGE_MIX(g, rhs.g, factor, uint8_t),
+			DGE_MIX(b, rhs.b, factor, uint8_t),
+			DGE_MIX(a, rhs.a, factor, uint8_t)
+		};
+	}
+
+	Pixel& Pixel::clamp()
+	{
+		r = DGE_MIN(255, DGE_MAX(0, r));
+		g = DGE_MIN(255, DGE_MAX(0, g));
+		b = DGE_MIN(255, DGE_MAX(0, b));
+		return ref();
+	}
+
+	Pixel& Pixel::ref() { return *this; }
+
+	Pixel Pixel::operator+(const uint8_t rhs) const { return Pixel(r + rhs, g + rhs, b + rhs, a).clamp(); }
+	Pixel Pixel::operator-(const uint8_t rhs) const { return Pixel(r - rhs, g - rhs, b - rhs, a).clamp(); }
+	Pixel Pixel::operator*(const uint8_t rhs) const { return Pixel(r * rhs, g * rhs, b * rhs, a).clamp(); }
+	Pixel Pixel::operator/(const uint8_t rhs) const { return Pixel(r / rhs, g / rhs, b / rhs, a).clamp(); }
+
+	Pixel& Pixel::operator+=(const uint8_t rhs)
+	{
+		r += rhs;
+		g += rhs;
+		b += rhs;
+		return ref().clamp();
+	}
+
+	Pixel& Pixel::operator-=(const uint8_t rhs)
+	{
+		r -= rhs;
+		g -= rhs;
+		b -= rhs;
+		return ref().clamp();
+	}
+
+	Pixel& Pixel::operator*=(const uint8_t rhs)
+	{
+		r *= rhs;
+		g *= rhs;
+		b *= rhs;
+		return ref().clamp();
+	}
+
+	Pixel& Pixel::operator/=(const uint8_t rhs)
+	{
+		r /= rhs;
+		g /= rhs;
+		b /= rhs;
+		return ref().clamp();
+	}
+
+	Pixel Pixel::operator+(const Pixel& rhs) const { return Pixel(r + rhs.r, g + rhs.g, b + rhs.b, a).clamp(); }
+	Pixel Pixel::operator-(const Pixel& rhs) const { return Pixel(r - rhs.r, g - rhs.g, b - rhs.b, a).clamp(); }
+	Pixel Pixel::operator*(const Pixel& rhs) const { return Pixel(r * rhs.r, g * rhs.g, b * rhs.b, a).clamp(); }
+	Pixel Pixel::operator/(const Pixel& rhs) const { return Pixel(r / rhs.r, g / rhs.g, b / rhs.b, a).clamp(); }
+
+	Pixel& Pixel::operator+=(const Pixel& rhs)
+	{
+		r += rhs.r;
+		g += rhs.g;
+		b += rhs.b;
+		return ref().clamp();
+	}
+
+	Pixel& Pixel::operator-=(const Pixel& rhs)
+	{
+		r -= rhs.r;
+		g -= rhs.g;
+		b -= rhs.b;
+		return ref().clamp();
+	}
+
+	Pixel& Pixel::operator*=(const Pixel& rhs)
+	{
+		r *= rhs.r;
+		g *= rhs.g;
+		b *= rhs.b;
+		return ref().clamp();
+	}
+
+	Pixel& Pixel::operator/=(const Pixel& rhs)
+	{
+		r /= rhs.r;
+		g /= rhs.g;
+		b /= rhs.b;
+		return ref().clamp();
+	}
+
+	bool Pixel::operator==(const Pixel& rhs) const { return r == rhs.r && g == rhs.g && b == rhs.b; }
+	bool Pixel::operator!=(const Pixel& rhs) const { return r != rhs.r || g != rhs.g || b != rhs.b; }
+	bool Pixel::operator>(const Pixel& rhs) const { return r > rhs.r && g > rhs.g && b > rhs.b; }
+	bool Pixel::operator<(const Pixel& rhs) const { return r < rhs.r && g < rhs.g && b < rhs.b; }
+	bool Pixel::operator>=(const Pixel& rhs) const { return r >= rhs.r && g >= rhs.g && b >= rhs.b; }
+	bool Pixel::operator<=(const Pixel& rhs) const { return r <= rhs.r && g <= rhs.g && b <= rhs.b; }
+
+	bool Pixel::operator==(const uint8_t rhs) const { return r == rhs && g == rhs && b == rhs; }
+	bool Pixel::operator!=(const uint8_t rhs) const { return r != rhs && g != rhs && b != rhs; }
+	bool Pixel::operator>(const uint8_t rhs) const { return r > rhs && g > rhs && b > rhs; }
+	bool Pixel::operator<(const uint8_t rhs) const { return r < rhs && g < rhs && b < rhs; }
+	bool Pixel::operator>=(const uint8_t rhs) const { return r >= rhs && g >= rhs && b >= rhs; }
+	bool Pixel::operator<=(const uint8_t rhs) const { return r <= rhs && g <= rhs && b <= rhs; }
+
+	Sprite::Sprite(int32_t width, int32_t height, int32_t channels)
+	{
+		Create(width, height, channels);
+	}
+
+	Sprite::Sprite(const std::string& fileName)
+	{
+		Load(fileName);
+	}
+
+	Sprite::~Sprite()
+	{
+		if (pixelData != nullptr)
+			delete[] pixelData;
+	}
+
+	void Sprite::Create(const int32_t width, const int32_t height, const int32_t channels)
+	{
+		DGE_ASSERT(width > 0 && height > 0 && channels > 0, "[Sprite.Create Error] Width, height and channels should be > 0")
+		if (pixelData != nullptr) delete[] pixelData;
+
+		this->width = width;
+		this->height = height;
+		this->channels = channels;
+
+		pixelData = new uint8_t[width * height * channels];
+		memset(pixelData, 0, width * height * channels * sizeof(uint8_t));
+	}
+
+	void Sprite::Load(const std::string& fileName)
+	{
+		channels = 4;
+		pixelData = stbi_load(fileName.c_str(), &width, &height, nullptr, channels);
+		DGE_ASSERT(pixelData, "[stb_image Error] " << stbi_failure_reason())
+	}
+
+	void Sprite::Save(const std::string& fileName, const FileType type) const
+	{
+		int err;
+
+		switch (type)
+		{
+		case FileType::BMP: err = stbi_write_bmp(fileName.c_str(), width, height, channels, pixelData); break;
+		case FileType::PNG: err = stbi_write_png(fileName.c_str(), width, height, channels, pixelData, width * channels); break;
+		case FileType::JPG: err = stbi_write_jpg(fileName.c_str(), width, height, channels, pixelData, 100); break;
+		case FileType::TGA: err = stbi_write_tga(fileName.c_str(), width, height, channels, pixelData); break;
+		case FileType::TGA_RLE:
+		{
+			stbi_write_tga_with_rle = 1;
+			err = stbi_write_tga(fileName.c_str(), width, height, channels, pixelData);
+			stbi_write_tga_with_rle = 0;
+		}
+		break;
+
+		}
+
+		DGE_ASSERT(err == 1, "[stb_image_write Error] Code: " << err)
+	}
+
+	bool Sprite::SetPixel(const int32_t x, const int32_t y, const Pixel& p)
+	{
+		if (x >= 0 && y >= 0 && x < width && y < height)
+		{
+			size_t i = channels * (y * width + x);
+
+			pixelData[i] = p.r;
+			pixelData[i + 1] = p.g;
+			pixelData[i + 2] = p.b;
+			pixelData[i + 3] = p.a;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	Pixel Sprite::GetPixel(const int32_t x, const int32_t y) const
+	{
+		if (x >= 0 && y >= 0 && x < width && y < height)
+		{
+			size_t i = channels * (y * width + x);
+
+			return Pixel(
+				pixelData[i],
+				pixelData[i + 1],
+				pixelData[i + 2],
+				pixelData[i + 3]
+			);
+		}
+
+		return BLACK;
+	}
+
+	void Sprite::SetPixelData(const uint8_t* data)
+	{
+		memcpy(pixelData, data, width * height * channels * sizeof(uint8_t));
+	}
+
+	void Sprite::SetPixelData(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a)
+	{
+		for (int i = 0; i < width; i++)
+			for (int j = 0; j < height; j++)
+			{
+				size_t idx = channels * (j * width + i);
+				pixelData[idx] = r;
+				pixelData[idx + 1] = g;
+				pixelData[idx + 2] = b;
+				pixelData[idx + 3] = a;
+			}
+	}
+
+	Pixel Sprite::Sample(const float x, const float y) const
+	{
+		return GetPixel(
+			DGE_MIN(int32_t(x * (float)width), width - 1),
+			DGE_MIN(int32_t(y * (float)height), height - 1)
+		);
+	}
+
+	Texture::Texture(Sprite* sprite) { Construct(sprite, false); }
+	Texture::Texture(const std::string& fileName) { Construct(new Sprite(fileName), true); }
+
+	void Texture::Construct(Sprite* sprite, bool deleteSprite)
+	{
+		Load(sprite);
+
+		UVScaleX = 1.0f / (float)sprite->width;
+		UVScaleY = 1.0f / (float)sprite->height;
+
+		width = sprite->width;
+		height = sprite->height;
+
+		if (deleteSprite) delete sprite;
+	}
+
+	void Texture::Load(Sprite* sprite)
+	{
+		GLenum format = 0;
+
+		switch (sprite->channels)
+		{
+		case 3: format = GL_RGB; break;
+		case 4: format = GL_RGBA; break;
+		}
+
+		DGE_ASSERT(format != 0, "[Texture.Load Error] Text: Invalid number of channels: " << sprite->channels)
+
+		glGenTextures(1, &id);
+		glBindTexture(GL_TEXTURE_2D, id);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0, format,
+			sprite->width,
+			sprite->height,
+			0, format,
+			GL_UNSIGNED_BYTE,
+			sprite->pixelData
+		);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	void Texture::Update(Sprite* sprite)
+	{
+		glBindTexture(GL_TEXTURE_2D, id);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sprite->width, sprite->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, sprite->pixelData);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	Graphic::Graphic(const std::string& fileName) { Load(fileName); }
+	Graphic::Graphic(const int32_t width, const int32_t height) { Load(width, height); }
+
+	Graphic::~Graphic()
+	{
+		if (texture != nullptr) delete texture;
+		if (sprite != nullptr) delete sprite;
+	}
+
+	void Graphic::Load(const std::string& fileName)
+	{
+		sprite = new Sprite(fileName);
+		texture = new Texture(sprite);
+	}
+
+	void Graphic::Load(const int32_t width, const int32_t height)
+	{
+		sprite = new Sprite(width, height);
+		texture = new Texture(sprite);
+	}
+
+	void Graphic::Save(const std::string& fileName, const Sprite::FileType type) const { return sprite->Save(fileName, type); }
+	void Graphic::UpdateTexture() { texture->Update(sprite); }
+
 	GameEngine::GameEngine()
 	{
-		m_sAppName = "Undefined";
-		m_vMouse = { -1, -1 };
+		m_AppName = "Undefined";
+		m_MousePos = { -1, -1 };
 
 		m_Window = nullptr;
 		m_Monitor = nullptr;
 
-		m_sprFont = nullptr;
+		m_Font = nullptr;
+		m_DrawTarget = nullptr;
+		m_Tint = { 255, 255, 255, 255 };
 
-		m_pDrawTarget = nullptr;
-		m_pixTint = { 255, 255, 255, 255 };
+		m_PixelMode = Pixel::DEFAULT;
+		m_TextureStructure = Texture::FAN;
 
-		m_nPixelMode = Pixel::DEFAULT;
-		m_nTextureStructure = Texture::FAN;
-
-		m_fTickTimer = 0.0f;
+		m_TickTimer = 0.0f;
 	}
 
 	GameEngine::~GameEngine() { Destroy(); }
 
 	void GameEngine::Destroy()
 	{
-		SetDrawTarget(m_pScreen);
+		SetDrawTarget(m_Screen);
 
-		if (m_pDrawTarget != nullptr) delete m_pDrawTarget;
-		if (m_sprFont != nullptr) delete m_sprFont;
+		if (m_DrawTarget != nullptr) delete m_DrawTarget;
+		if (m_Font != nullptr) delete m_Font;
 
 		glfwDestroyWindow(m_Window);
 		glfwTerminate();
@@ -1040,7 +1071,7 @@ namespace def
 	void GameEngine::AppThread()
 	{
 		if (!OnUserCreate())
-			m_bAppRunning = false;
+			m_IsAppRunning = false;
 
 		auto tp1 = std::chrono::system_clock::now();
 		auto tp2 = tp1;
@@ -1048,110 +1079,110 @@ namespace def
 		for (int i = 0; i < 512; i++)
 		{
 			m_Keys[i] = { false, false, false };
-			m_nKeyOldState[i] = 0;
-			m_nKeyNewState[i] = 0;
+			m_KeyOldState[i] = false;
+			m_KeyNewState[i] = false;
 		}
 
 		for (int i = 0; i < 5; i++)
 		{
 			m_Mouse[i] = { false, false, false };
-			m_nMouseOldState[i] = 0;
-			m_nMouseNewState[i] = 0;
+			m_MouseOldState[i] = false;
+			m_MouseNewState[i] = false;
 		}
 
-		std::string sTitle = "github.com/defini7 - defGameEngine - " + m_sAppName + " - FPS: 0";
-		glfwSetWindowTitle(m_Window, sTitle.c_str());
+		std::string title = "github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: 0";
+		glfwSetWindowTitle(m_Window, title.c_str());
 
-		while (m_bAppRunning)
+		while (m_IsAppRunning)
 		{
 			tp2 = std::chrono::system_clock::now();
-			float fDeltaTime = std::chrono::duration<float>(tp2 - tp1).count();
+			float deltaTime = std::chrono::duration<float>(tp2 - tp1).count();
 			tp1 = tp2;
 
-			m_bAppRunning = !glfwWindowShouldClose(m_Window);
+			m_IsAppRunning = !glfwWindowShouldClose(m_Window);
 
 			for (int i = 0; i < 512; i++)
 			{
-				m_nKeyNewState[i] = glfwGetKey(m_Window, i);
+				m_KeyNewState[i] = glfwGetKey(m_Window, i);
 
-				m_Keys[i].bPressed = false;
-				m_Keys[i].bReleased = false;
+				m_Keys[i].pressed = false;
+				m_Keys[i].released = false;
 
-				if (m_nKeyNewState[i] != m_nKeyOldState[i])
+				if (m_KeyNewState[i] != m_KeyOldState[i])
 				{
-					if (m_nKeyNewState[i])
+					if (m_KeyNewState[i])
 					{
-						m_Keys[i].bPressed = !m_Keys[i].bHeld;
-						m_Keys[i].bHeld = true;
+						m_Keys[i].pressed = !m_Keys[i].held;
+						m_Keys[i].held = true;
 					}
 					else
 					{
-						m_Keys[i].bReleased = true;
-						m_Keys[i].bHeld = false;
+						m_Keys[i].released = true;
+						m_Keys[i].held = false;
 					}
 				}
 
-				m_nKeyOldState[i] = m_nKeyNewState[i];
+				m_KeyOldState[i] = m_KeyNewState[i];
 			}
 
 			for (int i = 0; i < 5; i++)
 			{
-				m_nMouseNewState[i] = glfwGetMouseButton(m_Window, i);
+				m_MouseNewState[i] = glfwGetMouseButton(m_Window, i);
 
-				m_Mouse[i].bPressed = false;
-				m_Mouse[i].bReleased = false;
+				m_Mouse[i].pressed = false;
+				m_Mouse[i].released = false;
 
-				if (m_nMouseNewState[i] != m_nMouseOldState[i])
+				if (m_MouseNewState[i] != m_MouseOldState[i])
 				{
-					if (m_nMouseNewState[i])
+					if (m_MouseNewState[i])
 					{
-						m_Mouse[i].bPressed = true;
-						m_Mouse[i].bHeld = true;
+						m_Mouse[i].pressed = true;
+						m_Mouse[i].held = true;
 					}
 					else
 					{
-						m_Mouse[i].bReleased = true;
-						m_Mouse[i].bHeld = false;
+						m_Mouse[i].released = true;
+						m_Mouse[i].held = false;
 					}
 				}
 
-				m_nMouseOldState[i] = m_nMouseNewState[i];
+				m_MouseOldState[i] = m_MouseNewState[i];
 			}
 
-			double dMouseX, dMouseY;
-			glfwGetCursorPos(m_Window, &dMouseX, &dMouseY);
+			double mouseX, mouseY;
+			glfwGetCursorPos(m_Window, &mouseX, &mouseY);
 
-			m_vMouse = vi2d(dMouseX, dMouseY) / m_vPixelSize;
+			m_MousePos = vi2d(mouseX, mouseY) / m_PixelSize;
 
-			if (!OnUserUpdate(fDeltaTime))
-				m_bAppRunning = false;
+			if (!OnUserUpdate(deltaTime))
+				m_IsAppRunning = false;
 
 			ClearBuffer(BLACK);
 
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			m_pDrawTarget->UpdateTexture();
-			glBindTexture(GL_TEXTURE_2D, m_pDrawTarget->pTexture->nTexId);
+			m_DrawTarget->UpdateTexture();
+			glBindTexture(GL_TEXTURE_2D, m_DrawTarget->texture->id);
 
-			DrawQuad(m_pixTint);
+			DrawQuad(m_Tint);
 
-			for (const auto& t : m_vecTextures) DrawTexture(t);
-			m_vecTextures.clear();
+			for (const auto& t : m_Textures) DrawTexture(t);
+			m_Textures.clear();
 
-			if (m_bVSync)
+			if (m_IsVSync)
 				glfwSwapBuffers(m_Window);
 			else
 				glFlush();
 
 			glfwPollEvents();
 
-			m_fTickTimer += fDeltaTime;
-			if (m_fTickTimer >= 1.0f)
+			m_TickTimer += deltaTime;
+			if (m_TickTimer >= 1.0f)
 			{
-				sTitle = "github.com/defini7 - defGameEngine - " + m_sAppName + " - FPS: " + std::to_string(int(1.0f / fDeltaTime));
-				glfwSetWindowTitle(m_Window, sTitle.c_str());
-				m_fTickTimer = 0.0f;
+				title = "github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: " + std::to_string(int(1.0f / deltaTime));
+				glfwSetWindowTitle(m_Window, title.c_str());
+				m_TickTimer = 0.0f;
 			}
 		}
 	}
@@ -1159,7 +1190,7 @@ namespace def
 	void GameEngine::DrawTexture(const TextureInstance& ti)
 	{
 		if (ti.tex == nullptr) glBindTexture(GL_TEXTURE_2D, 0);
-		else				   glBindTexture(GL_TEXTURE_2D, ti.tex->nTexId);
+		else				   glBindTexture(GL_TEXTURE_2D, ti.tex->id);
 
 		switch (ti.structure)
 		{
@@ -1191,7 +1222,7 @@ namespace def
 
 	void GameEngine::Run()
 	{
-		m_bAppRunning = true;
+		m_IsAppRunning = true;
 		AppThread();
 	}
 
@@ -1209,11 +1240,11 @@ namespace def
 
 	void GameEngine::DropCallback(GLFWwindow* window, int nPathCount, const char* sPaths[])
 	{
-		s_vecDropCache.clear();
-		s_vecDropCache.reserve(nPathCount);
+		s_DropCache.clear();
+		s_DropCache.reserve(nPathCount);
 
 		for (int i = 0; i < nPathCount; i++)
-			s_vecDropCache.push_back(sPaths[i]);
+			s_DropCache[i] = sPaths[i];
 	}
 
 	void GameEngine::Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen, bool bVSync, bool bDirtyPixel)
@@ -1222,15 +1253,15 @@ namespace def
 
 		glfwInit();
 
-		m_vWindowSize = { nScreenWidth * nPixelWidth, nScreenHeight * nPixelHeight };
-		m_vScreenSize = { nScreenWidth, nScreenHeight };
-		m_vInvScreenSize = 1.0f / vf2d(m_vScreenSize);
-		m_vPixelSize = { nPixelWidth, nPixelHeight };
+		m_WindowSize = { nScreenWidth * nPixelWidth, nScreenHeight * nPixelHeight };
+		m_ScreenSize = { nScreenWidth, nScreenHeight };
+		m_InvScreenSize = 1.0f / vf2d(m_ScreenSize);
+		m_PixelSize = { nPixelWidth, nPixelHeight };
 
-		m_bFullScreen = bFullScreen;
-		m_bVSync = bVSync;
+		m_IsFullScreen = bFullScreen;
+		m_IsVSync = bVSync;
 
-		m_bDirtyPixel = bDirtyPixel;
+		m_IsDirtyPixel = bDirtyPixel;
 
 		m_Monitor = glfwGetPrimaryMonitor();
 		if (!m_Monitor) return;
@@ -1238,40 +1269,40 @@ namespace def
 		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
 		if (!videoMode) return;
 
-		if (!m_bVSync)
+		if (!m_IsVSync)
 			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
-		if (m_bFullScreen)
+		if (m_IsFullScreen)
 		{
-			m_vWindowSize = vi2d(videoMode->width, videoMode->height);
-			m_vScreenSize = m_vWindowSize / m_vPixelSize;
+			m_WindowSize = vi2d(videoMode->width, videoMode->height);
+			m_ScreenSize = m_WindowSize / m_PixelSize;
 
-			m_Window = glfwCreateWindow(m_vWindowSize.x, m_vWindowSize.y, "", m_Monitor, NULL);
+			m_Window = glfwCreateWindow(m_WindowSize.x, m_WindowSize.y, "", m_Monitor, NULL);
 			if (!m_Window) return;
 
 			glfwSetWindowMonitor(m_Window, m_Monitor,
-				0, 0, m_vWindowSize.x, m_vWindowSize.y, videoMode->refreshRate);
+				0, 0, m_WindowSize.x, m_WindowSize.y, videoMode->refreshRate);
 		}
 		else
 		{
-			m_Window = glfwCreateWindow(m_vWindowSize.x, m_vWindowSize.y, "", NULL, NULL);
+			m_Window = glfwCreateWindow(m_WindowSize.x, m_WindowSize.y, "", NULL, NULL);
 			if (!m_Window) return;
 		}
 
 		glfwMakeContextCurrent(m_Window);
-		glViewport(0, 0, m_vWindowSize.x, m_vWindowSize.y);
+		glViewport(0, 0, m_WindowSize.x, m_WindowSize.y);
 
 		glEnable(GL_TEXTURE_2D);
-		if (!m_bDirtyPixel) glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+		if (!m_IsDirtyPixel) glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-		if (m_bVSync)
+		if (m_IsVSync)
 		{
 			glfwSwapInterval(1);
 			glfwWindowHint(GLFW_REFRESH_RATE, videoMode->refreshRate);
 		}
 
-		m_pScreen = new Graphic(m_vScreenSize.x, m_vScreenSize.y);
-		m_pDrawTarget = m_pScreen;
+		m_Screen = new Graphic(m_ScreenSize.x, m_ScreenSize.y);
+		m_DrawTarget = m_Screen;
 		Clear(BLACK);
 
 		std::string data =
@@ -1292,7 +1323,7 @@ namespace def
 			"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
 			"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
 
-		m_sprFont = new Sprite(128, 48);
+		m_Font = new Sprite(128, 48);
 		int px = 0, py = 0;
 
 		for (size_t b = 0; b < 1024; b += 4)
@@ -1306,7 +1337,7 @@ namespace def
 			for (int i = 0; i < 24; i++)
 			{
 				uint8_t k = (r & (1 << i)) ? 255 : 0;
-				m_sprFont->SetPixel(px, py, Pixel(k, k, k, k));
+				m_Font->SetPixel(px, py, Pixel(k, k, k, k));
 				if (++py == 48) { px++; py = 0; }
 			}
 		}
@@ -1316,25 +1347,25 @@ namespace def
 
 	bool GameEngine::Draw(int32_t x, int32_t y, Pixel p)
 	{
-		if (!m_pDrawTarget) return false;
-		Sprite* target = m_pDrawTarget->pSprite;
+		if (!m_DrawTarget) return false;
+		Sprite* target = m_DrawTarget->sprite;
 
-		if (m_nPixelMode == Pixel::CUSTOM)
+		if (m_PixelMode == Pixel::CUSTOM)
 		{
-			return target->SetPixel(x, y, m_funcShader({ x, y }, target->GetPixel(x, y), p));
+			return target->SetPixel(x, y, m_Shader({ x, y }, target->GetPixel(x, y), p));
 		}
 
-		else if (m_nPixelMode == Pixel::DEFAULT)
+		else if (m_PixelMode == Pixel::DEFAULT)
 		{
 			return target->SetPixel(x, y, p);
 		}
 
-		else if (m_nPixelMode == Pixel::MASK)
+		else if (m_PixelMode == Pixel::MASK)
 		{
 			if (p.a == 255) return target->SetPixel(x, y, p);
 		}
 
-		else if (m_nPixelMode == Pixel::ALPHA)
+		else if (m_PixelMode == Pixel::ALPHA)
 		{
 			Pixel d = target->GetPixel(x, y);
 			float a = (float)(p.a / 255.0f);
@@ -1875,8 +1906,8 @@ namespace def
 
 	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* sprite)
 	{
-		for (int i = 0; i < sprite->nWidth; i++)
-			for (int j = 0; j < sprite->nHeight; j++)
+		for (int i = 0; i < sprite->width; i++)
+			for (int j = 0; j < sprite->height; j++)
 				Draw(x + i, y + j, sprite->GetPixel(i, j));
 	}
 
@@ -1889,57 +1920,57 @@ namespace def
 
 	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scaleX, float scaleY, const Pixel& tint)
 	{
-		vf2d vScreenPos =
+		vf2d screenPos =
 		{
-			(x * m_vInvScreenSize.x) * 2.0f - 1.0f,
-			((y * m_vInvScreenSize.y) * 2.0f - 1.0f) * -1.0f
+			(x * m_InvScreenSize.x) * 2.0f - 1.0f,
+			((y * m_InvScreenSize.y) * 2.0f - 1.0f) * -1.0f
 		};
 
-		vf2d vScreenSize =
+		vf2d screenSize =
 		{
-			vScreenPos.x + (2.0f * (float(tex->nWidth) * (1.0f / (float)ScreenWidth()))) * scaleX,
-			vScreenPos.y - (2.0f * (float(tex->nHeight) * (1.0f / (float)ScreenHeight()))) * scaleY
+			screenPos.x + (2.0f * (float(tex->width) * (1.0f / (float)ScreenWidth()))) * scaleX,
+			screenPos.y - (2.0f * (float(tex->height) * (1.0f / (float)ScreenHeight()))) * scaleY
 		};
 
 		TextureInstance ti;
 		ti.tex = tex;
 		ti.points = 4;
-		ti.structure = m_nTextureStructure;
+		ti.structure = m_TextureStructure;
 		ti.tint = { tint, tint, tint, tint };
-		ti.vert = { vScreenPos, { vScreenPos.x, vScreenSize.y }, vScreenSize, { vScreenSize.x, vScreenPos.y } };
+		ti.vert = { screenPos, { screenPos.x, screenSize.y }, screenSize, { screenSize.x, screenPos.y } };
 		ti.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
 
-		m_vecTextures.push_back(ti);
+		m_Textures.push_back(ti);
 	}
 
 	void GameEngine::DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX, float scaleY, const Pixel& tint)
 	{
-		vf2d vScreenSpacePos =
+		vf2d screenSpacePos =
 		{
-			  (x * m_vInvScreenSize.x) * 2.0f - 1.0f,
-			-((y * m_vInvScreenSize.y) * 2.0f - 1.0f)
+			  (x * m_InvScreenSize.x) * 2.0f - 1.0f,
+			-((y * m_InvScreenSize.y) * 2.0f - 1.0f)
 		};
 
-		vf2d vScreenSpaceSize =
+		vf2d screenSpaceSize =
 		{
-			  ((x + fileSizeX * scaleX) * m_vInvScreenSize.x) * 2.0f - 1.0f,
-			-(((y + fileSizeY * scaleY) * m_vInvScreenSize.y) * 2.0f - 1.0f)
+			  ((x + fileSizeX * scaleX) * m_InvScreenSize.x) * 2.0f - 1.0f,
+			-(((y + fileSizeY * scaleY) * m_InvScreenSize.y) * 2.0f - 1.0f)
 		};
 
-		vf2d vQuantisedPos = ((vScreenSpacePos * vf2d(m_vWindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_vWindowSize);
-		vf2d vQuantisedSize = ((vScreenSpaceSize * vf2d(m_vWindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_vWindowSize);
+		vf2d quantisedPos = ((screenSpacePos * vf2d(m_WindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_WindowSize);
+		vf2d quantisedSize = ((screenSpaceSize * vf2d(m_WindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_WindowSize);
 
-		vf2d tl = (vf2d(filePosX, filePosY) + vf2d(0.0001f, 0.0001f)) * vf2d(tex->fUVScaleX, tex->fUVScaleY);
-		vf2d br = (vf2d(filePosX, filePosY) + vf2d(fileSizeX, fileSizeY) - vf2d(0.0001f, 0.0001f)) * vf2d(tex->fUVScaleX, tex->fUVScaleY);
+		vf2d tl = (vf2d(filePosX, filePosY) + vf2d(0.0001f, 0.0001f)) * vf2d(tex->UVScaleX, tex->UVScaleY);
+		vf2d br = (vf2d(filePosX, filePosY) + vf2d(fileSizeX, fileSizeY) - vf2d(0.0001f, 0.0001f)) * vf2d(tex->UVScaleX, tex->UVScaleY);
 
 		TextureInstance ti;
 		ti.tex = tex;
 		ti.points = 4;
-		ti.structure = m_nTextureStructure;
+		ti.structure = m_TextureStructure;
 		ti.tint = { tint, tint, tint, tint };
-		ti.vert = { { vQuantisedPos.x, vQuantisedPos.y }, { vQuantisedPos.x, vQuantisedSize.y }, { vQuantisedSize.x, vQuantisedSize.y }, { vQuantisedSize.x, vQuantisedPos.y } };
+		ti.vert = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
 		ti.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
-		m_vecTextures.push_back(ti);
+		m_Textures.push_back(ti);
 	}
 
 	void GameEngine::DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
@@ -1947,17 +1978,17 @@ namespace def
 		TextureInstance ti;
 		ti.tex = tex;
 		ti.points = 4;
-		ti.structure = m_nTextureStructure;
+		ti.structure = m_TextureStructure;
 		ti.tint = { tint, tint, tint, tint };
 
-		vf2d vCenter = vf2d(centerX, centerY);
-		vf2d vScale = vf2d(scaleX, scaleY);
+		vf2d center = vf2d(centerX, centerY);
+		vf2d scale = vf2d(scaleX, scaleY);
 
 		ti.vert = {
-			(vf2d(0.0f, 0.0f) - vCenter) * vScale,
-			(vf2d(0.0f, float(tex->nHeight)) - vCenter) * vScale,
-			(vf2d(float(tex->nWidth), float(tex->nHeight)) - vCenter) * vScale,
-			(vf2d(float(tex->nWidth), 0.0f) - vCenter) * vScale
+			(vf2d(0.0f, 0.0f) - center) * scale,
+			(vf2d(0.0f, float(tex->height)) - center) * scale,
+			(vf2d(float(tex->width), float(tex->height)) - center) * scale,
+			(vf2d(float(tex->width), 0.0f) - center) * scale
 		};
 
 		float c = cos(r), s = sin(r);
@@ -1965,19 +1996,19 @@ namespace def
 		{
 			vf2d o = { ti.vert[i].x * c - ti.vert[i].y * s, ti.vert[i].x * s + ti.vert[i].y * c };
 			ti.vert[i] = vf2d(x, y) + o;
-			ti.vert[i] = ti.vert[i] * m_vInvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
+			ti.vert[i] = ti.vert[i] * m_InvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
 			ti.vert[i].y *= -1.0f;
 		}
 
 		ti.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
-		m_vecTextures.push_back(ti);
+		m_Textures.push_back(ti);
 	}
 
 	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint)
 	{
 		TextureInstance di;
 		di.tex = tex;
-		di.structure = m_nTextureStructure;
+		di.structure = m_TextureStructure;
 		di.points = 4;
 		di.tint = { tint, tint, tint, tint };
 		di.vert.resize(di.points);
@@ -2002,10 +2033,10 @@ namespace def
 			{
 				float q = d[i] == 0.0f ? 1.0f : (d[i] + d[(i + 2) & 3]) / d[(i + 2) & 3];
 				di.uv[i] *= q;
-				di.vert[i] = { (points[i].x * m_vInvScreenSize.x) * 2.0f - 1.0f, ((points[i].y * m_vInvScreenSize.y) * 2.0f - 1.0f) * -1.0f };
+				di.vert[i] = { (points[i].x * m_InvScreenSize.x) * 2.0f - 1.0f, ((points[i].y * m_InvScreenSize.y) * 2.0f - 1.0f) * -1.0f };
 			}
 
-			m_vecTextures.push_back(di);
+			m_Textures.push_back(di);
 		}
 	}
 
@@ -2013,32 +2044,32 @@ namespace def
 	{
 		int32_t verts = modelCoordinates.size();
 
-		std::vector<vf2d> vecCoordinates;
-		vecCoordinates.resize(verts);
+		std::vector<vf2d> coordinates;
+		coordinates.resize(verts);
 
 		for (int i = 0; i < verts; i++)
 		{
-			vecCoordinates[i].x = modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r);
-			vecCoordinates[i].y = modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r);
+			coordinates[i].x = modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r);
+			coordinates[i].y = modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r);
 		}
 
 		for (int i = 0; i < verts; i++)
 		{
-			vecCoordinates[i].x = vecCoordinates[i].x * s;
-			vecCoordinates[i].y = vecCoordinates[i].y * s;
+			coordinates[i].x = coordinates[i].x * s;
+			coordinates[i].y = coordinates[i].y * s;
 		}
 
 		for (int i = 0; i < verts; i++)
 		{
-			vecCoordinates[i].x = vecCoordinates[i].x + x;
-			vecCoordinates[i].y = vecCoordinates[i].y + y;
+			coordinates[i].x = coordinates[i].x + x;
+			coordinates[i].y = coordinates[i].y + y;
 		}
 
 		for (int i = 0; i < verts + 1; i++)
 		{
-			int32_t j = (i + 1);
-			DrawLine((int32_t)vecCoordinates[i % verts].x, (int32_t)vecCoordinates[i % verts].y,
-				(int32_t)vecCoordinates[j % verts].x, (int32_t)vecCoordinates[j % verts].y, p);
+			int32_t j = i + 1;
+			DrawLine((int32_t)coordinates[i % verts].x, (int32_t)coordinates[i % verts].y,
+				(int32_t)coordinates[j % verts].x, (int32_t)coordinates[j % verts].y, p);
 		}
 	}
 
@@ -2046,67 +2077,69 @@ namespace def
 	{
 		int32_t verts = modelCoordinates.size();
 
-		std::vector<vf2d> vecCoordinates;
-		vecCoordinates.resize(verts);
+		std::vector<vf2d> coordinates;
+		coordinates.resize(verts);
 
 		for (int i = 0; i < verts; i++)
 		{
-			vecCoordinates[i].x = modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r);
-			vecCoordinates[i].y = modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r);
+			coordinates[i].x = modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r);
+			coordinates[i].y = modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r);
 		}
 
 		for (int i = 0; i < verts; i++)
 		{
-			vecCoordinates[i].x = vecCoordinates[i].x * s;
-			vecCoordinates[i].y = vecCoordinates[i].y * s;
+			coordinates[i].x = coordinates[i].x * s;
+			coordinates[i].y = coordinates[i].y * s;
 		}
 
 		for (int i = 0; i < verts; i++)
 		{
-			vecCoordinates[i].x = vecCoordinates[i].x + x;
-			vecCoordinates[i].y = vecCoordinates[i].y + y;
+			coordinates[i].x = coordinates[i].x + x;
+			coordinates[i].y = coordinates[i].y + y;
 		}
 
 		auto GetAngle = [](const def::vf2d& p1, const def::vf2d& p2)
 		{
-			float fTheta = atan2(p2.y, p2.x) - atan2(p1.y, p1.x);
-			while (fTheta > 3.14159f) fTheta -= 3.14159f * 2.0f;
-			while (fTheta < -3.14159f) fTheta += 3.14159f * 2.0f;
-			return fTheta;
+			float theta = atan2(p2.y, p2.x) - atan2(p1.y, p1.x);
+			while (theta > 3.14159f) theta -= 3.14159f * 2.0f;
+			while (theta < -3.14159f) theta += 3.14159f * 2.0f;
+			return theta;
 		};
 
 		auto PointInPolygon = [&](const def::vf2d& p)
 		{
-			float fAngle = 0.0f;
+			float angle = 0.0f;
 
 			def::vf2d p1, p2;
 			for (int i = 0; i < verts; i++)
 			{
-				p1 = vecCoordinates[i] - p;
-				p2 = vecCoordinates[(i + 1) % verts] - p;
-				fAngle += GetAngle(p1, p2);
+				p1 = coordinates[i] - p;
+				p2 = coordinates[(i + 1) % verts] - p;
+				angle += GetAngle(p1, p2);
 			}
 
-			return abs(fAngle) < 3.14159f;
+			return std::abs(angle) < 3.14159f;
 		};
 
-		def::vf2d vMin = vecCoordinates.front();
-		def::vf2d vMax = vecCoordinates.front();
+		def::vf2d vMin = coordinates.front();
+		def::vf2d vMax = coordinates.front();
 
 		for (int i = 1; i < verts; i++)
 		{
-			if (vMin.x > vecCoordinates[i].x) vMin.x = vecCoordinates[i].x;
-			if (vMin.y > vecCoordinates[i].y) vMin.y = vecCoordinates[i].y;
+			if (vMin.x > coordinates[i].x) vMin.x = coordinates[i].x;
+			if (vMin.y > coordinates[i].y) vMin.y = coordinates[i].y;
 
-			if (vMax.x < vecCoordinates[i].x) vMax.x = vecCoordinates[i].x;
-			if (vMax.y < vecCoordinates[i].y) vMax.y = vecCoordinates[i].y;
+			if (vMax.x < coordinates[i].x) vMax.x = coordinates[i].x;
+			if (vMax.y < coordinates[i].y) vMax.y = coordinates[i].y;
 		}
 
-		def::vf2d vPoint;
-		for (vPoint.x = vMin.x; vPoint.x < vMax.x; vPoint.x++)
-			for (vPoint.y = vMin.y; vPoint.y < vMax.y; vPoint.y++)
-				if (PointInPolygon(vPoint))
-					Draw(vPoint, p);
+		def::vf2d point;
+		for (point.x = vMin.x; point.x < vMax.x; point.x++)
+			for (point.y = vMin.y; point.y < vMax.y; point.y++)
+			{
+				if (PointInPolygon(point))
+					Draw(point, p);
+			}
 	}
 
 	void GameEngine::DrawString(int32_t x, int32_t y, const std::string& s, const Pixel& p)
@@ -2130,7 +2163,7 @@ namespace def
 
 				for (uint32_t i = 0; i < 8; i++)
 					for (uint32_t j = 0; j < 8; j++)
-						if (m_sprFont->GetPixel(i + ox * 8, j + oy * 8).r > 0)
+						if (m_Font->GetPixel(i + ox * 8, j + oy * 8).r > 0)
 							Draw(x + sx + i, y + sy + j, p);
 
 				sx += 8;
@@ -2140,44 +2173,39 @@ namespace def
 
 	void GameEngine::Clear(const Pixel& p)
 	{
-		for (int32_t x = 0; x < m_pDrawTarget->pSprite->nWidth; x++)
-			for (int32_t y = 0; y < m_pDrawTarget->pSprite->nHeight; y++)
-				m_pDrawTarget->pSprite->SetPixel(x, y, p);
+		for (int32_t x = 0; x < m_DrawTarget->sprite->width; x++)
+			for (int32_t y = 0; y < m_DrawTarget->sprite->height; y++)
+				m_DrawTarget->sprite->SetPixel(x, y, p);
 	}
 
-	KeyState GameEngine::GetKey(uint32_t k) { return m_Keys[k]; }
-	KeyState GameEngine::GetMouse(uint32_t k) { return m_Mouse[k]; }
+	KeyState GameEngine::GetKey(uint32_t k) const { return m_Keys[k]; }
+	KeyState GameEngine::GetMouse(uint32_t k) const { return m_Mouse[k]; }
 
-	int32_t GameEngine::MouseX() { return m_vMouse.x; }
-	int32_t GameEngine::MouseY() { return m_vMouse.y; }
+	int32_t GameEngine::MouseX() const { return m_MousePos.x; }
+	int32_t GameEngine::MouseY() const { return m_MousePos.y; }
 
-	int32_t GameEngine::ScreenWidth() { return m_vScreenSize.x; }
-	int32_t GameEngine::ScreenHeight() { return m_vScreenSize.y; }
+	int32_t GameEngine::ScreenWidth() const { return m_ScreenSize.x; }
+	int32_t GameEngine::ScreenHeight() const { return m_ScreenSize.y; }
 
-	bool GameEngine::IsFullScreen() { return m_bFullScreen; }
-	bool GameEngine::IsVSync() { return m_bVSync; }
+	bool GameEngine::IsFullScreen() const { return m_IsFullScreen; }
+	bool GameEngine::IsVSync() const { return m_IsVSync; }
 
-	void GameEngine::SetIcon(const std::string& sFilename)
+	void GameEngine::SetIcon(const std::string& fileName)
 	{
-		Sprite sprIcon(sFilename);
+		Sprite sprIcon(fileName);
 
 		GLFWimage img;
-		img.width = sprIcon.nWidth;
-		img.height = sprIcon.nHeight;
-		img.pixels = sprIcon.pPixelData;
+		img.width = sprIcon.width;
+		img.height = sprIcon.height;
+		img.pixels = sprIcon.pixelData;
 		glfwSetWindowIcon(m_Window, 1, &img);
 	}
 
-	void GameEngine::SetDrawTarget(Graphic* pTarget)
-	{
-		m_pDrawTarget = pTarget ? pTarget : m_pScreen;
-	}
+	void GameEngine::SetDrawTarget(Graphic* target) { m_DrawTarget = target ? target : m_Screen; }
+	Graphic* GameEngine::GetDrawTarget() const { return m_DrawTarget; }
+	void GameEngine::SetTitle(const std::string& title) { m_AppName = title; }
 
-	Graphic* GameEngine::GetDrawTarget() { return m_pDrawTarget; }
-
-	void GameEngine::SetTitle(const std::string& sTitle) { m_sAppName = sTitle; }
-
-	WindowState GameEngine::GetWindowState()
+	WindowState GameEngine::GetWindowState() const
 	{
 		int32_t f = static_cast<int32_t>(WindowState::NONE);
 		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED)) f |= static_cast<int32_t>(WindowState::FOCUSED);
@@ -2185,14 +2213,14 @@ namespace def
 		return static_cast<WindowState>(f);
 	}
 
-	GLFWwindow* GameEngine::GetWindow() { return m_Window; }
-	std::vector<std::string>& GameEngine::GetDropped() { return s_vecDropCache; }
+	GLFWwindow* GameEngine::GetWindow() const { return m_Window; }
+	std::vector<std::string>& GameEngine::GetDropped() { return s_DropCache; }
 
-	void GameEngine::SetPixelMode(int32_t nPixelMode) { m_nPixelMode = nPixelMode; }
-	int32_t GameEngine::GetPixelMode() { return m_nPixelMode; }
+	void GameEngine::SetPixelMode(int32_t pixelMode) { m_PixelMode = pixelMode; }
+	int32_t GameEngine::GetPixelMode() const { return m_PixelMode; }
 
-	void GameEngine::SetTextureStructure(int32_t nTextureStructure) { m_nTextureStructure = nTextureStructure; }
-	int32_t GameEngine::GetTextureStructure(int32_t nTextureStructure) { return m_nTextureStructure; }
+	void GameEngine::SetTextureStructure(int32_t textureStructure) { m_TextureStructure = textureStructure; }
+	int32_t GameEngine::GetTextureStructure() const { return m_TextureStructure; }
 
 	bool GameEngine::Draw(const vi2d& pos, Pixel p)
 	{
@@ -2284,8 +2312,8 @@ namespace def
 		DrawString(pos.x, pos.y, text, p);
 	}
 
-	vi2d GameEngine::ScreenSize() { return m_vScreenSize; }
-	vi2d GameEngine::GetMouse() { return m_vMouse; }
+	vi2d GameEngine::ScreenSize() const { return m_ScreenSize; }
+	vi2d GameEngine::GetMouse() const { return m_MousePos; }
 
 	void GameEngine::ClearBuffer(const Pixel& p)
 	{
@@ -2295,13 +2323,13 @@ namespace def
 
 	void GameEngine::SetTint(const Pixel& p)
 	{
-		m_pixTint = p;
+		m_Tint = p;
 	}
 
-	void GameEngine::SetShader(Pixel(*func)(const vi2d& vPos, const Pixel& pixPrev, const Pixel& pixCur))
+	void GameEngine::SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur))
 	{
-		m_funcShader = func;
-		m_nPixelMode = m_funcShader ? Pixel::CUSTOM : Pixel::DEFAULT;
+		m_Shader = func;
+		m_PixelMode = m_Shader ? Pixel::CUSTOM : Pixel::DEFAULT;
 	}
 
 #endif

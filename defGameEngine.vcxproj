@@ -132,8 +132,28 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="defGameEngine.h" />
+    <ClInclude Include="Extensions\DGE_DearImGui.h" />
+    <ClInclude Include="Extensions\DGE_PanAndZoom.h" />
+    <ClInclude Include="Extensions\DGE_PathFinder.h" />
+    <ClInclude Include="Extensions\DGE_Physics.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Examples\3D_Engine.cpp" />
+    <ClCompile Include="Examples\ColorPalette.cpp" />
+    <ClCompile Include="Examples\DDA_Raycasting.cpp" />
+    <ClCompile Include="Examples\dearimgui_example\TEST_DearImGui.cpp" />
+    <ClCompile Include="Examples\dearimgui_example\WINAPI_Process.cpp" />
+    <ClCompile Include="Examples\Matrices.cpp" />
+    <ClCompile Include="Examples\Mazes.cpp" />
+    <ClCompile Include="Examples\Mode7.cpp" />
+    <ClCompile Include="Examples\panandzoom_example\TEST_PanAndZoom.cpp" />
+    <ClCompile Include="Examples\pathfinder_example\TEST_PathFinder.cpp" />
+    <ClCompile Include="Examples\SlidingPuzzle.cpp" />
+    <ClCompile Include="Examples\Snake.cpp" />
+    <ClCompile Include="Examples\Texturing.cpp" />
+    <ClCompile Include="Examples\Tiles.cpp" />
+    <ClCompile Include="Examples\WebCam.cpp" />
+    <ClCompile Include="Examples\Yahtzee.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <ItemGroup>

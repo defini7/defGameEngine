@@ -43,7 +43,7 @@ public:
 	}
 
 private:
-	float fFactor = 0.0f;
+	float factor = 0.0f;
 
 protected:
 	bool OnUserCreate() override
@@ -60,11 +60,11 @@ protected:
 		Clear(def::WHITE);
 
 		FillRectangle(10, 10, 50, 50, def::Pixel(
-			uint8_t(255.0f * fFactor), uint8_t(255.0f * fFactor), uint8_t(255.0f * fFactor)
+			uint8_t(255.0f * factor), uint8_t(255.0f * factor), uint8_t(255.0f * factor)
 		));
 
 		ImGui::Begin("Settings");
-		ImGui::SliderFloat("Factor", &fFactor, 0.0f, 1.0f);
+		ImGui::SliderFloat("Factor", &factor, 0.0f, 1.0f);
 		ImGui::End();
 
 		imgui.Draw();

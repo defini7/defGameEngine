@@ -33,24 +33,24 @@ namespace def
 	class PanAndZoom
 	{
 	private:
-		def::vf2d m_vScale;
-		def::vf2d m_vOffset;
+		def::vf2d m_Scale;
+		def::vf2d m_Offset;
 
-		def::vf2d m_vStartPan;
+		def::vf2d m_StartPan;
 
-		def::GameEngine* pDge = nullptr;
+		def::GameEngine* m_Dge = nullptr;
 
 	public:
 		def::vi2d WorldToScreen(const def::vf2d& vWorld);
 		def::vf2d ScreenToWorld(const def::vi2d& vScreen);
 
-		void Initialize(def::GameEngine* dge, const def::vf2d& vScale = { 1.0f, 1.0f }, const def::vf2d& vOffset = { 0.0f, 0.0f });
+		void Initialize(def::GameEngine* dge, const def::vf2d& scale = { 1.0f, 1.0f }, const def::vf2d& offset = { 0.0f, 0.0f });
 
 		def::vf2d GetScale() const;
 		def::vf2d GetOffset() const;
 
-		void SetScale(const def::vf2d& vScale);
-		void SetOffset(const def::vf2d& vOffset);
+		void SetScale(const def::vf2d& scale);
+		void SetOffset(const def::vf2d& offset);
 		void Handle();
 		void Draw(int32_t x, int32_t y, const def::Pixel& p);
 		void DrawSprite(int32_t x, int32_t y, Sprite* sprite);
@@ -64,79 +64,79 @@ namespace def
 #ifdef DGE_PANANDZOOM
 #undef DGE_PANANDZOOM
 
-	def::vi2d PanAndZoom::WorldToScreen(const def::vf2d& vWorld)
+	def::vi2d PanAndZoom::WorldToScreen(const def::vf2d& world)
 	{
-		return ((def::vf2d)vWorld - m_vOffset) * m_vScale;
+		return ((def::vf2d)world - m_Offset) * m_Scale;
 	}
 
-	def::vf2d PanAndZoom::ScreenToWorld(const def::vi2d& vScreen)
+	def::vf2d PanAndZoom::ScreenToWorld(const def::vi2d& screen)
 	{
-		return (def::vf2d)vScreen / m_vScale + m_vOffset;
+		return (def::vf2d)screen / m_Scale + m_Offset;
 	}
 
-	void PanAndZoom::Initialize(def::GameEngine* dge, const def::vf2d& vScale, const def::vf2d& vOffset)
+	void PanAndZoom::Initialize(def::GameEngine* dge, const def::vf2d& scale, const def::vf2d& offset)
 	{
-		pDge = dge;
+		dge = dge;
 
-		m_vScale = vScale;
-		m_vOffset = vOffset;
+		m_Scale = scale;
+		m_Offset = offset;
 	}
 
 	def::vf2d PanAndZoom::GetScale() const
 	{
-		return m_vScale;
+		return m_Scale;
 	}
 
 	def::vf2d PanAndZoom::GetOffset() const
 	{
-		return m_vOffset;
+		return m_Offset;
 	}
 
-	void PanAndZoom::SetScale(const def::vf2d& vScale)
+	void PanAndZoom::SetScale(const def::vf2d& scale)
 	{
-		m_vScale = vScale;
+		m_Scale = scale;
 	}
 
-	void PanAndZoom::SetOffset(const def::vf2d& vOffset)
+	void PanAndZoom::SetOffset(const def::vf2d& offset)
 	{
-		m_vOffset = vOffset;
+		m_Offset = offset;
 	}
 
 	void PanAndZoom::Handle()
 	{
-		def::vf2d vMouse = pDge->GetMouse();
+		def::vf2d mouse = m_Dge->GetMouse();
 
-		if (pDge->GetMouse(2).bPressed)
-			m_vStartPan = vMouse;
+		if (m_Dge->GetMouse(2).pressed)
+			m_StartPan = mouse;
 
-		if (pDge->GetMouse(2).bHeld)
+		if (m_Dge->GetMouse(2).held)
 		{
-			m_vOffset -= (vMouse - m_vStartPan) / m_vScale;
-			m_vStartPan = vMouse;
+			m_Offset -= (mouse - m_StartPan) / m_Scale;
+			m_StartPan = mouse;
 		}
 
-		def::vf2d vBeforeZoom = ScreenToWorld(vMouse);
+		def::vf2d beforeZoom = ScreenToWorld(mouse);
 
-		if (pDge->GetKey(def::Key::EQUAL).bHeld)
-			m_vScale *= 1.01f;
+		if (m_Dge->GetKey(def::Key::EQUAL).held)
+			m_Scale *= 1.01f;
 
-		if (pDge->GetKey(def::Key::MINUS).bHeld)
-			m_vScale *= 0.99f;
+		if (m_Dge->GetKey(def::Key::MINUS).held)
+			m_Scale *= 0.99f;
 
-		m_vScale.x = std::max(m_vScale.x, 0.0f);
-		m_vScale.y = std::max(m_vScale.y, 0.0f);
+		m_Scale.x = std::max(m_Scale.x, 0.0f);
+		m_Scale.y = std::max(m_Scale.y, 0.0f);
 
-		def::vf2d vAfterZoom = ScreenToWorld(vMouse);
-		m_vOffset += vBeforeZoom - vAfterZoom;
+		def::vf2d afterZoom = ScreenToWorld(mouse);
+		m_Offset += beforeZoom - afterZoom;
 	}
 
 	void PanAndZoom::Draw(int32_t x, int32_t y, const def::Pixel& p)
 	{
 		def::vi2d pos = WorldToScreen(def::vf2d(x, y));
 
-		for (int i = 0; i < m_vScale.x; i++)
-			for (int j = 0; j < m_vScale.y; j++)
-				pDge->Draw(pos.x + i, pos.y + j, p);
+		for (int i = 0; i < m_Scale.x; i++)
+			for (int j = 0; j < m_Scale.y; j++)
+				m_Dge->Draw(pos.x + i, pos.y + j, p);
 	}
 
 	void PanAndZoom::DrawSprite(int32_t x, int32_t y, Sprite* sprite)
@@ -144,33 +144,33 @@ namespace def
 		if (sprite == nullptr)
 			return;
 
-		for (int i = 0; i < sprite->nWidth; i++)
-			for (int j = 0; j < sprite->nHeight; j++)
+		for (int i = 0; i < sprite->width; i++)
+			for (int j = 0; j < sprite->height; j++)
 				Draw(x + i, y + j, sprite->GetPixel(i, j));
 	}
 
 	void PanAndZoom::DrawCircle(float x, float y, float r, const def::Pixel& p)
 	{
 		def::vi2d pos = WorldToScreen(def::vf2d(x, y));
-		pDge->DrawCircle(pos, r * m_vScale.x, p);
+		m_Dge->DrawCircle(pos, r * m_Scale.x, p);
 	}
 
 	void PanAndZoom::FillCircle(float x, float y, float r, const def::Pixel& p)
 	{
 		def::vi2d pos = WorldToScreen(def::vf2d(x, y));
-		pDge->FillCircle(pos, r * m_vScale.x, p);
+		m_Dge->FillCircle(pos, r * m_Scale.x, p);
 	}
 
 	void PanAndZoom::DrawRectangle(float x, float y, float sx, float sy, const def::Pixel& p)
 	{
 		def::vi2d pos = WorldToScreen(def::vf2d(x, y));
-		pDge->DrawRectangle(pos, def::vi2d(sx * m_vScale.x, sy * m_vScale.y), p);
+		m_Dge->DrawRectangle(pos, def::vi2d(sx * m_Scale.x, sy * m_Scale.y), p);
 	}
 
 	void PanAndZoom::FillRectangle(float x, float y, float sx, float sy, const def::Pixel& p)
 	{
 		def::vi2d pos = WorldToScreen(def::vf2d(x, y));
-		pDge->FillRectangle(pos, def::vi2d(sx * m_vScale.x, sy * m_vScale.y), p);
+		m_Dge->FillRectangle(pos, def::vi2d(sx * m_Scale.x, sy * m_Scale.y), p);
 	}
 
 #endif

@@ -52,7 +52,7 @@ namespace def
 	class DearImGui
 	{
 	public:
-		bool Setup(GLFWwindow* window, ImGuiTheme theme, float fBorderRadius = 0.0f);
+		bool Setup(GLFWwindow* window, ImGuiTheme theme, float borderRadius = 0.0f);
 		void Update();
 		void Draw();
 		void Destroy();
@@ -60,7 +60,7 @@ namespace def
 
 #ifdef DGE_DEARIMGUI
 #undef DGE_DEARIMGUI
-	bool DearImGui::Setup(GLFWwindow* window, ImGuiTheme theme, float fBorderRadius)
+	bool DearImGui::Setup(GLFWwindow* window, ImGuiTheme theme, float borderRadius)
 	{
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
@@ -82,7 +82,7 @@ namespace def
 		}
 
 		ImGuiStyle& style = ImGui::GetStyle();
-		style.WindowRounding = fBorderRadius;
+		style.WindowRounding = borderRadius;
 
 #ifdef DEF_DEARIMGUI_DOCKING
 		// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
@@ -91,11 +91,8 @@ namespace def
 #endif
 
 		// Setup Platform/Renderer backends
-		if (!ImGui_ImplGlfw_InitForOpenGL(window, true))
-			return false;
-
-		if (!ImGui_ImplOpenGL3_Init("#version 150"))
-			return false;
+		if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) return false;
+		if (!ImGui_ImplOpenGL3_Init("#version 150")) return false;
 	}
 
 	void DearImGui::Update()

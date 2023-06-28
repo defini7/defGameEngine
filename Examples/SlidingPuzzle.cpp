@@ -30,10 +30,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace std;
 
-constexpr int nMapWidth = 3;
-constexpr int nMapHeight = 3;
+constexpr int MAP_WIDTH = 3;
+constexpr int MAP_HEIGHT = 3;
 
-constexpr int nCellSize = 16;
+constexpr int CELL_SIZE = 16;
 
 template <typename T>
 struct Map
@@ -41,18 +41,18 @@ struct Map
 	Map() = default;
 	~Map() = default;
 
-	array<T, nMapWidth* nMapHeight> values;
+	array<T, MAP_WIDTH * MAP_HEIGHT> values;
 
 	void set(int x, int y, T value)
 	{
-		if (x >= 0 && y >= 0 && x < nMapWidth && y < nMapHeight)
-			values[y * nMapWidth + x] = value;
+		if (x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)
+			values[y * MAP_WIDTH + x] = value;
 	}
 
 	T* get(int x, int y)
 	{
-		if (x >= 0 && y >= 0 && x < nMapWidth && y < nMapHeight)
-			return &values[y * nMapWidth + x];
+		if (x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)
+			return &values[y * MAP_WIDTH + x];
 
 		return nullptr;
 	}
@@ -69,8 +69,8 @@ public:
 private:
 	Map<int> map;
 
-	def::vi2d vMapSize = { nMapWidth, nMapHeight };
-	def::vi2d vCellSize = { nCellSize, nCellSize };
+	def::vi2d mapSize = { MAP_WIDTH, MAP_HEIGHT };
+	def::vi2d cellSize = { CELL_SIZE, CELL_SIZE };
 
 public:
 	bool OnUserCreate() override
@@ -79,15 +79,15 @@ public:
 
 		for (int i = 0; i < map.values.size() - 1; i++)
 		{
-			int nValue;
+			int value;
 
-			do { nValue = rand() % (map.values.size() + 1); }
+			do { value = rand() % (map.values.size() + 1); }
 			while (
-				find(map.values.begin(), map.values.end(), nValue) != map.values.end() ||
-				nValue == map.values.size()
+				find(map.values.begin(), map.values.end(), value) != map.values.end() ||
+				value == map.values.size()
 			);
 
-			map.values[i] = nValue;
+			map.values[i] = value;
 		}
 
 		return true;
@@ -95,21 +95,21 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		if (GetMouse(0).bPressed)
+		if (GetMouse(0).pressed)
 		{
-			def::vi2d vCellPos = GetMouse() / vCellSize;
+			def::vi2d cellPos = GetMouse() / cellSize;
 
-			if (vCellPos < vMapSize && vCellPos >= def::vi2d(0, 0))
+			if (cellPos < mapSize && cellPos >= def::vi2d(0, 0))
 			{
-				int* pValueOld = map.get(vCellPos.x, vCellPos.y);
+				int* valueOld = map.get(cellPos.x, cellPos.y);
 
 				auto check = [&](int ox, int oy)
 				{
-					int* pValueNew = map.get(vCellPos.x + ox, vCellPos.y + oy);
-					if (pValueNew != nullptr && *pValueNew == 0)
+					int* valueNew = map.get(cellPos.x + ox, cellPos.y + oy);
+					if (valueNew != nullptr && *valueNew == 0)
 					{
-						*pValueNew = *pValueOld;
-						*pValueOld = 0;
+						*valueNew = *valueOld;
+						*valueOld = 0;
 
 						return true;
 					}
@@ -126,17 +126,15 @@ public:
 
 		Clear(def::BLACK);
 
-		def::vi2d vPos;
-		for (vPos.x = 0; vPos.x < nMapWidth; vPos.x++)
-			for (vPos.y = 0; vPos.y < nMapHeight; vPos.y++)
+		def::vi2d pos;
+		for (pos.x = 0; pos.x < MAP_WIDTH; pos.x++)
+			for (pos.y = 0; pos.y < MAP_HEIGHT; pos.y++)
 			{
-				def::vi2d vCellPos = vPos * vCellSize;
-				int nValue = map.values[vPos.y * nMapWidth + vPos.x];
+				def::vi2d cellPos = pos * cellSize;
+				int value = map.values[pos.y * MAP_WIDTH + pos.x];
 
-				DrawRectangle(vCellPos, vCellSize);
-
-				if (nValue > 0)
-					DrawString(def::vf2d(vCellPos) + def::vf2d(vCellSize) * 0.25f, std::to_string(nValue));
+				DrawRectangle(cellPos, cellSize);
+				if (value > 0) DrawString(def::vf2d(cellPos) + def::vf2d(cellSize) * 0.25f, std::to_string(value));
 			}
 
 		return true;

@@ -155,7 +155,7 @@ protected:
 		auto itRemove = std::remove_if(vecObjects.begin(), vecObjects.end(), [](const Object& o) { return o.bRemove; });
 		if (itRemove != vecObjects.end()) vecObjects.erase(itRemove);
 
-		if (GetKey(def::Key::W).bHeld)
+		if (GetKey(def::Key::W).held)
 		{
 			def::vf2d vNewPlayerPos = vPlayerPos + vPlayerVel * fMoveSpeed * fDeltaTime;
 
@@ -166,7 +166,7 @@ protected:
 			}
 		}
 
-		if (GetKey(def::Key::S).bHeld)
+		if (GetKey(def::Key::S).held)
 		{
 			def::vf2d vNewPlayerPos = vPlayerPos - vPlayerVel * fMoveSpeed * fDeltaTime;
 
@@ -177,7 +177,7 @@ protected:
 			}
 		}
 
-		if (GetKey(def::Key::A).bHeld)
+		if (GetKey(def::Key::A).held)
 		{
 			float fOldVelX = vPlayerVel.x;
 			float fOldPlaneX = vPlayerPlane.x;
@@ -189,7 +189,7 @@ protected:
 			vPlayerPlane.y = fOldPlaneX * sin(fRotSpeed * fDeltaTime) + vPlayerPlane.y * cos(fRotSpeed * fDeltaTime);
 		}
 
-		if (GetKey(def::Key::D).bHeld)
+		if (GetKey(def::Key::D).held)
 		{
 			float fOldVelX = vPlayerVel.x;
 			float fOldPlaneX = vPlayerPlane.x;
@@ -417,7 +417,7 @@ protected:
 			}
 		FillRectangle((int)vPlayerPos.x * 2, (int)vPlayerPos.y * 2, 2, 2, def::YELLOW);
 
-		if (GetMouse(0).bPressed)
+		if (GetMouse(0).pressed)
 		{
 			Object o;
 			o.vPos = vPlayerPos;
