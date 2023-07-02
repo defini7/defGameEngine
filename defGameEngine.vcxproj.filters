@@ -18,69 +18,9 @@
     <ClInclude Include="defGameEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Extensions\DGE_DearImGui.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Extensions\DGE_PanAndZoom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Extensions\DGE_PathFinder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Extensions\DGE_Physics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\dearimgui_example\TEST_DearImGui.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\dearimgui_example\WINAPI_Process.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\panandzoom_example\TEST_PanAndZoom.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\pathfinder_example\TEST_PathFinder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\3D_Engine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\ColorPalette.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\DDA_Raycasting.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\Matrices.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\Mazes.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\Mode7.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\SlidingPuzzle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\Snake.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\Texturing.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\Tiles.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\WebCam.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples\Yahtzee.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
