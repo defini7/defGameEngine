@@ -1209,10 +1209,10 @@ namespace def
 		glEnd();
 	}
 
-	void GameEngine::DrawQuad(const Pixel& pixTint)
+	void GameEngine::DrawQuad(const Pixel& tint)
 	{
 		glBegin(GL_QUADS);
-		glColor4ub(pixTint.r, pixTint.g, pixTint.b, pixTint.a);
+		glColor4ub(tint.r, tint.g, tint.b, tint.a);
 		glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, -1.0f);
 		glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, 1.0f);
 		glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f, 1.0f);
@@ -1226,42 +1226,42 @@ namespace def
 		AppThread();
 	}
 
-	void GameEngine::ErrorCallback(int nErrCode, const char* sDesc)
+	void GameEngine::ErrorCallback(int errCode, const char* desc)
 	{
-		if (nErrCode != GLFW_INVALID_ENUM)
+		if (errCode != GLFW_INVALID_ENUM)
 		{
 			std::cout << "[GLFW Error] Code: "
-				<< "0x000" << std::hex << nErrCode
-				<< ", text: " << sDesc << std::endl;
+				<< "0x000" << std::hex << errCode
+				<< ", text: " << desc << std::endl;
 
 			exit(1);
 		}
 	}
 
-	void GameEngine::DropCallback(GLFWwindow* window, int nPathCount, const char* sPaths[])
+	void GameEngine::DropCallback(GLFWwindow* window, int pathCount, const char* paths[])
 	{
 		s_DropCache.clear();
-		s_DropCache.reserve(nPathCount);
+		s_DropCache.reserve(pathCount);
 
-		for (int i = 0; i < nPathCount; i++)
-			s_DropCache[i] = sPaths[i];
+		for (int i = 0; i < pathCount; i++)
+			s_DropCache[i] = paths[i];
 	}
 
-	void GameEngine::Construct(int32_t nScreenWidth, int32_t nScreenHeight, int32_t nPixelWidth, int32_t nPixelHeight, bool bFullScreen, bool bVSync, bool bDirtyPixel)
+	void GameEngine::Construct(int32_t screenWidth, int32_t screenHeight, int32_t pixelWidth, int32_t pixelHeight, bool isFullScreen, bool isVSync, bool isDirtyPixel)
 	{
 		glfwSetErrorCallback(ErrorCallback);
 
 		glfwInit();
 
-		m_WindowSize = { nScreenWidth * nPixelWidth, nScreenHeight * nPixelHeight };
-		m_ScreenSize = { nScreenWidth, nScreenHeight };
+		m_ScreenSize = { screenWidth, screenHeight };
 		m_InvScreenSize = 1.0f / vf2d(m_ScreenSize);
-		m_PixelSize = { nPixelWidth, nPixelHeight };
+		m_PixelSize = { pixelWidth, pixelHeight };
+		m_WindowSize = m_ScreenSize * m_PixelSize;
 
-		m_IsFullScreen = bFullScreen;
-		m_IsVSync = bVSync;
+		m_IsFullScreen = isFullScreen;
+		m_IsVSync = isVSync;
 
-		m_IsDirtyPixel = bDirtyPixel;
+		m_IsDirtyPixel = isDirtyPixel;
 
 		m_Monitor = glfwGetPrimaryMonitor();
 		if (!m_Monitor) return;
@@ -1350,22 +1350,18 @@ namespace def
 		if (!m_DrawTarget) return false;
 		Sprite* target = m_DrawTarget->sprite;
 
-		if (m_PixelMode == Pixel::CUSTOM)
+		switch (m_PixelMode)
 		{
-			return target->SetPixel(x, y, m_Shader({ x, y }, target->GetPixel(x, y), p));
-		}
-
-		else if (m_PixelMode == Pixel::DEFAULT)
+		case Pixel::CUSTOM: return target->SetPixel(x, y, m_Shader({ x, y }, target->GetPixel(x, y), p));
+		case Pixel::DEFAULT: return target->SetPixel(x, y, p);
+		case Pixel::MASK:
 		{
-			return target->SetPixel(x, y, p);
+			if (p.a == 255)
+				return target->SetPixel(x, y, p);
 		}
+		break;
 
-		else if (m_PixelMode == Pixel::MASK)
-		{
-			if (p.a == 255) return target->SetPixel(x, y, p);
-		}
-
-		else if (m_PixelMode == Pixel::ALPHA)
+		case Pixel::ALPHA:
 		{
 			Pixel d = target->GetPixel(x, y);
 			float a = (float)(p.a / 255.0f);
@@ -1375,22 +1371,24 @@ namespace def
 			float b = a * (float)p.b + c * (float)d.b;
 			return target->SetPixel(x, y, Pixel((uint8_t)r, (uint8_t)g, (uint8_t)b));
 		}
+		
+		}
 
 		return false;
 	}
 
 	void GameEngine::DrawLine(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const Pixel& p)
 	{
-		int32_t x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
+		int32_t dx = x2 - x1;
+		int32_t dy = y2 - y1;
 
-		dx = x2 - x1;
-		dy = y2 - y1;
+		int32_t dx1 = abs(dx);
+		int32_t dy1 = abs(dy);
 
-		dx1 = abs(dx);
-		dy1 = abs(dy);
+		int32_t px = 2 * dy1 - dx1;
+		int32_t py = 2 * dx1 - dy1;
 
-		px = 2 * dy1 - dx1;
-		py = 2 * dx1 - dy1;
+		int32_t x, y, xe, ye;
 
 		if (dy1 <= dx1)
 		{
@@ -1409,7 +1407,7 @@ namespace def
 
 			Draw(x, y, p);
 
-			for (i = 0; x < xe; i++)
+			for (int _i = 0; x < xe; _i++)
 			{
 				x++;
 
@@ -1417,11 +1415,7 @@ namespace def
 					px = px + 2 * dy1;
 				else
 				{
-					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
-						y = y + 1;
-					else
-						y = y - 1;
-
+					y += ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) ? 1 : -1;
 					px = px + 2 * (dy1 - dx1);
 				}
 
@@ -1445,19 +1439,15 @@ namespace def
 
 			Draw(x, y, p);
 
-			for (i = 0; y < ye; i++)
+			for (int _i = 0; y < ye; _i++)
 			{
-				y = y + 1;
+				y++;
 
 				if (py <= 0)
 					py = py + 2 * dx1;
 				else
 				{
-					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
-						x = x + 1;
-					else
-						x = x - 1;
-
+					x += ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) ? 1 : -1;
 					py = py + 2 * (dx1 - dy1);
 				}
 
@@ -1475,7 +1465,11 @@ namespace def
 
 	void GameEngine::FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, const Pixel& p)
 	{
-		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny) { for (int i = sx; i <= ex; i++) Draw(i, ny, p); };
+		auto drawLine = [&](int32_t sx, int32_t ex, int32_t ny)
+		{
+			for (int i = sx; i <= ex; i++)
+				Draw(i, ny, p);
+		};
 
 		int32_t t1x, t2x, y, minx, maxx, t1xp, t2xp;
 
@@ -1498,9 +1492,7 @@ namespace def
 			signx1 = -1;
 		}
 		else
-		{
 			signx1 = 1;
-		}
 
 		dy1 = (int32_t)(y2 - y1);
 		dx2 = (int32_t)(x3 - x1);
@@ -1511,31 +1503,21 @@ namespace def
 			signx2 = -1;
 		}
 		else
-		{
 			signx2 = 1;
-		}
 
 		dy2 = (int32_t)(y3 - y1);
 
-		if (dy1 > dx1)
-		{
-			std::swap(dx1, dy1);
-			changed1 = true;
-		}
-
-		if (dy2 > dx2)
-		{
-			std::swap(dy2, dx2);
-			changed2 = true;
-		}
+		if (dy1 > dx1) { std::swap(dx1, dy1); changed1 = true; }
+		if (dy2 > dx2) { std::swap(dy2, dx2); changed2 = true; }
 
 		e2 = (int32_t)(dx2 >> 1);
-		if (y1 == y2)  goto next;
+		if (y1 == y2) goto next;
 		e1 = (int32_t)(dx1 >> 1);
 
 		for (int i = 0; i < dx1;)
 		{
-			t1xp = 0; t2xp = 0;
+			t1xp = t2xp = 0;
+
 			if (t1x < t2x)
 			{
 				minx = t1x;
@@ -1547,9 +1529,8 @@ namespace def
 				maxx = t1x;
 			}
 
-			while (i < dx1)
+			while (i++ < dx1)
 			{
-				i++;
 				e1 += dy1;
 
 				while (e1 >= dx1)
@@ -1572,9 +1553,11 @@ namespace def
 			while (1)
 			{
 				e2 += dy2;
+
 				while (e2 >= dx2)
 				{
 					e2 -= dx2;
+
 					if (changed2)
 						t2xp = signx2;
 					else
@@ -1593,14 +1576,14 @@ namespace def
 			if (maxx < t1x) maxx = t1x;
 			if (maxx < t2x) maxx = t2x;
 
-			drawline(minx, maxx, y);
+			drawLine(minx, maxx, y);
 			if (!changed1) t1x += signx1;
 
 			t1x += t1xp;
 			if (!changed2) t2x += signx2;
 
 			t2x += t2xp;
-			y += 1;
+			y++;
 
 			if (y == y2) break;
 		}
@@ -1614,9 +1597,7 @@ namespace def
 			signx1 = -1;
 		}
 		else
-		{
 			signx1 = 1;
-		}
 
 		dy1 = (int32_t)(y3 - y2);
 		t1x = x2;
@@ -1627,16 +1608,13 @@ namespace def
 			changed1 = true;
 		}
 		else
-		{
 			changed1 = false;
-		}
 
 		e1 = (int32_t)(dx1 >> 1);
 
 		for (int i = 0; i <= dx1; i++)
 		{
-			t1xp = 0;
-			t2xp = 0;
+			t1xp = t2xp = 0;
 
 			if (t1x < t2x)
 			{
@@ -1656,15 +1634,14 @@ namespace def
 				while (e1 >= dx1)
 				{
 					e1 -= dx1;
+
 					if (changed1)
 					{
 						t1xp = signx1;
 						break;
 					}
 					else
-					{
 						goto next3;
-					}
 				}
 
 				if (changed1)
@@ -1702,14 +1679,14 @@ namespace def
 			if (maxx < t1x) maxx = t1x;
 			if (maxx < t2x) maxx = t2x;
 
-			drawline(minx, maxx, y);
+			drawLine(minx, maxx, y);
 			if (!changed1) t1x += signx1;
 
 			t1x += t1xp;
 			if (!changed2) t2x += signx2;
 
 			t2x += t2xp;
-			y += 1;
+			y++;
 
 			if (y > y3) return;
 		}
@@ -1767,17 +1744,18 @@ namespace def
 		int32_t y1 = r;
 		int32_t p1 = 3 - 2 * r;
 
-		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny)
+		auto drawLine = [&](int32_t sx, int32_t ex, int32_t ny)
 		{
-			for (int i = sx; i <= ex; i++) Draw(i, ny, p);
+			for (int i = sx; i <= ex; i++)
+				Draw(i, ny, p);
 		};
 
 		while (y1 >= x1)
 		{
-			drawline(x - x1, x + x1, y - y1);
-			drawline(x - y1, x + y1, y - x1);
-			drawline(x - x1, x + x1, y + y1);
-			drawline(x - y1, x + y1, y + x1);
+			drawLine(x - x1, x + x1, y - y1);
+			drawLine(x - y1, x + y1, y - x1);
+			drawLine(x - x1, x + x1, y + y1);
+			drawLine(x - y1, x + y1, y + x1);
 
 			if (p1 < 0) p1 += 4 * x1++ + 6;
 			else p1 += 4 * (x1++ - y1--) + 10;
@@ -1847,7 +1825,7 @@ namespace def
 		int x1 = x + sx;
 		int y1 = y + sy;
 
-		auto drawline = [&](int32_t sx, int32_t ex, int32_t ny)
+		auto drawLine = [&](int32_t sx, int32_t ex, int32_t ny)
 		{
 			for (int i = sx; i <= ex; i++) Draw(i, ny, p);
 		};
@@ -1879,8 +1857,8 @@ namespace def
 
 		do
 		{
-			drawline(x, x1, y);
-			drawline(x, x1, y1);
+			drawLine(x, x1, y);
+			drawLine(x, x1, y1);
 
 			int e2 = 2 * err;
 			if (e2 <= dy)
@@ -1899,8 +1877,8 @@ namespace def
 
 		while (y - y1 < b)
 		{
-			drawline(x - 1, x1 + 1, y++);
-			drawline(x - 1, x1 + 1, y1--);
+			drawLine(x - 1, x1 + 1, y++);
+			drawLine(x - 1, x1 + 1, y1--);
 		}
 	}
 
@@ -2297,14 +2275,14 @@ namespace def
 		DrawRotatedTexture(pos.x, pos.y, r, tex, center.x, center.y, scale.x, scale.y, tint);
 	}
 
-	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, const vf2d& pos, float r, float s, const Pixel& p)
+	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r, float s, const Pixel& p)
 	{
-		DrawWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p);
+		DrawWireFrameModel(modelCoordinates, pos.x, pos.y, r, s, p);
 	}
 
-	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& vecModelCoordinates, const vf2d& pos, float r, float s, const Pixel& p)
+	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r, float s, const Pixel& p)
 	{
-		FillWireFrameModel(vecModelCoordinates, pos.x, pos.y, r, s, p);
+		FillWireFrameModel(modelCoordinates, pos.x, pos.y, r, s, p);
 	}
 
 	void GameEngine::DrawString(const vi2d& pos, const std::string& text, const Pixel& p)
