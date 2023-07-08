@@ -48,7 +48,7 @@
 			return true;
 		}
 
-		bool OnUserUpdate(float fDeltaTime) override
+		bool OnUserUpdate(float deltaTime) override
 		{
 			for (int i = 0; i < ScreenWidth(); i++)
 				for (int j = 0; j < ScreenHeight(); j++)
@@ -454,6 +454,7 @@ namespace def
 		vi2d m_ScreenSize;
 		vf2d m_InvScreenSize;
 		vi2d m_PixelSize;
+		vi2d m_MaxWindowSize;
 
 		GLFWwindow* m_Window;
 		GLFWmonitor* m_Monitor;
@@ -575,6 +576,7 @@ namespace def
 		void SetTitle(const std::string& title);
 
 		vi2d ScreenSize() const;
+		vi2d MaxScreenSize() const;
 
 		int32_t ScreenWidth() const;
 		int32_t ScreenHeight() const;
@@ -991,7 +993,7 @@ namespace def
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
+		
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glTexImage2D(
 			GL_TEXTURE_2D,
@@ -1167,7 +1169,7 @@ namespace def
 
 			DrawQuad(m_Tint);
 
-			for (const auto& t : m_Textures) DrawTexture(t);
+			for (const auto& ti : m_Textures) DrawTexture(ti);
 			m_Textures.clear();
 
 			if (m_IsVSync)
@@ -1268,6 +1270,8 @@ namespace def
 
 		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
 		if (!videoMode) return;
+
+		m_MaxWindowSize = { videoMode->width, videoMode->height };
 
 		if (!m_IsVSync)
 			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
@@ -1906,8 +1910,8 @@ namespace def
 
 		vf2d screenSize =
 		{
-			screenPos.x + (2.0f * (float(tex->width) * (1.0f / (float)ScreenWidth()))) * scaleX,
-			screenPos.y - (2.0f * (float(tex->height) * (1.0f / (float)ScreenHeight()))) * scaleY
+			screenPos.x + (2.0f * (float(tex->width) * m_InvScreenSize.x)) * scaleX,
+			screenPos.y - (2.0f * (float(tex->height) * m_InvScreenSize.y)) * scaleY
 		};
 
 		TextureInstance ti;
@@ -2291,6 +2295,7 @@ namespace def
 	}
 
 	vi2d GameEngine::ScreenSize() const { return m_ScreenSize; }
+	vi2d GameEngine::MaxScreenSize() const { return m_MaxWindowSize; };
 	vi2d GameEngine::GetMouse() const { return m_MousePos; }
 
 	void GameEngine::ClearBuffer(const Pixel& p)
