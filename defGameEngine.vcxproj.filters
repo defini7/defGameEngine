@@ -23,4 +23,9 @@
     <None Include=".gitignore" />
     <None Include="README.md" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Pool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
 </Project>

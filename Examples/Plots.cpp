@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "../defGameEngine.h"
 
 #include <algorithm>
 
@@ -118,6 +118,39 @@ protected:
 		DrawRectangle(p, WorldToScreen(pos + size) - p, col);
 	}
 
+	template <typename T>
+	void Bar(const def::vf2d& pos, const def::vf2d& size, const std::vector<T>& data, const def::Pixel& col = def::WHITE)
+	{
+		auto min = std::min_element(data.begin(), data.end(), [](const T& a, const T& b) { return a < b; });
+		auto max = std::max_element(data.begin(), data.end(), [](const T& a, const T& b) { return a < b; });
+
+		float diff = *max - *min;
+		def::vf2d step = 1.0f / size;
+
+		for (float x = 0.05f; x < size.x - 0.05f; x += step.x)
+		{
+			def::vi2d p = WorldToScreen({ pos.x + x, pos.y });
+			DrawLine(p.x, p.y - 2, p.x, p.y, col);
+		}
+
+		for (float y = 0.05f; y < size.x - 0.05f; y += step.y)
+		{
+			def::vi2d p = WorldToScreen({ pos.x, pos.y + y });
+			DrawLine(p.x - 2, p.y, p.x, p.y, col);
+		}
+
+		float barWidth = (size.x - 0.1f) / data.size();
+
+		for (size_t i = 0; i < data.size(); i++)
+		{
+			def::vi2d wp = WorldToScreen(pos + def::vf2d(0.05f, 0.05f) + barWidth * i + def::vf2d(0.0f, size.y));
+			FillRectangle(wp, def::vi2d(barWidth, data[i] / diff * size.y), col);
+		}
+
+		def::vi2d p = WorldToScreen(pos);
+		DrawRectangle(p, WorldToScreen(pos + size) - p, col);
+	}
+
 	bool OnUserUpdate(float deltaTime) override
 	{
 		if (GetMouse(0).pressed) panStart = offset + def::vf2d(GetMouse());
@@ -127,8 +160,9 @@ protected:
 		if (GetKey(def::Key::DOWN).held) scale *= 0.99f;
 
 		Clear(def::WHITE);
-		Plot({ 0.0f, 0.0f }, { 1.0f, 1.0f }, data, def::BLACK);
-		Scatter({ 0.0f, 1.1f }, { 1.0f, 1.0f }, data, def::BLACK);
+		//Bar<float>({ 0.0f, 0.0f }, { 1.0f, 1.0f }, { 0.5f, 2.0f, 20.0f, 31.0f, 10.0f, 15.0f }, def::BLACK);
+		Plot({ 0.0f, 1.1f }, { 1.0f, 1.0f }, data, def::BLACK);
+		Scatter({ 0.0f, 2.2f }, { 1.0f, 1.0f }, data, def::BLACK);
 
 		return true;
 	}
