@@ -33,6 +33,56 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 constexpr int FRAME_WIDTH = 320;
 constexpr int FRAME_HEIGHT = 240;
 
+constexpr float CONVO_RIDGE_KERNEL[9] =
+{
+	0.0f, -1.0f, 0.0f,
+	-1.0f, 4.0f, -1.0f,
+	0.0f, -1.0f, 0.0f
+};
+
+constexpr float CONVO_EDGE_KERNEL[9] =
+{
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  8.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f
+};
+
+constexpr float CONVO_SHARPEN_KERNEL[9] =
+{
+	0.0f, -1.0f, 0.0f,
+	-1.0f, 5.0f, -1.0f,
+	0.0f, -1.0f, 0.0f
+};
+
+constexpr float CONVO_BLUR_KERNEL[9] =
+{
+	1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f,
+	1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f,
+	1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f
+};
+
+constexpr float SOBEL_KERNEL_X[9] =
+{
+	-1.0f, 0.0f, 1.0f,
+	-2.0f, 0.0f, 2.0f,
+	-1.0f, 0.0f, 1.0f
+};
+
+constexpr float SOBEL_KERNEL_Y[9] =
+{
+	-1.0f, -2.0f, -1.0f,
+	0.0f, 0.0f, 0.0f,
+	1.0f, 2.0f, 1.0f
+};
+
+constexpr float DITHERING_FLOYDSTEINBERG_KERNEL[4] =
+{
+	7.0f / 16.0f,
+	3.0f / 16.0f,
+	5.0f / 16.0f,
+	1.0f / 16.0f
+};
+
 struct frame
 {
 	float* pixels = nullptr;
@@ -97,7 +147,8 @@ private:
 		LowPass,
 		Adaptive,
 		Sobel,
-		Median
+		Median,
+		Dithering_FloydSteinberg
 	};
 
 	Filter filter;
@@ -106,49 +157,9 @@ private:
 	float lowPass = 0.1f;
 	float adaptive = 0.5f;
 
-	float* convoKernel = convoRidgeKernel;
+	const float* convoKernel = CONVO_RIDGE_KERNEL;
 
-	float convoRidgeKernel[9] =
-	{
-		0.0f, -1.0f, 0.0f,
-		-1.0f, 4.0f, -1.0f,
-		0.0f, -1.0f, 0.0f
-	};
-
-	float convoEdgeKernel[9] =
-	{
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  8.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f
-	};
-
-	float convoSharpenKernel[9] =
-	{
-		0.0f, -1.0f, 0.0f,
-		-1.0f, 5.0f, -1.0f,
-		0.0f, -1.0f, 0.0f
-	};
-
-	float convoBlurKernel[9] =
-	{
-		1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f,
-		1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f,
-		1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f
-	};
-
-	float sobelKernelX[9] =
-	{
-		-1.0f, 0.0f, 1.0f,
-		-2.0f, 0.0f, 2.0f,
-		-1.0f, 0.0f, 1.0f
-	};
-
-	float sobelKernelY[9] =
-	{
-		-1.0f, -2.0f, -1.0f,
-		0.0f, 0.0f, 0.0f,
-		1.0f, 2.0f, 1.0f
-	};
+	int bitsPerChannel = 3;
 
 protected:
 	void DrawFrame(frame& f, int x, int y)
@@ -189,6 +200,7 @@ protected:
 		if (GetKey(def::Key::K5).pressed) filter = Filter::Sobel;
 		if (GetKey(def::Key::K6).pressed) filter = Filter::Median;
 		if (GetKey(def::Key::K7).pressed) filter = Filter::Adaptive;
+		if (GetKey(def::Key::K8).pressed) filter = Filter::Dithering_FloydSteinberg;
 
 		switch (filter)
 		{
@@ -215,10 +227,10 @@ protected:
 
 		case Filter::Convolution:
 		{
-			if (GetKey(def::Key::Z).held) convoKernel = convoRidgeKernel;
-			if (GetKey(def::Key::X).held) convoKernel = convoEdgeKernel;
-			if (GetKey(def::Key::C).held) convoKernel = convoSharpenKernel;
-			if (GetKey(def::Key::V).held) convoKernel = convoBlurKernel;
+			if (GetKey(def::Key::Z).held) convoKernel = CONVO_RIDGE_KERNEL;
+			if (GetKey(def::Key::X).held) convoKernel = CONVO_EDGE_KERNEL;
+			if (GetKey(def::Key::C).held) convoKernel = CONVO_SHARPEN_KERNEL;
+			if (GetKey(def::Key::V).held) convoKernel = CONVO_BLUR_KERNEL;
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
@@ -283,8 +295,8 @@ protected:
 						for (int j = 0; j < 3; j++)
 						{
 							float col = input.get(x + i - 1, y + j - 1);
-							sumX += col * sobelKernelX[j * 3 + i];
-							sumY += col * sobelKernelY[j * 3 + i];
+							sumX += col * SOBEL_KERNEL_X[j * 3 + i];
+							sumY += col * SOBEL_KERNEL_Y[j * 3 + i];
 						}
 
 					output.set(x, y, fabs((sumX + sumY) / 2.0f));
@@ -310,6 +322,37 @@ protected:
 		}
 		break;
 
+		case Filter::Dithering_FloydSteinberg:
+		{
+			if (GetKey(def::Key::Z).pressed) bitsPerChannel = std::max(bitsPerChannel - 1, 1);
+			if (GetKey(def::Key::X).pressed) bitsPerChannel = std::min(bitsPerChannel + 1, 31);
+
+			for (int y = 0; y < FRAME_HEIGHT; y++)
+				for (int x = 0; x < FRAME_WIDTH; x++)
+				{
+					float oldPix = input.get(x, y);
+					float levels = (1 << bitsPerChannel) - 1;
+					float newPix = std::clamp(round(oldPix * levels) / levels, 0.0f, 1.0f);
+
+					output.set(x, y, newPix);
+
+					float err = oldPix - newPix;
+
+					auto updatePixel = [&](int ox, int oy, size_t i)
+					{
+						int newX = x + ox;
+						int newY = y + oy;
+						output.set(newX, newY, input.get(newX, newY) + err * DITHERING_FLOYDSTEINBERG_KERNEL[i]);
+					};
+
+					updatePixel( 1, 0, 0);
+					updatePixel(-1, 1, 1);
+					updatePixel( 0, 1, 2);
+					updatePixel( 1, 1, 3);
+				}
+		}
+		break;
+
 		}
 
 		Clear(def::DARK_BLUE);
@@ -317,61 +360,71 @@ protected:
 		DrawFrame(input, 10, 10);
 		DrawFrame(output, 470, 10);
 
+		int y = 300;
+
 		switch (filter)
 		{
 		case Filter::Threshold:
 		{
-			DrawString(50, 300, "Filter: Threshold");
-			DrawString(50, 316, "Change threshold value with Z and X keys");
-			DrawString(50, 332, "Current value = " + std::to_string(threshold));
+			DrawString(50, y += 16, "Filter: Threshold");
+			DrawString(50, y += 16, "Change threshold value with Z and X keys");
+			DrawString(50, y += 16, "Current value = " + std::to_string(threshold));
 		}
 		break;
 
 		case Filter::Motion:
-			DrawString(50, 300, "Filter: Motion");
+			DrawString(50, y, "Filter: Motion");
 			break;
 
 		case Filter::Convolution:
 		{
-			DrawString(50, 300, "Filter: Convolution");
-			DrawString(50, 316, "Change convolution filter with Z, X, C, V keys");
+			DrawString(50, y += 16, "Filter: Convolution");
+			DrawString(50, y += 16, "Change convolution filter with Z, X, C, V keys");
 		}
 		break;
 
 		case Filter::LowPass:
 		{
-			DrawString(50, 300, "Filter: LowPass");
-			DrawString(50, 316, "Change lowpass value with Z and X keys");
-			DrawString(50, 332, "Current value = " + std::to_string(lowPass));
+			DrawString(50, y += 16, "Filter: LowPass");
+			DrawString(50, y += 16, "Change lowpass value with Z and X keys");
+			DrawString(50, y += 16, "Current value = " + std::to_string(lowPass));
 		}
 		break;
 
 		case Filter::Adaptive:
 		{
-			DrawString(50, 300, "Filter: Adaptive Threshold");
-			DrawString(50, 316, "Change adaptive threshold value with Z and X keys");
-			DrawString(50, 332, "Current value = " + std::to_string(adaptive));
+			DrawString(50, y += 16, "Filter: Adaptive Threshold");
+			DrawString(50, y += 16, "Change adaptive threshold value with Z and X keys");
+			DrawString(50, y += 16, "Current value = " + std::to_string(adaptive));
 		}
 		break;
 
 		case Filter::Sobel:
-			DrawString(50, 300, "Filter: Sobel");
+			DrawString(50, y, "Filter: Sobel");
 			break;
 
 		case Filter::Median:
-			DrawString(50, 300, "Filter: Median");
+			DrawString(50, y, "Filter: Median");
+			break;
+
+		case Filter::Dithering_FloydSteinberg:
+			DrawString(50, y += 16, "Filter: Floyd-Steinberg Dithering");
+			DrawString(50, y += 16, "Change bits per channel count with Z and X keys");
+			DrawString(50, y += 16, "Current value = " + std::to_string(bitsPerChannel));
 			break;
 
 		}
 
-		DrawString(500, 300, "Available filters: ");
-		DrawString(500, 316, "1) Threshold");
-		DrawString(500, 332, "2) Motion");
-		DrawString(500, 348, "3) Convolution");
-		DrawString(500, 364, "4) LowPass");
-		DrawString(500, 380, "5) Sobel");
-		DrawString(500, 396, "6) Median");
-		DrawString(500, 412, "7) Adaptive");
+		y = 300;
+		DrawString(500, y += 16, "Available filters: ");
+		DrawString(500, y += 16, "1) Threshold");
+		DrawString(500, y += 16, "2) Motion");
+		DrawString(500, y += 16, "3) Convolution");
+		DrawString(500, y += 16, "4) LowPass");
+		DrawString(500, y += 16, "5) Sobel");
+		DrawString(500, y += 16, "6) Median");
+		DrawString(500, y += 16, "7) Adaptive");
+		DrawString(500, y += 16, "8) Floyd-Steinberg Dithering");
 
 		return true;
 	}
