@@ -24,7 +24,7 @@
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Pool.cpp">
+    <ClCompile Include="Tetris.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

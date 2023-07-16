@@ -141,10 +141,10 @@ namespace def
 			K0, K1, K2, K3, K4, K5, K6, K7, K8, K9,
 
 			SEMICOLON = 59, EQUAL = 61,
-			
+
 			A = 65, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S,
 			T, U, V, W, X, Y, Z,
-			
+
 			LEFT_BRACKET, BACKSLASH, RIGHT_BRACKET,
 			GRAVE_ACCENT = 96, WORLD_1 = 161, WORLD_2 = 162,
 
@@ -175,7 +175,7 @@ namespace def
 
 		friend bool operator==(const v2d<T>& v1, const v2d<T>& v2) { return v1.x == v2.x && v1.y == v2.y; }
 		friend bool operator!=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x != v2.x || v1.y != v2.y; }
-		friend bool operator<(const v2d<T>& v1, const v2d<T>& v2) { return v1.x < v2.x && v1.y < v2.y; }
+		friend bool operator<(const v2d<T>& v1, const v2d<T>& v2) { return v1.x < v2.x&& v1.y < v2.y; }
 		friend bool operator>(const v2d<T>& v1, const v2d<T>& v2) { return v1.x > v2.x && v1.y > v2.y; }
 		friend bool operator<=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
 		friend bool operator>=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
@@ -242,7 +242,7 @@ namespace def
 
 	typedef v2d<int> vi2d;
 	typedef v2d<float> vf2d;
-	typedef v2d<double> vd2d;
+	typedef v2d<size_t> vs2d;
 
 	struct KeyState
 	{
@@ -530,7 +530,7 @@ namespace def
 
 		void FillCircle(const vi2d& pos, int32_t radius, const Pixel& p = WHITE);
 		virtual void FillCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
-		
+
 		void DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
 		virtual void DrawEllipse(int x, int y, int sx, int sy, const Pixel& p = def::WHITE);
 
@@ -553,6 +553,9 @@ namespace def
 
 		void DrawRotatedTexture(const vf2d& pos, float r, Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		virtual void DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+
+		void DrawPartialRotatedTexture(const vf2d& pos, const vf2d& fpos, const vf2d& fsize, float r, Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		virtual void DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
 		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
@@ -690,7 +693,7 @@ namespace def
 		this->y %= v;
 		return *this;
 	}
-	
+
 	template <class T>
 	v2d<T> v2d<T>::clamp(const v2d<T>& start, const v2d<T>& end) const
 	{
@@ -747,7 +750,7 @@ namespace def
 		b = DGE_MIN(255, DGE_MAX(0, b));
 		return ref();
 	}
-
+	
 	Pixel& Pixel::ref() { return *this; }
 
 	Pixel Pixel::operator+(const uint8_t rhs) const { return Pixel(r + rhs, g + rhs, b + rhs, a).clamp(); }
@@ -827,14 +830,14 @@ namespace def
 	bool Pixel::operator==(const Pixel& rhs) const { return r == rhs.r && g == rhs.g && b == rhs.b; }
 	bool Pixel::operator!=(const Pixel& rhs) const { return r != rhs.r || g != rhs.g || b != rhs.b; }
 	bool Pixel::operator>(const Pixel& rhs) const { return r > rhs.r && g > rhs.g && b > rhs.b; }
-	bool Pixel::operator<(const Pixel& rhs) const { return r < rhs.r && g < rhs.g && b < rhs.b; }
+	bool Pixel::operator<(const Pixel& rhs) const { return r < rhs.r&& g < rhs.g&& b < rhs.b; }
 	bool Pixel::operator>=(const Pixel& rhs) const { return r >= rhs.r && g >= rhs.g && b >= rhs.b; }
 	bool Pixel::operator<=(const Pixel& rhs) const { return r <= rhs.r && g <= rhs.g && b <= rhs.b; }
 
 	bool Pixel::operator==(const uint8_t rhs) const { return r == rhs && g == rhs && b == rhs; }
 	bool Pixel::operator!=(const uint8_t rhs) const { return r != rhs && g != rhs && b != rhs; }
 	bool Pixel::operator>(const uint8_t rhs) const { return r > rhs && g > rhs && b > rhs; }
-	bool Pixel::operator<(const uint8_t rhs) const { return r < rhs && g < rhs && b < rhs; }
+	bool Pixel::operator<(const uint8_t rhs) const { return r < rhs&& g < rhs&& b < rhs; }
 	bool Pixel::operator>=(const uint8_t rhs) const { return r >= rhs && g >= rhs && b >= rhs; }
 	bool Pixel::operator<=(const uint8_t rhs) const { return r <= rhs && g <= rhs && b <= rhs; }
 
@@ -857,7 +860,7 @@ namespace def
 	void Sprite::Create(const int32_t width, const int32_t height, const int32_t channels)
 	{
 		DGE_ASSERT(width > 0 && height > 0 && channels > 0, "[Sprite.Create Error] Width, height and channels should be > 0")
-		if (pixelData != nullptr) delete[] pixelData;
+			if (pixelData != nullptr) delete[] pixelData;
 
 		this->width = width;
 		this->height = height;
@@ -993,7 +996,7 @@ namespace def
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		
+
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glTexImage2D(
 			GL_TEXTURE_2D,
@@ -1375,7 +1378,7 @@ namespace def
 			float b = a * (float)p.b + c * (float)d.b;
 			return target->SetPixel(x, y, Pixel((uint8_t)r, (uint8_t)g, (uint8_t)b));
 		}
-		
+
 		}
 
 		return false;
@@ -1986,6 +1989,50 @@ namespace def
 		m_Textures.push_back(ti);
 	}
 
+	void GameEngine::DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
+	{
+		TextureInstance ti;
+		ti.tex = tex;
+		ti.points = 4;
+		ti.structure = m_TextureStructure;
+		ti.tint = { tint, tint, tint, tint };
+
+		vf2d center = vf2d(centerX, centerY);
+		vf2d scale = vf2d(scaleX, scaleY);
+
+		vf2d screenSpacePos =
+		{
+			  (x * m_InvScreenSize.x) * 2.0f - 1.0f,
+			-((y * m_InvScreenSize.y) * 2.0f - 1.0f)
+		};
+
+		vf2d screenSpaceSize =
+		{
+			  ((x + fw * scaleX) * m_InvScreenSize.x) * 2.0f - 1.0f,
+			-(((y + fh * scaleY) * m_InvScreenSize.y) * 2.0f - 1.0f)
+		};
+
+		vf2d quantisedPos = ((screenSpacePos * vf2d(m_WindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_WindowSize);
+		vf2d quantisedSize = ((screenSpaceSize * vf2d(m_WindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_WindowSize);
+
+		vf2d tl = (vf2d(fx, fy) + vf2d(0.0001f, 0.0001f)) * vf2d(tex->UVScaleX, tex->UVScaleY);
+		vf2d br = (vf2d(fx, fy) + vf2d(fx, fy) - vf2d(0.0001f, 0.0001f)) * vf2d(tex->UVScaleX, tex->UVScaleY);
+
+		ti.vert = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
+
+		float c = cos(r), s = sin(r);
+		for (int i = 0; i < ti.points; i++)
+		{
+			vf2d o = { ti.vert[i].x * c - ti.vert[i].y * s, ti.vert[i].x * s + ti.vert[i].y * c };
+			ti.vert[i] = vf2d(x, y) + o;
+			ti.vert[i] = ti.vert[i] * m_InvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
+			ti.vert[i].y *= -1.0f;
+		}
+
+		ti.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
+		m_Textures.push_back(ti);
+	}
+
 	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint)
 	{
 		TextureInstance di;
@@ -2277,6 +2324,11 @@ namespace def
 	void GameEngine::DrawRotatedTexture(const vf2d& pos, float r, Texture* tex, const vf2d& center, const vf2d& scale, const Pixel& tint)
 	{
 		DrawRotatedTexture(pos.x, pos.y, r, tex, center.x, center.y, scale.x, scale.y, tint);
+	}
+
+	void GameEngine::DrawPartialRotatedTexture(const vf2d& pos, const vf2d& fpos, const vf2d& fsize, float r, Texture* tex, const vf2d& center, const vf2d& scale, const Pixel& tint)
+	{
+		DrawPartialRotatedTexture(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, r, tex, center.x, center.y, scale.x, scale.y, tint);
 	}
 
 	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r, float s, const Pixel& p)
