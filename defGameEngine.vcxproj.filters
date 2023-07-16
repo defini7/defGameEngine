@@ -23,9 +23,4 @@
     <None Include=".gitignore" />
     <None Include="README.md" />
   </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Tetris.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
 </Project>
