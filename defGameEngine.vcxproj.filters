@@ -18,13 +18,19 @@
     <ClInclude Include="defGameEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="escapi.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Examples\WebCam.cpp">
+    <ClCompile Include="escapi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EdgeDetection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

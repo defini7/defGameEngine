@@ -131,7 +131,7 @@ public:
 private:
 	SimpleCapParams capture;
 
-	frame input, output, prevInput;
+	frame input, output, prevInput, motionDiffMap;
 
 	union RGBint
 	{
