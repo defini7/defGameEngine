@@ -268,6 +268,7 @@ namespace def
 		Pixel mix(const def::Pixel& rhs, const float factor) const;
 		Pixel& clamp();
 		Pixel& ref();
+		std::string str() const;
 
 		Pixel operator+(const uint8_t rhs) const;
 		Pixel operator-(const uint8_t rhs) const;
@@ -586,6 +587,7 @@ namespace def
 
 		bool IsFullScreen() const;
 		bool IsVSync() const;
+		bool IsFocused() const;
 
 		void SetIcon(const std::string& fileName);
 
@@ -752,6 +754,15 @@ namespace def
 	}
 	
 	Pixel& Pixel::ref() { return *this; }
+
+	std::string Pixel::str() const
+	{
+		return '(' +
+			std::to_string(r) + ',' +
+			std::to_string(g) + ',' +
+			std::to_string(b) + ',' +
+			std::to_string(a) + ')';
+	}
 
 	Pixel Pixel::operator+(const uint8_t rhs) const { return Pixel(r + rhs, g + rhs, b + rhs, a).clamp(); }
 	Pixel Pixel::operator-(const uint8_t rhs) const { return Pixel(r - rhs, g - rhs, b - rhs, a).clamp(); }
@@ -2218,6 +2229,7 @@ namespace def
 
 	bool GameEngine::IsFullScreen() const { return m_IsFullScreen; }
 	bool GameEngine::IsVSync() const { return m_IsVSync; }
+	bool GameEngine::IsFocused() const { return (bool)glfwGetWindowAttrib(this->m_Window, GLFW_FOCUSED); }
 
 	void GameEngine::SetIcon(const std::string& fileName)
 	{
@@ -2230,7 +2242,17 @@ namespace def
 		glfwSetWindowIcon(m_Window, 1, &img);
 	}
 
-	void GameEngine::SetDrawTarget(Graphic* target) { m_DrawTarget = target ? target : m_Screen; }
+	void GameEngine::SetDrawTarget(Graphic* target)
+	{
+		if (target == nullptr)
+			m_DrawTarget = m_Screen;
+		else
+		{
+			m_DrawTarget = target;
+			m_DrawTarget->UpdateTexture();
+		}
+	}
+
 	Graphic* GameEngine::GetDrawTarget() const { return m_DrawTarget; }
 	void GameEngine::SetTitle(const std::string& title) { m_AppName = title; }
 

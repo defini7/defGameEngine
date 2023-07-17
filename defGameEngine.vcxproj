@@ -132,15 +132,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="defGameEngine.h" />
-    <ClInclude Include="escapi.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EdgeDetection.cpp" />
-    <ClCompile Include="escapi.cpp" />
+    <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
