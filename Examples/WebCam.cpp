@@ -468,9 +468,10 @@ protected:
 
 					output.set(x, y, newPix);
 
-					float errR = oldPix.r - newPix.r;
-					float errG = oldPix.g - newPix.g;
-					float errB = oldPix.b - newPix.b;
+					Pixelf err;
+					err.r = oldPix.r - newPix.r;
+					err.g = oldPix.g - newPix.g;
+					err.b = oldPix.b - newPix.b;
 
 					auto updatePixel = [&](int ox, int oy, size_t i)
 					{
@@ -478,9 +479,9 @@ protected:
 						int newY = y + oy;
 
 						Pixelf out = input.get(newX, newY);
-						out.r += errR * DITHERING_FLOYDSTEINBERG_KERNEL[i];
-						out.g += errG * DITHERING_FLOYDSTEINBERG_KERNEL[i];
-						out.b += errB * DITHERING_FLOYDSTEINBERG_KERNEL[i];
+						out.r += err.r * DITHERING_FLOYDSTEINBERG_KERNEL[i];
+						out.g += err.g * DITHERING_FLOYDSTEINBERG_KERNEL[i];
+						out.b += err.b * DITHERING_FLOYDSTEINBERG_KERNEL[i];
 
 						output.set(newX, newY, out);
 					};
@@ -519,10 +520,10 @@ protected:
 
 					float l = sqrt(cx * cx + cy * cy);
 
-					float tex_u = u + (cx / l) * lerp(cos(l * 12.0f - accTime * 4.0f) * 0.03f, 0.0f, l / 0.25f);
-					float tex_v = v + (cx / l) * lerp(cos(l * 12.0f - accTime * 4.0f) * 0.03f, 0.0f, l / 0.25f);
+					u += (cx / l) * lerp(cos(l * 12.0f - accTime * 4.0f) * 0.03f, 0.0f, l / 0.25f);
+					v += (cy / l) * lerp(cos(l * 12.0f - accTime * 4.0f) * 0.03f, 0.0f, l / 0.25f);
 
-					output.set(x, y, input.get(int(tex_u * fw), int(tex_v * fh)));
+					output.set(x, y, input.get(int(u * fw), int(v * fh)));
 				}
 		}
 		break;
