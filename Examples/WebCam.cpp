@@ -160,7 +160,7 @@ public:
 private:
 	SimpleCapParams capture;
 
-	Frame input, output, prevInput, motionDiffMap;
+	Frame input, output, prevInput;
 
 	union RGBint
 	{
@@ -202,12 +202,24 @@ private:
 	float rippleCenterX = 0.5f;
 	float rippleCenterY = 0.5f;
 
+	// Windows Command Prompt colors
 	const std::vector<Pixelf> DITH_PALETTE = {
-		{ 0.0f, 0.0f, 0.0f },
-		{ 1.0f, 1.0f, 1.0f },
-		{ 1.0f, 1.0f, 0.0f },
-		{ 0.0f, 1.0f, 1.0f },
-		{ 0.706f, 0.0f, 0.62f }
+		{ 12.0f / 255.0f,12.0f / 255.0f,12.0f / 255.0f },
+		{ 0.0f, 55.0f / 255.0f, 218.0f / 255.0f },
+		{ 19.0f / 255.0f, 161.0f / 255.0f, 14.0f / 255.0f },
+		{ 58.0f / 255.0f, 150.0f / 255.0f, 221.0f / 255.0f },
+		{ 197.0f / 255.0f, 15.0f / 255.0f, 31.0f / 255.0f },
+		{ 136.0f / 255.0f, 23.0f / 255.0f, 152.0f / 255.0f },
+		{ 193.0f / 255.0f, 156.0f / 255.0f, 0.0f },
+		{ 204.0f / 255.0f, 204.0f / 255.0f, 204.0f / 255.0f },
+		{ 118.0f / 255.0f, 118.0f / 255.0f, 118.0f / 255.0f },
+		{ 59.0f / 255.0f, 120.0f / 255.0f, 1.0f },
+		{ 22.0f / 255.0f, 198.0f / 255.0f, 12.0f / 255.0f },
+		{ 97.0f / 255.0f, 214.0f / 255.0f, 214.0f / 255.0f },
+		{ 231.0f / 255.0f, 72.0f / 255.0f, 86.0f / 255.0f },
+		{ 180.0f / 255.0f, 0.0f, 158.0f / 255.0f },
+		{ 249.0f / 255.0f, 241.0f / 255.0f, 165.0f / 255.0f },
+		{ 242.0f / 255.0f, 242.0f / 255.0f, 242.0f / 255.0f, },
 	};
 
 protected:
@@ -436,7 +448,7 @@ protected:
 			if (GetKey(def::Key::C).pressed) quantMode = DitheringQuantiseMode::NBit;
 			if (GetKey(def::Key::V).pressed) quantMode = DitheringQuantiseMode::CustomPalette;
 
-			bitsPerChannel = std::min(std::max(bitsPerChannel, 1), 31);
+			bitsPerChannel = std::min(std::max(bitsPerChannel, 1), 8);
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
@@ -531,7 +543,7 @@ protected:
 		{
 		case Filter::Threshold:
 		{
-			DrawString(50, y += 16, "Filter: Threshold");
+			DrawString(50, y, "Filter: Threshold");
 			DrawString(50, y += 16, "Change threshold value with Z and X keys");
 			DrawString(50, y += 16, "Current value = " + std::to_string(threshold));
 		}
@@ -543,14 +555,14 @@ protected:
 
 		case Filter::Convolution:
 		{
-			DrawString(50, y += 16, "Filter: Convolution");
+			DrawString(50, y, "Filter: Convolution");
 			DrawString(50, y += 16, "Change convolution filter with Z, X, C, V keys");
 		}
 		break;
 
 		case Filter::LowPass:
 		{
-			DrawString(50, y += 16, "Filter: LowPass");
+			DrawString(50, y, "Filter: LowPass");
 			DrawString(50, y += 16, "Change lowpass value with Z and X keys");
 			DrawString(50, y += 16, "Current value = " + std::to_string(lowPass));
 		}
@@ -558,7 +570,7 @@ protected:
 
 		case Filter::Adaptive:
 		{
-			DrawString(50, y += 16, "Filter: Adaptive Threshold");
+			DrawString(50, y, "Filter: Adaptive Threshold");
 			DrawString(50, y += 16, "Change adaptive threshold value with Z and X keys");
 			DrawString(50, y += 16, "Current value = " + std::to_string(adaptive));
 		}
@@ -574,7 +586,7 @@ protected:
 
 		case Filter::Dithering_FloydSteinberg:
 		{
-			DrawString(50, y += 16, "Filter: Floyd-Steinberg Dithering");
+			DrawString(50, y, "Filter: Floyd-Steinberg Dithering");
 			DrawString(50, y += 16, "Change bits per channel count with Z and X keys");
 			DrawString(50, y += 16, "Change modes with C and V keys");
 			DrawString(50, y += 16, "Current value = " + std::to_string(bitsPerChannel));
@@ -582,7 +594,7 @@ protected:
 		break;
 
 		case Filter::Ripple:
-			DrawString(50, y += 16, "Filter: Ripple");
+			DrawString(50, y, "Filter: Ripple");
 			DrawString(50, y += 16, "Change ripple center with Z, X, C, V keys");
 			DrawString(50, y += 16, "Current x value = " + std::to_string(rippleCenterX));
 			DrawString(50, y += 16, "Current y value = " + std::to_string(rippleCenterY));
@@ -591,7 +603,7 @@ protected:
 		}
 
 		y = 300;
-		DrawString(500, y += 16, "Available filters: ");
+		DrawString(500, y, "Available filters: ");
 		DrawString(500, y += 16, "1) Threshold");
 		DrawString(500, y += 16, "2) Motion");
 		DrawString(500, y += 16, "3) Convolution");
