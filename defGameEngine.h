@@ -305,7 +305,7 @@ namespace def
 		bool operator<=(const uint8_t rhs) const;
 	};
 
-	static Pixel BLACK(0, 0, 0, 0),
+	static Pixel BLACK(0, 0, 0, 255),
 		DARK_BLUE(0, 55, 218, 255),
 		DARK_GREEN(19, 161, 14, 255),
 		DARK_CYAN(59, 120, 255, 255),
@@ -334,9 +334,9 @@ namespace def
 		PURPLE(200, 122, 255, 255),
 		NONE(0, 0, 0, 0);
 
-	Pixel PixelF(float r, float g, float b)
+	Pixel PixelF(float r, float g, float b, float a = 1.0f)
 	{
-		return Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f));
+		return Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f), uint8_t(a * 255.0f));
 	}
 
 	Pixel RandomPixel(bool isRandomAlpha = false)

@@ -83,42 +83,71 @@ constexpr float DITHERING_FLOYDSTEINBERG_KERNEL[4] =
 	1.0f / 16.0f
 };
 
-struct frame
+struct Pixelf
 {
-	float* pixels = nullptr;
+	Pixelf(float r = 0.0f, float g = 0.0f, float b = 0.0f) : r(r), g(g), b(b) {}
+	float r, g, b;
+};
 
-	frame()
+struct Frame
+{
+	Pixelf* pixels = nullptr;
+
+	Frame()
 	{
-		pixels = new float[FRAME_WIDTH * FRAME_HEIGHT];
+		pixels = new Pixelf[FRAME_WIDTH * FRAME_HEIGHT];
 	}
 
-	~frame()
+	~Frame()
 	{
 		delete[] pixels;
 	}
 
-	float get(int x, int y)
+	Pixelf get(int x, int y)
 	{
-		if (x < 0 || y < 0 || x >= FRAME_WIDTH || y >= FRAME_HEIGHT)
-			return 0.0f;
+		if (x >= 0 && y >= 0 && x < FRAME_WIDTH && y < FRAME_HEIGHT)
+			return pixels[y * FRAME_WIDTH + x];
 
-		return pixels[y * FRAME_WIDTH + x];
+		return { 0.0f, 0.0f, 0.0f };
 	}
 
-	void set(int x, int y, float p)
+	void set(int x, int y, const Pixelf& p)
 	{
-		if (x < 0 || y < 0 || x >= FRAME_WIDTH || y >= FRAME_HEIGHT)
-			return;
-
-		pixels[y * FRAME_WIDTH + x] = p;
+		if (x >= 0 && y >= 0 && x < FRAME_WIDTH && y < FRAME_HEIGHT)
+			pixels[y * FRAME_WIDTH + x] = p;
 	}
 
-	void operator=(const frame& f)
+	Frame& operator=(const Frame& f)
 	{
-		memcpy(pixels, f.pixels, FRAME_WIDTH * FRAME_HEIGHT * sizeof(float));
+		memcpy(pixels, f.pixels, FRAME_WIDTH * FRAME_HEIGHT * sizeof(Pixelf));
+		return *this;
 	}
 
 };
+
+void DitheringQuantise_NBit(const Pixelf& in, Pixelf& out, const int bitsPerChannel)
+{
+	float levels = (1 << bitsPerChannel) - 1;
+	out.r = std::clamp(round(in.r * levels) / levels, 0.0f, 1.0f);
+	out.g = std::clamp(round(in.g * levels) / levels, 0.0f, 1.0f);
+	out.b = std::clamp(round(in.b * levels) / levels, 0.0f, 1.0f);
+}
+
+void DitheringQuantise_CustomPalette(const Pixelf& in, Pixelf& out, const std::vector<Pixelf>& shades)
+{
+	float closest = INFINITY;
+
+	for (const auto& s : shades)
+	{
+		float dist = sqrt(pow(s.r - in.r, 2) + pow(s.g - in.g, 2) + pow(s.b - in.b, 2));
+
+		if (dist < closest)
+		{
+			closest = dist;
+			out = s;
+		}
+	}
+}
 
 class WebCam : public def::GameEngine
 {
@@ -131,7 +160,7 @@ public:
 private:
 	SimpleCapParams capture;
 
-	frame input, output, prevInput, motionDiffMap;
+	Frame input, output, prevInput, motionDiffMap;
 
 	union RGBint
 	{
@@ -148,10 +177,18 @@ private:
 		Adaptive,
 		Sobel,
 		Median,
-		Dithering_FloydSteinberg
+		Dithering_FloydSteinberg,
+		Ripple
 	};
 
-	Filter filter;
+	enum class DitheringQuantiseMode
+	{
+		NBit,
+		CustomPalette
+	};
+
+	Filter filter = Filter::Threshold;
+	DitheringQuantiseMode quantMode = DitheringQuantiseMode::NBit;
 
 	float threshold = 0.5f;
 	float lowPass = 0.1f;
@@ -161,14 +198,28 @@ private:
 
 	int bitsPerChannel = 3;
 
+	float accTime = 0.0f;
+	float rippleCenterX = 0.5f;
+	float rippleCenterY = 0.5f;
+
+	const std::vector<Pixelf> DITH_PALETTE = {
+		{ 0.0f, 0.0f, 0.0f },
+		{ 1.0f, 1.0f, 1.0f },
+		{ 1.0f, 1.0f, 0.0f },
+		{ 0.0f, 1.0f, 1.0f },
+		{ 0.706f, 0.0f, 0.62f }
+	};
+
 protected:
-	void DrawFrame(frame& f, int x, int y)
+	void DrawFrame(Frame& f, int x, int y)
 	{
 		for (int i = 0; i < FRAME_WIDTH; i++)
 			for (int j = 0; j < FRAME_HEIGHT; j++)
 			{
-				uint8_t c = (uint8_t)std::min(std::max(0.0f, f.pixels[j * FRAME_WIDTH + i] * 255.0f), 255.0f);
-				Draw(x + i, y + j, def::Pixel(c, c, c));
+				float r = std::min(std::max(0.0f, f.pixels[j * FRAME_WIDTH + i].r), 1.0f);
+				float g = std::min(std::max(0.0f, f.pixels[j * FRAME_WIDTH + i].g), 1.0f);
+				float b = std::min(std::max(0.0f, f.pixels[j * FRAME_WIDTH + i].b), 1.0f);
+				Draw(x + i, y + j, def::PixelF(r, g, b, 1.0f));
 			}
 	}
 
@@ -181,7 +232,7 @@ protected:
 		return initCapture(0, &capture);
 	}
 
-	bool OnUserUpdate(float fDeltaTime) override
+	bool OnUserUpdate(float dt) override
 	{
 		prevInput = input;
 		doCapture(0); while (isCaptureDone(0) == 0);
@@ -190,7 +241,9 @@ protected:
 			{
 				int i = y * capture.mWidth + x;
 				RGBint col; col.rgb = capture.mTargetBuf[i];
-				input.pixels[i] = (float)col.c[1] / 255.0f;
+				input.pixels[i].r = (float)col.c[2] / 255.0f;
+				input.pixels[i].g = (float)col.c[1] / 255.0f;
+				input.pixels[i].b = (float)col.c[0] / 255.0f;
 			}
 
 		if (GetKey(def::Key::K1).pressed) filter = Filter::Threshold;
@@ -201,19 +254,27 @@ protected:
 		if (GetKey(def::Key::K6).pressed) filter = Filter::Median;
 		if (GetKey(def::Key::K7).pressed) filter = Filter::Adaptive;
 		if (GetKey(def::Key::K8).pressed) filter = Filter::Dithering_FloydSteinberg;
+		if (GetKey(def::Key::K9).pressed) filter = Filter::Ripple;
 
 		switch (filter)
 		{
 		case Filter::Threshold:
 		{
-			if (GetKey(def::Key::Z).held) threshold -= 0.1f * fDeltaTime;
-			if (GetKey(def::Key::X).held) threshold += 0.1f * fDeltaTime;
+			if (GetKey(def::Key::Z).held) threshold -= 0.1f * dt;
+			if (GetKey(def::Key::X).held) threshold += 0.1f * dt;
 
 			threshold = std::min(1.0f, std::max(threshold, 0.0f));
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
-					output.set(x, y, input.get(x, y) >= threshold ? 1.0f : 0.0f);
+				{
+					Pixelf out, in = input.get(x, y);
+
+					float col = ((in.r + in.g + in.b) / 3.0f) >= threshold ? 1.0f : 0.0f;
+					out.r = col; out.g = col; out.b = col;
+
+					output.set(x, y, out);
+				}
 		}
 		break;
 
@@ -221,7 +282,17 @@ protected:
 		{
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
-					output.set(x, y, fabs(input.get(x, y) - prevInput.get(x, y)));
+				{
+					Pixelf in = input.get(x, y);
+					Pixelf prev = prevInput.get(x, y);
+					
+					Pixelf out;
+					out.r = fabs(in.r - prev.r);
+					out.g = fabs(in.g - prev.g);
+					out.b = fabs(in.b - prev.b);
+
+					output.set(x, y, out);
+				}
 		}
 		break;
 
@@ -235,51 +306,71 @@ protected:
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
-					float fSum = 0.0f;
+					float sumR = 0.0f, sumG = 0.0f, sumB = 0.0f;
 
 					for (int i = 0; i < 3; i++)
 						for (int j = 0; j < 3; j++)
-							fSum += input.get(x + i - 1, y + j - 1) * convoKernel[j * 3 + i];
+						{
+							Pixelf in = input.get(x + i - 1, y + j - 1);
+							sumR += in.r * convoKernel[j * 3 + i];
+							sumG += in.g * convoKernel[j * 3 + i];
+							sumB += in.b * convoKernel[j * 3 + i];
+						}
 
-					output.set(x, y, fSum);
+					output.set(x, y, { sumR, sumG, sumB });
 				}
 		}
 		break;
 
 		case Filter::LowPass:
 		{
-			if (GetKey(def::Key::Z).held) lowPass -= 0.1f * fDeltaTime;
-			if (GetKey(def::Key::X).held) lowPass += 0.1f * fDeltaTime;
+			if (GetKey(def::Key::Z).held) lowPass -= 0.1f * dt;
+			if (GetKey(def::Key::X).held) lowPass += 0.1f * dt;
 
 			lowPass = std::min(1.0f, std::max(lowPass, 0.0f));
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
-					float dist = (input.get(x, y) - output.get(x, y)) * lowPass;
-					output.set(x, y, dist + output.get(x, y));
+					Pixelf in1 = input.get(x, y);
+					Pixelf in2 = output.get(x, y);
+
+					Pixelf out;
+					out.r = (in1.r - in2.r) * lowPass + in2.r;
+					out.g = (in1.g - in2.g) * lowPass + in2.g;
+					out.b = (in1.b - in2.b) * lowPass + in2.b;
+
+					output.set(x, y, out);
 				}
 		}
 		break;
 
 		case Filter::Adaptive:
 		{
-			if (GetKey(def::Key::Z).held) adaptive -= 0.1f * fDeltaTime;
-			if (GetKey(def::Key::X).held) adaptive += 0.1f * fDeltaTime;
+			if (GetKey(def::Key::Z).held) adaptive -= 0.1f * dt;
+			if (GetKey(def::Key::X).held) adaptive += 0.1f * dt;
 
 			adaptive = std::min(1.0f, std::max(adaptive, 0.5f));
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
-					float sum = 0.0f;
+					float sumR = 0.0f, sumG = 0.0f, sumB = 0.0f;
 
 					for (int i = -2; i <= 2; i++)
 						for (int j = -2; j <= 2; j++)
-							sum += input.get(x + i, y + j);
+						{
+							Pixelf in = input.get(x + i, y + j);
+							sumR += in.r; sumG += in.g; sumB += in.b;
+						}
+					sumR /= 25.0f; sumG /= 25.0f; sumB /= 25.0f;
 
-					sum /= 25.0f;
-					output.set(x, y, input.get(x, y) > (sum * adaptive) ? 1.0f : 0.0f);
+					Pixelf out, in = input.get(x, y);
+					out.r = (in.r > sumR * adaptive) ? 1.0f : 0.0f;
+					out.g = (in.g > sumG * adaptive) ? 1.0f : 0.0f;
+					out.b = (in.b > sumB * adaptive) ? 1.0f : 0.0f;
+
+					output.set(x, y, out);
 				}
 		}
 		break;
@@ -289,17 +380,30 @@ protected:
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
-					float sumX = 0.0f, sumY = 0.0f;
+					float sumXr = 0.0f, sumXg = 0.0f, sumXb = 0.0f;
+					float sumYr = 0.0f, sumYg = 0.0f, sumYb = 0.0f;
 
 					for (int i = 0; i < 3; i++)
 						for (int j = 0; j < 3; j++)
 						{
-							float col = input.get(x + i - 1, y + j - 1);
-							sumX += col * SOBEL_KERNEL_X[j * 3 + i];
-							sumY += col * SOBEL_KERNEL_Y[j * 3 + i];
+							Pixelf in = input.get(x + i - 1, y + j - 1);
+							size_t k = j * 3 + i;
+
+							sumXr += in.r * SOBEL_KERNEL_X[k];
+							sumXg += in.g * SOBEL_KERNEL_X[k];
+							sumXb += in.b * SOBEL_KERNEL_X[k];
+
+							sumYr += in.r * SOBEL_KERNEL_Y[k];
+							sumYg += in.g * SOBEL_KERNEL_Y[k];
+							sumYb += in.b * SOBEL_KERNEL_Y[k];
 						}
 
-					output.set(x, y, fabs((sumX + sumY) / 2.0f));
+					Pixelf out;
+					out.r = fabs((sumXr + sumYr) * 0.5f);
+					out.g = fabs((sumXg + sumYg) * 0.5f);
+					out.b = fabs((sumXb + sumYb) * 0.5f);
+
+					output.set(x, y, out);
 				}
 		}
 		break;
@@ -309,13 +413,16 @@ protected:
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
-					std::array<float, 25> col;
+					std::array<Pixelf, 25> col;
 
 					for (int i = 0; i < 5; i++)
 						for (int j = 0; j < 5; j++)
 							col[j * 5 + i] = input.get(x + i - 2, y + j - 2);
 
-					std::sort(col.begin(), col.end(), [](float c1, float c2) { return c2 < c1; });
+					std::sort(col.begin(), col.end(), [](const Pixelf& c1, const Pixelf& c2) {
+						return c2.r < c1.r && c2.g < c1.g && c2.b < c1.b;
+					});
+
 					output.set(x, y, col[12]);
 				}
 
@@ -324,25 +431,46 @@ protected:
 
 		case Filter::Dithering_FloydSteinberg:
 		{
-			if (GetKey(def::Key::Z).pressed) bitsPerChannel = std::max(bitsPerChannel - 1, 1);
-			if (GetKey(def::Key::X).pressed) bitsPerChannel = std::min(bitsPerChannel + 1, 31);
+			if (GetKey(def::Key::Z).pressed) bitsPerChannel--;
+			if (GetKey(def::Key::X).pressed) bitsPerChannel++;
+			if (GetKey(def::Key::C).pressed) quantMode = DitheringQuantiseMode::NBit;
+			if (GetKey(def::Key::V).pressed) quantMode = DitheringQuantiseMode::CustomPalette;
+
+			bitsPerChannel = std::min(std::max(bitsPerChannel, 1), 31);
 
 			for (int y = 0; y < FRAME_HEIGHT; y++)
 				for (int x = 0; x < FRAME_WIDTH; x++)
 				{
-					float oldPix = input.get(x, y);
-					float levels = (1 << bitsPerChannel) - 1;
-					float newPix = std::clamp(round(oldPix * levels) / levels, 0.0f, 1.0f);
+					Pixelf oldPix = input.get(x, y), newPix;
+
+					switch (quantMode)
+					{
+					case DitheringQuantiseMode::NBit:
+						DitheringQuantise_NBit(oldPix, newPix, bitsPerChannel);
+					break;
+
+					case DitheringQuantiseMode::CustomPalette:
+						DitheringQuantise_CustomPalette(oldPix, newPix, DITH_PALETTE);
+					break;
+					}
 
 					output.set(x, y, newPix);
 
-					float err = oldPix - newPix;
+					float errR = oldPix.r - newPix.r;
+					float errG = oldPix.g - newPix.g;
+					float errB = oldPix.b - newPix.b;
 
 					auto updatePixel = [&](int ox, int oy, size_t i)
 					{
 						int newX = x + ox;
 						int newY = y + oy;
-						output.set(newX, newY, input.get(newX, newY) + err * DITHERING_FLOYDSTEINBERG_KERNEL[i]);
+
+						Pixelf out = input.get(newX, newY);
+						out.r += errR * DITHERING_FLOYDSTEINBERG_KERNEL[i];
+						out.g += errG * DITHERING_FLOYDSTEINBERG_KERNEL[i];
+						out.b += errB * DITHERING_FLOYDSTEINBERG_KERNEL[i];
+
+						output.set(newX, newY, out);
 					};
 
 					updatePixel( 1, 0, 0);
@@ -353,7 +481,44 @@ protected:
 		}
 		break;
 
+		case Filter::Ripple:
+		{
+			if (GetKey(def::Key::Z).held) rippleCenterX -= 0.1f * dt;
+			if (GetKey(def::Key::X).held) rippleCenterX += 0.1f * dt;
+			if (GetKey(def::Key::C).held) rippleCenterY -= 0.1f * dt;
+			if (GetKey(def::Key::V).held) rippleCenterY += 0.1f * dt;
+
+			auto lerp = [](float x, float y, float t)
+			{
+				return x * (1.0f - t) + y * t;
+			};
+
+			float fw = (float)FRAME_WIDTH;
+			float fh = (float)FRAME_HEIGHT;
+
+			for (int y = 0; y < FRAME_HEIGHT; y++)
+				for (int x = 0; x < FRAME_WIDTH; x++)
+				{
+					float u = (float)x / fw;
+					float v = (float)y / fh;
+
+					float cx = u * rippleCenterX;
+					float cy = v * rippleCenterY;
+
+					float l = sqrt(cx * cx + cy * cy);
+
+					float tex_u = u + (cx / l) * lerp(cos(l * 12.0f - accTime * 4.0f) * 0.03f, 0.0f, l / 0.25f);
+					float tex_v = v + (cx / l) * lerp(cos(l * 12.0f - accTime * 4.0f) * 0.03f, 0.0f, l / 0.25f);
+
+					output.set(x, y, input.get(int(tex_u * fw), int(tex_v * fh)));
+				}
 		}
+		break;
+
+		}
+
+		accTime += dt;
+		if (accTime > 2.0f * 3.14159f) accTime = 0.0f;
 
 		Clear(def::DARK_BLUE);
 
@@ -374,7 +539,7 @@ protected:
 
 		case Filter::Motion:
 			DrawString(50, y, "Filter: Motion");
-			break;
+		break;
 
 		case Filter::Convolution:
 		{
@@ -401,17 +566,27 @@ protected:
 
 		case Filter::Sobel:
 			DrawString(50, y, "Filter: Sobel");
-			break;
+		break;
 
 		case Filter::Median:
 			DrawString(50, y, "Filter: Median");
-			break;
+		break;
 
 		case Filter::Dithering_FloydSteinberg:
+		{
 			DrawString(50, y += 16, "Filter: Floyd-Steinberg Dithering");
 			DrawString(50, y += 16, "Change bits per channel count with Z and X keys");
+			DrawString(50, y += 16, "Change modes with C and V keys");
 			DrawString(50, y += 16, "Current value = " + std::to_string(bitsPerChannel));
-			break;
+		}
+		break;
+
+		case Filter::Ripple:
+			DrawString(50, y += 16, "Filter: Ripple");
+			DrawString(50, y += 16, "Change ripple center with Z, X, C, V keys");
+			DrawString(50, y += 16, "Current x value = " + std::to_string(rippleCenterX));
+			DrawString(50, y += 16, "Current y value = " + std::to_string(rippleCenterY));
+		break;
 
 		}
 
@@ -425,6 +600,7 @@ protected:
 		DrawString(500, y += 16, "6) Median");
 		DrawString(500, y += 16, "7) Adaptive");
 		DrawString(500, y += 16, "8) Floyd-Steinberg Dithering");
+		DrawString(500, y += 16, "9) Ripple");
 
 		return true;
 	}
