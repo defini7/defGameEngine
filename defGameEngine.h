@@ -80,6 +80,7 @@
 #include <cmath>
 #include <list>
 #include <memory>
+#include <algorithm>
 
 #include <GLFW/glfw3.h>
 
@@ -118,7 +119,7 @@
 #endif
 
 #ifndef DGE_MIX
-#define DGE_MIX(x, y, f, t) t((float)x * (1.0f - f) + (float)y * f)
+#define DGE_MIX(x, y, f, t) t(float(x) * (1.0f - f) + float(y) * f)
 #endif
 
 #ifndef DGE_MAX
@@ -202,6 +203,7 @@ namespace def
 		operator v2d<int>() const { return { static_cast<int32_t>(this->x), static_cast<int32_t>(this->y) }; }
 		operator v2d<float>() const { return { static_cast<float>(this->x),static_cast<float>(this->y) }; }
 		operator v2d<double>() const { return { static_cast<double>(this->x), static_cast<double>(this->y) }; }
+		operator v2d<uint32_t>() const { return { static_cast<uint32_t>(this->x), static_cast<uint32_t>(this->y) }; }
 
 		v2d<T>& operator+=(const v2d<T>& v);
 		v2d<T>& operator-=(const v2d<T>& v);
@@ -227,6 +229,8 @@ namespace def
 		v2d<T> max(const v2d<T>& v) const;
 		v2d<T> min(const v2d<T>& v) const;
 
+		void swap(v2d<T>& v);
+
 		v2d<T> norm() const;
 		v2d<T> abs() const;
 		v2d<T> perp() const;
@@ -242,7 +246,7 @@ namespace def
 
 	typedef v2d<int> vi2d;
 	typedef v2d<float> vf2d;
-	typedef v2d<size_t> vs2d;
+	typedef v2d<uint32_t> vu2d;
 
 	struct KeyState
 	{
@@ -253,7 +257,7 @@ namespace def
 
 	struct Pixel
 	{
-		Pixel(const uint8_t r = 0, const uint8_t g = 0, const uint8_t b = 0, const uint8_t a = 255U);
+		Pixel(uint8_t r = 0u, uint8_t g = 0u, uint8_t b = 0u, uint8_t a = 255u);
 
 		enum Mode
 		{
@@ -270,39 +274,39 @@ namespace def
 		Pixel& ref();
 		std::string str() const;
 
-		Pixel operator+(const uint8_t rhs) const;
-		Pixel operator-(const uint8_t rhs) const;
-		Pixel operator*(const uint8_t rhs) const;
-		Pixel operator/(const uint8_t rhs) const;
+		Pixel operator+(const float rhs) const;
+		Pixel operator-(const float rhs) const;
+		Pixel operator*(const float rhs) const;
+		Pixel operator/(const float rhs) const;
 
-		Pixel& operator+=(const uint8_t rhs);
-		Pixel& operator-=(const uint8_t rhs);
-		Pixel& operator*=(const uint8_t rhs);
-		Pixel& operator/=(const uint8_t rhs);
+		Pixel& operator+=(const float rhs);
+		Pixel& operator-=(const float rhs);
+		Pixel& operator*=(const float rhs);
+		Pixel& operator/=(const float rhs);
 
-		Pixel operator+(const Pixel& rhs) const;
-		Pixel operator-(const Pixel& rhs) const;
-		Pixel operator*(const Pixel& rhs) const;
-		Pixel operator/(const Pixel& rhs) const;
+		Pixel operator+(const def::Pixel& rhs) const;
+		Pixel operator-(const def::Pixel& rhs) const;
+		Pixel operator*(const def::Pixel& rhs) const;
+		Pixel operator/(const def::Pixel& rhs) const;
 
-		Pixel& operator+=(const Pixel& rhs);
-		Pixel& operator-=(const Pixel& rhs);
-		Pixel& operator*=(const Pixel& rhs);
-		Pixel& operator/=(const Pixel& rhs);
+		Pixel& operator+=(const def::Pixel& rhs);
+		Pixel& operator-=(const def::Pixel& rhs);
+		Pixel& operator*=(const def::Pixel& rhs);
+		Pixel& operator/=(const def::Pixel& rhs);
 
-		bool operator==(const Pixel& rhs) const;
-		bool operator!=(const Pixel& rhs) const;
-		bool operator>(const Pixel& rhs) const;
-		bool operator<(const Pixel& rhs) const;
-		bool operator>=(const Pixel& rhs) const;
-		bool operator<=(const Pixel& rhs) const;
+		bool operator==(const def::Pixel& rhs) const;
+		bool operator!=(const def::Pixel& rhs) const;
+		bool operator>(const def::Pixel& rhs) const;
+		bool operator<(const def::Pixel& rhs) const;
+		bool operator>=(const def::Pixel& rhs) const;
+		bool operator<=(const def::Pixel& rhs) const;
 
-		bool operator==(const uint8_t rhs) const;
-		bool operator!=(const uint8_t rhs) const;
-		bool operator>(const uint8_t rhs) const;
-		bool operator<(const uint8_t rhs) const;
-		bool operator>=(const uint8_t rhs) const;
-		bool operator<=(const uint8_t rhs) const;
+		bool operator==(const float rhs) const;
+		bool operator!=(const float rhs) const;
+		bool operator>(const float rhs) const;
+		bool operator<(const float rhs) const;
+		bool operator>=(const float rhs) const;
+		bool operator<=(const float rhs) const;
 	};
 
 	static Pixel BLACK(0, 0, 0, 255),
@@ -352,6 +356,9 @@ namespace def
 	public:
 		enum class FileType { BMP, PNG, JPG, TGA, TGA_RLE };
 
+		enum class SampleMethod { LINEAR, BILINEAR, TRILINEAR };
+		enum class WrapMethod { NONE, REPEAT, MIRROR, CLAMP };
+
 		Sprite() = default;
 		Sprite(const int32_t width, const int32_t height, const int32_t channels = 4);
 		Sprite(const std::string& filename);
@@ -370,13 +377,13 @@ namespace def
 
 		void Save(const std::string& filename, const FileType type) const;
 
-		bool SetPixel(const int32_t x, const int32_t y, const Pixel& p);
-		Pixel GetPixel(const int32_t x, const int32_t y) const;
+		bool SetPixel(const def::vi2d& pos, const Pixel& p);
+		Pixel GetPixel(const def::vi2d& pos, const WrapMethod wrap = WrapMethod::NONE) const;
 
 		void SetPixelData(const uint8_t* data);
-		void SetPixelData(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a = 255);
+		void SetPixelData(const def::Pixel& col);
 
-		Pixel Sample(const float x, const float y) const;
+		Pixel Sample(const def::vf2d& uv, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
 	};
 
 	struct Texture
@@ -699,13 +706,9 @@ namespace def
 	template <class T>
 	v2d<T> v2d<T>::clamp(const v2d<T>& start, const v2d<T>& end) const
 	{
-		v2d<T> clamped;
-		clamped.x = this->x;
-		clamped.y = this->y;
-		if (clamped.x < start.x) clamped.x = start.x;
-		if (clamped.y < start.y) clamped.y = start.y;
-		if (clamped.x > end.x) clamped.x = end.x;
-		if (clamped.y > end.y) clamped.y = end.y;
+		v2d<T> clamped = { this->x, this->y };
+		clamped.x = std::clamp(clamped.x, start.x, end.x);
+		clamped.y = std::clamp(clamped.y, start.y, end.y);
 		return clamped;
 	}
 
@@ -718,6 +721,13 @@ namespace def
 
 	template <class T> v2d<T> v2d<T>::max(const v2d<T>& v) const { return v2d<T>(DGE_MAX(this->x, v.x), DGE_MAX(this->y, v.y)); }
 	template <class T> v2d<T> v2d<T>::min(const v2d<T>& v) const { return v2d<T>(DGE_MIN(this->x, v.x), DGE_MIN(this->y, v.y)); }
+
+	template <class T>
+	void v2d<T>::swap(v2d<T>& v)
+	{
+		std::swap(x, v.x);
+		std::swap(y, v.y);
+	}
 
 	template <class T> v2d<T> v2d<T>::norm() const { float n = 1.0f / mag(); return v2d<T>(this->x * n, this->y * n); }
 	template <class T> v2d<T> v2d<T>::abs() const { return v2d<T>(std::abs(this->x), std::abs(this->y)); }
@@ -732,17 +742,16 @@ namespace def
 	template <class T> v2d<T>::operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
 	template <class T> std::string v2d<T>::str() const { return operator std::string(); }
 
-	Pixel::Pixel(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) : r(r), g(g), b(b), a(a) {}
+	Pixel::Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
 
 	Pixel Pixel::mix(const def::Pixel& rhs, const float factor) const
 	{
-		return
-		{
+		return Pixel(
 			DGE_MIX(r, rhs.r, factor, uint8_t),
 			DGE_MIX(g, rhs.g, factor, uint8_t),
 			DGE_MIX(b, rhs.b, factor, uint8_t),
 			DGE_MIX(a, rhs.a, factor, uint8_t)
-		};
+		);
 	}
 
 	Pixel& Pixel::clamp()
@@ -764,12 +773,12 @@ namespace def
 			std::to_string(a) + ')';
 	}
 
-	Pixel Pixel::operator+(const uint8_t rhs) const { return Pixel(r + rhs, g + rhs, b + rhs, a).clamp(); }
-	Pixel Pixel::operator-(const uint8_t rhs) const { return Pixel(r - rhs, g - rhs, b - rhs, a).clamp(); }
-	Pixel Pixel::operator*(const uint8_t rhs) const { return Pixel(r * rhs, g * rhs, b * rhs, a).clamp(); }
-	Pixel Pixel::operator/(const uint8_t rhs) const { return Pixel(r / rhs, g / rhs, b / rhs, a).clamp(); }
+	Pixel Pixel::operator+(const float rhs) const { return Pixel(r + rhs, g + rhs, b + rhs, a).clamp(); }
+	Pixel Pixel::operator-(const float rhs) const { return Pixel(r - rhs, g - rhs, b - rhs, a).clamp(); }
+	Pixel Pixel::operator*(const float rhs) const { return Pixel(r * rhs, g * rhs, b * rhs, a).clamp(); }
+	Pixel Pixel::operator/(const float rhs) const { return Pixel(r / rhs, g / rhs, b / rhs, a).clamp(); }
 
-	Pixel& Pixel::operator+=(const uint8_t rhs)
+	Pixel& Pixel::operator+=(const float rhs)
 	{
 		r += rhs;
 		g += rhs;
@@ -777,7 +786,7 @@ namespace def
 		return ref().clamp();
 	}
 
-	Pixel& Pixel::operator-=(const uint8_t rhs)
+	Pixel& Pixel::operator-=(const float rhs)
 	{
 		r -= rhs;
 		g -= rhs;
@@ -785,7 +794,7 @@ namespace def
 		return ref().clamp();
 	}
 
-	Pixel& Pixel::operator*=(const uint8_t rhs)
+	Pixel& Pixel::operator*=(const float rhs)
 	{
 		r *= rhs;
 		g *= rhs;
@@ -793,7 +802,7 @@ namespace def
 		return ref().clamp();
 	}
 
-	Pixel& Pixel::operator/=(const uint8_t rhs)
+	Pixel& Pixel::operator/=(const float rhs)
 	{
 		r /= rhs;
 		g /= rhs;
@@ -845,12 +854,12 @@ namespace def
 	bool Pixel::operator>=(const Pixel& rhs) const { return r >= rhs.r && g >= rhs.g && b >= rhs.b; }
 	bool Pixel::operator<=(const Pixel& rhs) const { return r <= rhs.r && g <= rhs.g && b <= rhs.b; }
 
-	bool Pixel::operator==(const uint8_t rhs) const { return r == rhs && g == rhs && b == rhs; }
-	bool Pixel::operator!=(const uint8_t rhs) const { return r != rhs && g != rhs && b != rhs; }
-	bool Pixel::operator>(const uint8_t rhs) const { return r > rhs && g > rhs && b > rhs; }
-	bool Pixel::operator<(const uint8_t rhs) const { return r < rhs&& g < rhs&& b < rhs; }
-	bool Pixel::operator>=(const uint8_t rhs) const { return r >= rhs && g >= rhs && b >= rhs; }
-	bool Pixel::operator<=(const uint8_t rhs) const { return r <= rhs && g <= rhs && b <= rhs; }
+	bool Pixel::operator==(const float rhs) const { return r == rhs && g == rhs && b == rhs; }
+	bool Pixel::operator!=(const float rhs) const { return r != rhs && g != rhs && b != rhs; }
+	bool Pixel::operator>(const float rhs) const { return r > rhs && g > rhs && b > rhs; }
+	bool Pixel::operator<(const float rhs) const { return r < rhs&& g < rhs&& b < rhs; }
+	bool Pixel::operator>=(const float rhs) const { return r >= rhs && g >= rhs && b >= rhs; }
+	bool Pixel::operator<=(const float rhs) const { return r <= rhs && g <= rhs && b <= rhs; }
 
 	Sprite::Sprite(int32_t width, int32_t height, int32_t channels)
 	{
@@ -911,11 +920,11 @@ namespace def
 		DGE_ASSERT(err == 1, "[stb_image_write Error] Code: " << err)
 	}
 
-	bool Sprite::SetPixel(const int32_t x, const int32_t y, const Pixel& p)
+	bool Sprite::SetPixel(const def::vi2d& pos, const Pixel& p)
 	{
-		if (x >= 0 && y >= 0 && x < width && y < height)
+		if (pos >= def::vi2d(0, 0) && pos < def::vi2d(width, height))
 		{
-			size_t i = channels * (y * width + x);
+			size_t i = channels * (pos.y * width + pos.x);
 
 			pixelData[i] = p.r;
 			pixelData[i + 1] = p.g;
@@ -928,21 +937,50 @@ namespace def
 		return false;
 	}
 
-	Pixel Sprite::GetPixel(const int32_t x, const int32_t y) const
+	Pixel Sprite::GetPixel(const def::vi2d& pos, const WrapMethod wrap) const
 	{
-		if (x >= 0 && y >= 0 && x < width && y < height)
+		auto get_pixel = [&](const def::vi2d& xy)
 		{
-			size_t i = channels * (y * width + x);
-
+			size_t i = channels * (xy.y * width + xy.x);
 			return Pixel(
 				pixelData[i],
 				pixelData[i + 1],
 				pixelData[i + 2],
 				pixelData[i + 3]
 			);
+		};
+
+		def::vi2d size = { width, height };
+
+		switch (wrap)
+		{
+		case WrapMethod::NONE:
+		{
+			if (pos >= def::vi2d(0, 0) && pos < size)
+				return get_pixel(pos);
+		}
+		break;
+
+		case WrapMethod::REPEAT:
+			return get_pixel((pos % size).abs());
+
+		case WrapMethod::MIRROR:
+		{
+			def::vi2d q = pos / size;
+			def::vi2d m = (pos % size).abs();
+
+			if (q.x % 2 == 0) m.x = width - m.x - 1;
+			if (q.y % 2 == 0) m.y = height - m.y - 1;
+
+			return get_pixel(m);
 		}
 
-		return BLACK;
+		case WrapMethod::CLAMP:
+			return get_pixel(pos.clamp({ 0, 0 }, size));
+
+		}
+
+		return def::BLACK;
 	}
 
 	void Sprite::SetPixelData(const uint8_t* data)
@@ -950,25 +988,107 @@ namespace def
 		memcpy(pixelData, data, width * height * channels * sizeof(uint8_t));
 	}
 
-	void Sprite::SetPixelData(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a)
+	void Sprite::SetPixelData(const def::Pixel& col)
 	{
 		for (int i = 0; i < width; i++)
 			for (int j = 0; j < height; j++)
 			{
 				size_t idx = channels * (j * width + i);
-				pixelData[idx] = r;
-				pixelData[idx + 1] = g;
-				pixelData[idx + 2] = b;
-				pixelData[idx + 3] = a;
+				pixelData[idx] = col.r;
+				pixelData[idx + 1] = col.g;
+				pixelData[idx + 2] = col.b;
+				pixelData[idx + 3] = col.a;
 			}
 	}
 
-	Pixel Sprite::Sample(const float x, const float y) const
+	Pixel Sprite::Sample(const def::vf2d& uv, const SampleMethod sample, const WrapMethod wrap) const
 	{
-		return GetPixel(
-			DGE_MIN(int32_t(x * (float)width), width - 1),
-			DGE_MIN(int32_t(y * (float)height), height - 1)
-		);
+		def::vf2d denorm = uv * def::vf2d(width, height);
+
+		switch (sample)
+		{
+		case SampleMethod::LINEAR:
+			return GetPixel(denorm.floor(), wrap);
+
+		case SampleMethod::BILINEAR:
+		{
+			def::vf2d offset = denorm - denorm.floor();
+
+			def::Pixel tl = GetPixel(offset + def::vf2d(0, 0), wrap);
+			def::Pixel tr = GetPixel(offset + def::vf2d(1, 0), wrap);
+			def::Pixel bl = GetPixel(offset + def::vf2d(0, 1), wrap);
+			def::Pixel br = GetPixel(offset + def::vf2d(1, 1), wrap);
+
+			def::Pixel topCol = tr * offset.x + tl * (1.0f - offset.x);
+			def::Pixel bottomCol = br * offset.x + bl * (1.0f - offset.x);
+
+			return bottomCol * offset.y + topCol * (1.0f - offset.y);
+		}
+
+		case SampleMethod::TRILINEAR:
+		{
+			def::vi2d center = (denorm - def::vf2d(0.5f, 0.5f)).floor();
+			def::vf2d offset = (denorm - def::vf2d(0.5f, 0.5f)) - def::vf2d(center);
+
+			struct Pixelf
+			{
+				float r = 0.0f;
+				float g = 0.0f;
+				float b = 0.0f;
+				float a = 0.0f;
+			};
+
+			Pixelf splineX[4][4];
+
+			def::vi2d s;
+			for (s.y = 0; s.y < 4; s.y++)
+				for (s.x = 0; s.x < 4; s.x++)
+				{
+					def::Pixel p = GetPixel(center + s - def::vi2d(1, 1), wrap);
+					splineX[s.y][s.x] = { (float)p.r, (float)p.g, (float)p.b, (float)p.a };
+				}
+
+			def::vf2d t = offset;
+			def::vf2d tt = t * t;
+			def::vf2d ttt = tt * tt;
+
+			def::vf2d q[4];
+			q[0] = 0.5f * (-1.0f * ttt + 2.0f * tt - t);
+			q[1] = 0.5f * (3.0f * ttt - 5.0f * tt + def::vf2d(2.0f, 2.0f));
+			q[2] = 0.5f * (-3.0f * ttt + 4.0f * tt + t);
+			q[3] = 0.5f * (ttt - tt);
+
+			Pixelf splineY[4];
+			
+			for (int s = 0; s < 4; s++)
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					splineY[s].r += splineX[s][i].r * q[i].x;
+					splineY[s].g += splineX[s][i].g * q[i].x;
+					splineY[s].b += splineX[s][i].b * q[i].x;
+					splineY[s].a += splineX[s][i].a * q[i].x;
+				}
+			}
+
+			Pixelf pix;
+			for (int i = 0; i < 4; i++)
+			{
+				pix.r += splineY[i].r * q[i].y;
+				pix.g += splineY[i].g * q[i].y;
+				pix.b += splineY[i].b * q[i].y;
+				pix.a += splineY[i].a * q[i].y;
+			}
+
+			return def::Pixel(
+				(uint8_t)std::clamp(pix.r, 0.0f, 255.0f),
+				(uint8_t)std::clamp(pix.g, 0.0f, 255.0f),
+				(uint8_t)std::clamp(pix.b, 0.0f, 255.0f),
+				(uint8_t)std::clamp(pix.a, 0.0f, 255.0f)
+			);
+		}
+		
+		}
 	}
 
 	Texture::Texture(Sprite* sprite) { Construct(sprite, false); }
@@ -1342,7 +1462,7 @@ namespace def
 			"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
 
 		m_Font = new Sprite(128, 48);
-		int px = 0, py = 0;
+		def::vi2d p;
 
 		for (size_t b = 0; b < 1024; b += 4)
 		{
@@ -1355,8 +1475,8 @@ namespace def
 			for (int i = 0; i < 24; i++)
 			{
 				uint8_t k = (r & (1 << i)) ? 255 : 0;
-				m_Font->SetPixel(px, py, Pixel(k, k, k, k));
-				if (++py == 48) { px++; py = 0; }
+				m_Font->SetPixel({ p.x, p.y }, { k, k, k, k });
+				if (++p.y == 48) { p.x++; p.y = 0; }
 			}
 		}
 
@@ -1370,24 +1490,24 @@ namespace def
 
 		switch (m_PixelMode)
 		{
-		case Pixel::CUSTOM: return target->SetPixel(x, y, m_Shader({ x, y }, target->GetPixel(x, y), p));
-		case Pixel::DEFAULT: return target->SetPixel(x, y, p);
+		case Pixel::CUSTOM: return target->SetPixel({ x, y }, m_Shader({ x, y }, target->GetPixel({ x, y }), p));
+		case Pixel::DEFAULT: return target->SetPixel({ x, y }, p);
 		case Pixel::MASK:
 		{
 			if (p.a == 255)
-				return target->SetPixel(x, y, p);
+				return target->SetPixel({ x, y }, p);
 		}
 		break;
 
 		case Pixel::ALPHA:
 		{
-			Pixel d = target->GetPixel(x, y);
+			Pixel d = target->GetPixel({ x, y });
 			float a = (float)(p.a / 255.0f);
 			float c = 1.0f - a;
 			float r = a * (float)p.r + c * (float)d.r;
 			float g = a * (float)p.g + c * (float)d.g;
 			float b = a * (float)p.b + c * (float)d.b;
-			return target->SetPixel(x, y, Pixel((uint8_t)r, (uint8_t)g, (uint8_t)b));
+			return target->SetPixel({ x, y }, { (uint8_t)r, (uint8_t)g, (uint8_t)b });
 		}
 
 		}
@@ -1904,14 +2024,14 @@ namespace def
 	{
 		for (int i = 0; i < sprite->width; i++)
 			for (int j = 0; j < sprite->height; j++)
-				Draw(x + i, y + j, sprite->GetPixel(i, j));
+				Draw(x + i, y + j, sprite->GetPixel({ i, j }));
 	}
 
 	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* sprite)
 	{
 		for (int i = fx, x1 = 0; i < fx + fsx; i++, x1++)
 			for (int j = fy, y1 = 0; j < fy + fsy; j++, y1++)
-				Draw(x + x1, y + y1, sprite->GetPixel(i, j));
+				Draw(x + x1, y + y1, sprite->GetPixel({ i, j }));
 	}
 
 	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scaleX, float scaleY, const Pixel& tint)
@@ -2201,9 +2321,9 @@ namespace def
 				int32_t ox = (c - 32) % 16;
 				int32_t oy = (c - 32) / 16;
 
-				for (uint32_t i = 0; i < 8; i++)
-					for (uint32_t j = 0; j < 8; j++)
-						if (m_Font->GetPixel(i + ox * 8, j + oy * 8).r > 0)
+				for (int32_t i = 0; i < 8; i++)
+					for (int32_t j = 0; j < 8; j++)
+						if (m_Font->GetPixel({ i + ox * 8, j + oy * 8 }).r > 0)
 							Draw(x + sx + i, y + sy + j, p);
 
 				sx += 8;
@@ -2215,7 +2335,7 @@ namespace def
 	{
 		for (int32_t x = 0; x < m_DrawTarget->sprite->width; x++)
 			for (int32_t y = 0; y < m_DrawTarget->sprite->height; y++)
-				m_DrawTarget->sprite->SetPixel(x, y, p);
+				m_DrawTarget->sprite->SetPixel({ x, y }, p);
 	}
 
 	KeyState GameEngine::GetKey(uint32_t k) const { return m_Keys[k]; }
