@@ -84,13 +84,6 @@
 
 #include <GLFW/glfw3.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#pragma warning(disable:4996)
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-
 #ifdef _WIN32
 
 #ifndef _CRT_SECURE_NO_WARNINGS
@@ -338,15 +331,8 @@ namespace def
 		PURPLE(200, 122, 255, 255),
 		NONE(0, 0, 0, 0);
 
-	Pixel PixelF(float r, float g, float b, float a = 1.0f)
-	{
-		return Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f), uint8_t(a * 255.0f));
-	}
-
-	Pixel RandomPixel(bool isRandomAlpha = false)
-	{
-		return Pixel(rand() % 256, rand() % 256, rand() % 256, isRandomAlpha ? rand() % 256 : 255);
-	}
+	Pixel PixelF(float r, float g, float b, float a = 1.0f);
+	Pixel RandomPixel(bool isRandomAlpha = false);
 
 #define DGE_B2F(v) ((float)v / 255.0f)
 #define DGE_F2B(v) uint8_t(v * 255.0f)
@@ -619,6 +605,7 @@ namespace def
 
 		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur));
 
+		uint32_t AnyKey(bool pressed = true, bool held = false, bool released = false);
 	};
 
 #ifdef DGE_APPLICATION
@@ -761,7 +748,7 @@ namespace def
 		b = DGE_MIN(255, DGE_MAX(0, b));
 		return ref();
 	}
-	
+
 	Pixel& Pixel::ref() { return *this; }
 
 	std::string Pixel::str() const
@@ -860,6 +847,16 @@ namespace def
 	bool Pixel::operator<(const float rhs) const { return r < rhs&& g < rhs&& b < rhs; }
 	bool Pixel::operator>=(const float rhs) const { return r >= rhs && g >= rhs && b >= rhs; }
 	bool Pixel::operator<=(const float rhs) const { return r <= rhs && g <= rhs && b <= rhs; }
+
+	Pixel PixelF(float r, float g, float b, float a)
+	{
+		return Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f), uint8_t(a * 255.0f));
+	}
+
+	Pixel RandomPixel(bool isRandomAlpha)
+	{
+		return Pixel(rand() % 256, rand() % 256, rand() % 256, isRandomAlpha ? rand() % 256 : 255);
+	}
 
 	Sprite::Sprite(int32_t width, int32_t height, int32_t channels)
 	{
@@ -962,15 +959,15 @@ namespace def
 		break;
 
 		case WrapMethod::REPEAT:
-			return get_pixel((pos % size).abs());
+			return get_pixel(pos.abs() % size);
 
 		case WrapMethod::MIRROR:
 		{
-			def::vi2d q = pos / size;
-			def::vi2d m = (pos % size).abs();
-
-			if (q.x % 2 == 0) m.x = width - m.x - 1;
-			if (q.y % 2 == 0) m.y = height - m.y - 1;
+			def::vi2d m =
+			{
+				(pos.x < 0) ? width - 1 - abs(pos.x) % width : abs(pos.x) % width,
+				(pos.y < 0) ? height - 1 - abs(pos.y) % height : abs(pos.y) % height
+			};
 
 			return get_pixel(m);
 		}
@@ -1012,12 +1009,13 @@ namespace def
 
 		case SampleMethod::BILINEAR:
 		{
-			def::vf2d offset = denorm - denorm.floor();
+			def::vf2d cell = denorm.floor();
+			def::vf2d offset = denorm - cell;
 
-			def::Pixel tl = GetPixel(offset + def::vf2d(0, 0), wrap);
-			def::Pixel tr = GetPixel(offset + def::vf2d(1, 0), wrap);
-			def::Pixel bl = GetPixel(offset + def::vf2d(0, 1), wrap);
-			def::Pixel br = GetPixel(offset + def::vf2d(1, 1), wrap);
+			def::Pixel tl = GetPixel(cell + def::vf2d(0, 0), wrap);
+			def::Pixel tr = GetPixel(cell + def::vf2d(1, 0), wrap);
+			def::Pixel bl = GetPixel(cell + def::vf2d(0, 1), wrap);
+			def::Pixel br = GetPixel(cell + def::vf2d(1, 1), wrap);
 
 			def::Pixel topCol = tr * offset.x + tl * (1.0f - offset.x);
 			def::Pixel bottomCol = br * offset.x + bl * (1.0f - offset.x);
@@ -1059,7 +1057,7 @@ namespace def
 			q[3] = 0.5f * (ttt - tt);
 
 			Pixelf splineY[4];
-			
+
 			for (int s = 0; s < 4; s++)
 			{
 				for (int i = 0; i < 4; i++)
@@ -1087,7 +1085,7 @@ namespace def
 				(uint8_t)std::clamp(pix.a, 0.0f, 255.0f)
 			);
 		}
-		
+
 		}
 	}
 
@@ -1119,7 +1117,7 @@ namespace def
 
 		DGE_ASSERT(format != 0, "[Texture.Load Error] Text: Invalid number of channels: " << sprite->channels)
 
-		glGenTextures(1, &id);
+			glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -2029,9 +2027,9 @@ namespace def
 
 	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* sprite)
 	{
-		for (int i = fx, x1 = 0; i < fx + fsx; i++, x1++)
-			for (int j = fy, y1 = 0; j < fy + fsy; j++, y1++)
-				Draw(x + x1, y + y1, sprite->GetPixel({ i, j }));
+		for (int i = 0, x1 = 0; i < fsx; i++, x1++)
+			for (int j = 0, y1 = 0; j < fsy; j++, y1++)
+				Draw(x + x1, y + y1, sprite->GetPixel({ fx + i, fy + j }));
 	}
 
 	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scaleX, float scaleY, const Pixel& tint)
@@ -2188,7 +2186,6 @@ namespace def
 
 			float d[4];
 			for (int i = 0; i < 4; i++)	d[i] = (points[i] - center).mag();
-
 			for (int i = 0; i < 4; i++)
 			{
 				float q = d[i] == 0.0f ? 1.0f : (d[i] + d[(i + 2) & 3]) / d[(i + 2) & 3];
@@ -2204,33 +2201,16 @@ namespace def
 	{
 		int32_t verts = modelCoordinates.size();
 
-		std::vector<vf2d> coordinates;
-		coordinates.resize(verts);
+		std::vector<vf2d> coordinates(verts);
 
 		for (int i = 0; i < verts; i++)
 		{
-			coordinates[i].x = modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r);
-			coordinates[i].y = modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r);
-		}
-
-		for (int i = 0; i < verts; i++)
-		{
-			coordinates[i].x = coordinates[i].x * s;
-			coordinates[i].y = coordinates[i].y * s;
-		}
-
-		for (int i = 0; i < verts; i++)
-		{
-			coordinates[i].x = coordinates[i].x + x;
-			coordinates[i].y = coordinates[i].y + y;
+			coordinates[i].x = (modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r)) * s + x;
+			coordinates[i].y = (modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r)) * s + y;
 		}
 
 		for (int i = 0; i < verts + 1; i++)
-		{
-			int32_t j = i + 1;
-			DrawLine((int32_t)coordinates[i % verts].x, (int32_t)coordinates[i % verts].y,
-				(int32_t)coordinates[j % verts].x, (int32_t)coordinates[j % verts].y, p);
-		}
+			DrawLine(coordinates[i % verts], coordinates[(i + 1) % verts], p);
 	}
 
 	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& p)
@@ -2242,28 +2222,16 @@ namespace def
 
 		for (int i = 0; i < verts; i++)
 		{
-			coordinates[i].x = modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r);
-			coordinates[i].y = modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r);
-		}
-
-		for (int i = 0; i < verts; i++)
-		{
-			coordinates[i].x = coordinates[i].x * s;
-			coordinates[i].y = coordinates[i].y * s;
-		}
-
-		for (int i = 0; i < verts; i++)
-		{
-			coordinates[i].x = coordinates[i].x + x;
-			coordinates[i].y = coordinates[i].y + y;
+			coordinates[i].x = (modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r)) * s + x;
+			coordinates[i].y = (modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r)) * s + y;
 		}
 
 		auto GetAngle = [](const def::vf2d& p1, const def::vf2d& p2)
 		{
-			float theta = atan2(p2.y, p2.x) - atan2(p1.y, p1.x);
-			while (theta > 3.14159f) theta -= 3.14159f * 2.0f;
-			while (theta < -3.14159f) theta += 3.14159f * 2.0f;
-			return theta;
+			float a = atan2(p2.y, p2.x) - atan2(p1.y, p1.x);
+			while (a > 3.14159f) a -= 3.14159f * 2.0f;
+			while (a < -3.14159f) a += 3.14159f * 2.0f;
+			return a;
 		};
 
 		auto PointInPolygon = [&](const def::vf2d& p)
@@ -2507,6 +2475,16 @@ namespace def
 	{
 		m_Shader = func;
 		m_PixelMode = m_Shader ? Pixel::CUSTOM : Pixel::DEFAULT;
+	}
+
+	uint32_t GameEngine::AnyKey(bool pressed, bool held, bool released)
+	{
+		for (uint32_t i = 0; i < 512U; i++)
+		{
+			if (m_Keys[i].pressed && pressed) return i;
+			if (m_Keys[i].held && held) return i;
+			if (m_Keys[i].released && released) return i;
+		}
 	}
 
 #endif
