@@ -24,7 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DGE_APPLICATION
-#include "../defGameEngine.h"
+#include "defGameEngine.h"
 
 #include <algorithm>
 
@@ -225,9 +225,9 @@ protected:
 		// Perform DDA raycast algorithm
 		for (int x = 0; x < ScreenWidth(); x++)
 		{
-			float fCameraX = 2.0f * (float)x / (float)ScreenWidth() - 1.0f;
+			float fPlayerA = 2.0f * (float)x / (float)ScreenWidth() - 1.0f;
 
-			def::vf2d vRayDir = vPlayerVel + vPlayerPlane * fCameraX;
+			def::vf2d vRayDir = vPlayerVel + vPlayerPlane * fPlayerA;
 			def::vf2d vDistance = (1.0f / vRayDir).abs();
 
 			bool bHitWall = false;
@@ -292,20 +292,13 @@ protected:
 			else
 				fDistanceToWall = vFromCurrentDistance.y - vDistance.y;
 
-			int nLineHeight = int((float)ScreenHeight() / fDistanceToWall) * 2;
+			int nLineHeight = int((float)ScreenHeight() / fDistanceToWall);
 
-			int nCeiling = -nLineHeight / 2 + ScreenHeight() / 2;
-			int nFloor = nLineHeight / 2 + ScreenHeight() / 2;
-
-			if (nCeiling < 0)
-				nCeiling = 0;
-
-			if (nFloor >= ScreenHeight())
-				nFloor = ScreenHeight();
+			int nCeiling = std::max(-nLineHeight + ScreenHeight() / 2, 0);
+			int nFloor = std::min(nLineHeight + ScreenHeight() / 2, ScreenHeight() - 1);
 
 			float fTestPoint;
-			float fTexStep;
-			float fTexPos;
+			float fTexStep, fTexPos;
 
 			if (nSide == 0)
 				fTestPoint = vPlayerPos.y + vRayDir.y * fDistanceToWall;
@@ -319,8 +312,8 @@ protected:
 			if ((nSide == 0 && vRayDir.x > 0.0f) || (nSide == 1 && vRayDir.y < 0.0f))
 				vTex.x = vTexSize.x - vTex.x - 1;
 
-			fTexStep = (float)vTexSize.y / (float)nLineHeight;
-			fTexPos = float(nCeiling - ScreenHeight() / 2 + nLineHeight / 2) * fTexStep;
+			fTexStep = (float)vTexSize.y / (float)nLineHeight / 2;
+			fTexPos = float(nCeiling - ScreenHeight() / 2 + nLineHeight) * fTexStep;
 
 			for (int y = 0; y <= nFloor; y++)
 			{
@@ -333,17 +326,17 @@ protected:
 
 					def::vi2d vTexPos = (vPlaneSample * def::vf2d(vTexSize)).min(vTexSize);
 
-					Draw(x, y, sprTiles->GetPixel(nCeilingId * vTexSize.x + vTexPos.x, vTexPos.y)); // ceiling
-					Draw(x, ScreenHeight() - y, sprTiles->GetPixel(nFloorId * vTexSize.x + vTexPos.x, vTexPos.y)); // floor
+					Draw(x, y, sprTiles->GetPixel({ nCeilingId * vTexSize.x + vTexPos.x, vTexPos.y })); // ceiling
+					Draw(x, ScreenHeight() - y, sprTiles->GetPixel({ nFloorId * vTexSize.x + vTexPos.x, vTexPos.y })); // floor
 				}
 				else if (y > nCeiling && !bNoWall) // wall
 				{
 					if (fDistanceToWall < fDepth)
 					{
-						vTex.y = (int)fTexPos & (vTexSize.y - 1);
+						vTex.y = (int)fTexPos % (vTexSize.y - 1);
 						fTexPos += fTexStep;
 
-						Draw(x, y, sprTiles->GetPixel(((int)sMap[vMapPos.y * vMapSize.x + vMapPos.x] - 48)* vTexSize.x + vTex.x, vTex.y));
+						Draw(x, y, sprTiles->GetPixel({ ((int)sMap[vMapPos.y * vMapSize.x + vMapPos.x] - 48) * vTexSize.x + vTex.x, vTex.y }));
 					}
 				}
 			}
@@ -359,7 +352,7 @@ protected:
 			if (o.vPos.floor() >= def::vf2d(0, 0) && o.vPos.floor() < def::vf2d(vMapSize) && !std::isdigit(sMap[(int)o.vPos.y * vMapSize.x + (int)o.vPos.x]))
 			{
 				def::vf2d vObjectPos = o.vPos - vPlayerPos;
-				
+
 				float fInvDet = 1.0f / (vPlayerPlane.x * vPlayerVel.y - vPlayerPlane.y * vPlayerVel.x);
 
 				def::vf2d vTransform =
@@ -371,10 +364,10 @@ protected:
 				float fAspectRatio = vTransform.x / vTransform.y;
 
 				def::vi2d vObjectScreenPos = { int(float(ScreenWidth() / 2) * (1.0f + fAspectRatio)), ScreenHeight() / 2 };
-				def::vi2d vObjectScreenSize = (def::vf2d(ScreenHeight(), ScreenHeight()) / def::vf2d(vTransform.y, vTransform.y)).abs();
+				int nObjectScreenSize = int((float)ScreenHeight() / vTransform.y);
 
-				def::vi2d vCeiling = vObjectScreenSize / -2 + vObjectScreenPos;
-				def::vi2d vFloor = vObjectScreenSize / 2 + vObjectScreenPos;
+				def::vi2d vCeiling = def::vi2d(nObjectScreenSize, nObjectScreenSize) / -2 + vObjectScreenPos;
+				def::vi2d vFloor = def::vi2d(nObjectScreenSize, nObjectScreenSize) / 2 + vObjectScreenPos;
 
 				vCeiling = vCeiling.max(def::vi2d(0, 0)).min(ScreenSize());
 				vFloor = vFloor.max(def::vi2d(0, 0)).min(ScreenSize());
@@ -383,16 +376,16 @@ protected:
 
 				for (int x = vCeiling.x; x < vFloor.x; x++)
 				{
-					int nTexX = (256 * (x - (-vObjectScreenSize.x / 2 + vObjectScreenPos.x)) * vTexSize.x / vObjectScreenSize.x) / 256;
+					int nTexX = (256 * (x - (-nObjectScreenSize / 2 + vObjectScreenPos.x)) * vTexSize.x / nObjectScreenSize) / 256;
 
 					if (vTransform.y >= 0 && x >= 0 && x < ScreenWidth() && vTransform.y < fDepthBuffer[x])
 					{
 						for (int y = vCeiling.y; y < vFloor.y; y++)
 						{
-							int d = y * 256 - ScreenHeight() * 128 + vObjectScreenSize.y * 128;
-							int nTexY = (d * vTexSize.y / vObjectScreenSize.y) / 256;
+							int d = y * 256 - ScreenHeight() * 128 + nObjectScreenSize * 128;
+							int nTexY = (d * vTexSize.y / nObjectScreenSize) / 256;
 
-							Draw(x, y, sprTiles->GetPixel(o.nType * vTexSize.x + nTexX, nTexY));
+							Draw(x, y, sprTiles->GetPixel({ (int)o.nType * vTexSize.x + nTexX, nTexY }));
 							fDepthBuffer[x] = vTransform.y;
 						}
 					}
@@ -401,9 +394,7 @@ protected:
 				SetPixelMode(def::Pixel::DEFAULT);
 			}
 			else
-			{
 				o.bRemove = true;
-			}
 		}
 
 		// Draw map
@@ -415,6 +406,7 @@ protected:
 				else
 					FillRectangle(x * 2, y * 2, 2, 2, def::WHITE);
 			}
+
 		FillRectangle((int)vPlayerPos.x * 2, (int)vPlayerPos.y * 2, 2, 2, def::YELLOW);
 
 		if (GetMouse(0).pressed)
@@ -437,7 +429,7 @@ int main()
 {
 	RayCasting demo;
 
-	demo.Construct(512, 480, 2, 2);
+	demo.Construct(256, 240, 4, 4);
 	demo.Run();
 
 	return 0;
