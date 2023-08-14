@@ -73,16 +73,20 @@
 #pragma region includes
 
 #include <iostream>
-#include <cstdio>
 #include <string>
 #include <chrono>
 #include <vector>
 #include <cmath>
-#include <list>
 #include <memory>
 #include <algorithm>
 
 #include <GLFW/glfw3.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #ifdef _WIN32
 
@@ -102,30 +106,13 @@
 
 #pragma endregion
 
-#ifndef DGE_ASSERT
-#define DGE_ASSERT(expr, msg) \
-	if (!(expr)) \
-	{ \
-		std::cout << msg << std::endl; \
-		exit(1); \
-	}
-#endif
-
-#ifndef DGE_MIX
-#define DGE_MIX(x, y, f, t) t(float(x) * (1.0f - f) + float(y) * f)
-#endif
-
-#ifndef DGE_MAX
-#define DGE_MAX(x, y) (((x) > (y)) ? (x) : (y)) 
-#endif
-
-#ifndef DGE_MIN
-#define DGE_MIN(x, y) (((x) < (y)) ? (x) : (y)) 
-#endif
-
 namespace def
 {
-	// Keyboard keys constants for convenient usage
+	void Assert(bool expr, const std::string& msg);
+
+	template <class T>
+	T Lerp(T x, T y, float t);
+
 	namespace Key
 	{
 		enum Keys : uint32_t
@@ -260,7 +247,11 @@ namespace def
 			CUSTOM
 		};
 
-		uint8_t r, g, b, a;
+		union
+		{
+			struct { uint8_t r, g, b, a; };
+			uint8_t rgba[4];
+		};
 
 		Pixel mix(const def::Pixel& rhs, const float factor) const;
 		Pixel& clamp();
@@ -334,8 +325,8 @@ namespace def
 	Pixel PixelF(float r, float g, float b, float a = 1.0f);
 	Pixel RandomPixel(bool isRandomAlpha = false);
 
-#define DGE_B2F(v) ((float)v / 255.0f)
-#define DGE_F2B(v) uint8_t(v * 255.0f)
+	float B2F(uint8_t b);
+	uint8_t F2B(float f);
 
 	class Sprite
 	{
@@ -346,19 +337,18 @@ namespace def
 		enum class WrapMethod { NONE, REPEAT, MIRROR, CLAMP };
 
 		Sprite() = default;
-		Sprite(const int32_t width, const int32_t height, const int32_t channels = 4);
+		Sprite(const int32_t width, const int32_t height);
 		Sprite(const std::string& filename);
 		~Sprite();
 
 	public:
 		int32_t width;
 		int32_t height;
-		int32_t channels;
 
-		uint8_t* pixelData = nullptr;
+		std::vector<Pixel> pixels;
 
 	public:
-		void Create(const int32_t width, const int32_t height, const int32_t channels = 4);
+		void Create(const int32_t width, const int32_t height);
 		void Load(const std::string& filename);
 
 		void Save(const std::string& filename, const FileType type) const;
@@ -366,8 +356,7 @@ namespace def
 		bool SetPixel(const def::vi2d& pos, const Pixel& p);
 		Pixel GetPixel(const def::vi2d& pos, const WrapMethod wrap = WrapMethod::NONE) const;
 
-		void SetPixelData(const uint8_t* data);
-		void SetPixelData(const def::Pixel& col);
+		void SetPixelData(const Pixel& col);
 
 		Pixel Sample(const def::vf2d& uv, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
 	};
@@ -386,11 +375,11 @@ namespace def
 
 		GLuint id;
 
-		float UVScaleX;
-		float UVScaleY;
+		float uvScaleX;
+		float uvScaleY;
 
-		int width;
-		int height;
+		int32_t width;
+		int32_t height;
 
 		void Load(Sprite* sprite);
 		void Update(Sprite* sprite);
@@ -425,7 +414,7 @@ namespace def
 
 	struct TextureInstance
 	{
-		Texture* tex = nullptr;
+		const Texture* tex = nullptr;
 
 		int32_t structure = Texture::FAN;
 		int32_t points = 0;
@@ -473,6 +462,7 @@ namespace def
 
 		Graphic* m_Screen;
 		Graphic* m_DrawTarget;
+
 		std::vector<TextureInstance> m_Textures;
 		Pixel m_Tint;
 
@@ -481,7 +471,7 @@ namespace def
 
 		float m_TickTimer;
 
-		Pixel(*m_Shader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
+		Pixel(*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
 
 	public:
 		inline static std::vector<std::string> s_DropCache;
@@ -531,25 +521,25 @@ namespace def
 		void FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
 		virtual void FillEllipse(int x, int y, int sx, int sy, const Pixel& p = def::WHITE);
 
-		void DrawSprite(const vi2d& pos, Sprite* sprite);
-		virtual void DrawSprite(int32_t x, int32_t y, Sprite* sprite);
+		void DrawSprite(const vi2d& pos, const Sprite* sprite);
+		virtual void DrawSprite(int32_t x, int32_t y, const Sprite* sprite);
 
-		void DrawPartialSprite(const vi2d& pos, const vi2d& fpos, const vi2d& fsize, Sprite* sprite);
-		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsizeX, int32_t fsizeY, Sprite* sprite);
+		void DrawPartialSprite(const vi2d& pos, const vi2d& fpos, const vi2d& fsize, const Sprite* sprite);
+		virtual void DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsizeX, int32_t fsizeY, const Sprite* sprite);
 
-		void DrawTexture(const vf2d& pos, Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawTexture(float x, float y, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+		void DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		virtual void DrawTexture(float x, float y, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		void DrawPartialTexture(const vf2d& pos, const vi2d& filePos, const vi2d& fileSize, Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+		void DrawPartialTexture(const vf2d& pos, const vi2d& filePos, const vi2d& fileSize, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		virtual void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint = WHITE);
+		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint = WHITE);
 
-		void DrawRotatedTexture(const vf2d& pos, float r, Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+		void DrawRotatedTexture(const vf2d& pos, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		virtual void DrawRotatedTexture(float x, float y, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		void DrawPartialRotatedTexture(const vf2d& pos, const vf2d& fpos, const vf2d& fsize, float r, Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+		void DrawPartialRotatedTexture(const vf2d& pos, const vf2d& fpos, const vf2d& fsize, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		virtual void DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
 		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
@@ -585,7 +575,7 @@ namespace def
 		void SetIcon(const std::string& fileName);
 
 		void SetDrawTarget(Graphic* target);
-		Graphic* GetDrawTarget() const;
+		Graphic* GetDrawTarget();
 
 		WindowState GetWindowState() const;
 		GLFWwindow* GetWindow() const;
@@ -610,6 +600,21 @@ namespace def
 
 #ifdef DGE_APPLICATION
 #undef DGE_APPLICATION
+
+	void Assert(bool expr, const std::string& msg)
+	{
+		if (!expr)
+		{
+			std::cerr << msg << std::endl;
+			exit(1);
+		}
+	}
+
+	template <class T>
+	T Lerp(T x, T y, float t)
+	{
+		return (float)x * (1.0f - t) + (float)y * t;
+	}
 
 	template <class T>
 	v2d<T>::v2d(const T& x, const T& y)
@@ -734,18 +739,18 @@ namespace def
 	Pixel Pixel::mix(const def::Pixel& rhs, const float factor) const
 	{
 		return Pixel(
-			DGE_MIX(r, rhs.r, factor, uint8_t),
-			DGE_MIX(g, rhs.g, factor, uint8_t),
-			DGE_MIX(b, rhs.b, factor, uint8_t),
-			DGE_MIX(a, rhs.a, factor, uint8_t)
+			Lerp(r, rhs.r, factor),
+			Lerp(g, rhs.g, factor),
+			Lerp(b, rhs.b, factor),
+			Lerp(a, rhs.a, factor)
 		);
 	}
 
 	Pixel& Pixel::clamp()
 	{
-		r = DGE_MIN(255, DGE_MAX(0, r));
-		g = DGE_MIN(255, DGE_MAX(0, g));
-		b = DGE_MIN(255, DGE_MAX(0, b));
+		r = std::min((uint8_t)255, std::max((uint8_t)0, r));
+		g = std::min((uint8_t)255, std::max((uint8_t)0, g));
+		b = std::min((uint8_t)255, std::max((uint8_t)0, b));
 		return ref();
 	}
 
@@ -858,9 +863,12 @@ namespace def
 		return Pixel(rand() % 256, rand() % 256, rand() % 256, isRandomAlpha ? rand() % 256 : 255);
 	}
 
-	Sprite::Sprite(int32_t width, int32_t height, int32_t channels)
+	float B2F(uint8_t b) { return (float)b / 255.0f; }
+	uint8_t F2B(float f) { return uint8_t(f * 255.0f); }
+
+	Sprite::Sprite(int32_t width, int32_t height)
 	{
-		Create(width, height, channels);
+		Create(width, height);
 	}
 
 	Sprite::Sprite(const std::string& fileName)
@@ -870,28 +878,34 @@ namespace def
 
 	Sprite::~Sprite()
 	{
-		if (pixelData != nullptr)
-			delete[] pixelData;
 	}
 
-	void Sprite::Create(const int32_t width, const int32_t height, const int32_t channels)
+	void Sprite::Create(const int32_t width, const int32_t height)
 	{
-		DGE_ASSERT(width > 0 && height > 0 && channels > 0, "[Sprite.Create Error] Width, height and channels should be > 0")
-			if (pixelData != nullptr) delete[] pixelData;
+		Assert(width > 0 && height > 0, "[Sprite.Create Error] Width and height should be > 0");
 
+		pixels.clear();
 		this->width = width;
 		this->height = height;
-		this->channels = channels;
 
-		pixelData = new uint8_t[width * height * channels];
-		memset(pixelData, 0, width * height * channels * sizeof(uint8_t));
+		pixels.resize(width * height);
+		std::fill(pixels.begin(), pixels.end(), def::BLACK);
 	}
 
 	void Sprite::Load(const std::string& fileName)
 	{
-		channels = 4;
-		pixelData = stbi_load(fileName.c_str(), &width, &height, nullptr, channels);
-		DGE_ASSERT(pixelData, "[stb_image Error] " << stbi_failure_reason())
+		uint8_t* data = stbi_load(fileName.c_str(), &width, &height, nullptr, 4);
+		Assert(data, "[stb_image Error] " + std::string(stbi_failure_reason()));
+
+		size_t size = width * height * 4;
+		for (size_t i = 0; i < size; i += 4)
+		{
+			size_t j = i / 4;
+			pixels[j].r = data[i + 0];
+			pixels[j].g = data[i + 1];
+			pixels[j].b = data[i + 2];
+			pixels[j].a = data[i + 3];
+		}
 	}
 
 	void Sprite::Save(const std::string& fileName, const FileType type) const
@@ -900,34 +914,28 @@ namespace def
 
 		switch (type)
 		{
-		case FileType::BMP: err = stbi_write_bmp(fileName.c_str(), width, height, channels, pixelData); break;
-		case FileType::PNG: err = stbi_write_png(fileName.c_str(), width, height, channels, pixelData, width * channels); break;
-		case FileType::JPG: err = stbi_write_jpg(fileName.c_str(), width, height, channels, pixelData, 100); break;
-		case FileType::TGA: err = stbi_write_tga(fileName.c_str(), width, height, channels, pixelData); break;
+		case FileType::BMP: err = stbi_write_bmp(fileName.c_str(), width, height, 4, pixels.data()); break;
+		case FileType::PNG: err = stbi_write_png(fileName.c_str(), width, height, 4, pixels.data(), width * 4); break;
+		case FileType::JPG: err = stbi_write_jpg(fileName.c_str(), width, height, 4, pixels.data(), 100); break;
+		case FileType::TGA: err = stbi_write_tga(fileName.c_str(), width, height, 4, pixels.data()); break;
 		case FileType::TGA_RLE:
 		{
 			stbi_write_tga_with_rle = 1;
-			err = stbi_write_tga(fileName.c_str(), width, height, channels, pixelData);
+			err = stbi_write_tga(fileName.c_str(), width, height, 4, pixels.data());
 			stbi_write_tga_with_rle = 0;
 		}
 		break;
 
 		}
 
-		DGE_ASSERT(err == 1, "[stb_image_write Error] Code: " << err)
+		Assert(err == 1, "[stb_image_write Error] Code: " + std::to_string(err));
 	}
 
 	bool Sprite::SetPixel(const def::vi2d& pos, const Pixel& p)
 	{
-		if (pos >= def::vi2d(0, 0) && pos < def::vi2d(width, height))
+		if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height)
 		{
-			size_t i = channels * (pos.y * width + pos.x);
-
-			pixelData[i] = p.r;
-			pixelData[i + 1] = p.g;
-			pixelData[i + 2] = p.b;
-			pixelData[i + 3] = p.a;
-
+			pixels[pos.y * width + pos.x] = p;
 			return true;
 		}
 
@@ -936,15 +944,9 @@ namespace def
 
 	Pixel Sprite::GetPixel(const def::vi2d& pos, const WrapMethod wrap) const
 	{
-		auto get_pixel = [&](const def::vi2d& xy)
+		auto get_pixel = [&](const def::vi2d& p)
 		{
-			size_t i = channels * (xy.y * width + xy.x);
-			return Pixel(
-				pixelData[i],
-				pixelData[i + 1],
-				pixelData[i + 2],
-				pixelData[i + 3]
-			);
+			return pixels[p.y * width + p.x];
 		};
 
 		def::vi2d size = { width, height };
@@ -980,22 +982,9 @@ namespace def
 		return def::BLACK;
 	}
 
-	void Sprite::SetPixelData(const uint8_t* data)
-	{
-		memcpy(pixelData, data, width * height * channels * sizeof(uint8_t));
-	}
-
 	void Sprite::SetPixelData(const def::Pixel& col)
 	{
-		for (int i = 0; i < width; i++)
-			for (int j = 0; j < height; j++)
-			{
-				size_t idx = channels * (j * width + i);
-				pixelData[idx] = col.r;
-				pixelData[idx + 1] = col.g;
-				pixelData[idx + 2] = col.b;
-				pixelData[idx + 3] = col.a;
-			}
+		std::fill(pixels.begin(), pixels.end(), col);
 	}
 
 	Pixel Sprite::Sample(const def::vf2d& uv, const SampleMethod sample, const WrapMethod wrap) const
@@ -1096,8 +1085,8 @@ namespace def
 	{
 		Load(sprite);
 
-		UVScaleX = 1.0f / (float)sprite->width;
-		UVScaleY = 1.0f / (float)sprite->height;
+		uvScaleX = 1.0f / (float)sprite->width;
+		uvScaleY = 1.0f / (float)sprite->height;
 
 		width = sprite->width;
 		height = sprite->height;
@@ -1107,17 +1096,7 @@ namespace def
 
 	void Texture::Load(Sprite* sprite)
 	{
-		GLenum format = 0;
-
-		switch (sprite->channels)
-		{
-		case 3: format = GL_RGB; break;
-		case 4: format = GL_RGBA; break;
-		}
-
-		DGE_ASSERT(format != 0, "[Texture.Load Error] Text: Invalid number of channels: " << sprite->channels)
-
-			glGenTextures(1, &id);
+		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1129,12 +1108,12 @@ namespace def
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glTexImage2D(
 			GL_TEXTURE_2D,
-			0, format,
+			0, GL_RGBA,
 			sprite->width,
 			sprite->height,
-			0, format,
+			0, GL_RGBA,
 			GL_UNSIGNED_BYTE,
-			sprite->pixelData
+			sprite->pixels.data()
 		);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -1143,18 +1122,14 @@ namespace def
 	void Texture::Update(Sprite* sprite)
 	{
 		glBindTexture(GL_TEXTURE_2D, id);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sprite->width, sprite->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, sprite->pixelData);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sprite->width, sprite->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, sprite->pixels.data());
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	Graphic::Graphic(const std::string& fileName) { Load(fileName); }
 	Graphic::Graphic(const int32_t width, const int32_t height) { Load(width, height); }
 
-	Graphic::~Graphic()
-	{
-		if (texture != nullptr) delete texture;
-		if (sprite != nullptr) delete sprite;
-	}
+	Graphic::~Graphic() {}
 
 	void Graphic::Load(const std::string& fileName)
 	{
@@ -1187,6 +1162,8 @@ namespace def
 		m_TextureStructure = Texture::FAN;
 
 		m_TickTimer = 0.0f;
+
+		m_Shader = nullptr;
 	}
 
 	GameEngine::~GameEngine() { Destroy(); }
@@ -1195,8 +1172,8 @@ namespace def
 	{
 		SetDrawTarget(m_Screen);
 
-		if (m_DrawTarget != nullptr) delete m_DrawTarget;
-		if (m_Font != nullptr) delete m_Font;
+		delete m_DrawTarget;
+		delete m_Font;
 
 		glfwDestroyWindow(m_Window);
 		glfwTerminate();
@@ -1286,7 +1263,8 @@ namespace def
 			double mouseX, mouseY;
 			glfwGetCursorPos(m_Window, &mouseX, &mouseY);
 
-			m_MousePos = vi2d(mouseX, mouseY) / m_PixelSize;
+			m_MousePos.x = (int)mouseX / m_PixelSize.x;
+			m_MousePos.y = (int)mouseY / m_PixelSize.y;
 
 			if (!OnUserUpdate(deltaTime))
 				m_IsAppRunning = false;
@@ -1328,7 +1306,7 @@ namespace def
 
 		switch (ti.structure)
 		{
-		case Texture::DEFAULT: glBegin(GL_TRIANGLES);		break;
+		case Texture::DEFAULT:	glBegin(GL_TRIANGLES);		break;
 		case Texture::FAN:		glBegin(GL_TRIANGLE_FAN);	break;
 		case Texture::STRIP:	glBegin(GL_TRIANGLE_STRIP);	break;
 		}
@@ -1500,7 +1478,7 @@ namespace def
 		case Pixel::ALPHA:
 		{
 			Pixel d = target->GetPixel({ x, y });
-			float a = (float)(p.a / 255.0f);
+			float a = B2F(p.a);
 			float c = 1.0f - a;
 			float r = a * (float)p.r + c * (float)d.r;
 			float g = a * (float)p.g + c * (float)d.g;
@@ -2018,21 +1996,21 @@ namespace def
 		}
 	}
 
-	void GameEngine::DrawSprite(int32_t x, int32_t y, Sprite* sprite)
+	void GameEngine::DrawSprite(int32_t x, int32_t y, const Sprite* sprite)
 	{
 		for (int i = 0; i < sprite->width; i++)
 			for (int j = 0; j < sprite->height; j++)
 				Draw(x + i, y + j, sprite->GetPixel({ i, j }));
 	}
 
-	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, Sprite* sprite)
+	void GameEngine::DrawPartialSprite(int32_t x, int32_t y, int32_t fx, int32_t fy, int32_t fsx, int32_t fsy, const Sprite* sprite)
 	{
 		for (int i = 0, x1 = 0; i < fsx; i++, x1++)
 			for (int j = 0, y1 = 0; j < fsy; j++, y1++)
 				Draw(x + x1, y + y1, sprite->GetPixel({ fx + i, fy + j }));
 	}
 
-	void GameEngine::DrawTexture(float x, float y, Texture* tex, float scaleX, float scaleY, const Pixel& tint)
+	void GameEngine::DrawTexture(float x, float y, const Texture* tex, float scaleX, float scaleY, const Pixel& tint)
 	{
 		vf2d screenPos =
 		{
@@ -2057,7 +2035,7 @@ namespace def
 		m_Textures.push_back(ti);
 	}
 
-	void GameEngine::DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, Texture* tex, float scaleX, float scaleY, const Pixel& tint)
+	void GameEngine::DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, const Texture* tex, float scaleX, float scaleY, const Pixel& tint)
 	{
 		vf2d screenSpacePos =
 		{
@@ -2074,8 +2052,8 @@ namespace def
 		vf2d quantisedPos = ((screenSpacePos * vf2d(m_WindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_WindowSize);
 		vf2d quantisedSize = ((screenSpaceSize * vf2d(m_WindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_WindowSize);
 
-		vf2d tl = (vf2d(filePosX, filePosY) + vf2d(0.0001f, 0.0001f)) * vf2d(tex->UVScaleX, tex->UVScaleY);
-		vf2d br = (vf2d(filePosX, filePosY) + vf2d(fileSizeX, fileSizeY) - vf2d(0.0001f, 0.0001f)) * vf2d(tex->UVScaleX, tex->UVScaleY);
+		vf2d tl = (vf2d(filePosX, filePosY) + vf2d(0.0001f, 0.0001f)) * vf2d(tex->uvScaleX, tex->uvScaleY);
+		vf2d br = (vf2d(filePosX, filePosY) + vf2d(fileSizeX, fileSizeY) - vf2d(0.0001f, 0.0001f)) * vf2d(tex->uvScaleX, tex->uvScaleY);
 
 		TextureInstance ti;
 		ti.tex = tex;
@@ -2087,7 +2065,7 @@ namespace def
 		m_Textures.push_back(ti);
 	}
 
-	void GameEngine::DrawRotatedTexture(float x, float y, float r, Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
+	void GameEngine::DrawRotatedTexture(float x, float y, float r, const Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
 	{
 		TextureInstance ti;
 		ti.tex = tex;
@@ -2118,7 +2096,7 @@ namespace def
 		m_Textures.push_back(ti);
 	}
 
-	void GameEngine::DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
+	void GameEngine::DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, const Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
 	{
 		TextureInstance ti;
 		ti.tex = tex;
@@ -2144,8 +2122,8 @@ namespace def
 		vf2d quantisedPos = ((screenSpacePos * vf2d(m_WindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_WindowSize);
 		vf2d quantisedSize = ((screenSpaceSize * vf2d(m_WindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_WindowSize);
 
-		vf2d tl = (vf2d(fx, fy) + vf2d(0.0001f, 0.0001f)) * vf2d(tex->UVScaleX, tex->UVScaleY);
-		vf2d br = (vf2d(fx, fy) + vf2d(fx, fy) - vf2d(0.0001f, 0.0001f)) * vf2d(tex->UVScaleX, tex->UVScaleY);
+		vf2d tl = (vf2d(fx, fy) + vf2d(0.0001f, 0.0001f)) * vf2d(tex->uvScaleX, tex->uvScaleY);
+		vf2d br = (vf2d(fx, fy) + vf2d(fx, fy) - vf2d(0.0001f, 0.0001f)) * vf2d(tex->uvScaleX, tex->uvScaleY);
 
 		ti.vert = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
 
@@ -2162,15 +2140,15 @@ namespace def
 		m_Textures.push_back(ti);
 	}
 
-	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, Texture* tex, const Pixel& tint)
+	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint)
 	{
-		TextureInstance di;
-		di.tex = tex;
-		di.structure = m_TextureStructure;
-		di.points = 4;
-		di.tint = { tint, tint, tint, tint };
-		di.vert.resize(di.points);
-		di.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+		TextureInstance ti;
+		ti.tex = tex;
+		ti.structure = m_TextureStructure;
+		ti.points = 4;
+		ti.tint = { tint, tint, tint, tint };
+		ti.vert.resize(ti.points);
+		ti.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
 
 		float rd = ((points[2].x - points[0].x) * (points[3].y - points[1].y) - (points[3].x - points[1].x) * (points[2].y - points[0].y));
 
@@ -2189,11 +2167,11 @@ namespace def
 			for (int i = 0; i < 4; i++)
 			{
 				float q = d[i] == 0.0f ? 1.0f : (d[i] + d[(i + 2) & 3]) / d[(i + 2) & 3];
-				di.uv[i] *= q;
-				di.vert[i] = { (points[i].x * m_InvScreenSize.x) * 2.0f - 1.0f, ((points[i].y * m_InvScreenSize.y) * 2.0f - 1.0f) * -1.0f };
+				ti.uv[i] *= q;
+				ti.vert[i] = { (points[i].x * m_InvScreenSize.x) * 2.0f - 1.0f, ((points[i].y * m_InvScreenSize.y) * 2.0f - 1.0f) * -1.0f };
 			}
 
-			m_Textures.push_back(di);
+			m_Textures.push_back(ti);
 		}
 	}
 
@@ -2317,7 +2295,7 @@ namespace def
 
 	bool GameEngine::IsFullScreen() const { return m_IsFullScreen; }
 	bool GameEngine::IsVSync() const { return m_IsVSync; }
-	bool GameEngine::IsFocused() const { return (bool)glfwGetWindowAttrib(this->m_Window, GLFW_FOCUSED); }
+	bool GameEngine::IsFocused() const { return (bool)glfwGetWindowAttrib(m_Window, GLFW_FOCUSED); }
 
 	void GameEngine::SetIcon(const std::string& fileName)
 	{
@@ -2326,22 +2304,21 @@ namespace def
 		GLFWimage img;
 		img.width = sprIcon.width;
 		img.height = sprIcon.height;
-		img.pixels = sprIcon.pixelData;
+		img.pixels = (uint8_t*)sprIcon.pixels.data();
 		glfwSetWindowIcon(m_Window, 1, &img);
 	}
 
 	void GameEngine::SetDrawTarget(Graphic* target)
 	{
-		if (target == nullptr)
-			m_DrawTarget = m_Screen;
-		else
-		{
+		if (target)
 			m_DrawTarget = target;
-			m_DrawTarget->UpdateTexture();
-		}
+		else
+			m_DrawTarget = m_Screen;
+
+		m_DrawTarget->UpdateTexture();
 	}
 
-	Graphic* GameEngine::GetDrawTarget() const { return m_DrawTarget; }
+	Graphic* GameEngine::GetDrawTarget() { return m_DrawTarget; }
 	void GameEngine::SetTitle(const std::string& title) { m_AppName = title; }
 
 	WindowState GameEngine::GetWindowState() const
@@ -2411,32 +2388,32 @@ namespace def
 		FillEllipse(pos.x, pos.y, size.x, size.y, p);
 	}
 
-	void GameEngine::DrawSprite(const vi2d& pos, Sprite* spr)
+	void GameEngine::DrawSprite(const vi2d& pos, const Sprite* spr)
 	{
 		DrawSprite(pos.x, pos.y, spr);
 	}
 
-	void GameEngine::DrawPartialSprite(const vi2d& pos, const vi2d& fpos, const vi2d& fsize, Sprite* spr)
+	void GameEngine::DrawPartialSprite(const vi2d& pos, const vi2d& fpos, const vi2d& fsize, const Sprite* spr)
 	{
 		DrawPartialSprite(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, spr);
 	}
 
-	void GameEngine::DrawTexture(const vf2d& pos, Texture* tex, const vf2d& scale, const Pixel& tint)
+	void GameEngine::DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale, const Pixel& tint)
 	{
 		DrawTexture(pos.x, pos.y, tex, scale.x, scale.y, tint);
 	}
 
-	void GameEngine::DrawPartialTexture(const vf2d& pos, const vi2d& filePos, const vi2d& fileSize, Texture* tex, const vf2d& scale, const Pixel& tint)
+	void GameEngine::DrawPartialTexture(const vf2d& pos, const vi2d& filePos, const vi2d& fileSize, const Texture* tex, const vf2d& scale, const Pixel& tint)
 	{
 		DrawPartialTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, tex, scale.x, scale.y, tint);
 	}
 
-	void GameEngine::DrawRotatedTexture(const vf2d& pos, float r, Texture* tex, const vf2d& center, const vf2d& scale, const Pixel& tint)
+	void GameEngine::DrawRotatedTexture(const vf2d& pos, float r, const Texture* tex, const vf2d& center, const vf2d& scale, const Pixel& tint)
 	{
 		DrawRotatedTexture(pos.x, pos.y, r, tex, center.x, center.y, scale.x, scale.y, tint);
 	}
 
-	void GameEngine::DrawPartialRotatedTexture(const vf2d& pos, const vf2d& fpos, const vf2d& fsize, float r, Texture* tex, const vf2d& center, const vf2d& scale, const Pixel& tint)
+	void GameEngine::DrawPartialRotatedTexture(const vf2d& pos, const vf2d& fpos, const vf2d& fsize, float r, const Texture* tex, const vf2d& center, const vf2d& scale, const Pixel& tint)
 	{
 		DrawPartialRotatedTexture(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, r, tex, center.x, center.y, scale.x, scale.y, tint);
 	}
@@ -2471,7 +2448,7 @@ namespace def
 		m_Tint = p;
 	}
 
-	void GameEngine::SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur))
+	void GameEngine::SetShader(Pixel (*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur))
 	{
 		m_Shader = func;
 		m_PixelMode = m_Shader ? Pixel::CUSTOM : Pixel::DEFAULT;
