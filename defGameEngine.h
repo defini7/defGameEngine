@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DEF_GAME_ENGINE_H
+#define DEF_GAME_ENGINE_H
 
 #pragma region license
 /***
@@ -77,15 +78,21 @@
 #include <chrono>
 #include <vector>
 #include <cmath>
-#include <memory>
 #include <algorithm>
 
 #include <GLFW/glfw3.h>
 
+#ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
+#endif
 #include "stb_image.h"
 
+// Thank you, dear stb_image!
+#define SAFE_STBI_FAILURE_REASON() (stbi_failure_reason() ? stbi_failure_reason() : "")
+
+#ifndef STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#endif
 #include "stb_image_write.h"
 
 #ifdef _WIN32
@@ -108,7 +115,7 @@
 
 namespace def
 {
-	void Assert(bool expr, const std::string& msg);
+	void Assert(bool expr, const std::vector<std::string>& args);
 
 	template <class T>
 	T Lerp(T x, T y, float t);
@@ -253,7 +260,7 @@ namespace def
 			uint8_t rgba[4];
 		};
 
-		Pixel mix(const def::Pixel& rhs, const float factor) const;
+		Pixel mix(const Pixel& rhs, const float factor) const;
 		Pixel& clamp();
 		Pixel& ref();
 		std::string str() const;
@@ -268,22 +275,22 @@ namespace def
 		Pixel& operator*=(const float rhs);
 		Pixel& operator/=(const float rhs);
 
-		Pixel operator+(const def::Pixel& rhs) const;
-		Pixel operator-(const def::Pixel& rhs) const;
-		Pixel operator*(const def::Pixel& rhs) const;
-		Pixel operator/(const def::Pixel& rhs) const;
+		Pixel operator+(const Pixel& rhs) const;
+		Pixel operator-(const Pixel& rhs) const;
+		Pixel operator*(const Pixel& rhs) const;
+		Pixel operator/(const Pixel& rhs) const;
 
-		Pixel& operator+=(const def::Pixel& rhs);
-		Pixel& operator-=(const def::Pixel& rhs);
-		Pixel& operator*=(const def::Pixel& rhs);
-		Pixel& operator/=(const def::Pixel& rhs);
+		Pixel& operator+=(const Pixel& rhs);
+		Pixel& operator-=(const Pixel& rhs);
+		Pixel& operator*=(const Pixel& rhs);
+		Pixel& operator/=(const Pixel& rhs);
 
-		bool operator==(const def::Pixel& rhs) const;
-		bool operator!=(const def::Pixel& rhs) const;
-		bool operator>(const def::Pixel& rhs) const;
-		bool operator<(const def::Pixel& rhs) const;
-		bool operator>=(const def::Pixel& rhs) const;
-		bool operator<=(const def::Pixel& rhs) const;
+		bool operator==(const Pixel& rhs) const;
+		bool operator!=(const Pixel& rhs) const;
+		bool operator>(const Pixel& rhs) const;
+		bool operator<(const Pixel& rhs) const;
+		bool operator>=(const Pixel& rhs) const;
+		bool operator<=(const Pixel& rhs) const;
 
 		bool operator==(const float rhs) const;
 		bool operator!=(const float rhs) const;
@@ -353,12 +360,12 @@ namespace def
 
 		void Save(const std::string& filename, const FileType type) const;
 
-		bool SetPixel(const def::vi2d& pos, const Pixel& p);
-		Pixel GetPixel(const def::vi2d& pos, const WrapMethod wrap = WrapMethod::NONE) const;
+		bool SetPixel(const vi2d& pos, const Pixel& p);
+		Pixel GetPixel(const vi2d& pos, const WrapMethod wrap = WrapMethod::NONE) const;
 
 		void SetPixelData(const Pixel& col);
 
-		Pixel Sample(const def::vf2d& uv, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
+		Pixel Sample(const vf2d& uv, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
 	};
 
 	struct Texture
@@ -516,10 +523,10 @@ namespace def
 		virtual void FillCircle(int32_t x, int32_t y, int32_t radius, const Pixel& p = WHITE);
 
 		void DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void DrawEllipse(int x, int y, int sx, int sy, const Pixel& p = def::WHITE);
+		virtual void DrawEllipse(int x, int y, int sx, int sy, const Pixel& p = WHITE);
 
 		void FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void FillEllipse(int x, int y, int sx, int sy, const Pixel& p = def::WHITE);
+		virtual void FillEllipse(int x, int y, int sx, int sy, const Pixel& p = WHITE);
 
 		void DrawSprite(const vi2d& pos, const Sprite* sprite);
 		virtual void DrawSprite(int32_t x, int32_t y, const Sprite* sprite);
@@ -563,7 +570,7 @@ namespace def
 		void SetTitle(const std::string& title);
 
 		vi2d ScreenSize() const;
-		vi2d MaxScreenSize() const;
+		vi2d MaxWindowSize() const;
 
 		int32_t ScreenWidth() const;
 		int32_t ScreenHeight() const;
@@ -593,7 +600,7 @@ namespace def
 		void ClearBuffer(const Pixel& p);
 		void SetTint(const Pixel& p);
 
-		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur));
+		void SetShader(Pixel (*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur));
 
 		uint32_t AnyKey(bool pressed = true, bool held = false, bool released = false);
 	};
@@ -601,11 +608,14 @@ namespace def
 #ifdef DGE_APPLICATION
 #undef DGE_APPLICATION
 
-	void Assert(bool expr, const std::string& msg)
+	void Assert(bool expr, const std::vector<std::string>& args)
 	{
 		if (!expr)
 		{
-			std::cerr << msg << std::endl;
+			for (const auto& a : args)
+				std::cerr << a;
+			std::cerr << std::endl;
+
 			exit(1);
 		}
 	}
@@ -736,7 +746,7 @@ namespace def
 
 	Pixel::Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
 
-	Pixel Pixel::mix(const def::Pixel& rhs, const float factor) const
+	Pixel Pixel::mix(const Pixel& rhs, const float factor) const
 	{
 		return Pixel(
 			Lerp(r, rhs.r, factor),
@@ -882,20 +892,23 @@ namespace def
 
 	void Sprite::Create(const int32_t width, const int32_t height)
 	{
-		Assert(width > 0 && height > 0, "[Sprite.Create Error] Width and height should be > 0");
+		Assert(width > 0 && height > 0, { "[Sprite.Create Error] Width and height should be > 0" });
 
 		pixels.clear();
 		this->width = width;
 		this->height = height;
 
 		pixels.resize(width * height);
-		std::fill(pixels.begin(), pixels.end(), def::BLACK);
+		std::fill(pixels.begin(), pixels.end(), BLACK);
 	}
 
 	void Sprite::Load(const std::string& fileName)
 	{
-		uint8_t* data = stbi_load(fileName.c_str(), &width, &height, nullptr, 4);
-		Assert(data, "[stb_image Error] " + std::string(stbi_failure_reason()));
+		uint8_t* data = stbi_load(fileName.c_str(), &width, &height, NULL, 4);
+		Assert(data, { "[stb_image Error] ", SAFE_STBI_FAILURE_REASON() });
+
+		pixels.clear();
+		pixels.resize(width * height);
 
 		size_t size = width * height * 4;
 		for (size_t i = 0; i < size; i += 4)
@@ -928,10 +941,10 @@ namespace def
 
 		}
 
-		Assert(err == 1, "[stb_image_write Error] Code: " + std::to_string(err));
+		Assert(err == 1, { "[stb_image_write Error] Code: ", std::to_string(err) });
 	}
 
-	bool Sprite::SetPixel(const def::vi2d& pos, const Pixel& p)
+	bool Sprite::SetPixel(const vi2d& pos, const Pixel& p)
 	{
 		if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height)
 		{
@@ -942,20 +955,20 @@ namespace def
 		return false;
 	}
 
-	Pixel Sprite::GetPixel(const def::vi2d& pos, const WrapMethod wrap) const
+	Pixel Sprite::GetPixel(const vi2d& pos, const WrapMethod wrap) const
 	{
-		auto get_pixel = [&](const def::vi2d& p)
+		auto get_pixel = [&](const vi2d& p)
 		{
 			return pixels[p.y * width + p.x];
 		};
 
-		def::vi2d size = { width, height };
+		vi2d size = { width, height };
 
 		switch (wrap)
 		{
 		case WrapMethod::NONE:
 		{
-			if (pos >= def::vi2d(0, 0) && pos < size)
+			if (pos >= vi2d(0, 0) && pos < size)
 				return get_pixel(pos);
 		}
 		break;
@@ -965,7 +978,7 @@ namespace def
 
 		case WrapMethod::MIRROR:
 		{
-			def::vi2d m =
+			vi2d m =
 			{
 				(pos.x < 0) ? width - 1 - abs(pos.x) % width : abs(pos.x) % width,
 				(pos.y < 0) ? height - 1 - abs(pos.y) % height : abs(pos.y) % height
@@ -979,17 +992,17 @@ namespace def
 
 		}
 
-		return def::BLACK;
+		return BLACK;
 	}
 
-	void Sprite::SetPixelData(const def::Pixel& col)
+	void Sprite::SetPixelData(const Pixel& col)
 	{
 		std::fill(pixels.begin(), pixels.end(), col);
 	}
 
-	Pixel Sprite::Sample(const def::vf2d& uv, const SampleMethod sample, const WrapMethod wrap) const
+	Pixel Sprite::Sample(const vf2d& uv, const SampleMethod sample, const WrapMethod wrap) const
 	{
-		def::vf2d denorm = uv * def::vf2d(width, height);
+		vf2d denorm = uv * vf2d(width, height);
 
 		switch (sample)
 		{
@@ -998,24 +1011,24 @@ namespace def
 
 		case SampleMethod::BILINEAR:
 		{
-			def::vf2d cell = denorm.floor();
-			def::vf2d offset = denorm - cell;
+			vf2d cell = denorm.floor();
+			vf2d offset = denorm - cell;
 
-			def::Pixel tl = GetPixel(cell + def::vf2d(0, 0), wrap);
-			def::Pixel tr = GetPixel(cell + def::vf2d(1, 0), wrap);
-			def::Pixel bl = GetPixel(cell + def::vf2d(0, 1), wrap);
-			def::Pixel br = GetPixel(cell + def::vf2d(1, 1), wrap);
+			Pixel tl = GetPixel(cell + vf2d(0, 0), wrap);
+			Pixel tr = GetPixel(cell + vf2d(1, 0), wrap);
+			Pixel bl = GetPixel(cell + vf2d(0, 1), wrap);
+			Pixel br = GetPixel(cell + vf2d(1, 1), wrap);
 
-			def::Pixel topCol = tr * offset.x + tl * (1.0f - offset.x);
-			def::Pixel bottomCol = br * offset.x + bl * (1.0f - offset.x);
+			Pixel topCol = tr * offset.x + tl * (1.0f - offset.x);
+			Pixel bottomCol = br * offset.x + bl * (1.0f - offset.x);
 
 			return bottomCol * offset.y + topCol * (1.0f - offset.y);
 		}
 
 		case SampleMethod::TRILINEAR:
 		{
-			def::vi2d center = (denorm - def::vf2d(0.5f, 0.5f)).floor();
-			def::vf2d offset = (denorm - def::vf2d(0.5f, 0.5f)) - def::vf2d(center);
+			vi2d center = (denorm - vf2d(0.5f, 0.5f)).floor();
+			vf2d offset = (denorm - vf2d(0.5f, 0.5f)) - vf2d(center);
 
 			struct Pixelf
 			{
@@ -1027,21 +1040,21 @@ namespace def
 
 			Pixelf splineX[4][4];
 
-			def::vi2d s;
+			vi2d s;
 			for (s.y = 0; s.y < 4; s.y++)
 				for (s.x = 0; s.x < 4; s.x++)
 				{
-					def::Pixel p = GetPixel(center + s - def::vi2d(1, 1), wrap);
+					Pixel p = GetPixel(center + s - vi2d(1, 1), wrap);
 					splineX[s.y][s.x] = { (float)p.r, (float)p.g, (float)p.b, (float)p.a };
 				}
 
-			def::vf2d t = offset;
-			def::vf2d tt = t * t;
-			def::vf2d ttt = tt * tt;
+			vf2d t = offset;
+			vf2d tt = t * t;
+			vf2d ttt = tt * tt;
 
-			def::vf2d q[4];
+			vf2d q[4];
 			q[0] = 0.5f * (-1.0f * ttt + 2.0f * tt - t);
-			q[1] = 0.5f * (3.0f * ttt - 5.0f * tt + def::vf2d(2.0f, 2.0f));
+			q[1] = 0.5f * (3.0f * ttt - 5.0f * tt + vf2d(2.0f, 2.0f));
 			q[2] = 0.5f * (-3.0f * ttt + 4.0f * tt + t);
 			q[3] = 0.5f * (ttt - tt);
 
@@ -1067,7 +1080,7 @@ namespace def
 				pix.a += splineY[i].a * q[i].y;
 			}
 
-			return def::Pixel(
+			return Pixel(
 				(uint8_t)std::clamp(pix.r, 0.0f, 255.0f),
 				(uint8_t)std::clamp(pix.g, 0.0f, 255.0f),
 				(uint8_t)std::clamp(pix.b, 0.0f, 255.0f),
@@ -1378,24 +1391,24 @@ namespace def
 		m_Monitor = glfwGetPrimaryMonitor();
 		if (!m_Monitor) return;
 
-		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
-		if (!videoMode) return;
+		const GLFWvidmode* vmode = glfwGetVideoMode(m_Monitor);
+		if (!vmode) return;
 
-		m_MaxWindowSize = { videoMode->width, videoMode->height };
+		m_MaxWindowSize = { vmode->width, vmode->height };
 
 		if (!m_IsVSync)
 			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
 		if (m_IsFullScreen)
 		{
-			m_WindowSize = vi2d(videoMode->width, videoMode->height);
+			m_WindowSize = vi2d(vmode->width, vmode->height);
 			m_ScreenSize = m_WindowSize / m_PixelSize;
 
 			m_Window = glfwCreateWindow(m_WindowSize.x, m_WindowSize.y, "", m_Monitor, NULL);
 			if (!m_Window) return;
 
 			glfwSetWindowMonitor(m_Window, m_Monitor,
-				0, 0, m_WindowSize.x, m_WindowSize.y, videoMode->refreshRate);
+				0, 0, m_WindowSize.x, m_WindowSize.y, vmode->refreshRate);
 		}
 		else
 		{
@@ -1412,7 +1425,7 @@ namespace def
 		if (m_IsVSync)
 		{
 			glfwSwapInterval(1);
-			glfwWindowHint(GLFW_REFRESH_RATE, videoMode->refreshRate);
+			glfwWindowHint(GLFW_REFRESH_RATE, vmode->refreshRate);
 		}
 
 		m_Screen = new Graphic(m_ScreenSize.x, m_ScreenSize.y);
@@ -1438,7 +1451,7 @@ namespace def
 			"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
 
 		m_Font = new Sprite(128, 48);
-		def::vi2d p;
+		vi2d p;
 
 		for (size_t b = 0; b < 1024; b += 4)
 		{
@@ -1478,12 +1491,10 @@ namespace def
 		case Pixel::ALPHA:
 		{
 			Pixel d = target->GetPixel({ x, y });
-			float a = B2F(p.a);
-			float c = 1.0f - a;
-			float r = a * (float)p.r + c * (float)d.r;
-			float g = a * (float)p.g + c * (float)d.g;
-			float b = a * (float)p.b + c * (float)d.b;
-			return target->SetPixel({ x, y }, { (uint8_t)r, (uint8_t)g, (uint8_t)b });
+			uint8_t r = Lerp(p.r, d.r, uint8_t(p.a / 255.0f));
+			uint8_t g = Lerp(p.g, d.g, uint8_t(p.a / 255.0f));
+			uint8_t b = Lerp(p.b, d.b, uint8_t(p.a / 255.0f));
+			return target->SetPixel({ x, y }, { r, g, b });
 		}
 
 		}
@@ -2204,7 +2215,7 @@ namespace def
 			coordinates[i].y = (modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r)) * s + y;
 		}
 
-		auto GetAngle = [](const def::vf2d& p1, const def::vf2d& p2)
+		auto GetAngle = [](const vf2d& p1, const vf2d& p2)
 		{
 			float a = atan2(p2.y, p2.x) - atan2(p1.y, p1.x);
 			while (a > 3.14159f) a -= 3.14159f * 2.0f;
@@ -2212,11 +2223,11 @@ namespace def
 			return a;
 		};
 
-		auto PointInPolygon = [&](const def::vf2d& p)
+		auto PointInPolygon = [&](const vf2d& p)
 		{
 			float angle = 0.0f;
 
-			def::vf2d p1, p2;
+			vf2d p1, p2;
 			for (int i = 0; i < verts; i++)
 			{
 				p1 = coordinates[i] - p;
@@ -2227,8 +2238,8 @@ namespace def
 			return std::abs(angle) < 3.14159f;
 		};
 
-		def::vf2d vMin = coordinates.front();
-		def::vf2d vMax = coordinates.front();
+		vf2d vMin = coordinates.front();
+		vf2d vMax = coordinates.front();
 
 		for (int i = 1; i < verts; i++)
 		{
@@ -2239,7 +2250,7 @@ namespace def
 			if (vMax.y < coordinates[i].y) vMax.y = coordinates[i].y;
 		}
 
-		def::vf2d point;
+		vf2d point;
 		for (point.x = vMin.x; point.x < vMax.x; point.x++)
 			for (point.y = vMin.y; point.y < vMax.y; point.y++)
 			{
@@ -2434,12 +2445,12 @@ namespace def
 	}
 
 	vi2d GameEngine::ScreenSize() const { return m_ScreenSize; }
-	vi2d GameEngine::MaxScreenSize() const { return m_MaxWindowSize; };
+	vi2d GameEngine::MaxWindowSize() const { return m_MaxWindowSize; };
 	vi2d GameEngine::GetMouse() const { return m_MousePos; }
 
 	void GameEngine::ClearBuffer(const Pixel& p)
 	{
-		glClearColor(p.r / 255.0f, p.g / 255.0f, p.b / 255.0f, p.a / 255.0f);
+		glClearColor(B2F(p.r), B2F(p.g), B2F(p.b), B2F(p.a));
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
@@ -2467,3 +2478,5 @@ namespace def
 #endif
 
 }
+
+#endif
