@@ -1,34 +1,34 @@
 <p align="center"><img src="dge_large_logo.png"></p>
 
 # defGameEngine
-defGameEngine - это игровой движок, доступный на Windows (>7), Linux и возможно на MacOS
+defGameEngine is a game engine, that's available on Windows, Linux and probably on MacOS
 
-# Установка
+# Installation
 
 Windows:
-- Скачать [GLFW](https://www.glfw.org/download.html).
+- Download [GLFW](https://www.glfw.org/download.html).
 
 Linux:
-- ```sudo apt-get install xorg libx11-dev libglu1-mesa-dev freeglut3-dev libglu1-mesa libgl1-mesa-glx libgl1-mesa-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev libglew-dev libglfw3-dev```
+- `sudo apt-get install xorg libx11-dev libglu1-mesa-dev freeglut3-dev libglu1-mesa libgl1-mesa-glx libgl1-mesa-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev libglew-dev libglfw3-dev`
 
-Для всех платформ:
-- Скачать файл [defGameEngine.h](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.h).
+For all platforms:
+- Download [defGameEngine.h](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.h).
 
-# Запуск
+# Setup
 
-Используется C++14
+C++17 is preferrable, but you can use C++14
 
 1. Windows MSVC:
-- На верхней панели нажать ``Проект`` -> ``Свойства: название проекта``.
-- В появившемся окне выбрать вкладку ``C++`` -> ``Общие``.
-- В поле ``Дополнительные каталоги включаемых библиотек`` вы должны вписать полный путь до папки ```include```.
-- Далее выбрать вкладку ``Компоновщик`` -> ``Общие``.
-- В поле ``Дополнительные каталоги библиотек`` вы должны вписать полный путь до одной из папок ``lib``.
+- Menu bar: `Project` -> `[Project name] Properties`.
+- In opened window `C++` -> `General`.
+- Add path for include folders in `Additional include directories`.
+- Then `Linker` -> `General`.
+- Add path for lib folder in `Additional Library Directories`.
 
 2. Linux G++:
-- ```g++ <файл>.cpp -o <файл> -std=c++14 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -fsanitize=undefined -fno-sanitize-recover```.
+- `g++ <файл>.cpp -o <файл> -std=c++14 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -fsanitize=undefined -fno-sanitize-recover`.
 
-# Лицензия
+# License
 
 BSD 3-Clause License
 
