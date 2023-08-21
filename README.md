@@ -26,7 +26,7 @@ C++17 is preferrable, but you can use C++14
 - Add path for lib folder in `Additional Library Directories`.
 
 2. Linux G++:
-- `g++ <файл>.cpp -o <file> -std=c++14 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -fsanitize=undefined -fno-sanitize-recover`.
+- `g++ <file>.cpp -o <file> -std=c++14 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -fsanitize=undefined -fno-sanitize-recover`.
 
 # License
 
