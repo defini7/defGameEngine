@@ -19,7 +19,7 @@ For all platforms:
 C++17 is preferrable, but you can use C++14
 
 1. Windows MSVC:
-- Menu bar: `Project` -> `[Project name] Properties`.
+- Menu bar: `Project` -> `<project name> Properties`.
 - In opened window `C++` -> `General`.
 - Add path for include folders in `Additional include directories`.
 - Then `Linker` -> `General`.
