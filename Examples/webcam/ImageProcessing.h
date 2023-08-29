@@ -1,4 +1,5 @@
-#pragma once
+#ifndef IMAGE_PROCESSING_HPP
+#define IMAGE_PROCESSING_HPP
 
 #include <algorithm>
 #include <array>
@@ -300,7 +301,7 @@ namespace def::img
 						col[j * 5 + i] = input.get(x + i - 2, y + j - 2);
 
 				std::sort(col.begin(), col.end(), [](const Pixelf& c1, const Pixelf& c2) {
-					return c2.r < c1.r&& c2.g < c1.g&& c2.b < c1.b;
+					return c2.r < c1.r && c2.g < c1.g && c2.b < c1.b;
 					});
 
 				output.set(x, y, col[12]);
@@ -393,3 +394,5 @@ namespace def::img
 
 #endif
 }
+
+#endif
