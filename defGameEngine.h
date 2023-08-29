@@ -87,6 +87,8 @@
 #endif
 #include "stb_image.h"
 
+#pragma warning(disable : 4996)
+
 // Thank you, dear stb_image!
 #define SAFE_STBI_FAILURE_REASON() (stbi_failure_reason() ? stbi_failure_reason() : "")
 
@@ -163,7 +165,7 @@ namespace def
 
 		friend bool operator==(const v2d<T>& v1, const v2d<T>& v2) { return v1.x == v2.x && v1.y == v2.y; }
 		friend bool operator!=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x != v2.x || v1.y != v2.y; }
-		friend bool operator<(const v2d<T>& v1, const v2d<T>& v2) { return v1.x < v2.x&& v1.y < v2.y; }
+		friend bool operator<(const v2d<T>& v1, const v2d<T>& v2) { return v1.x < v2.x && v1.y < v2.y; }
 		friend bool operator>(const v2d<T>& v1, const v2d<T>& v2) { return v1.x > v2.x && v1.y > v2.y; }
 		friend bool operator<=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
 		friend bool operator>=(const v2d<T>& v1, const v2d<T>& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
@@ -600,7 +602,7 @@ namespace def
 		void ClearBuffer(const Pixel& p);
 		void SetTint(const Pixel& p);
 
-		void SetShader(Pixel (*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur));
+		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur));
 
 		uint32_t AnyKey(bool pressed = true, bool held = false, bool released = false);
 	};
@@ -852,14 +854,14 @@ namespace def
 	bool Pixel::operator==(const Pixel& rhs) const { return r == rhs.r && g == rhs.g && b == rhs.b; }
 	bool Pixel::operator!=(const Pixel& rhs) const { return r != rhs.r || g != rhs.g || b != rhs.b; }
 	bool Pixel::operator>(const Pixel& rhs) const { return r > rhs.r && g > rhs.g && b > rhs.b; }
-	bool Pixel::operator<(const Pixel& rhs) const { return r < rhs.r&& g < rhs.g&& b < rhs.b; }
+	bool Pixel::operator<(const Pixel& rhs) const { return r < rhs.r && g < rhs.g && b < rhs.b; }
 	bool Pixel::operator>=(const Pixel& rhs) const { return r >= rhs.r && g >= rhs.g && b >= rhs.b; }
 	bool Pixel::operator<=(const Pixel& rhs) const { return r <= rhs.r && g <= rhs.g && b <= rhs.b; }
 
 	bool Pixel::operator==(const float rhs) const { return r == rhs && g == rhs && b == rhs; }
 	bool Pixel::operator!=(const float rhs) const { return r != rhs && g != rhs && b != rhs; }
 	bool Pixel::operator>(const float rhs) const { return r > rhs && g > rhs && b > rhs; }
-	bool Pixel::operator<(const float rhs) const { return r < rhs&& g < rhs&& b < rhs; }
+	bool Pixel::operator<(const float rhs) const { return r < rhs && g < rhs && b < rhs; }
 	bool Pixel::operator>=(const float rhs) const { return r >= rhs && g >= rhs && b >= rhs; }
 	bool Pixel::operator<=(const float rhs) const { return r <= rhs && g <= rhs && b <= rhs; }
 
@@ -2459,7 +2461,7 @@ namespace def
 		m_Tint = p;
 	}
 
-	void GameEngine::SetShader(Pixel (*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur))
+	void GameEngine::SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur))
 	{
 		m_Shader = func;
 		m_PixelMode = m_Shader ? Pixel::CUSTOM : Pixel::DEFAULT;
