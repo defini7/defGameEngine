@@ -24,11 +24,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DGE_APPLICATION
-#include "../defGameEngine.h"
+#include "defGameEngine.h"
 #include "escapi.h"
 
 #define DEF_IMAGE_PROCESSING
-#include "../ImageProcessing.h"
+#include "ImageProcessing.hpp"
 
 constexpr int FRAME_WIDTH = 320;
 constexpr int FRAME_HEIGHT = 240;
@@ -163,7 +163,7 @@ protected:
 		capture.mHeight = FRAME_HEIGHT;
 		capture.mTargetBuf = new int[FRAME_WIDTH * FRAME_HEIGHT];
 		if (initCapture(0, &capture) == 0) return false;
-		
+
 		input.create(FRAME_WIDTH, FRAME_HEIGHT);
 		prevInput.create(FRAME_WIDTH, FRAME_HEIGHT);
 		output.create(FRAME_WIDTH, FRAME_HEIGHT);
@@ -283,11 +283,11 @@ protected:
 			{
 			case DitheringMatrixSizeMode::Two:
 				def::img::Dithering_Ordered(input, output, def::img::DITHERING_ORDERED_2X2, 2, 2);
-			break;
+				break;
 
 			case DitheringMatrixSizeMode::Four:
 				def::img::Dithering_Ordered(input, output, def::img::DITHERING_ORDERED_4X4, 4, 4);
-			break;
+				break;
 			}
 		}
 		break;
@@ -327,7 +327,7 @@ protected:
 
 		case Filter::Motion:
 			DrawString(50, y, "Filter: Motion");
-		break;
+			break;
 
 		case Filter::Convolution:
 		{
@@ -354,11 +354,11 @@ protected:
 
 		case Filter::Sobel:
 			DrawString(50, y, "Filter: Sobel");
-		break;
+			break;
 
 		case Filter::Median:
 			DrawString(50, y, "Filter: Median");
-		break;
+			break;
 
 		case Filter::Dithering_FloydSteinberg:
 		{
@@ -381,7 +381,7 @@ protected:
 			DrawString(50, y += 16, "Change ripple center with Z, X, C, V keys");
 			DrawString(50, y += 16, "Current x value = " + std::to_string(rippleCenterX));
 			DrawString(50, y += 16, "Current y value = " + std::to_string(rippleCenterY));
-		break;
+			break;
 
 		}
 
