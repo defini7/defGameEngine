@@ -1,5 +1,5 @@
-#ifndef DEF_GAME_ENGINE_H
-#define DEF_GAME_ENGINE_H
+#ifndef DEF_GAME_ENGINE_HPP
+#define DEF_GAME_ENGINE_HPP
 
 #pragma region license
 /***
@@ -33,7 +33,7 @@
 /**
 * Example:
 	#define DGE_APPLICATION
-	#include "defGameEngine.h"
+	#include "defGameEngine.hpp"
 
 	class Sample : public def::GameEngine
 	{
@@ -487,6 +487,7 @@ namespace def
 
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float deltaTime) = 0;
+		virtual bool OnAfterDraw();
 
 		void Construct(int32_t screenWidth, int32_t screenHeight, int32_t pixelWidth, int32_t pixelHeight, bool isFullScreen = false, bool isVSync = false, bool isDirtyPixel = false);
 		void Run();
@@ -777,10 +778,10 @@ namespace def
 			std::to_string(a) + ')';
 	}
 
-	Pixel Pixel::operator+(const float rhs) const { return Pixel(r + rhs, g + rhs, b + rhs, a).clamp(); }
-	Pixel Pixel::operator-(const float rhs) const { return Pixel(r - rhs, g - rhs, b - rhs, a).clamp(); }
-	Pixel Pixel::operator*(const float rhs) const { return Pixel(r * rhs, g * rhs, b * rhs, a).clamp(); }
-	Pixel Pixel::operator/(const float rhs) const { return Pixel(r / rhs, g / rhs, b / rhs, a).clamp(); }
+	Pixel Pixel::operator+(const float rhs) const { return Pixel((float)r + rhs, (float)g + rhs, (float)b + rhs, a).clamp(); }
+	Pixel Pixel::operator-(const float rhs) const { return Pixel((float)r - rhs, (float)g - rhs, (float)b - rhs, a).clamp(); }
+	Pixel Pixel::operator*(const float rhs) const { return Pixel((float)r * rhs, (float)g * rhs, (float)b * rhs, a).clamp(); }
+	Pixel Pixel::operator/(const float rhs) const { return Pixel((float)r / rhs, (float)g / rhs, (float)b / rhs, a).clamp(); }
 
 	Pixel& Pixel::operator+=(const float rhs)
 	{
@@ -1281,8 +1282,7 @@ namespace def
 			m_MousePos.x = (int)mouseX / m_PixelSize.x;
 			m_MousePos.y = (int)mouseY / m_PixelSize.y;
 
-			if (!OnUserUpdate(deltaTime))
-				m_IsAppRunning = false;
+			if (!OnUserUpdate(deltaTime)) m_IsAppRunning = false;
 
 			ClearBuffer(BLACK);
 
@@ -1296,6 +1296,8 @@ namespace def
 
 			for (const auto& ti : m_Textures) DrawTexture(ti);
 			m_Textures.clear();
+
+			if (!OnAfterDraw()) m_IsAppRunning = false;
 
 			if (m_IsVSync)
 				glfwSwapBuffers(m_Window);
@@ -1373,6 +1375,8 @@ namespace def
 		for (int i = 0; i < pathCount; i++)
 			s_DropCache[i] = paths[i];
 	}
+
+	bool GameEngine::OnAfterDraw() { return true; }
 
 	void GameEngine::Construct(int32_t screenWidth, int32_t screenHeight, int32_t pixelWidth, int32_t pixelHeight, bool isFullScreen, bool isVSync, bool isDirtyPixel)
 	{
