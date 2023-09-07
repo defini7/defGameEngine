@@ -724,8 +724,8 @@ namespace def
 	template <class T> T v2d<T>::mag2() const { return static_cast<T>(this->x * this->x + this->y * this->y); }
 	template <class T> float v2d<T>::man(const v2d<T>& v) const { return std::abs(this->x - v.x) + std::abs(this->y - v.y); }
 
-	template <class T> v2d<T> v2d<T>::max(const v2d<T>& v) const { return v2d<T>(DGE_MAX(this->x, v.x), DGE_MAX(this->y, v.y)); }
-	template <class T> v2d<T> v2d<T>::min(const v2d<T>& v) const { return v2d<T>(DGE_MIN(this->x, v.x), DGE_MIN(this->y, v.y)); }
+	template <class T> v2d<T> v2d<T>::max(const v2d<T>& v) const { return v2d<T>(std::max(this->x, v.x), std::max(this->y, v.y)); }
+	template <class T> v2d<T> v2d<T>::min(const v2d<T>& v) const { return v2d<T>(std::min(this->x, v.x), std::min(this->y, v.y)); }
 
 	template <class T>
 	void v2d<T>::swap(v2d<T>& v)
@@ -1497,9 +1497,9 @@ namespace def
 		case Pixel::ALPHA:
 		{
 			Pixel d = target->GetPixel({ x, y });
-			uint8_t r = Lerp(p.r, d.r, uint8_t(p.a / 255.0f));
-			uint8_t g = Lerp(p.g, d.g, uint8_t(p.a / 255.0f));
-			uint8_t b = Lerp(p.b, d.b, uint8_t(p.a / 255.0f));
+			uint8_t r = Lerp(d.r, p.r, (float)p.a / 255.0f);
+			uint8_t g = Lerp(d.g, p.g, (float)p.a / 255.0f);
+			uint8_t b = Lerp(d.b, p.b, (float)p.a / 255.0f);
 			return target->SetPixel({ x, y }, { r, g, b });
 		}
 
