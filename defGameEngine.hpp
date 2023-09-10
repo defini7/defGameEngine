@@ -605,7 +605,8 @@ namespace def
 
 		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur));
 
-		uint32_t AnyKey(bool pressed = true, bool held = false, bool released = false);
+		Key::Keys AnyKey(bool pressed = true, bool held = false, bool released = false);
+		std::vector<Key::Keys> AnyKeys(bool pressed = true, bool held = false, bool released = false);
 	};
 
 #ifdef DGE_APPLICATION
@@ -2471,14 +2472,30 @@ namespace def
 		m_PixelMode = m_Shader ? Pixel::CUSTOM : Pixel::DEFAULT;
 	}
 
-	uint32_t GameEngine::AnyKey(bool pressed, bool held, bool released)
+	Key::Keys GameEngine::AnyKey(bool pressed, bool held, bool released)
 	{
 		for (uint32_t i = 0; i < 512U; i++)
 		{
-			if (m_Keys[i].pressed && pressed) return i;
-			if (m_Keys[i].held && held) return i;
-			if (m_Keys[i].released && released) return i;
+			if ((m_Keys[i].pressed && pressed) ||
+				(m_Keys[i].held && held) ||
+				(m_Keys[i].released && released))
+				return Key::Keys(i);
 		}
+	}
+
+	std::vector<Key::Keys> GameEngine::AnyKeys(bool pressed, bool held, bool released)
+	{
+		std::vector<Key::Keys> keys;
+
+		for (uint32_t i = 0; i < 512U; i++)
+		{
+			if ((m_Keys[i].pressed && pressed) ||
+				(m_Keys[i].held && held) ||
+				(m_Keys[i].released && released))
+				keys.push_back(Key::Keys(i));
+		}
+
+		return keys;
 	}
 
 #endif
