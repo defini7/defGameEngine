@@ -24,7 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DGE_APPLICATION
-#include "../defGameEngine.h"
+#include "defGameEngine.hpp"
 
 #include <array>
 #include <numeric>
