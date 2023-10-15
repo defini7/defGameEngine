@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "defGameEngine.hpp"
 
 #include <array>
 
@@ -43,13 +43,12 @@ def::Pixel GetColor(char c)
 // of the pieces in map array
 int RotatePiece(const def::vi2d& p, uint8_t r)
 {
-	// 0, 90, 180, 270 degrees
 	switch (r % 4)
 	{
-	case 0: return p.y * 4 + p.x;
-	case 1: return 12 + p.y - p.x * 4;
-	case 2: return 15 - p.y * 4 - p.x;
-	case 3: return 3 - p.y + p.x * 4;
+	case 0: return p.y * 4 + p.x; // 0 deg
+	case 1: return 12 + p.y - p.x * 4; // 90 deg
+	case 2: return 15 - p.y * 4 - p.x; // 180 deg
+	case 3: return 3 - p.y + p.x * 4; // 270 deg
 	}
 }
 
@@ -88,9 +87,14 @@ public:
 			{
 				int fi = (pos.y + y) * fieldSize.x + (pos.x + x);
 
+				// Now we are checking each tetromino local cell against
+				// it's global analogue
 				if (pos.y + y >= 0 && pos.y + y < fieldSize.y)
 					if (pos.x + x >= 0 && pos.x + x < fieldSize.x)
 					{
+						// So if it's not a blank cell we check whether
+						// rotated tetromino piece fits
+						// in map's cell or not
 						if (field[fi] != ' ' && TETROMINOS[i][RotatePiece({ x, y }, r)] != '.')
 							return false;
 					}
@@ -99,10 +103,12 @@ public:
 		return true;
 	}
 
+	/*
+	* Draws piece and it's background
+	* based on specified flags
+	*/
 	void DrawPiece(const def::vi2d& pos, size_t i, int rot, bool fillBlank, bool colorised, const def::Pixel& blankCol = def::BLACK)
 	{
-		if (i >= TETROMINOS.size()) return;
-
 		def::vi2d p;
 		for (p.y = 0; p.y < TETROMINO_SIZE.y; p.y++)
 			for (p.x = 0; p.x < TETROMINO_SIZE.x; p.x++)
@@ -220,7 +226,7 @@ protected:
 				{
 					// Grab data from next line
 					std::string data = field.substr((y - 1) * fieldSize.x, fieldSize.x - 1);
-					
+
 					// and put it on the current one
 					field.replace(y * fieldSize.x, data.size(), data);
 				}
