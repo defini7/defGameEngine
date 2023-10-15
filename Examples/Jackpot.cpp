@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "defGameEngine.hpp"
 
 #include <array>
 
@@ -123,9 +123,9 @@ protected:
 
 		if (lines.back().offset >= lines.back().maxOffset)
 		{
-			def::Pixel p0 = field->sprite->GetPixel(machineCellSize.x * 0 + 1, machineCellSize.y + 1);
-			def::Pixel p1 = field->sprite->GetPixel(machineCellSize.x * 1 + 1, machineCellSize.y + 1);
-			def::Pixel p2 = field->sprite->GetPixel(machineCellSize.x * 2 + 1, machineCellSize.y + 1);
+			def::Pixel p0 = field->sprite->GetPixel({ machineCellSize.x * 0 + 1, machineCellSize.y + 1 });
+			def::Pixel p1 = field->sprite->GetPixel({ machineCellSize.x * 1 + 1, machineCellSize.y + 1 });
+			def::Pixel p2 = field->sprite->GetPixel({ machineCellSize.x * 2 + 1, machineCellSize.y + 1 });
 
 			if (p0 == p1 && p1 == p2)
 			{
@@ -145,7 +145,7 @@ protected:
 		FillRectangle(machinePos + def::vi2d(3 * machineCellSize.x + 6, y), { 5, 5 }, def::RED);
 		DrawString(machinePos + def::vi2d(3 * machineCellSize.x + 14, y), "20");
 		y += 12;
-		
+
 		FillRectangle(machinePos + def::vi2d(3 * machineCellSize.x + 6, y), { 5, 5 }, def::BLUE);
 		DrawString(machinePos + def::vi2d(3 * machineCellSize.x + 14, y), "40");
 		y += 12;
