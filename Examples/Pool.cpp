@@ -1,5 +1,7 @@
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "defGameEngine.hpp"
+
+#include <list>
 
 constexpr float BALL_MASS = 284.0f;
 constexpr float BALL_RADIUS = 20.0f;
@@ -18,7 +20,7 @@ struct Ball
 
 	uint8_t type;
 	uint8_t id;
-	
+
 	def::vf2d acc;
 	def::vf2d vel;
 	def::vf2d pos;
@@ -48,14 +50,14 @@ struct Ball
 		if (fabs(vel.mag2()) < 0.01f)
 			vel = { 0.0f, 0.0f };
 	}
-	
+
 };
 
 struct Table
 {
 	Table() = default;
 	Table(const def::vf2d& tl, const def::vf2d& br, const float brdWidth, const float pctRadius)
-		: boundary{tl, br}, borderWidth(brdWidth) {}
+		: boundary{ tl, br }, borderWidth(brdWidth) {}
 
 	void AddBall(const def::vf2d& pos, const float radius, const uint8_t type = Ball::WHITE)
 	{
@@ -188,13 +190,13 @@ struct Table
 				if (
 					ball.pos.y < boundary.first.y + borderWidth + ball.radius ||
 					ball.pos.y > boundary.second.y - borderWidth - ball.radius
-				)
+					)
 					ball.vel.y = -ball.vel.y;
 
 				if (
 					ball.pos.x < boundary.first.x + borderWidth + ball.radius ||
 					ball.pos.x > boundary.second.x - borderWidth - ball.radius
-				)
+					)
 					ball.vel.x = -ball.vel.x;
 			}
 		}
@@ -310,7 +312,7 @@ public:
 		table->AddBall(table->balls.back().pos + def::vf2d(ballRadius * 2 + 2, 0), ballRadius);
 
 		table->AddBall(def::vf2d(ScreenWidth() * 0.4f + ballRadius * 4 + 4, borderWidth * 5 + ballRadius * 8 + 8), ballRadius);
-	
+
 		AddPockets(tl, br, pocketRadius);
 	}
 
