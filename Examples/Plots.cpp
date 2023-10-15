@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "../defGameEngine.h"
+#include "defGameEngine.hpp"
 
 #include <algorithm>
 
@@ -44,7 +44,7 @@ protected:
 		{
 			data[i] = def::vf2d(i, 1.0f + sin(i));
 		}
-		
+
 		return true;
 	}
 
