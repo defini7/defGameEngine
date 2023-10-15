@@ -1,5 +1,7 @@
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "defGameEngine.hpp"
+
+#include <list>
 
 class AxisKiller : public def::GameEngine
 {
@@ -125,7 +127,7 @@ protected:
 		}
 
 		Clear(def::BLACK);
-		
+
 		// Draw Enemy
 		FillCircle(enemyPos, objRadius, def::RED);
 
