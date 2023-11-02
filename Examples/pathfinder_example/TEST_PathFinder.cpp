@@ -24,10 +24,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DGE_APPLICATION
-#include "../../defGameEngine.h"
+#include "defGameEngine.hpp"
 
 #define DGE_PATHFINDER
-#include "../../Extensions/DGE_PathFinder.h"
+#include "DGE_PathFinder.hpp"
 
 using namespace def;
 
@@ -44,7 +44,7 @@ private:
 
 	static float Distance(Node* n1, Node* n2)
 	{
-		return sqrtf((n1->posX - n2->posX) * (n1->posX - n2->posX) + (n1->posY - n2->posY) * (n1->posY - n2->posY));
+		return (n1->pos - n2->pos).length();
 	}
 
 	static float Heuristic(Node* n1, Node* n2)
@@ -55,8 +55,8 @@ private:
 protected:
 	bool OnUserCreate() override
 	{
-		pathFinder.ConstructMap(16, 16);
-		pathFinder.SetNodes(1, 8, 14, 8);
+		pathFinder.ConstructMap({ 16, 16 });
+		pathFinder.SetNodes({ 1, 8 }, { 14, 8 });
 
 		pathFinder.ClearMap();
 		pathFinder.FindPath(&Distance, &Heuristic);
@@ -69,80 +69,78 @@ protected:
 		int nodeSize = 9;
 		int nodeBorder = 2;
 
-		int selectedNodeX = MouseX() / nodeSize;
-		int selectedNodeY = MouseY() / nodeSize;
+		def::vi2d selectedNode = GetMouse() / nodeSize;
 
 		Node* nodes = pathFinder.GetNodes();
 
 		if (GetMouse(0).released)
 		{
-			if (selectedNodeX >= 0 && selectedNodeX < pathFinder.GetMapWidth())
-				if (selectedNodeY >= 0 && selectedNodeY < pathFinder.GetMapHeight())
+			if (selectedNode >= def::vi2d(0, 0) && selectedNode < pathFinder.GetMapSize())
+			{
+				int p = selectedNode.y * pathFinder.GetMapWidth() + selectedNode.x;
+
+				if (GetKey(L'S').held)
+					pathFinder.SetNodes(&nodes[p], nullptr);
+				else if (GetKey(L'G').held)
+					pathFinder.SetNodes(nullptr, &nodes[p]);
+				else
 				{
-					int p = selectedNodeY * pathFinder.GetMapWidth() + selectedNodeX;
-
-					if (GetKey(L'S').held)
-						pathFinder.SetNodes(&nodes[p], nullptr);
-					else if (GetKey(L'G').held)
-						pathFinder.SetNodes(nullptr, &nodes[p]);
-					else
-					{
-						if (&nodes[p] != pathFinder.GetStartNode() && &nodes[p] != pathFinder.GetGoalNode())
-							nodes[p].isObstacle = !nodes[p].isObstacle;
-					}
-
-					pathFinder.ClearMap();
-					pathFinder.FindPath(&Distance, &Heuristic);
+					if (&nodes[p] != pathFinder.GetStartNode() && &nodes[p] != pathFinder.GetGoalNode())
+						nodes[p].isObstacle = !nodes[p].isObstacle;
 				}
+
+				pathFinder.ClearMap();
+				pathFinder.FindPath(&Distance, &Heuristic);
+			}
 		}
 
 		Clear(def::BLACK);
 
-		for (int x = 0; x < pathFinder.GetMapWidth(); x++)
-			for (int y = 0; y < pathFinder.GetMapHeight(); y++)
+		def::vi2d i;
+		for (i.x = 0; i.x < pathFinder.GetMapWidth(); i.x++)
+			for (i.y = 0; i.y < pathFinder.GetMapHeight(); i.y++)
 			{
-				for (auto n : nodes[y * pathFinder.GetMapWidth() + x].neighbours)
+				for (auto n : nodes[i.y * pathFinder.GetMapWidth() + i.x].neighbours)
 				{
 					DrawLine(
-						x * nodeSize + nodeSize / 2, y * nodeSize + nodeSize / 2,
-						n->posX * nodeSize + nodeSize / 2, n->posY * nodeSize + nodeSize / 2,
-						def::DARK_BLUE
-					);
+						i * nodeSize + nodeSize / 2,
+						n->pos * nodeSize + nodeSize / 2,
+						def::DARK_BLUE);
 				}
 			}
 
-		for (int x = 0; x < pathFinder.GetMapWidth(); x++)
-			for (int y = 0; y < pathFinder.GetMapHeight(); y++)
+		for (i.x = 0; i.x < pathFinder.GetMapWidth(); i.x++)
+			for (i.y = 0; i.y < pathFinder.GetMapHeight(); i.y++)
 			{
-				int x1 = x * nodeSize + nodeBorder;
-				int y1 = y * nodeSize + nodeBorder;
-				int sx1 = ((x + 1) * nodeSize - nodeBorder) - x1;
-				int sy1 = ((y + 1) * nodeSize - nodeBorder) - y1;
+				def::Node& n = nodes[i.y * pathFinder.GetMapWidth() + i.x];
+				def::Pixel col;
 
-				if (nodes[y * pathFinder.GetMapWidth() + x].isObstacle)
-					FillRectangle(x1, y1, sx1, sy1, def::WHITE);
-				else if (&nodes[y * pathFinder.GetMapWidth() + x] == pathFinder.GetStartNode())
-					FillRectangle(x1, y1, sx1, sy1, def::GREEN);
-				else if (&nodes[y * pathFinder.GetMapWidth() + x] == pathFinder.GetGoalNode())
-					FillRectangle(x1, y1, sx1, sy1, def::RED);
-				else if (nodes[y * pathFinder.GetMapWidth() + x].isVisited)
-					FillRectangle(x1, y1, sx1, sy1, def::BLUE);
+				if (n.isObstacle)
+					col = def::WHITE;
+				else if (&n == pathFinder.GetStartNode())
+					col = def::GREEN;
+				else if (&n == pathFinder.GetGoalNode())
+					col = def::RED;
+				else if (n.isVisited)
+					col = def::BLUE;
 				else
-					FillRectangle(x1, y1, sx1, sy1, def::DARK_BLUE);
+					col = def::DARK_BLUE;
+
+				int s = nodeSize - 2 * nodeBorder;
+				FillRectangle(i * nodeSize + nodeBorder, { s, s }, col);
 			}
 
 		if (pathFinder.GetGoalNode() != nullptr)
 		{
-			Node* p = pathFinder.GetGoalNode();
-			while (p->parent != nullptr)
+			Node* n = pathFinder.GetGoalNode();
+			while (n->parent != nullptr)
 			{
 				DrawLine(
-					p->posX * nodeSize + nodeSize / 2, p->posY * nodeSize + nodeSize / 2,
-					p->parent->posX * nodeSize + nodeSize / 2, p->parent->posY * nodeSize + nodeSize / 2,
-					def::YELLOW
-				);
+					n->pos * nodeSize + nodeSize / 2,
+					n->parent->pos * nodeSize + nodeSize / 2,
+					def::YELLOW);
 
-				p = p->parent;
+				n = n->parent;
 			}
 		}
 
