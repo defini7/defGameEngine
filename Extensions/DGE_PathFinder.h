@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DGE_PATHFINDER_HPP
+#define DGE_PATHFINDER_HPP
 
 #pragma region license
 /***
@@ -41,12 +42,16 @@ namespace def
 {
 	struct Node
 	{
-		bool isObstacle = false;
-		bool isVisited = false;
+		Node();
+
+		bool isObstacle;
+		bool isVisited;
+
 		float globalGoal;
 		float localGoal;
-		int posX;
-		int posY;
+
+		def::vi2d pos;
+
 		std::vector<Node*> neighbours;
 		Node* parent;
 	};
@@ -54,38 +59,25 @@ namespace def
 	class PathFinder
 	{
 	public:
-		PathFinder() = default;
-
-		PathFinder(int mapWidth, int mapHeight)
-		{
-			m_MapWidth = mapWidth;
-			m_MapHeight = mapHeight;
-
-			m_Nodes = new Node[m_MapWidth * m_MapHeight];
-		}
-
-		~PathFinder()
-		{
-			FreeMap();
-		}
+		PathFinder();
+		~PathFinder();
 
 	private:
-		int m_MapWidth;
-		int m_MapHeight;
+		def::vi2d m_MapSize;
 
 		Node* m_Nodes;
 
 		Node* m_Start;
 		Node* m_Goal;
 
-		bool m_IsMapFreed = false;
+		bool m_IsMapFreed;
 
 	public:
 		void ClearMap();
 		bool FreeMap();
-		bool ConstructMap(int mapWidth, int mapHeight);
+		bool ConstructMap(const def::vi2d& size);
 
-		bool SetNodes(int startX, int startY, int goalX, int goalY);
+		bool SetNodes(const def::vi2d& start, const def::vi2d& goal);
 		void SetNodes(Node* start = nullptr, Node* goal = nullptr);
 
 		Node* GetStartNode();
@@ -93,8 +85,10 @@ namespace def
 		Node* GetNodes();
 
 		void ResetNodes();
-		int GetMapWidth();
-		int GetMapHeight();
+
+		int GetMapWidth() const;
+		int GetMapHeight() const;
+		def::vi2d GetMapSize() const;
 
 		void FindPath(float (*dist)(Node*, Node*), float (*heuristic)(Node*, Node*));
 
@@ -103,15 +97,44 @@ namespace def
 #ifdef DGE_PATHFINDER
 #undef DGE_PATHFINDER
 
+	Node::Node()
+	{
+		isObstacle = false;
+		isVisited = false;
+
+		globalGoal = INFINITY;
+		localGoal = INFINITY;
+
+		parent = nullptr;
+	}
+
+	PathFinder::PathFinder()
+	{
+		m_Start = nullptr;
+		m_Goal = nullptr;
+
+		m_IsMapFreed = false;
+	}
+
+	PathFinder::~PathFinder()
+	{
+		FreeMap();
+	}
+
 	void PathFinder::ClearMap()
 	{
-		for (int x = 0; x < m_MapWidth; x++)
-			for (int y = 0; y < m_MapHeight; y++)
+		for (int x = 0; x < m_MapSize.x; x++)
+			for (int y = 0; y < m_MapSize.y; y++)
 			{
-				int p = y * m_MapWidth + x;
+				int p = y * m_MapSize.x + x;
+
 				m_Nodes[p].isVisited = false;
+
 				m_Nodes[p].globalGoal = INFINITY;
 				m_Nodes[p].localGoal = INFINITY;
+
+				m_Nodes[p].pos = { x, y };
+
 				m_Nodes[p].parent = nullptr;
 			}
 	}
@@ -127,51 +150,64 @@ namespace def
 		return m_IsMapFreed;
 	}
 
-	bool PathFinder::ConstructMap(int mapWidth, int mapHeight)
+	bool PathFinder::ConstructMap(const def::vi2d& size)
 	{
-		if (mapWidth <= 0 || mapHeight <= 0)
+		if (size.x <= 0 || size.y <= 0)
 			return false;
 
-		FreeMap();
+		m_MapSize = size;
 
-		m_MapWidth = mapWidth;
-		m_MapHeight = mapHeight;
+		if (FreeMap())
+			m_IsMapFreed = false;
 
-		m_Nodes = new Node[mapWidth * mapHeight];
+		m_Nodes = new Node[size.x * size.y];
 
-		for (int x = 0; x < mapWidth; x++)
-			for (int y = 0; y < mapHeight; y++)
+		ClearMap();
+
+		for (int x = 0; x < size.x; x++)
+			for (int y = 0; y < size.y; y++)
 			{
-				int p = y * mapWidth + x;
-				m_Nodes[p].isObstacle = false;
-				m_Nodes[p].isVisited = false;
-				m_Nodes[p].posX = x;
-				m_Nodes[p].posY = y;
-				m_Nodes[p].parent = nullptr;
-			}
+				bool topFits = y > 0;
+				bool bottomFits = y < size.y - 1;
 
-		for (int x = 0; x < mapWidth; x++)
-			for (int y = 0; y < mapHeight; y++)
-			{
-				if (y > 0) m_Nodes[y * mapWidth + x].neighbours.push_back(&m_Nodes[(y - 1) * mapWidth + x]);
-				if (y < mapHeight - 1) m_Nodes[y * mapWidth + x].neighbours.push_back(&m_Nodes[(y + 1) * mapWidth + x]);
-				if (x > 0) m_Nodes[y * mapWidth + x].neighbours.push_back(&m_Nodes[y * mapWidth + x - 1]);
-				if (x < mapWidth - 1) m_Nodes[y * mapWidth + x].neighbours.push_back(&m_Nodes[y * mapWidth + x + 1]);
-			}
+				bool leftFits = x > 0;
+				bool rightFits = x < size.x - 1;
 
-		m_IsMapFreed = false;
+				if (topFits)
+					m_Nodes[y * size.x + x].neighbours.push_back(&m_Nodes[(y - 1) * size.x + x]);
+
+				if (bottomFits)
+					m_Nodes[y * size.x + x].neighbours.push_back(&m_Nodes[(y + 1) * size.x + x]);
+
+				if (leftFits)
+					m_Nodes[y * size.x + x].neighbours.push_back(&m_Nodes[y * size.x + x - 1]);
+
+				if (rightFits)
+					m_Nodes[y * size.x + x].neighbours.push_back(&m_Nodes[y * size.x + x + 1]);
+			
+				if (topFits && leftFits)
+					m_Nodes[y * size.x + x].neighbours.push_back(&m_Nodes[(y - 1) * size.x + x - 1]);
+
+				if (bottomFits && rightFits)
+					m_Nodes[y * size.x + x].neighbours.push_back(&m_Nodes[(y + 1) * size.x + x + 1]);
+
+				if (leftFits && bottomFits)
+					m_Nodes[y * size.x + x].neighbours.push_back(&m_Nodes[(y + 1) * size.x + x - 1]);
+
+				if (rightFits && topFits)
+					m_Nodes[y * size.x + x].neighbours.push_back(&m_Nodes[(y - 1) * size.x + x + 1]);
+			}
 
 		return true;
 	}
 
-	bool PathFinder::SetNodes(int nStartX, int nStartY, int nGoalX, int nGoalY)
+	bool PathFinder::SetNodes(const def::vi2d& start, const def::vi2d& goal)
 	{
-		if (nStartX < 0 || nStartX >= m_MapWidth || nGoalX < 0 || nGoalX >= m_MapWidth ||
-			nStartY < 0 || nStartY >= m_MapHeight || nGoalY < 0 || nGoalY >= m_MapHeight)
+		if (start < def::vi2d(0, 0) || goal < def::vi2d(0, 0) || start >= m_MapSize || goal >= m_MapSize)
 			return false;
 
-		m_Start = &m_Nodes[nStartY * m_MapWidth + nStartX];
-		m_Goal = &m_Nodes[nGoalY * m_MapWidth + nGoalX];
+		m_Start = &m_Nodes[start.y * m_MapSize.x + start.x];
+		m_Goal = &m_Nodes[goal.y * m_MapSize.x + goal.x];
 
 		return true;
 	}
@@ -202,25 +238,30 @@ namespace def
 	{
 		return m_Nodes;
 	}
-
-	int PathFinder::GetMapWidth()
+	
+	int PathFinder::GetMapWidth() const
 	{
-		return m_MapWidth;
+		return m_MapSize.x;
 	}
 
-	int PathFinder::GetMapHeight()
+	int PathFinder::GetMapHeight() const
 	{
-		return m_MapHeight;
+		return m_MapSize.y;
+	}
+
+	def::vi2d PathFinder::GetMapSize() const
+	{
+		return m_MapSize;
 	}
 
 	void PathFinder::FindPath(float (*dist)(Node*, Node*), float (*heuristic)(Node*, Node*))
 	{
 		Node* current = m_Start;
-		m_Start->localGoal = 0.0f;
-		m_Start->globalGoal = heuristic(m_Start, m_Goal);
+		current->localGoal = 0.0f;
+		current->globalGoal = heuristic(current, m_Goal);
 
 		std::list<Node*> nodesToTest;
-		nodesToTest.push_back(m_Start);
+		nodesToTest.push_back(current);
 
 		while (!nodesToTest.empty() && current != m_Goal)
 		{
@@ -255,6 +296,8 @@ namespace def
 			}
 		}
 	}
-	
+
 #endif
 }
+
+#endif
