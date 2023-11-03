@@ -89,7 +89,7 @@
 
 #pragma warning(disable : 4996)
 
-// Thank you, dear stb_image!
+// Oh, dear stb_image...
 #define SAFE_STBI_FAILURE_REASON() (stbi_failure_reason() ? stbi_failure_reason() : "")
 
 #ifndef STB_IMAGE_WRITE_IMPLEMENTATION
@@ -118,9 +118,6 @@
 namespace def
 {
 	void Assert(bool expr, const std::vector<std::string>& args);
-
-	template <class T>
-	T Lerp(T x, T y, float t);
 
 	namespace Key
 	{
@@ -263,7 +260,6 @@ namespace def
 		};
 
 		Pixel mix(const Pixel& rhs, const float factor) const;
-		Pixel& clamp();
 		Pixel& ref();
 		std::string str() const;
 
@@ -334,8 +330,8 @@ namespace def
 	Pixel PixelF(float r, float g, float b, float a = 1.0f);
 	Pixel RandomPixel(bool isRandomAlpha = false);
 
-	float B2F(uint8_t b);
-	uint8_t F2B(float f);
+	float ByteToFloat(uint8_t b);
+	uint8_t FloatToByte(float f);
 
 	class Sprite
 	{
@@ -625,12 +621,6 @@ namespace def
 	}
 
 	template <class T>
-	T Lerp(T x, T y, float t)
-	{
-		return (float)x * (1.0f - t) + (float)y * t;
-	}
-
-	template <class T>
 	v2d<T>::v2d(const T& x, const T& y)
 	{
 		this->x = x;
@@ -712,16 +702,13 @@ namespace def
 	template <class T>
 	v2d<T> v2d<T>::clamp(const v2d<T>& start, const v2d<T>& end) const
 	{
-		v2d<T> clamped = { this->x, this->y };
-		clamped.x = std::clamp(clamped.x, start.x, end.x);
-		clamped.y = std::clamp(clamped.y, start.y, end.y);
-		return clamped;
+		return { std::clamp(x, start.x, end.x), std::clamp(y, start.y, end.y) };
 	}
 
 	template <class T> float v2d<T>::dot(const v2d<T>& v) const { return this->x * v.x + this->y * v.y; }
-	template <class T> float v2d<T>::length() const { return sqrtf(dot(*this)); }
+	template <class T> float v2d<T>::length() const { return std::sqrtf(dot(*this)); }
 
-	template <class T> T v2d<T>::mag() const { return static_cast<T>(sqrtf(this->x * this->x + this->y * this->y)); }
+	template <class T> T v2d<T>::mag() const { return static_cast<T>(std::sqrtf(this->x * this->x + this->y * this->y)); }
 	template <class T> T v2d<T>::mag2() const { return static_cast<T>(this->x * this->x + this->y * this->y); }
 	template <class T> float v2d<T>::man(const v2d<T>& v) const { return std::abs(this->x - v.x) + std::abs(this->y - v.y); }
 
@@ -753,19 +740,11 @@ namespace def
 	Pixel Pixel::mix(const Pixel& rhs, const float factor) const
 	{
 		return Pixel(
-			Lerp(r, rhs.r, factor),
-			Lerp(g, rhs.g, factor),
-			Lerp(b, rhs.b, factor),
-			Lerp(a, rhs.a, factor)
+			std::lerp(r, rhs.r, factor),
+			std::lerp(g, rhs.g, factor),
+			std::lerp(b, rhs.b, factor),
+			std::lerp(a, rhs.a, factor)
 		);
-	}
-
-	Pixel& Pixel::clamp()
-	{
-		r = std::min((uint8_t)255, std::max((uint8_t)0, r));
-		g = std::min((uint8_t)255, std::max((uint8_t)0, g));
-		b = std::min((uint8_t)255, std::max((uint8_t)0, b));
-		return ref();
 	}
 
 	Pixel& Pixel::ref() { return *this; }
@@ -779,78 +758,140 @@ namespace def
 			std::to_string(a) + ')';
 	}
 
-	Pixel Pixel::operator+(const float rhs) const { return Pixel((float)r + rhs, (float)g + rhs, (float)b + rhs, a).clamp(); }
-	Pixel Pixel::operator-(const float rhs) const { return Pixel((float)r - rhs, (float)g - rhs, (float)b - rhs, a).clamp(); }
-	Pixel Pixel::operator*(const float rhs) const { return Pixel((float)r * rhs, (float)g * rhs, (float)b * rhs, a).clamp(); }
-	Pixel Pixel::operator/(const float rhs) const { return Pixel((float)r / rhs, (float)g / rhs, (float)b / rhs, a).clamp(); }
-
 	Pixel& Pixel::operator+=(const float rhs)
 	{
-		r += rhs;
-		g += rhs;
-		b += rhs;
-		return ref().clamp();
+		r = std::clamp((float)r + rhs, 0.0f, 255.0f);
+		g = std::clamp((float)g + rhs, 0.0f, 255.0f);
+		b = std::clamp((float)b + rhs, 0.0f, 255.0f);
+		return ref();
 	}
 
 	Pixel& Pixel::operator-=(const float rhs)
 	{
-		r -= rhs;
-		g -= rhs;
-		b -= rhs;
-		return ref().clamp();
+		r = std::clamp((float)r - rhs, 0.0f, 255.0f);
+		g = std::clamp((float)g - rhs, 0.0f, 255.0f);
+		b = std::clamp((float)b - rhs, 0.0f, 255.0f);
+		return ref();
 	}
 
 	Pixel& Pixel::operator*=(const float rhs)
 	{
-		r *= rhs;
-		g *= rhs;
-		b *= rhs;
-		return ref().clamp();
+		r = std::clamp((float)r * rhs, 0.0f, 255.0f);
+		g = std::clamp((float)g * rhs, 0.0f, 255.0f);
+		b = std::clamp((float)b * rhs, 0.0f, 255.0f);
+		return ref();
 	}
 
 	Pixel& Pixel::operator/=(const float rhs)
 	{
-		r /= rhs;
-		g /= rhs;
-		b /= rhs;
-		return ref().clamp();
+		r = std::clamp((float)r / rhs, 0.0f, 255.0f);
+		g = std::clamp((float)g / rhs, 0.0f, 255.0f);
+		b = std::clamp((float)b / rhs, 0.0f, 255.0f);
+		return ref();
 	}
 
-	Pixel Pixel::operator+(const Pixel& rhs) const { return Pixel(r + rhs.r, g + rhs.g, b + rhs.b, a).clamp(); }
-	Pixel Pixel::operator-(const Pixel& rhs) const { return Pixel(r - rhs.r, g - rhs.g, b - rhs.b, a).clamp(); }
-	Pixel Pixel::operator*(const Pixel& rhs) const { return Pixel(r * rhs.r, g * rhs.g, b * rhs.b, a).clamp(); }
-	Pixel Pixel::operator/(const Pixel& rhs) const { return Pixel(r / rhs.r, g / rhs.g, b / rhs.b, a).clamp(); }
+	Pixel Pixel::operator+(const float rhs) const
+	{
+		return Pixel(
+			std::clamp((float)r + (float)rhs, 0.0f, 255.0f),
+			std::clamp((float)g + (float)rhs, 0.0f, 255.0f),
+			std::clamp((float)b + (float)rhs, 0.0f, 255.0f)
+		);
+	}
+
+	Pixel Pixel::operator-(const float rhs) const
+	{
+		return Pixel(
+			std::clamp((float)r - (float)rhs, 0.0f, 255.0f),
+			std::clamp((float)g - (float)rhs, 0.0f, 255.0f),
+			std::clamp((float)b - (float)rhs, 0.0f, 255.0f)
+		);
+	}
+
+	Pixel Pixel::operator*(const float rhs) const
+	{
+		return Pixel(
+			std::clamp((float)r * (float)rhs, 0.0f, 255.0f),
+			std::clamp((float)g * (float)rhs, 0.0f, 255.0f),
+			std::clamp((float)b * (float)rhs, 0.0f, 255.0f)
+		);
+	}
+
+	Pixel Pixel::operator/(const float rhs) const
+	{
+		return Pixel(
+			std::clamp((float)r / (float)rhs, 0.0f, 255.0f),
+			std::clamp((float)g / (float)rhs, 0.0f, 255.0f),
+			std::clamp((float)b / (float)rhs, 0.0f, 255.0f)
+		);
+	}
 
 	Pixel& Pixel::operator+=(const Pixel& rhs)
 	{
-		r += rhs.r;
-		g += rhs.g;
-		b += rhs.b;
-		return ref().clamp();
+		r = std::clamp((float)r + (float)rhs.r, 0.0f, 255.0f);
+		g = std::clamp((float)g + (float)rhs.g, 0.0f, 255.0f);
+		b = std::clamp((float)b + (float)rhs.b, 0.0f, 255.0f);
+		return ref();
 	}
 
 	Pixel& Pixel::operator-=(const Pixel& rhs)
 	{
-		r -= rhs.r;
-		g -= rhs.g;
-		b -= rhs.b;
-		return ref().clamp();
+		r = std::clamp((float)r - (float)rhs.r, 0.0f, 255.0f);
+		g = std::clamp((float)g - (float)rhs.g, 0.0f, 255.0f);
+		b = std::clamp((float)b - (float)rhs.b, 0.0f, 255.0f);
+		return ref();
 	}
 
 	Pixel& Pixel::operator*=(const Pixel& rhs)
 	{
-		r *= rhs.r;
-		g *= rhs.g;
-		b *= rhs.b;
-		return ref().clamp();
+		r = std::clamp((float)r * (float)rhs.r, 0.0f, 255.0f);
+		g = std::clamp((float)g * (float)rhs.g, 0.0f, 255.0f);
+		b = std::clamp((float)b * (float)rhs.b, 0.0f, 255.0f);
+		return ref();
 	}
 
 	Pixel& Pixel::operator/=(const Pixel& rhs)
 	{
-		r /= rhs.r;
-		g /= rhs.g;
-		b /= rhs.b;
-		return ref().clamp();
+		r = std::clamp((float)r / (float)rhs.r, 0.0f, 255.0f);
+		g = std::clamp((float)g / (float)rhs.g, 0.0f, 255.0f);
+		b = std::clamp((float)b / (float)rhs.b, 0.0f, 255.0f);
+		return ref();
+	}
+
+	Pixel Pixel::operator+(const Pixel& rhs) const
+	{
+		return Pixel(
+			std::clamp((int)r + (int)rhs.r, 0, 255),
+			std::clamp((int)g + (int)rhs.g, 0, 255),
+			std::clamp((int)b + (int)rhs.b, 0, 255)
+		);
+	}
+
+	Pixel Pixel::operator-(const Pixel& rhs) const
+	{
+		return Pixel(
+			std::clamp((int)r - (int)rhs.r, 0, 255),
+			std::clamp((int)g - (int)rhs.g, 0, 255),
+			std::clamp((int)b - (int)rhs.b, 0, 255)
+		);
+	}
+
+	Pixel Pixel::operator*(const Pixel& rhs) const
+	{
+		return Pixel(
+			std::clamp((float)r * (float)rhs.r / 255.0f, 0.0f, 255.0f),
+			std::clamp((float)g * (float)rhs.g / 255.0f, 0.0f, 255.0f),
+			std::clamp((float)b * (float)rhs.b / 255.0f, 0.0f, 255.0f)
+		);
+	}
+
+	Pixel Pixel::operator/(const Pixel& rhs) const
+	{
+		return Pixel(
+			std::clamp((float)r / (float)rhs.r, 0.0f, 255.0f),
+			std::clamp((float)g / (float)rhs.g, 0.0f, 255.0f),
+			std::clamp((float)b / (float)rhs.b, 0.0f, 255.0f)
+		);
 	}
 
 	bool Pixel::operator==(const Pixel& rhs) const { return r == rhs.r && g == rhs.g && b == rhs.b; }
@@ -877,8 +918,8 @@ namespace def
 		return Pixel(rand() % 256, rand() % 256, rand() % 256, isRandomAlpha ? rand() % 256 : 255);
 	}
 
-	float B2F(uint8_t b) { return (float)b / 255.0f; }
-	uint8_t F2B(float f) { return uint8_t(f * 255.0f); }
+	float ByteToFloat(uint8_t b) { return (float)b / 255.0f; }
+	uint8_t FloatToByte(float f) { return uint8_t(f * 255.0f); }
 
 	Sprite::Sprite(int32_t width, int32_t height)
 	{
@@ -992,7 +1033,7 @@ namespace def
 		}
 
 		case WrapMethod::CLAMP:
-			return get_pixel(pos.clamp({ 0, 0 }, size));
+			return get_pixel(pos.clamp({ 0, 0 }, { size.x - 1, size.y - 1 }));
 
 		}
 
@@ -1498,9 +1539,9 @@ namespace def
 		case Pixel::ALPHA:
 		{
 			Pixel d = target->GetPixel({ x, y });
-			uint8_t r = Lerp(d.r, p.r, (float)p.a / 255.0f);
-			uint8_t g = Lerp(d.g, p.g, (float)p.a / 255.0f);
-			uint8_t b = Lerp(d.b, p.b, (float)p.a / 255.0f);
+			uint8_t r = std::lerp(d.r, p.r, (float)p.a / 255.0f);
+			uint8_t g = std::lerp(d.g, p.g, (float)p.a / 255.0f);
+			uint8_t b = std::lerp(d.b, p.b, (float)p.a / 255.0f);
 			return target->SetPixel({ x, y }, { r, g, b });
 		}
 
@@ -2457,7 +2498,7 @@ namespace def
 
 	void GameEngine::ClearBuffer(const Pixel& p)
 	{
-		glClearColor(B2F(p.r), B2F(p.g), B2F(p.b), B2F(p.a));
+		glClearColor(ByteToFloat(p.r), ByteToFloat(p.g), ByteToFloat(p.b), ByteToFloat(p.a));
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
