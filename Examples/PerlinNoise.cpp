@@ -1,123 +1,144 @@
+/*
+* BSD 3-Clause License
+Copyright (c) 2023, Alex
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "defGameEngine.hpp"
 
-constexpr float BOUND = (3.14159265 / ~(~0u >> 1));
+using namespace def;
 
-class Example : public def::GameEngine
+vf2d RandomGradient(const vi2d& i)
+{
+	uint32_t a = i.x, b = i.y;
+	a *= 3284157443u; b ^= a << 16 | a >> 16;
+	b *= 1911520717u; a ^= b << 16 | b >> 16;
+	a *= 2048419325u;
+
+	float random = (float)a * 3.14159f / float(~(~0u >> 1));
+	return { cosf(random), sinf(random) };
+}
+
+float DotProductGridGradient(const vi2d& i, const vf2d& p)
+{
+	return (p - vf2d(i)).dot(RandomGradient(i));
+}
+
+// Returns float value (0.0f - 1.0f)
+float PerlinNoise2D(const vf2d& p)
+{
+	vi2d i0 = p.floor();
+	vi2d i1 = i0 + 1.0f;
+
+	vf2d w = p - vf2d(i0);
+
+	float ix0 = std::lerp(
+		DotProductGridGradient(i0, p),
+		DotProductGridGradient({ i1.x, i0.y }, p),
+		w.x);
+
+	float ix1 = std::lerp(
+		DotProductGridGradient({ i0.x, i1.y }, p),
+		DotProductGridGradient(i1, p),
+		w.x);
+
+	return std::lerp(ix0, ix1, w.y);
+}
+
+class PerlinNoise : public def::GameEngine
 {
 public:
-	Example()
+	PerlinNoise()
 	{
-		SetTitle("Example");
+		SetTitle("Perlin Noise");
 	}
 
-protected:
-	def::vf2d RandGradient(const def::vi2d& pos)
+private:
+	void UpdateMap()
 	{
-		uint32_t width = 8 * sizeof(uint32_t);
-		uint32_t rot = width / 2;
-
-		uint64_t x = (uint64_t)pos.x;
-		uint64_t y = (uint64_t)pos.y;
-
-		x *= 3284157443;
-		y ^= x << rot | x >> width - rot;
-
-		y *= 1911520717;
-		x ^= y << rot | y >> width - rot;
-
-		x *= 2048419325;
-
-		float rand = (float)x * BOUND;
-		return { cosf(rand), sinf(rand) };
-	}
-
-	float DotGradient(const def::vi2d& posI, const def::vf2d& posF)
-	{
-		def::vf2d grad = RandGradient(posI);
-		def::vf2d dist = posF - def::vf2d(posI);
-
-		return dist.dot(grad);
-	}
-
-	float PerlinNoise2D(const def::vf2d& pos)
-	{
-		auto lerp = [](float start, float end, float t)
-		{
-			return (end - start) * t + start;
-		};
-
-		def::vi2d p0 = pos.floor();
-		def::vi2d p1 = def::vi2d(pos) + def::vi2d(1, 1);
-
-		def::vf2d s = pos - def::vf2d(p0);
-
-		float n0, n1, ix0, ix1;
-
-		n0 = DotGradient(p0, pos);
-		n1 = DotGradient({ p1.x, p0.y }, pos);
-		ix0 = lerp(n0, n1, s.x);
-
-		n0 = DotGradient({ p0.x, p1.y }, pos);
-		n1 = DotGradient(p1, pos);
-		ix1 = lerp(n0, n1, s.x);
-
-		return lerp(ix0, ix1, s.y) * 0.5f + 0.5f;
-	}
-
-	void ApplyPerlinNoise2D()
-	{
-		for (int32_t x = 0; x < ScreenWidth(); x++)
-			for (int32_t y = 0; y < ScreenHeight(); y++)
+		for (int i = 0; i < ScreenWidth(); i++)
+			for (int j = 0; j < ScreenHeight(); j++)
 			{
-				size_t i = y * ScreenWidth() + x;
-				perlinNoise[i] = PerlinNoise2D(def::vf2d(x, y) / def::vf2d(ScreenSize())) * factor;
+				float n = 0.0f;
+
+				float frequency = 1.0f;
+				float amplitude = 1.0f;
+
+				for (int o = 0; o < octaves; o++)
+				{
+					n += PerlinNoise2D(vf2d(i, j) / (vf2d)ScreenSize() * frequency) * amplitude;
+
+					frequency *= 2.0f;
+					amplitude *= 0.5f;
+				}
+
+				map[j * ScreenWidth() + i] = std::clamp(n * 1.2f, -1.0f, 1.0f) * 0.5f + 0.5f;
 			}
 	}
 
-public:
+private:
+	int octaves = 12;
+	float* map = nullptr;
+
+protected:
 	bool OnUserCreate() override
 	{
-		perlinNoise = new float[ScreenWidth() * ScreenHeight()];
+		map = new float[ScreenWidth() * ScreenHeight()];
+		memset(map, 0, sizeof(float) * ScreenWidth() * ScreenHeight());
+
+		UpdateMap();
 
 		return true;
 	}
 
 	bool OnUserUpdate(float deltaTime) override
 	{
-		if (GetKey(def::Key::UP).held) factor += deltaTime;
-		if (GetKey(def::Key::DOWN).held) factor -= deltaTime;
+		if (GetKey(def::Key::LEFT).pressed) octaves--;
+		if (GetKey(def::Key::RIGHT).pressed) octaves++;
+		if (octaves < 0) octaves = 0;
 
-		auto start = std::chrono::high_resolution_clock::now();
-		ApplyPerlinNoise2D();
-		auto end = std::chrono::high_resolution_clock::now();
+		if (GetKey(def::Key::SPACE).pressed)
+			UpdateMap();
 
-		double elapsed = std::chrono::duration<double>(end - start).count();
-
-		for (int32_t x = 0; x < ScreenWidth(); x++)
-			for (int32_t y = 0; y < ScreenHeight(); y++)
+		for (int i = 0; i < ScreenWidth(); i++)
+			for (int j = 0; j < ScreenHeight(); j++)
 			{
-				float n = perlinNoise[y * ScreenWidth() + x];
-				Draw(x, y, def::PixelF(n, 1.0f - n, 1.0f - n));
+				float& n = map[j * ScreenWidth() + i];
+				Draw(i, j, PixelF(n, n, n));
 			}
 
-		DrawString(10, 10, "Took = " + std::to_string(elapsed) + "s");
-		DrawString(10, 20, "Factor = " + std::to_string(factor));
+		DrawString(2, 2, "Octaves = " + std::to_string(octaves), def::CYAN);
 
 		return true;
 	}
-
-protected:
-	float* perlinNoise;
-	float factor = 20.0f;
 
 };
 
 int main()
 {
-	Example demo;
+	PerlinNoise demo;
 
-	demo.Construct(256, 240, 4, 4);
+	demo.Construct(512, 480, 2, 2);
 	demo.Run();
 
 	return 0;
