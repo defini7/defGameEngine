@@ -51,10 +51,8 @@ namespace def::img
 
 	constexpr float DITHERING_FLOYDSTEINBERG_KERNEL[4] =
 	{
-		7.0f / 16.0f,
-		3.0f / 16.0f,
-		5.0f / 16.0f,
-		1.0f / 16.0f
+		7.0f / 16.0f, 3.0f / 16.0f,
+		5.0f / 16.0f, 1.0f / 16.0f
 	};
 
 	const std::vector<float> DITHERING_ORDERED_2X2 = { 0, 2, 3, 1 };
@@ -62,8 +60,23 @@ namespace def::img
 
 	struct Pixelf
 	{
-		constexpr Pixelf(float r = 0.0f, float g = 0.0f, float b = 0.0f) : r(r), g(g), b(b) {}
-		float r, g, b;
+		Pixelf(float r = 0.0f, float g = 0.0f, float b = 0.0f) : r(r), g(g), b(b) {}
+		
+		union
+		{
+			struct { float r, g, b; };
+			float rgb[3];
+		};
+
+		std::string str() const
+		{
+			return std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b);
+		}
+
+		float& operator[](const size_t i)
+		{
+			return rgb[i];
+		}
 	};
 
 	struct Frame
@@ -97,6 +110,7 @@ namespace def::img
 	void Dithering_FloydSteinberg(const Frame& input, Frame& output, const std::function<void(const def::Pixel&, def::Pixel& p)>& quantise);
 	void Dithering_Ordered(const Frame& input, Frame& output, const std::vector<float>& kernel, const size_t kernelWidth, const size_t kernelHeight);
 	void Ripple(const Frame& input, Frame& output, const float accTime, const float centerX = 0.5f, const float centerY = 0.5f);
+	void CRT(const Frame& input, Frame& output, const float brightness, const float contrast, const float vertFill1 = 0.0f, const float vertFill2 = 0.0f);
 
 #ifdef DEF_IMAGE_PROCESSING
 #undef DEF_IMAGE_PROCESSING
@@ -390,6 +404,29 @@ namespace def::img
 
 				output.set(x, y, input.get(int(u * fw), int(v * fh)));
 			}
+	}
+
+	void CRT(const Frame& input, Frame& output, const Pixelf& gun, const Pixelf& skew, const Pixelf& align)
+	{
+		Pixelf workingGun = gun;
+
+		for (int scanline = 0; scanline < input.height; scanline++)
+		{
+			workingGun = gun;
+			
+			for (int pixel = 0; pixel < input.width; pixel++)
+			{
+				Pixelf inRed = input.get(pixel + align.r, scanline);
+				Pixelf inGreen = input.get(pixel + align.g, scanline);
+				Pixelf inBlue = input.get(pixel + align.b, scanline);
+
+				workingGun.r += (inRed.r - workingGun.r) * skew.r;
+				workingGun.g += (inGreen.g - workingGun.g) * skew.g;
+				workingGun.b += (inBlue.b - workingGun.b) * skew.b;
+
+				output.set(pixel, scanline, workingGun);
+			}
+		}
 	}
 
 #endif
