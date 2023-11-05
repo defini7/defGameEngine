@@ -115,7 +115,7 @@ protected:
 	{
 		if (GetKey(def::Key::LEFT).pressed) octaves--;
 		if (GetKey(def::Key::RIGHT).pressed) octaves++;
-		if (octaves < 0) octaves = 0;
+		octaves = std::clamp(octaves, 0, 32);
 
 		if (GetKey(def::Key::SPACE).pressed)
 			UpdateMap();
@@ -123,8 +123,32 @@ protected:
 		for (int i = 0; i < ScreenWidth(); i++)
 			for (int j = 0; j < ScreenHeight(); j++)
 			{
-				float& n = map[j * ScreenWidth() + i];
-				Draw(i, j, PixelF(n, n, n));
+				float n = map[j * ScreenWidth() + i];
+				uint8_t col = uint8_t(n * 12.0f);
+
+				def::Pixel pix;
+
+				switch (col)
+				{
+				case 0: pix = BLACK; break;
+
+				case 1: pix = DARK_BROWN; break;
+				case 2: pix = BROWN; break;
+				case 3: pix = DARK_RED; break;
+				case 4: pix = RED; break;
+
+				case 5: pix = DARK_PURPLE; break;
+				case 6: pix = DARK_BLUE; break;
+				case 7: pix = PURPLE; break;
+				case 8: pix = BLUE; break;
+
+				case 9:  pix = DARK_ORANGE; break;
+				case 10: pix = ORANGE; break;
+				case 11: pix = BEIGE; break;
+				case 12: pix = YELLOW; break;
+				}
+
+				Draw(i, j, pix);
 			}
 
 		DrawString(2, 2, "Octaves = " + std::to_string(octaves), def::CYAN);
@@ -138,7 +162,7 @@ int main()
 {
 	PerlinNoise demo;
 
-	demo.Construct(512, 480, 2, 2);
+	demo.Construct(1280, 720, 1, 1);
 	demo.Run();
 
 	return 0;
