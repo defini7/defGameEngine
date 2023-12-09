@@ -50,7 +50,7 @@ function CreateApp()
 	app = {}
 
 	app.dimensions = { 256, 240, 4, 4 }
-	app.title = "Star Track"
+	app.title = "Star Field"
 
 	return app
 end
