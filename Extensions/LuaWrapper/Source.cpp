@@ -104,29 +104,26 @@ bool CreateApp(def::vi2d& screenSize, def::vi2d& pixelSize, std::string& title, 
 	}
 
 	sol::table init = funcResult;
-	int32_t dimensions[4]{ 256, 240, 4, 4 };
 
-	if (init["title"].valid())
-		title = init["title"].get<std::string_view>();
+	title = init["title"].get_or<std::string_view>("Undefined");
 
-	fullScreen = init["full_screen"].valid() && init["full_screen"].get<bool>();
-	vsync = init["vsync"].valid() && init["vsync"].get<bool>();
-	dirtyPixel = init["dirty_pixel"].valid() && init["dirty_pixel"].get<bool>();
-
-	if (init["dimensions"].valid())
+	if (init["size"].valid())
 	{
-		for (int i = 0; i < 4; i++)
-		{
-			if (init["dimensions"][i + 1].valid())
-				dimensions[i] = init["dimensions"][i + 1];
-		}
+		screenSize.x = init["size"][1].get_or(256);
+		screenSize.y = init["size"][2].get_or(240);
+
+		pixelSize.x = init["size"][3].get_or(4);
+		pixelSize.y = init["size"][4].get_or(4);
+	}
+	else
+	{
+		screenSize = { 256, 240 };
+		pixelSize = { 4, 4 };
 	}
 
-	screenSize.x = dimensions[0];
-	screenSize.y = dimensions[1];
-
-	pixelSize.x = dimensions[2];
-	pixelSize.y = dimensions[3];
+	fullScreen = init["full_screen"].get_or(false);
+	vsync = init["vsync"].get_or(false);
+	dirtyPixel = init["dirty_pixel"].get_or(false);
 
 	return true;
 }
@@ -556,7 +553,7 @@ int main(int argc, char** argv)
 	Application app;
 	RegisterAll(app);
 
-	if (!lua.script_file("Helpers.lua").valid())
+	if (!lua.script_file("Lua/Helpers.lua").valid())
 		return 1;
 
 	if (!lua.script_file(argv[1]).valid())
