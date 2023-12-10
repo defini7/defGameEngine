@@ -90,3 +90,50 @@ end
 
 AddVectorOperations(vi2d)
 AddVectorOperations(vf2d)
+
+function clamp(n, min, max)
+	if n > max then n = max
+	elseif n < min then n = min end
+
+	return n
+end
+
+function Pixel.__add(lhs, rhs)
+	if type(rhs) == "number" then
+		return Pixel:new(clamp(lhs.x + rhs, 0, 255), clamp(lhs.y + rhs, 0, 255))
+	end
+
+	return Pixel:new(clamp(lhs.x + rhs.x, 0, 255), clamp(lhs.y + rhs.y, 0, 255))
+end
+
+function Pixel.__sub(lhs, rhs)
+	if type(rhs) == "number" then
+		return Pixel:new(clamp(lhs.x - rhs, 0, 255), clamp(lhs.y - rhs, 0, 255))
+	end
+
+	return Pixel:new(clamp(lhs.x - rhs.x, 0, 255), clamp(lhs.y - rhs.y, 0, 255))
+end
+
+function Pixel.__mul(lhs, rhs)
+	if type(rhs) == "number" then
+		return Pixel:new(clamp(lhs.x * rhs, 0, 255), clamp(lhs.y * rhs, 0, 255))
+	end
+
+	return Pixel:new(clamp(lhs.x * rhs.x, 0, 255), clamp(lhs.y * rhs.y, 0, 255))
+end
+
+function Pixel.__div(lhs, rhs)
+	if type(rhs) == "number" then
+		return Pixel:new(clamp(lhs.x / rhs, 0, 255), clamp(lhs.y / rhs, 0, 255))
+	end
+
+	return Pixel:new(clamp(lhs.x / rhs.x, 0, 255), clamp(lhs.y / rhs.y, 0, 255))
+end
+
+function Pixel.__idiv(lhs, rhs)
+	if type(rhs) == "number" then
+		return Pixel:new(clamp(lhs.x // rhs, 0, 255), clamp(lhs.y // rhs, 0, 255))
+	end
+	
+	return Pixel:new(clamp(lhs.x // rhs.x, 0, 255), clamp(lhs.y // rhs.y, 0, 255))
+end
