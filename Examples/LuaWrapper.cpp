@@ -1,5 +1,5 @@
 /* TODO:
-* - Enums for keys
+*
 */
 
 #define DGE_APPLICATION
@@ -57,7 +57,7 @@ protected:
 };
 
 template <class T>
-void AddVec2D(std::string_view name)
+void RegisterVec2D(std::string_view name)
 {
 	auto vecType = lua.new_usertype<T>(name,
 		sol::constructors<T(), T(decltype(T::x), decltype(T::y))>(),
@@ -133,7 +133,8 @@ bool CreateApp(def::vi2d& screenSize, def::vi2d& pixelSize, std::string& title, 
 
 void RegisterKeyState()
 {
-	lua.new_usertype<def::KeyState>("KeyState",
+	auto keyType = lua.new_usertype<def::KeyState>("KeyState",
+		sol::constructors<def::KeyState(), def::KeyState(bool, bool, bool)>(),
 		"held", sol::property(&def::KeyState::held, &def::KeyState::held),
 		"released", sol::property(&def::KeyState::released, &def::KeyState::released),
 		"pressed", sol::property(&def::KeyState::pressed, &def::KeyState::pressed)
@@ -262,36 +263,53 @@ void RegisterWindowState()
 void RegisterFunctions(Application& app)
 {
 	lua["Draw"] = [&app = app](const def::vi2d& pos, const def::Pixel& p) { return app.Draw(pos, p); };
-	lua["DrawLine"] = [&app = app](const def::vi2d& pos1, const def::vi2d& pos2, const def::Pixel& p) { return app.DrawLine(pos1, pos2, p); };
+	lua["DrawLine"] = [&app = app](const def::vi2d& pos1, const def::vi2d& pos2, const def::Pixel& p) { app.DrawLine(pos1, pos2, p); };
 
-	lua["DrawTriangle"] = [&app = app](const def::vi2d& pos1, const def::vi2d& pos2, const def::vi2d& pos3, const def::Pixel& p) { return app.DrawTriangle(pos1, pos2, pos3, p); };
-	lua["FillTriangle"] = [&app = app](const def::vi2d& pos1, const def::vi2d& pos2, const def::vi2d& pos3, const def::Pixel& p) { return app.FillTriangle(pos1, pos2, pos3, p); };
+	lua["DrawTriangle"] = [&app = app](const def::vi2d& pos1, const def::vi2d& pos2, const def::vi2d& pos3, const def::Pixel& p) { app.DrawTriangle(pos1, pos2, pos3, p); };
+	lua["FillTriangle"] = [&app = app](const def::vi2d& pos1, const def::vi2d& pos2, const def::vi2d& pos3, const def::Pixel& p) { app.FillTriangle(pos1, pos2, pos3, p); };
 
-	lua["DrawRectangle"] = [&app = app](const def::vi2d& pos, const def::vi2d& size, const def::Pixel& p) { return app.DrawRectangle(pos, size, p); };
-	lua["FillRectangle"] = [&app = app](const def::vi2d& pos, const def::vi2d& size, const def::Pixel& p) { return app.FillRectangle(pos, size, p); };
+	lua["DrawRectangle"] = [&app = app](const def::vi2d& pos, const def::vi2d& size, const def::Pixel& p) { app.DrawRectangle(pos, size, p); };
+	lua["FillRectangle"] = [&app = app](const def::vi2d& pos, const def::vi2d& size, const def::Pixel& p) { app.FillRectangle(pos, size, p); };
 
-	lua["DrawCircle"] = [&app = app](const def::vi2d& pos, int32_t radius, const def::Pixel& p) { return app.DrawCircle(pos, radius, p); };
-	lua["FillCircle"] = [&app = app](const def::vi2d& pos, int32_t radius, const def::Pixel& p) { return app.FillCircle(pos, radius, p); };
+	lua["DrawCircle"] = [&app = app](const def::vi2d& pos, int32_t radius, const def::Pixel& p) { app.DrawCircle(pos, radius, p); };
+	lua["FillCircle"] = [&app = app](const def::vi2d& pos, int32_t radius, const def::Pixel& p) { app.FillCircle(pos, radius, p); };
 
-	lua["DrawEllipse"] = [&app = app](const def::vi2d& pos, const def::vi2d& size, const def::Pixel& p) { return app.DrawEllipse(pos, size, p); };
-	lua["FillEllipse"] = [&app = app](const def::vi2d& pos, const def::vi2d& size, const def::Pixel& p) { return app.FillEllipse(pos, size, p); };
+	lua["DrawEllipse"] = [&app = app](const def::vi2d& pos, const def::vi2d& size, const def::Pixel& p) { app.DrawEllipse(pos, size, p); };
+	lua["FillEllipse"] = [&app = app](const def::vi2d& pos, const def::vi2d& size, const def::Pixel& p) { app.FillEllipse(pos, size, p); };
 
-	lua["DrawSprite"] = [&app = app](const def::vi2d& pos, const def::Sprite& sprite) { return app.DrawSprite(pos, &sprite); };
-	lua["DrawPartialSprite"] = [&app = app](const def::vi2d& pos, const def::vi2d& fpos, const def::vi2d& fsize, const def::Sprite& sprite) { return app.DrawPartialSprite(pos, fpos, fsize, &sprite); };
+	lua["DrawSprite"] = [&app = app](const def::vi2d& pos, const def::Sprite& sprite) { app.DrawSprite(pos, &sprite); };
+	lua["DrawPartialSprite"] = [&app = app](const def::vi2d& pos, const def::vi2d& fpos, const def::vi2d& fsize, const def::Sprite& sprite) { app.DrawPartialSprite(pos, fpos, fsize, &sprite); };
 
-	lua["DrawTexture"] = [&app = app](const def::vf2d& pos, const def::Texture& tex, const def::vf2d& scale, const def::Pixel& tint) { return app.DrawTexture(pos, &tex, scale, tint); };
-	lua["DrawPartialTexture"] = [&app = app](const def::vf2d& pos, const def::vi2d& filePos, const def::vi2d& fileSize, const def::Texture& tex, const def::vf2d& scale, const def::Pixel& tint) { return app.DrawPartialTexture(pos, filePos, fileSize, &tex, scale, tint); };
+	lua["DrawTexture"] = [&app = app](const def::vf2d& pos, const def::Texture& tex, const def::vf2d& scale, const def::Pixel& tint) { app.DrawTexture(pos, &tex, scale, tint); };
+	lua["DrawPartialTexture"] = [&app = app](const def::vf2d& pos, const def::vi2d& filePos, const def::vi2d& fileSize, const def::Texture& tex, const def::vf2d& scale, const def::Pixel& tint) { app.DrawPartialTexture(pos, filePos, fileSize, &tex, scale, tint); };
 
-	lua["DrawWarpedTexture"] = [&app = app](const std::vector<def::vf2d>& points, const def::Texture& tex, const def::Pixel& tint) { return app.DrawWarpedTexture(points, &tex, tint); };
+	lua["DrawWarpedTexture"] = [&app = app](const std::vector<def::vf2d>& points, const def::Texture& tex, const def::Pixel& tint) { app.DrawWarpedTexture(points, &tex, tint); };
 
-	lua["DrawRotatedTexture"] = [&app = app](const def::vf2d& pos, float r, const def::Texture& tex, const def::vf2d& center, const def::vf2d& scale, const def::Pixel& tint) { return app.DrawRotatedTexture(pos, r, &tex, center, scale, tint); };
-	lua["DrawRotatedPartialTexture"] = [&app = app](const def::vf2d& pos, const def::vi2d& filePos, const def::vi2d& fileSize, float r, const def::Texture& tex, const def::vf2d& center, const def::vf2d& scale, const def::Pixel& tint) { return app.DrawPartialRotatedTexture(pos, filePos, fileSize, r, &tex, center, scale, tint); };
+	lua["DrawRotatedTexture"] = [&app = app](const def::vf2d& pos, float r, const def::Texture& tex, const def::vf2d& center, const def::vf2d& scale, const def::Pixel& tint) { app.DrawRotatedTexture(pos, r, &tex, center, scale, tint); };
+	lua["DrawRotatedPartialTexture"] = [&app = app](const def::vf2d& pos, const def::vi2d& filePos, const def::vi2d& fileSize, float r, const def::Texture& tex, const def::vf2d& center, const def::vf2d& scale, const def::Pixel& tint) { app.DrawPartialRotatedTexture(pos, filePos, fileSize, r, &tex, center, scale, tint); };
 
-	lua["DrawWireFrameModel"] = [&app = app](const std::vector<def::vf2d>& modelCoordinates, const def::vf2d& pos, float r, float s, const def::Pixel& p) { return app.DrawWireFrameModel(modelCoordinates, pos, r, s, p); };
-	lua["FillWireFrameModel"] = [&app = app](const std::vector<def::vf2d>& modelCoordinates, const def::vf2d& pos, float r, float s, const def::Pixel& p) { return app.FillWireFrameModel(modelCoordinates, pos, r, s, p); };
+	lua["DrawWireFrameModel"] = [&app = app](sol::table modelCoordinates, const def::vf2d& pos, float r, float s, const def::Pixel& p)
+		{
+			std::vector<def::vf2d> coords;
 
-	lua["DrawString"] = [&app = app](const def::vi2d& pos, std::string_view text, const def::Pixel& p) { return app.DrawString(pos, text, p); };
-	lua["Clear"] = [&app = app](const def::Pixel& p) { return app.Clear(p); };
+			for (const auto& [_, coord] : modelCoordinates)
+				coords.push_back(coord.as<def::vf2d>());
+
+			app.DrawWireFrameModel(coords, pos, r, s, p);
+		};
+
+	lua["FillWireFrameModel"] = [&app = app](sol::table modelCoordinates, const def::vf2d& pos, float r, float s, const def::Pixel& p)
+		{
+			std::vector<def::vf2d> coords;
+
+			for (const auto& [_, coord] : modelCoordinates)
+				coords.push_back(coord.as<def::vf2d>());
+
+			app.FillWireFrameModel(coords, pos, r, s, p);
+		};
+
+	lua["DrawString"] = [&app = app](const def::vi2d& pos, const char* text, const def::Pixel& p) { app.DrawString(pos, text, p); };
+	lua["Clear"] = [&app = app](const def::Pixel& p) { app.Clear(p); };
 
 	lua["GetKey"] = [&app = app](uint32_t k) { return app.GetKey(k); };
 	lua["GetMouse"] = [&app = app](uint32_t k) { return app.GetMouse(k); };
@@ -300,7 +318,7 @@ void RegisterFunctions(Application& app)
 	lua["MouseX"] = [&app = app]() { return app.MouseX(); };
 	lua["MouseY"] = [&app = app]() { return app.MouseY(); };
 
-	lua["SetTitle"] = [&app = app](std::string_view title) { return app.SetTitle(title); };
+	lua["SetTitle"] = [&app = app](const char* title) { app.SetTitle(title); };
 
 	lua["ScreenSize"] = [&app = app]() { return app.ScreenSize(); };
 	lua["GetMaxWindowSize"] = [&app = app]() { return app.MaxWindowSize(); };
@@ -311,34 +329,193 @@ void RegisterFunctions(Application& app)
 	lua["IsFullScreen"] = [&app = app]() { return app.IsFullScreen(); };
 	lua["IsVSync"] = [&app = app]() { return app.IsVSync(); };
 	lua["IsFocused"] = [&app = app]() { return app.IsFocused(); };
-	lua["SetIcon"] = [&app = app](std::string_view fileName) { return app.SetIcon(fileName); };
+	lua["SetIcon"] = [&app = app](const char* fileName) { app.SetIcon(fileName); };
 
-	lua["SetDrawTarget"] = [&app = app](def::Graphic* target) { return app.SetDrawTarget(target); };
+	lua["SetDrawTarget"] = [&app = app](def::Graphic* target) { app.SetDrawTarget(target); };
 	lua["GetDrawTarget"] = [&app = app]() { return app.GetDrawTarget(); };
 
-	lua["GetWindowState"] = [&app = app]() { return app.GetWindowState(); };
+	lua["GetWindowState"] = [&app = app]() { return (uint32_t)app.GetWindowState(); };
 
 	lua["GetDropped"] = []() { return Application::GetDropped(); };
 
 	lua["SetPixelMode"] = [&app = app](def::Pixel::Mode pixelMode) { app.SetPixelMode(pixelMode); };
-	lua["GetPixelMode"] = [&app = app]() { return app.GetPixelMode(); };
+	lua["GetPixelMode"] = [&app = app]() { return (uint32_t)app.GetPixelMode(); };
 
 	lua["SetTextureStructure"] = [&app = app](def::Texture::Structure structure) { app.SetTextureStructure(structure); };
-	lua["GetTextureStructure"] = [&app = app]() { return app.GetTextureStructure(); };
+	lua["GetTextureStructure"] = [&app = app]() { return (uint32_t)app.GetTextureStructure(); };
 
 	lua["SetTint"] = [&app = app](const def::Pixel& p) { app.SetTint(p); };
 	lua["SetShader"] = [&app = app](def::Pixel(*func)(const def::vi2d&, const def::Pixel&, const def::Pixel&)) { app.SetShader(func); };
 
-	lua["AnyKey"] = [&app = app](bool pressed, bool held, bool released) { return app.AnyKey(pressed, held, released); };
-	lua["AnyKeys"] = [&app = app](bool pressed, bool held, bool released) { return app.AnyKeys(pressed, held, released); };
+	lua["AnyKey"] = [&app = app](bool pressed, bool held, bool released) { return uint32_t(app.AnyKey(pressed, held, released)); };
+	lua["AnyKeys"] = [&app = app](bool pressed, bool held, bool released)
+		{
+			sol::table res;
+
+			auto keys = app.AnyKeys(pressed, held, released);
+			
+			for (const auto& key : keys)
+				res.add(uint32_t(key));
+
+			return res;
+		};
+}
+
+void RegisterKeys()
+{
+	lua["Keys"] = lua.create_table_with(
+		"SPACE", def::Key::SPACE,
+		"APOSTROPHE", def::Key::APOSTROPHE,
+		"COMMA", def::Key::COMMA,
+		"MINUS", def::Key::MINUS,
+		"PERIOD", def::Key::PERIOD,
+		"SLASH", def::Key::SLASH,
+
+		"K0", def::Key::K0,
+		"K1", def::Key::K1,
+		"K2", def::Key::K2,
+		"K3", def::Key::K3,
+		"K4", def::Key::K4,
+		"K5", def::Key::K5,
+		"K6", def::Key::K6,
+		"K7", def::Key::K7,
+		"K8", def::Key::K8,
+		"K9", def::Key::K9,
+
+		"SEMICOLON", def::Key::SEMICOLON,
+		"EQUAL", def::Key::EQUAL,
+
+		"A", def::Key::A,
+		"B", def::Key::B,
+		"C", def::Key::C,
+		"D", def::Key::D,
+		"E", def::Key::E,
+		"F", def::Key::F,
+		"G", def::Key::G,
+		"H", def::Key::H,
+		"I", def::Key::I,
+		"J", def::Key::J,
+		"K", def::Key::K,
+		"L", def::Key::L,
+		"M", def::Key::M,
+		"N", def::Key::N,
+		"O", def::Key::O,
+		"P", def::Key::P,
+		"Q", def::Key::Q,
+		"R", def::Key::R,
+		"S", def::Key::S,
+		"T", def::Key::T,
+		"U", def::Key::U,
+		"V", def::Key::V,
+		"W", def::Key::W,
+		"X", def::Key::X,
+		"Y", def::Key::Y,
+		"Z", def::Key::Z,
+
+		"LEFT_BRACKET", def::Key::LEFT_BRACKET,
+		"BACKSLASH", def::Key::BACKSLASH,
+		"RIGHT_BRACKET", def::Key::RIGHT_BRACKET,
+		"GRAVE_ACCENT", def::Key::GRAVE_ACCENT,
+		"WORLD_1", def::Key::WORLD_1,
+		"WORLD_2", def::Key::WORLD_2,
+
+		"ESCAPE", def::Key::ESCAPE,
+		"ENTER", def::Key::ENTER,
+		"TAB", def::Key::TAB,
+		"BACKSPACE", def::Key::BACKSPACE,
+		"INSERT", def::Key::INSERT,
+		"DEL", def::Key::DEL,
+		"RIGHT", def::Key::RIGHT,
+		"LEFT", def::Key::LEFT,
+		"DOWN", def::Key::DOWN,
+		"UP", def::Key::UP,
+		"PAGE_UP", def::Key::PAGE_UP,
+		"PAGE_DOWN", def::Key::PAGE_DOWN,
+		"HOME", def::Key::HOME,
+		"END", def::Key::END,
+		"CAPS_LOCK", def::Key::CAPS_LOCK,
+		"SCROLL_LOCK", def::Key::SCROLL_LOCK,
+		"NUM_LOCK", def::Key::NUM_LOCK,
+		"PRINT_SCREEN", def::Key::PRINT_SCREEN,
+		"PAUSE", def::Key::PAUSE,
+
+		"F1", def::Key::F1,
+		"F2", def::Key::F2,
+		"F3", def::Key::F3,
+		"F4", def::Key::F4,
+		"F5", def::Key::F5,
+		"F6", def::Key::F6,
+		"F7", def::Key::F7,
+		"F8", def::Key::F8,
+		"F9", def::Key::F9,
+		"F10", def::Key::F10,
+		"F11", def::Key::F11,
+		"F12", def::Key::F12,
+		"F13", def::Key::F13,
+		"F14", def::Key::F14,
+		"F15", def::Key::F15,
+		"F16", def::Key::F16,
+		"F17", def::Key::F17,
+		"F18", def::Key::F18,
+		"F19", def::Key::F19,
+		"F20", def::Key::F20,
+		"F21", def::Key::F21,
+		"F22", def::Key::F22,
+		"F23", def::Key::F23,
+		"F24", def::Key::F24,
+		"F25", def::Key::F25,
+
+		"NP_0", def::Key::NP_0,
+		"NP_1", def::Key::NP_1,
+		"NP_2", def::Key::NP_2,
+		"NP_3", def::Key::NP_3,
+		"NP_4", def::Key::NP_4,
+		"NP_5", def::Key::NP_5,
+		"NP_6", def::Key::NP_6,
+		"NP_7", def::Key::NP_7,
+		"NP_8", def::Key::NP_8,
+		"NP_9", def::Key::NP_9,
+		"NP_DECIMAL", def::Key::NP_DECIMAL,
+		"NP_DIVIDE", def::Key::NP_DIVIDE,
+		"NP_MULTIPLY", def::Key::NP_MULTIPLY,
+		"NP_SUBTRACT", def::Key::NP_SUBTRACT,
+		"NP_ADD", def::Key::NP_ADD,
+		"NP_ENTER", def::Key::NP_ENTER,
+		"NP_EQUAL", def::Key::NP_EQUAL,
+
+		"LEFT_SHIFT", def::Key::LEFT_SHIFT,
+		"LEFT_CONTROL", def::Key::LEFT_CONTROL,
+		"LEFT_ALT", def::Key::LEFT_ALT,
+		"LEFT_SUPER", def::Key::LEFT_SUPER,
+		"RIGHT_SHIFT", def::Key::RIGHT_SHIFT,
+		"RIGHT_CONTROL", def::Key::RIGHT_CONTROL,
+		"RIGHT_ALT", def::Key::RIGHT_ALT,
+		"RIGHT_SUPER", def::Key::RIGHT_SUPER,
+		"MENU", def::Key::MENU,
+
+		"NONE", def::Key::NONE
+	);
+}
+
+void RegisterButtons()
+{
+	lua["Mouse"] = lua.create_table_with(
+		"LEFT", def::Button::LEFT,
+		"RIGHT", def::Button::RIGHT,
+		"WHEEL", def::Button::WHEEL,
+		"MOUSE4", def::Button::MOUSE4,
+		"MOUSE5", def::Button::MOUSE5
+	);
 }
 
 void RegisterAll(Application& app)
 {
-	AddVec2D<def::vi2d>("vi2d");
-	AddVec2D<def::vf2d>("vf2d");
+	RegisterVec2D<def::vi2d>("vi2d");
+	RegisterVec2D<def::vf2d>("vf2d");
 
 	RegisterKeyState();
+	RegisterKeys();
+	RegisterButtons();
 	RegisterPixel();
 	RegisterSprite();
 	RegisterTexture();
@@ -376,11 +553,11 @@ int main(int argc, char** argv)
 
 	lua.open_libraries();
 
+	Application app;
+	RegisterAll(app);
+
 	if (!lua.script_file(argv[1]).valid())
 		return 1;
 
-	Application app;
-	
-	RegisterAll(app);
 	return RunApplication(app) ? 0 : 1;
 }
