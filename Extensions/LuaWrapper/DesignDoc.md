@@ -10,5 +10,3 @@
 ### Bugs
 
 ### Improvements
-
-- [ ] Add operators for Pixel type
