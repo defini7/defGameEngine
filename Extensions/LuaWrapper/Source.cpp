@@ -1,7 +1,3 @@
-/* TODO:
-*
-*/
-
 #define DGE_APPLICATION
 #include "defGameEngine.hpp"
 
@@ -22,7 +18,15 @@ int Iota(bool resetAtStart = false)
 	return g_IotaCount++;
 }
 
-sol::state lua;
+void LuaPanic(std::optional<std::string> message)
+{
+	std::cerr << "[LUA] Panic:\n";
+
+	if (message)
+		std::cerr << message.value() << std::endl;
+}
+
+sol::state lua(sol::c_call<decltype(&LuaPanic), &LuaPanic>);
 
 class Application : public def::GameEngine
 {
