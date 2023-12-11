@@ -1,47 +1,87 @@
-stars = {}
-
-function RandFloat(min, max)
-	return min + math.random() * (max - min)
+function CalcRandomPos()
+	return vi2d:new(math.random(0, world_size.x - 1), math.random(0, world_size.y - 1))
 end
 
-function AddStar(i)
-	local lum = RandFloat(0.5, 1.0)
+function NewGame()
+	snake = { { color=Colors.DARK_GREEN, pos=CalcRandomPos() } }
+	apple = CalcRandomPos()
 
-	stars[i] = {}
-	stars[i].angle = RandFloat(0.0, 2.0 * math.pi)
-	stars[i].speed = RandFloat(10, 100)
-	stars[i].distance = RandFloat(bound / 10.0 * 0.5, bound * 0.5)
-	stars[i].col = PixelF(lum, lum, lum, 1.0)
+	snake_dir = vi2d:new(1, 0)
+
+	counter = 0.0
+	delay = 0.15
+
+	score = 0
+	is_dead = false
 end
 
 function OnUserCreate()
-	origin = vf2d:new(ScreenWidth() / 2, ScreenHeight() / 2)
-	bound = math.max(ScreenWidth(), ScreenHeight()) * 0.8
+	math.randomseed(os.time())
 
-	for i=1, 200 do
-		AddStar(i)
-	end
+	tile_size = vi2d:new(8, 8)
+	world_size = ScreenSize() // tile_size
+
+	NewGame()
 
 	return true
 end
 
-function OnUserUpdate(delta_time)
-	Clear(Colors.BLACK)
+function OnUserUpdate(dt)
+	if is_dead then
+		if GetKey(Keys.SPACE).pressed then NewGame() end
 
-	for i=1, #stars do
-		stars[i].distance = stars[i].distance + stars[i].speed * delta_time * (stars[i].distance / (bound * 0.5))
+		DrawString(vi2d:new(1, ScreenHeight() // 2), "Game over! Press SPACE to play again.", Colors.YELLOW)
 
-		if stars[i].distance > bound then
-			AddStar(i)
+		return true
+	end
+
+	if GetKey(Keys.LEFT).pressed then snake_dir = vi2d:new(-1, 0) end
+	if GetKey(Keys.RIGHT).pressed then snake_dir = vi2d:new(1, 0) end
+	if GetKey(Keys.UP).pressed then snake_dir = vi2d:new(0, -1) end
+	if GetKey(Keys.DOWN).pressed then snake_dir = vi2d:new(0, 1) end
+
+	if counter > delay then
+		counter = 0.0
+
+		table.insert(snake, 1, { color = RandomPixel(false), pos = snake[1].pos + snake_dir })
+
+		if snake[1].pos == apple then
+			score = score + 1
+
+			if score % 5 == 0 then
+				delay = delay - 0.001
+			end
+
+			apple = CalcRandomPos()
+			snake[#snake + 1] = snake[#snake]
 		end
 
-		local pos = vf2d:new(origin.x + math.cos(stars[i].angle) * stars[i].distance, origin.y + math.sin(stars[i].angle) * stars[i].distance)
+		for i=2, #snake do
+			snake[i].color = RandomPixel(false)
 
-		local col = stars[i].col
-		local factor = stars[i].distance / bound * 0.8
+			if snake[i].pos == snake[1].pos then
+				is_dead = true
+			end
+		end
 
-		Draw(vi2d:new(math.floor(pos.x), math.floor(pos.y)), Pixel:new(math.floor(col.r * factor), math.floor(col.g * factor), math.floor(col.b * factor), 255))
+		if snake[1].pos.x < 0 or snake[1].pos.y < 0 or snake[1].pos.x >= world_size.x or snake[1].pos.y >= world_size.y then
+			is_dead = true
+		end
+
+		table.remove(snake, #snake)
 	end
+
+	counter = counter + dt
+
+	Clear(Pixel:new(32, 32, 32, 255))
+
+	DrawString(vi2d:new(2, 2), "Score: " .. score, Colors.YELLOW)
+
+	for k, v in pairs(snake) do
+		FillRectangle(tile_size * v.pos, tile_size, v.color)
+	end
+
+	FillRectangle(tile_size * apple, tile_size, Colors.RED)
 
 	return true
 end
@@ -50,6 +90,7 @@ function CreateApp()
 	return
 	{
 		size = { 256, 240, 4, 4 },
-		title = "Star Field"
+		title = "Snake",
+		full_screen = true
 	}
 end
