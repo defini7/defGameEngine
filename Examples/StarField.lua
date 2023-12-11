@@ -47,10 +47,9 @@ function OnUserUpdate(delta_time)
 end
 
 function CreateApp()
-	app = {}
-
-	app.dimensions = { 256, 240, 4, 4 }
-	app.title = "Star Field"
-
-	return app
+	return
+	{
+		size = { 256, 240, 4, 4 },
+		title = "Star Field"
+	}
 end
