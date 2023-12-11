@@ -92,9 +92,8 @@ AddVectorOperations(vi2d)
 AddVectorOperations(vf2d)
 
 function clamp(n, min, max)
-	if n > max then n = max
-	elseif n < min then n = min end
-
+	if n > max then return max end
+	if n < min then return min end
 	return n
 end
 
