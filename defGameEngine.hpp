@@ -256,7 +256,8 @@ namespace def
 
 	struct Pixel
 	{
-		constexpr Pixel(uint8_t r = 0u, uint8_t g = 0u, uint8_t b = 0u, uint8_t a = 255u);
+		constexpr Pixel();
+		constexpr Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255u);
 
 		enum class Mode
 		{
@@ -760,6 +761,7 @@ namespace def
 
 	}
 
+	constexpr Pixel::Pixel() : r(0), g(0), b(0), a(255) {}
 	constexpr Pixel::Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
 
 	constexpr Pixel Pixel::mix(const Pixel& rhs, const float factor) const
@@ -818,44 +820,44 @@ namespace def
 	constexpr Pixel Pixel::operator+(const float rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r + (float)rhs, 0.0f, 255.0f),
-			std::clamp((float)g + (float)rhs, 0.0f, 255.0f),
-			std::clamp((float)b + (float)rhs, 0.0f, 255.0f)
+			std::clamp((float)r + rhs, 0.0f, 255.0f),
+			std::clamp((float)g + rhs, 0.0f, 255.0f),
+			std::clamp((float)b + rhs, 0.0f, 255.0f)
 		);
 	}
 
 	constexpr Pixel Pixel::operator-(const float rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r - (float)rhs, 0.0f, 255.0f),
-			std::clamp((float)g - (float)rhs, 0.0f, 255.0f),
-			std::clamp((float)b - (float)rhs, 0.0f, 255.0f)
+			std::clamp((float)r - rhs, 0.0f, 255.0f),
+			std::clamp((float)g - rhs, 0.0f, 255.0f),
+			std::clamp((float)b - rhs, 0.0f, 255.0f)
 		);
 	}
 
 	constexpr Pixel Pixel::operator*(const float rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r * (float)rhs, 0.0f, 255.0f),
-			std::clamp((float)g * (float)rhs, 0.0f, 255.0f),
-			std::clamp((float)b * (float)rhs, 0.0f, 255.0f)
+			std::clamp((float)r * rhs, 0.0f, 255.0f),
+			std::clamp((float)g * rhs, 0.0f, 255.0f),
+			std::clamp((float)b * rhs, 0.0f, 255.0f)
 		);
 	}
 
 	constexpr Pixel Pixel::operator/(const float rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r / (float)rhs, 0.0f, 255.0f),
-			std::clamp((float)g / (float)rhs, 0.0f, 255.0f),
-			std::clamp((float)b / (float)rhs, 0.0f, 255.0f)
+			std::clamp((float)r / rhs, 0.0f, 255.0f),
+			std::clamp((float)g / rhs, 0.0f, 255.0f),
+			std::clamp((float)b / rhs, 0.0f, 255.0f)
 		);
 	}
 
 	constexpr Pixel& Pixel::operator+=(const Pixel& rhs)
 	{
-		r = std::clamp((float)r + (float)rhs.r, 0.0f, 255.0f);
-		g = std::clamp((float)g + (float)rhs.g, 0.0f, 255.0f);
-		b = std::clamp((float)b + (float)rhs.b, 0.0f, 255.0f);
+		r = std::clamp((float)r + rhs.r, 0.0f, 255.0f);
+		g = std::clamp((float)g + rhs.g, 0.0f, 255.0f);
+		b = std::clamp((float)b + rhs.b, 0.0f, 255.0f);
 		return ref();
 	}
 
