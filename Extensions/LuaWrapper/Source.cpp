@@ -95,9 +95,9 @@ bool CreateApp(def::vi2d& screenSize, def::vi2d& pixelSize, std::string& title, 
 		return false;
 	}
 
-	sol::protected_function_result funcResult = luaCreateApp();
+	auto funcResult = luaCreateApp();
 
-	if (!funcResult.valid())
+	if (funcResult.get_type() != sol::type::table)
 	{
 		std::cerr << "[LUA] CreateApp function must return a table" << std::endl;
 		return false;
@@ -531,8 +531,7 @@ bool RunApplication(Application& app)
 	if (!CreateApp(screenSize, pixelSize, title, fullScreen, vsync, dirtyPixel))
 		return false;
 
-	if (!title.empty())
-		app.SetTitle(title);
+	app.SetTitle(title);
 
 	app.Construct(screenSize.x, screenSize.y, pixelSize.x, pixelSize.y, fullScreen, vsync, dirtyPixel);
 	app.Run();
@@ -559,5 +558,5 @@ int main(int argc, char** argv)
 	if (!lua.script_file(argv[1]).valid())
 		return 1;
 
-	return RunApplication(app) ? 0 : 1;
+	return RunApplication(app) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
