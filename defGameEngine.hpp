@@ -312,7 +312,7 @@ namespace def
 		constexpr bool operator<=(const float rhs) const;
 	};
 
-	static Pixel BLACK(0, 0, 0, 255),
+	static const Pixel BLACK(0, 0, 0, 255),
 		DARK_BLUE(0, 55, 218, 255),
 		DARK_GREEN(19, 161, 14, 255),
 		DARK_CYAN(59, 120, 255, 255),
@@ -2153,7 +2153,7 @@ namespace def
 		ti.structure = m_TextureStructure;
 		ti.tint = { tint, tint, tint, tint };
 
-		vf2d center = vf2d(centerX, centerY);
+		vf2d center = vf2d(centerX, centerY) * vf2d(tex->size);
 		vf2d scale = vf2d(scaleX, scaleY);
 
 		ti.vert = {
@@ -2184,20 +2184,17 @@ namespace def
 		ti.structure = m_TextureStructure;
 		ti.tint = { tint, tint, tint, tint };
 
-		vf2d center = vf2d(centerX, centerY);
-		vf2d scale = vf2d(scaleX, scaleY);
-
 		vf2d screenSpacePos =
 		{
-			  (x * m_InvScreenSize.x) * 2.0f - 1.0f,
-			-((y * m_InvScreenSize.y) * 2.0f - 1.0f)
+			  ((x - centerX * tex->size.x) * m_InvScreenSize.x) * 2.0f - 1.0f,
+			-(((y - centerY * tex->size.y) * m_InvScreenSize.y) * 2.0f - 1.0f)
 		};
 
 		vf2d screenSpaceSize =
 		{
-			  ((x + fw * scaleX) * m_InvScreenSize.x) * 2.0f - 1.0f,
-			-(((y + fh * scaleY) * m_InvScreenSize.y) * 2.0f - 1.0f)
-		};
+			  ((x - centerX * tex->size.x + fw * scaleX) * m_InvScreenSize.x) * 2.0f - 1.0f,
+			-(((y - centerY * tex->size.y + fh * scaleY) * m_InvScreenSize.y) * 2.0f - 1.0f)
+		}; 
 
 		vf2d quantisedPos = ((screenSpacePos * vf2d(m_WindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_WindowSize);
 		vf2d quantisedSize = ((screenSpaceSize * vf2d(m_WindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_WindowSize);
@@ -2240,10 +2237,14 @@ namespace def
 			float sn = ((points[2].x - points[0].x) * (points[0].y - points[1].y) - (points[2].y - points[0].y) * (points[0].x - points[1].x)) * rd;
 
 			vf2d center;
-			if (!(rn < 0.0f || rn > 1.0f || sn < 0.0f || sn > 1.0f)) center = points[0] + rn * (points[2] - points[0]);
+			if (!(rn < 0.0f || rn > 1.0f || sn < 0.0f || sn > 1.0f))
+				center = points[0] + rn * (points[2] - points[0]);
 
 			float d[4];
-			for (int i = 0; i < 4; i++)	d[i] = (points[i] - center).mag();
+
+			for (int i = 0; i < 4; i++)
+				d[i] = (points[i] - center).mag();
+
 			for (int i = 0; i < 4; i++)
 			{
 				float q = d[i] == 0.0f ? 1.0f : (d[i] + d[(i + 2) & 3]) / d[(i + 2) & 3];
@@ -2257,28 +2258,28 @@ namespace def
 
 	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& p)
 	{
-		int32_t verts = modelCoordinates.size();
+		size_t verts = modelCoordinates.size();
 
 		std::vector<vf2d> coordinates(verts);
 
-		for (int i = 0; i < verts; i++)
+		for (size_t i = 0; i < verts; i++)
 		{
 			coordinates[i].x = (modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r)) * s + x;
 			coordinates[i].y = (modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r)) * s + y;
 		}
 
-		for (int i = 0; i < verts + 1; i++)
+		for (size_t i = 0; i < verts + 1; i++)
 			DrawLine(coordinates[i % verts], coordinates[(i + 1) % verts], p);
 	}
 
 	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& p)
 	{
-		int32_t verts = modelCoordinates.size();
+		size_t verts = modelCoordinates.size();
 
 		std::vector<vf2d> coordinates;
 		coordinates.resize(verts);
 
-		for (int i = 0; i < verts; i++)
+		for (size_t i = 0; i < verts; i++)
 		{
 			coordinates[i].x = (modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r)) * s + x;
 			coordinates[i].y = (modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r)) * s + y;
@@ -2307,21 +2308,21 @@ namespace def
 			return std::abs(angle) < 3.14159f;
 		};
 
-		vf2d vMin = coordinates.front();
-		vf2d vMax = coordinates.front();
+		vf2d min = coordinates.front();
+		vf2d max = coordinates.front();
 
-		for (int i = 1; i < verts; i++)
+		for (size_t i = 1; i < verts; i++)
 		{
-			if (vMin.x > coordinates[i].x) vMin.x = coordinates[i].x;
-			if (vMin.y > coordinates[i].y) vMin.y = coordinates[i].y;
+			if (min.x > coordinates[i].x) min.x = coordinates[i].x;
+			if (min.y > coordinates[i].y) min.y = coordinates[i].y;
 
-			if (vMax.x < coordinates[i].x) vMax.x = coordinates[i].x;
-			if (vMax.y < coordinates[i].y) vMax.y = coordinates[i].y;
+			if (max.x < coordinates[i].x) max.x = coordinates[i].x;
+			if (max.y < coordinates[i].y) max.y = coordinates[i].y;
 		}
 
 		vf2d point;
-		for (point.x = vMin.x; point.x < vMax.x; point.x++)
-			for (point.y = vMin.y; point.y < vMax.y; point.y++)
+		for (point.x = min.x; point.x < max.x; point.x++)
+			for (point.y = min.y; point.y < max.y; point.y++)
 			{
 				if (PointInPolygon(point))
 					Draw(point, p);
@@ -2349,8 +2350,10 @@ namespace def
 
 				for (int32_t i = 0; i < 8; i++)
 					for (int32_t j = 0; j < 8; j++)
+					{
 						if (m_Font->GetPixel({ i + ox * 8, j + oy * 8 }).r > 0)
 							Draw(x + sx + i, y + sy + j, p);
+					}
 
 				sx += 8;
 			}
@@ -2385,16 +2388,13 @@ namespace def
 		img.width = icon.size.x;
 		img.height = icon.size.y;
 		img.pixels = (uint8_t*)icon.pixels.data();
+
 		glfwSetWindowIcon(m_Window, 1, &img);
 	}
 
 	void GameEngine::SetDrawTarget(Graphic* target)
 	{
-		if (target)
-			m_DrawTarget = target;
-		else
-			m_DrawTarget = m_Screen;
-
+		m_DrawTarget = target ? target : m_Screen;
 		m_DrawTarget->UpdateTexture();
 	}
 
@@ -2538,9 +2538,7 @@ namespace def
 	{
 		for (uint32_t i = 0; i < 512U; i++)
 		{
-			if ((m_Keys[i].pressed && pressed) ||
-				(m_Keys[i].held && held) ||
-				(m_Keys[i].released && released))
+			if (m_Keys[i].pressed && pressed || m_Keys[i].held && held || m_Keys[i].released && released)
 				return Key(i);
 		}
 
@@ -2553,9 +2551,7 @@ namespace def
 
 		for (uint32_t i = 0; i < 512U; i++)
 		{
-			if ((m_Keys[i].pressed && pressed) ||
-				(m_Keys[i].held && held) ||
-				(m_Keys[i].released && released))
+			if (m_Keys[i].pressed && pressed || m_Keys[i].held && held || m_Keys[i].released && released)
 				keys.push_back(Key(i));
 		}
 
