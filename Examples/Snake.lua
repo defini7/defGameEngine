@@ -90,6 +90,7 @@ function CreateApp()
 	return
 	{
 		size = { 256, 240, 4, 4 },
-		title = "Snake"
+		title = "Snake",
+		full_screen = true
 	}
 end
