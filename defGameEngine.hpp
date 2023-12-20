@@ -151,7 +151,7 @@ namespace def
 
 		NONE = -1
 	};
-	
+
 	enum class Button
 	{
 		LEFT,
@@ -170,72 +170,74 @@ namespace def
 		T x = (T)0;
 		T y = (T)0;
 
-		friend constexpr bool operator==(const vec2d<T>& v1, const vec2d<T>& v2) { return v1.x == v2.x && v1.y == v2.y; }
-		friend constexpr bool operator!=(const vec2d<T>& v1, const vec2d<T>& v2) { return v1.x != v2.x || v1.y != v2.y; }
-		friend constexpr bool operator<(const vec2d<T>& v1, const vec2d<T>& v2) { return v1.x < v2.x && v1.y < v2.y; }
-		friend constexpr bool operator>(const vec2d<T>& v1, const vec2d<T>& v2) { return v1.x > v2.x && v1.y > v2.y; }
-		friend constexpr bool operator<=(const vec2d<T>& v1, const vec2d<T>& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
-		friend constexpr bool operator>=(const vec2d<T>& v1, const vec2d<T>& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
+		friend constexpr bool operator==(const vec2d& v1, const vec2d& v2) { return v1.x == v2.x && v1.y == v2.y; }
+		friend constexpr bool operator!=(const vec2d& v1, const vec2d& v2) { return v1.x != v2.x || v1.y != v2.y; }
+		friend constexpr bool operator<(const vec2d& v1, const vec2d& v2) { return v1.x < v2.x && v1.y < v2.y; }
+		friend constexpr bool operator>(const vec2d& v1, const vec2d& v2) { return v1.x > v2.x && v1.y > v2.y; }
+		friend constexpr bool operator<=(const vec2d& v1, const vec2d& v2) { return v1.x <= v2.x && v1.y <= v2.y; }
+		friend constexpr bool operator>=(const vec2d& v1, const vec2d& v2) { return v1.x >= v2.x && v1.y >= v2.y; }
 
-		friend constexpr vec2d<T> operator+(const vec2d<T>& v1, const vec2d<T>& v2) { return vec2d<T>(v1.x + v2.x, v1.y + v2.y); }
-		friend constexpr vec2d<T> operator-(const vec2d<T>& v1, const vec2d<T>& v2) { return vec2d<T>(v1.x - v2.x, v1.y - v2.y); }
-		friend constexpr vec2d<T> operator*(const vec2d<T>& v1, const vec2d<T>& v2) { return vec2d<T>(v1.x * v2.x, v1.y * v2.y); }
-		friend constexpr vec2d<T> operator/(const vec2d<T>& v1, const vec2d<T>& v2) { return vec2d<T>(v1.x / v2.x, v1.y / v2.y); }
-		friend constexpr vec2d<T> operator%(const vec2d<T>& v1, const vec2d<T>& v2) { return vec2d<T>(v1.x % v2.x, v1.y % v2.y); }
+		friend constexpr vec2d operator+(const vec2d& v1, const vec2d& v2) { return vec2d(v1.x + v2.x, v1.y + v2.y); }
+		friend constexpr vec2d operator-(const vec2d& v1, const vec2d& v2) { return vec2d(v1.x - v2.x, v1.y - v2.y); }
+		friend constexpr vec2d operator*(const vec2d& v1, const vec2d& v2) { return vec2d(v1.x * v2.x, v1.y * v2.y); }
+		friend constexpr vec2d operator/(const vec2d& v1, const vec2d& v2) { return vec2d(v1.x / v2.x, v1.y / v2.y); }
+		friend constexpr vec2d operator%(const vec2d& v1, const vec2d& v2) { return vec2d(v1.x % v2.x, v1.y % v2.y); }
 
-		friend constexpr vec2d<T> operator+(const vec2d<T>& v1, const T& v2) { return vec2d<T>(v1.x + v2, v1.y + v2); }
-		friend constexpr vec2d<T> operator-(const vec2d<T>& v1, const T& v2) { return vec2d<T>(v1.x - v2, v1.y - v2); }
-		friend constexpr vec2d<T> operator*(const vec2d<T>& v1, const T& v2) { return vec2d<T>(v1.x * v2, v1.y * v2); }
-		friend constexpr vec2d<T> operator/(const vec2d<T>& v1, const T& v2) { return vec2d<T>(v1.x / v2, v1.y / v2); }
-		friend constexpr vec2d<T> operator%(const vec2d<T>& v1, const T& v2) { return vec2d<T>(v1.x % v2, v1.y % v2); }
+		friend constexpr vec2d operator+(const vec2d& v1, const T& v2) { return vec2d(v1.x + v2, v1.y + v2); }
+		friend constexpr vec2d operator-(const vec2d& v1, const T& v2) { return vec2d(v1.x - v2, v1.y - v2); }
+		friend constexpr vec2d operator*(const vec2d& v1, const T& v2) { return vec2d(v1.x * v2, v1.y * v2); }
+		friend constexpr vec2d operator/(const vec2d& v1, const T& v2) { return vec2d(v1.x / v2, v1.y / v2); }
+		friend constexpr vec2d operator%(const vec2d& v1, const T& v2) { return vec2d(v1.x % v2, v1.y % v2); }
 
-		friend constexpr vec2d<T> operator*(const float& lhs, const vec2d<T>& rhs) { return vec2d<T>((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y)); }
-		friend constexpr vec2d<T> operator*(const double& lhs, const vec2d<T>& rhs) { return vec2d<T>((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y)); }
-		friend constexpr vec2d<T> operator*(const int& lhs, const vec2d<T>& rhs) { return vec2d<T>((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y)); }
-		friend constexpr vec2d<T> operator/(const float& lhs, const vec2d<T>& rhs) { return vec2d<T>((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y)); }
-		friend constexpr vec2d<T> operator/(const double& lhs, const vec2d<T>& rhs) { return vec2d<T>((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y)); }
-		friend constexpr vec2d<T> operator/(const int& lhs, const vec2d<T>& rhs) { return vec2d<T>((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y)); }
+		friend constexpr vec2d operator*(const float& lhs, const vec2d& rhs) { return vec2d((T)(lhs * (float)rhs.x), (T)(lhs * (float)rhs.y)); }
+		friend constexpr vec2d operator*(const double& lhs, const vec2d& rhs) { return vec2d((T)(lhs * (double)rhs.x), (T)(lhs * (double)rhs.y)); }
+		friend constexpr vec2d operator*(const int& lhs, const vec2d& rhs) { return vec2d((T)(lhs * (int)rhs.x), (T)(lhs * (int)rhs.y)); }
+		friend constexpr vec2d operator/(const float& lhs, const vec2d& rhs) { return vec2d((T)(lhs / (float)rhs.x), (T)(lhs / (float)rhs.y)); }
+		friend constexpr vec2d operator/(const double& lhs, const vec2d& rhs) { return vec2d((T)(lhs / (double)rhs.x), (T)(lhs / (double)rhs.y)); }
+		friend constexpr vec2d operator/(const int& lhs, const vec2d& rhs) { return vec2d((T)(lhs / (int)rhs.x), (T)(lhs / (int)rhs.y)); }
 
 		constexpr operator vec2d<int>() const { return { static_cast<int32_t>(this->x), static_cast<int32_t>(this->y) }; }
 		constexpr operator vec2d<float>() const { return { static_cast<float>(this->x),static_cast<float>(this->y) }; }
 		constexpr operator vec2d<double>() const { return { static_cast<double>(this->x), static_cast<double>(this->y) }; }
 		constexpr operator vec2d<uint32_t>() const { return { static_cast<uint32_t>(this->x), static_cast<uint32_t>(this->y) }; }
 
-		constexpr vec2d<T>& operator+=(const vec2d<T>& v);
-		constexpr vec2d<T>& operator-=(const vec2d<T>& v);
-		constexpr vec2d<T>& operator*=(const vec2d<T>& v);
-		constexpr vec2d<T>& operator/=(const vec2d<T>& v);
+		constexpr vec2d& operator+=(const vec2d& v);
+		constexpr vec2d& operator-=(const vec2d& v);
+		constexpr vec2d& operator*=(const vec2d& v);
+		constexpr vec2d& operator/=(const vec2d& v);
 
-		constexpr vec2d<T>& operator+=(const T& v);
-		constexpr vec2d<T>& operator-=(const T& v);
-		constexpr vec2d<T>& operator*=(const T& v);
-		constexpr vec2d<T>& operator/=(const T& v);
-		constexpr vec2d<T>& operator%=(const T& v);
+		constexpr vec2d& operator+=(const T& v);
+		constexpr vec2d& operator-=(const T& v);
+		constexpr vec2d& operator*=(const T& v);
+		constexpr vec2d& operator/=(const T& v);
+		constexpr vec2d& operator%=(const T& v);
 
-		constexpr vec2d<T> clamp(const vec2d<T>& start, const vec2d<T>& end) const;
+		constexpr vec2d clamp(const vec2d& start, const vec2d& end) const;
 
-		constexpr float dot(const vec2d<T>& v) const;
-		float length() const;
+		constexpr auto dot(const vec2d& v) const;
+		constexpr auto cross(const vec2d& v) const;
 
-		T mag() const;
-		constexpr T mag2() const;
+		constexpr auto length() const;
 
-		float man(const vec2d<T>& v) const;
+		constexpr auto mag() const;
+		constexpr auto mag2() const;
 
-		constexpr vec2d<T> max(const vec2d<T>& v) const;
-		constexpr vec2d<T> min(const vec2d<T>& v) const;
+		constexpr auto man(const vec2d& v) const;
 
-		constexpr void swap(vec2d<T>& v);
+		constexpr vec2d max(const vec2d& v) const;
+		constexpr vec2d min(const vec2d& v) const;
 
-		vec2d<T> norm() const;
-		vec2d<T> abs() const;
-		constexpr vec2d<T> perp() const;
-		vec2d<T> floor() const;
-		vec2d<T> ceil() const;
-		vec2d<T> round() const;
-		vec2d<T> cart() const;
-		vec2d<T> polar() const;
-		constexpr vec2d<T>& ref() const;
+		constexpr void swap(vec2d& v);
+
+		constexpr vec2d norm() const;
+		constexpr vec2d abs() const;
+		constexpr vec2d perp() const;
+		constexpr vec2d floor() const;
+		constexpr vec2d ceil() const;
+		constexpr vec2d round() const;
+		constexpr vec2d cart() const;
+		constexpr vec2d polar() const;
+		constexpr vec2d& ref() const;
 
 		constexpr operator std::string() const;
 		constexpr std::string str() const;
@@ -274,7 +276,6 @@ namespace def
 		};
 
 		constexpr Pixel mix(const Pixel& rhs, const float factor) const;
-		constexpr Pixel& ref();
 		constexpr std::string str() const;
 
 		constexpr Pixel operator+(const float rhs) const;
@@ -311,34 +312,34 @@ namespace def
 		constexpr bool operator>=(const float rhs) const;
 		constexpr bool operator<=(const float rhs) const;
 	};
-
-	static const Pixel BLACK(0, 0, 0, 255),
-		DARK_BLUE(0, 55, 218, 255),
-		DARK_GREEN(19, 161, 14, 255),
-		DARK_CYAN(59, 120, 255, 255),
-		DARK_RED(197, 15, 31, 255),
-		DARK_MAGENTA(136, 32, 152, 255),
-		DARK_GREY(118, 118, 118, 255),
-		DARK_ORANGE(255, 140, 0, 255),
-		DARK_BROWN(76, 63, 47, 255),
-		DARK_PURPLE(112, 31, 126, 255),
-		ORANGE(255, 165, 0, 255),
-		GREY(200, 200, 200, 255),
-		BLUE(0, 0, 255, 255),
-		GREEN(0, 255, 0, 255),
-		CYAN(0, 255, 255, 255),
-		RED(255, 0, 0, 255),
-		MAGENTA(180, 0, 158, 255),
-		YELLOW(255, 255, 0, 255),
-		WHITE(255, 255, 255, 255),
-		GOLD(255, 203, 0, 255),
-		PINK(255, 109, 194, 255),
-		MAROON(190, 33, 55, 255),
-		LIME(0, 158, 47, 255),
-		BROWN(127, 106, 79, 255),
-		BEIGE(211, 176, 131, 255),
-		VIOLET(135, 60, 190, 255),
-		PURPLE(200, 122, 255, 255),
+	
+	static const Pixel BLACK(0, 0, 0),
+		DARK_BLUE(0, 55, 218),
+		DARK_GREEN(19, 161, 14),
+		DARK_CYAN(59, 120, 255),
+		DARK_RED(197, 15, 31),
+		DARK_MAGENTA(136, 32, 152),
+		DARK_GREY(118, 118, 118),
+		DARK_ORANGE(255, 140, 0),
+		DARK_BROWN(76, 63, 47),
+		DARK_PURPLE(112, 31, 126),
+		ORANGE(255, 165, 0),
+		GREY(200, 200, 200),
+		BLUE(0, 0, 255),
+		GREEN(0, 255, 0),
+		CYAN(0, 255, 255),
+		RED(255, 0, 0),
+		MAGENTA(180, 0, 158),
+		YELLOW(255, 255, 0),
+		WHITE(255, 255, 255),
+		GOLD(255, 203, 0),
+		PINK(255, 109, 194),
+		MAROON(190, 33, 55),
+		LIME(0, 158, 47),
+		BROWN(127, 106, 79),
+		BEIGE(211, 176, 131),
+		VIOLET(135, 60, 190),
+		PURPLE(200, 122, 255),
 		NONE(0, 0, 0, 0);
 
 	constexpr Pixel PixelF(float r, float g, float b, float a = 1.0f);
@@ -643,7 +644,7 @@ namespace def
 	}
 
 	template <class T>
-	constexpr vec2d<T>& vec2d<T>::operator+=(const vec2d<T>& v)
+	constexpr vec2d<T>& vec2d<T>::operator+=(const vec2d& v)
 	{
 		this->x += v.x;
 		this->y += v.y;
@@ -651,7 +652,7 @@ namespace def
 	}
 
 	template <class T>
-	constexpr vec2d<T>& vec2d<T>::operator-=(const vec2d<T>& v)
+	constexpr vec2d<T>& vec2d<T>::operator-=(const vec2d& v)
 	{
 		this->x -= v.x;
 		this->y -= v.y;
@@ -659,7 +660,7 @@ namespace def
 	}
 
 	template <class T>
-	constexpr vec2d<T>& vec2d<T>::operator*=(const vec2d<T>& v)
+	constexpr vec2d<T>& vec2d<T>::operator*=(const vec2d& v)
 	{
 		this->x *= v.x;
 		this->y *= v.y;
@@ -667,7 +668,7 @@ namespace def
 	}
 
 	template <class T>
-	constexpr vec2d<T>& vec2d<T>::operator/=(const vec2d<T>& v)
+	constexpr vec2d<T>& vec2d<T>::operator/=(const vec2d& v)
 	{
 		this->x /= v.x;
 		this->y /= v.y;
@@ -715,40 +716,113 @@ namespace def
 	}
 
 	template <class T>
-	constexpr vec2d<T> vec2d<T>::clamp(const vec2d<T>& start, const vec2d<T>& end) const
+	constexpr vec2d<T> vec2d<T>::clamp(const vec2d& start, const vec2d& end) const
 	{
 		return { std::clamp(x, start.x, end.x), std::clamp(y, start.y, end.y) };
 	}
 
-	template <class T> constexpr float vec2d<T>::dot(const vec2d<T>& v) const { return this->x * v.x + this->y * v.y; }
-	template <class T> float vec2d<T>::length() const { return std::sqrtf(dot(*this)); }
+	template <class T> constexpr auto vec2d<T>::dot(const vec2d& v) const
+	{
+		return this->x * v.x + this->y * v.y;
+	}
 
-	template <class T> T vec2d<T>::mag() const { return static_cast<T>(std::sqrtf(this->x * this->x + this->y * this->y)); }
-	template <class T> constexpr T vec2d<T>::mag2() const { return static_cast<T>(this->x * this->x + this->y * this->y); }
-	template <class T> float vec2d<T>::man(const vec2d<T>& v) const { return std::abs(this->x - v.x) + std::abs(this->y - v.y); }
+	template <class T> constexpr auto vec2d<T>::cross(const vec2d& v) const
+	{
+		return this->x * v.y - this->y * v.x;
+	}
+	
+	template <class T> constexpr auto vec2d<T>::length() const
+	{
+		return std::sqrtf(dot(*this));
+	}
 
-	template <class T> constexpr vec2d<T> vec2d<T>::max(const vec2d<T>& v) const { return vec2d<T>(std::max(this->x, v.x), std::max(this->y, v.y)); }
-	template <class T> constexpr vec2d<T> vec2d<T>::min(const vec2d<T>& v) const { return vec2d<T>(std::min(this->x, v.x), std::min(this->y, v.y)); }
+	template <class T> constexpr auto vec2d<T>::mag() const
+	{
+		return static_cast<T>(std::sqrtf(this->x * this->x + this->y * this->y));
+	}
+
+	template <class T> constexpr auto vec2d<T>::mag2() const
+	{
+		return static_cast<T>(this->x * this->x + this->y * this->y);
+	}
+
+	template <class T> constexpr auto vec2d<T>::man(const vec2d& v) const
+	{
+		return std::abs(this->x - v.x) + std::abs(this->y - v.y);
+	}
+
+	template <class T> constexpr vec2d<T> vec2d<T>::max(const vec2d& v) const
+	{
+		return vec2d(std::max(this->x, v.x), std::max(this->y, v.y));
+	}
+
+	template <class T> constexpr vec2d<T> vec2d<T>::min(const vec2d& v) const
+	{
+		return vec2d(std::min(this->x, v.x), std::min(this->y, v.y)); 
+	}
 
 	template <class T>
-	constexpr void vec2d<T>::swap(vec2d<T>& v)
+	constexpr void vec2d<T>::swap(vec2d& v)
 	{
 		std::swap(x, v.x);
 		std::swap(y, v.y);
 	}
 
-	template <class T> vec2d<T> vec2d<T>::norm() const { float n = 1.0f / mag(); return vec2d<T>(this->x * n, this->y * n); }
-	template <class T> vec2d<T> vec2d<T>::abs() const { return vec2d<T>(std::abs(this->x), std::abs(this->y)); }
-	template <class T> constexpr vec2d<T> vec2d<T>::perp() const { return vec2d<T>(-this->y, this->x); }
-	template <class T> vec2d<T> vec2d<T>::floor() const { return vec2d<T>(std::floor(this->x), std::floor(this->y)); }
-	template <class T> vec2d<T> vec2d<T>::ceil() const { return vec2d<T>(std::ceil(this->x), std::ceil(this->y)); }
-	template <class T> vec2d<T> vec2d<T>::round() const { return vec2d<T>(std::round(this->x), std::round(this->y)); }
-	template <class T> vec2d<T> vec2d<T>::cart() const { return vec2d<T>(cos(this->y) * this->x, sin(this->y) * this->x); }
-	template <class T> vec2d<T> vec2d<T>::polar() const { return vec2d<T>(mag(), atan2(this->y, this->x)); }
-	template <class T> constexpr vec2d<T>& vec2d<T>::ref() const { return *this; }
+	template <class T> constexpr vec2d<T> vec2d<T>::norm() const
+	{
+		auto n = 1 / mag();
+		return vec2d(this->x * n, this->y * n);
+	}
 
-	template <class T> constexpr vec2d<T>::operator std::string() const { return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")"; }
-	template <class T> constexpr std::string vec2d<T>::str() const { return operator std::string(); }
+	template <class T> constexpr vec2d<T> vec2d<T>::abs() const
+	{
+		return vec2d(std::abs(this->x), std::abs(this->y));
+	}
+
+	template <class T> constexpr vec2d<T> vec2d<T>::perp() const
+	{
+		return vec2d(-this->y, this->x);
+	}
+
+	template <class T> constexpr vec2d<T> vec2d<T>::floor() const
+	{
+		return vec2d(std::floor(this->x), std::floor(this->y));
+	}
+
+	template <class T> constexpr vec2d<T> vec2d<T>::ceil() const
+	{
+		return vec2d(std::ceil(this->x), std::ceil(this->y));
+	}
+
+	template <class T> constexpr vec2d<T> vec2d<T>::round() const
+	{
+		return vec2d(std::round(this->x), std::round(this->y));
+	}
+
+	template <class T> constexpr vec2d<T> vec2d<T>::cart() const
+	{
+		return vec2d(cos(this->y) * this->x, sin(this->y) * this->x);
+	}
+
+	template <class T> constexpr vec2d<T> vec2d<T>::polar() const
+	{
+		return vec2d(mag(), atan2(this->y, this->x));
+	}
+
+	template <class T> constexpr vec2d<T>& vec2d<T>::ref() const
+	{
+		return *this;
+	}
+
+	template <class T> constexpr vec2d<T>::operator std::string() const
+	{
+		return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")";
+	}
+
+	template <class T> constexpr std::string vec2d<T>::str() const
+	{
+		return operator std::string();
+	}
 
 	constexpr KeyState::KeyState() : held(false), released(false), pressed(false)
 	{
@@ -761,8 +835,15 @@ namespace def
 
 	}
 
-	constexpr Pixel::Pixel() : r(0), g(0), b(0), a(255) {}
-	constexpr Pixel::Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {}
+	constexpr Pixel::Pixel() : r(0), g(0), b(0), a(255)
+	{
+
+	}
+
+	constexpr Pixel::Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a)
+	{
+
+	}
 
 	constexpr Pixel Pixel::mix(const Pixel& rhs, const float factor) const
 	{
@@ -773,8 +854,6 @@ namespace def
 			std::lerp(a, rhs.a, factor)
 		);
 	}
-
-	constexpr Pixel& Pixel::ref() { return *this; }
 
 	constexpr std::string Pixel::str() const
 	{
@@ -790,7 +869,7 @@ namespace def
 		r = std::clamp((float)r + rhs, 0.0f, 255.0f);
 		g = std::clamp((float)g + rhs, 0.0f, 255.0f);
 		b = std::clamp((float)b + rhs, 0.0f, 255.0f);
-		return ref();
+		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator-=(const float rhs)
@@ -798,7 +877,7 @@ namespace def
 		r = std::clamp((float)r - rhs, 0.0f, 255.0f);
 		g = std::clamp((float)g - rhs, 0.0f, 255.0f);
 		b = std::clamp((float)b - rhs, 0.0f, 255.0f);
-		return ref();
+		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator*=(const float rhs)
@@ -806,7 +885,7 @@ namespace def
 		r = std::clamp((float)r * rhs, 0.0f, 255.0f);
 		g = std::clamp((float)g * rhs, 0.0f, 255.0f);
 		b = std::clamp((float)b * rhs, 0.0f, 255.0f);
-		return ref();
+		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator/=(const float rhs)
@@ -814,7 +893,7 @@ namespace def
 		r = std::clamp((float)r / rhs, 0.0f, 255.0f);
 		g = std::clamp((float)g / rhs, 0.0f, 255.0f);
 		b = std::clamp((float)b / rhs, 0.0f, 255.0f);
-		return ref();
+		return *this;
 	}
 
 	constexpr Pixel Pixel::operator+(const float rhs) const
@@ -858,7 +937,7 @@ namespace def
 		r = std::clamp((float)r + rhs.r, 0.0f, 255.0f);
 		g = std::clamp((float)g + rhs.g, 0.0f, 255.0f);
 		b = std::clamp((float)b + rhs.b, 0.0f, 255.0f);
-		return ref();
+		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator-=(const Pixel& rhs)
@@ -866,7 +945,7 @@ namespace def
 		r = std::clamp((float)r - (float)rhs.r, 0.0f, 255.0f);
 		g = std::clamp((float)g - (float)rhs.g, 0.0f, 255.0f);
 		b = std::clamp((float)b - (float)rhs.b, 0.0f, 255.0f);
-		return ref();
+		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator*=(const Pixel& rhs)
@@ -874,7 +953,7 @@ namespace def
 		r = std::clamp((float)r * (float)rhs.r, 0.0f, 255.0f);
 		g = std::clamp((float)g * (float)rhs.g, 0.0f, 255.0f);
 		b = std::clamp((float)b * (float)rhs.b, 0.0f, 255.0f);
-		return ref();
+		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator/=(const Pixel& rhs)
@@ -882,7 +961,7 @@ namespace def
 		r = std::clamp((float)r / (float)rhs.r, 0.0f, 255.0f);
 		g = std::clamp((float)g / (float)rhs.g, 0.0f, 255.0f);
 		b = std::clamp((float)b / (float)rhs.b, 0.0f, 255.0f);
-		return ref();
+		return *this;
 	}
 
 	constexpr Pixel Pixel::operator+(const Pixel& rhs) const
@@ -1208,7 +1287,11 @@ namespace def
 	Graphic::Graphic(std::string_view fileName) { Load(fileName); }
 	Graphic::Graphic(const vi2d& size) { Load(size); }
 
-	Graphic::~Graphic() {}
+	Graphic::~Graphic()
+	{
+		delete texture;
+		delete sprite;
+	}
 
 	void Graphic::Load(std::string_view fileName)
 	{
@@ -1245,7 +1328,10 @@ namespace def
 		m_Shader = nullptr;
 	}
 
-	GameEngine::~GameEngine() { Destroy(); }
+	GameEngine::~GameEngine()
+	{
+		Destroy();
+	}
 
 	void GameEngine::Destroy()
 	{
