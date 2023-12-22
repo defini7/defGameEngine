@@ -5,7 +5,7 @@ CC_GLFW_LIB=C:\SDKs\glfw\x86\lib-static-ucrt
 CC_STB_INCLUDE=C:\SDKs\stb
 CC_LIBS=-lgdi32 -luser32 -lkernel32 -lmingw32 -lopengl32 -lglfw3
 
-CC_FLAGS=-Wall -pedantic -std=c++17
+CC_FLAGS=-Wall -pedantic -std=c++20
 
 .PHONY: all
 all:
