@@ -16,7 +16,7 @@ For all platforms:
 
 # Setup
 
-C++17 is preferrable, but you can use C++14
+C++20 and higher is required
 
 1. Windows MSVC:
 - Menu bar: `Project` -> `<project name> Properties`.
