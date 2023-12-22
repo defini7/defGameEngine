@@ -164,6 +164,8 @@ namespace def
 	template <typename T>
 	struct vec2d
 	{
+		static_assert(std::is_arithmetic<T>::value, "def::vec2d<T> must be numeric");
+
 		constexpr vec2d() = default;
 		constexpr vec2d(const T& x, const T& y);
 
@@ -237,7 +239,6 @@ namespace def
 		constexpr vec2d round() const;
 		constexpr vec2d cart() const;
 		constexpr vec2d polar() const;
-		constexpr vec2d& ref() const;
 
 		constexpr operator std::string() const;
 		constexpr std::string str() const;
@@ -344,9 +345,6 @@ namespace def
 
 	constexpr Pixel PixelF(float r, float g, float b, float a = 1.0f);
 	constexpr Pixel RandomPixel(bool isRandomAlpha = false);
-
-	constexpr float ByteToFloat(uint8_t b);
-	constexpr uint8_t FloatToByte(float f);
 
 	class Sprite
 	{
@@ -569,8 +567,8 @@ namespace def
 
 		virtual void Clear(const Pixel& p);
 
-		KeyState GetKey(uint32_t k) const;
-		KeyState GetMouse(uint32_t k) const;
+		KeyState GetKey(Key k) const;
+		KeyState GetMouse(Button k) const;
 
 		vi2d GetMouse() const;
 
@@ -723,12 +721,12 @@ namespace def
 
 	template <class T> constexpr auto vec2d<T>::dot(const vec2d& v) const
 	{
-		return this->x * v.x + this->y * v.y;
+		return x * v.x + y * v.y;
 	}
 
 	template <class T> constexpr auto vec2d<T>::cross(const vec2d& v) const
 	{
-		return this->x * v.y - this->y * v.x;
+		return x * v.y - y * v.x;
 	}
 	
 	template <class T> constexpr auto vec2d<T>::length() const
@@ -738,27 +736,27 @@ namespace def
 
 	template <class T> constexpr auto vec2d<T>::mag() const
 	{
-		return static_cast<T>(std::sqrtf(this->x * this->x + this->y * this->y));
+		return static_cast<T>(std::sqrtf(x * x + y * y));
 	}
 
 	template <class T> constexpr auto vec2d<T>::mag2() const
 	{
-		return static_cast<T>(this->x * this->x + this->y * this->y);
+		return static_cast<T>(x * x + y * y);
 	}
 
 	template <class T> constexpr auto vec2d<T>::man(const vec2d& v) const
 	{
-		return std::abs(this->x - v.x) + std::abs(this->y - v.y);
+		return std::abs(x - v.x) + std::abs(y - v.y);
 	}
 
 	template <class T> constexpr vec2d<T> vec2d<T>::max(const vec2d& v) const
 	{
-		return vec2d(std::max(this->x, v.x), std::max(this->y, v.y));
+		return vec2d(std::max(x, v.x), std::max(y, v.y));
 	}
 
 	template <class T> constexpr vec2d<T> vec2d<T>::min(const vec2d& v) const
 	{
-		return vec2d(std::min(this->x, v.x), std::min(this->y, v.y)); 
+		return vec2d(std::min(x, v.x), std::min(y, v.y)); 
 	}
 
 	template <class T>
@@ -771,52 +769,47 @@ namespace def
 	template <class T> constexpr vec2d<T> vec2d<T>::norm() const
 	{
 		auto n = 1 / mag();
-		return vec2d(this->x * n, this->y * n);
+		return vec2d(x * n, y * n);
 	}
 
 	template <class T> constexpr vec2d<T> vec2d<T>::abs() const
 	{
-		return vec2d(std::abs(this->x), std::abs(this->y));
+		return vec2d(std::abs(x), std::abs(y));
 	}
 
 	template <class T> constexpr vec2d<T> vec2d<T>::perp() const
 	{
-		return vec2d(-this->y, this->x);
+		return vec2d(-y, x);
 	}
 
 	template <class T> constexpr vec2d<T> vec2d<T>::floor() const
 	{
-		return vec2d(std::floor(this->x), std::floor(this->y));
+		return vec2d(std::floor(x), std::floor(y));
 	}
 
 	template <class T> constexpr vec2d<T> vec2d<T>::ceil() const
 	{
-		return vec2d(std::ceil(this->x), std::ceil(this->y));
+		return vec2d(std::ceil(x), std::ceil(y));
 	}
 
 	template <class T> constexpr vec2d<T> vec2d<T>::round() const
 	{
-		return vec2d(std::round(this->x), std::round(this->y));
+		return vec2d(std::round(x), std::round(y));
 	}
 
 	template <class T> constexpr vec2d<T> vec2d<T>::cart() const
 	{
-		return vec2d(cos(this->y) * this->x, sin(this->y) * this->x);
+		return vec2d(cos(y) * x, sin(y) * x);
 	}
 
 	template <class T> constexpr vec2d<T> vec2d<T>::polar() const
 	{
-		return vec2d(mag(), atan2(this->y, this->x));
-	}
-
-	template <class T> constexpr vec2d<T>& vec2d<T>::ref() const
-	{
-		return *this;
+		return vec2d(mag(), atan2(y, x));
 	}
 
 	template <class T> constexpr vec2d<T>::operator std::string() const
 	{
-		return "(" + std::to_string(this->x) + ", " + std::to_string(this->y) + ")";
+		return "(" + std::to_string(x) + ", " + std::to_string(y) + ")";
 	}
 
 	template <class T> constexpr std::string vec2d<T>::str() const
@@ -857,11 +850,7 @@ namespace def
 
 	constexpr std::string Pixel::str() const
 	{
-		return '(' +
-			std::to_string(r) + ',' +
-			std::to_string(g) + ',' +
-			std::to_string(b) + ',' +
-			std::to_string(a) + ')';
+		return "(" + std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b) + ", " + std::to_string(a) + ")";
 	}
 
 	constexpr Pixel& Pixel::operator+=(const float rhs)
@@ -934,33 +923,33 @@ namespace def
 
 	constexpr Pixel& Pixel::operator+=(const Pixel& rhs)
 	{
-		r = std::clamp((float)r + rhs.r, 0.0f, 255.0f);
-		g = std::clamp((float)g + rhs.g, 0.0f, 255.0f);
-		b = std::clamp((float)b + rhs.b, 0.0f, 255.0f);
+		r = std::clamp((int)r + (int)rhs.r, 0, 255);
+		g = std::clamp((int)g + (int)rhs.g, 0, 255);
+		b = std::clamp((int)b + (int)rhs.b, 0, 255);
 		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator-=(const Pixel& rhs)
 	{
-		r = std::clamp((float)r - (float)rhs.r, 0.0f, 255.0f);
-		g = std::clamp((float)g - (float)rhs.g, 0.0f, 255.0f);
-		b = std::clamp((float)b - (float)rhs.b, 0.0f, 255.0f);
+		r = std::clamp((int)r - (int)rhs.r, 0, 255);
+		g = std::clamp((int)g - (int)rhs.g, 0, 255);
+		b = std::clamp((int)b - (int)rhs.b, 0, 255);
 		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator*=(const Pixel& rhs)
 	{
-		r = std::clamp((float)r * (float)rhs.r, 0.0f, 255.0f);
-		g = std::clamp((float)g * (float)rhs.g, 0.0f, 255.0f);
-		b = std::clamp((float)b * (float)rhs.b, 0.0f, 255.0f);
+		r = std::clamp((int)r * (int)rhs.r, 0, 255);
+		g = std::clamp((int)g * (int)rhs.g, 0, 255);
+		b = std::clamp((int)b * (int)rhs.b, 0, 255);
 		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator/=(const Pixel& rhs)
 	{
-		r = std::clamp((float)r / (float)rhs.r, 0.0f, 255.0f);
-		g = std::clamp((float)g / (float)rhs.g, 0.0f, 255.0f);
-		b = std::clamp((float)b / (float)rhs.b, 0.0f, 255.0f);
+		r = std::clamp((int)r / (int)rhs.r, 0, 255);
+		g = std::clamp((int)g / (int)rhs.g, 0, 255);
+		b = std::clamp((int)b / (int)rhs.b, 0, 255);
 		return *this;
 	}
 
@@ -1023,9 +1012,6 @@ namespace def
 	{
 		return Pixel(rand() % 256, rand() % 256, rand() % 256, isRandomAlpha ? rand() % 256 : 255);
 	}
-
-	constexpr float ByteToFloat(uint8_t b) { return (float)b / 255.0f; }
-	constexpr uint8_t FloatToByte(float f) { return uint8_t(f * 255.0f); }
 
 	Sprite::Sprite(const vi2d& size)
 	{
@@ -1239,8 +1225,15 @@ namespace def
 		}
 	}
 
-	Texture::Texture(Sprite* sprite) { Construct(sprite, false); }
-	Texture::Texture(std::string_view fileName) { Construct(new Sprite(fileName), true); }
+	Texture::Texture(Sprite* sprite)
+	{
+		Construct(sprite, false);
+	}
+
+	Texture::Texture(std::string_view fileName)
+	{
+		Construct(new Sprite(fileName), true);
+	}
 
 	void Texture::Construct(Sprite* sprite, bool deleteSprite)
 	{
@@ -1890,7 +1883,7 @@ namespace def
 		else
 			changed1 = false;
 
-		e1 = (int32_t)(dx1 >> 1);
+		e1 = dx1 >> 1;
 
 		for (int i = 0; i <= dx1; i++)
 		{
@@ -2013,8 +2006,10 @@ namespace def
 			Draw(x + y1, y + x1, p);
 			Draw(x + x1, y + y1, p);
 
-			if (p1 < 0) p1 += 4 * x1++ + 6;
-			else p1 += 4 * (x1++ - y1--) + 10;
+			if (p1 < 0)
+				p1 += 4 * x1++ + 6;
+			else
+				p1 += 4 * (x1++ - y1--) + 10;
 		}
 	}
 
@@ -2037,8 +2032,10 @@ namespace def
 			drawLine(x - x1, x + x1, y + y1);
 			drawLine(x - y1, x + y1, y + x1);
 
-			if (p1 < 0) p1 += 4 * x1++ + 6;
-			else p1 += 4 * (x1++ - y1--) + 10;
+			if (p1 < 0)
+				p1 += 4 * x1++ + 6;
+			else
+				p1 += 4 * (x1++ - y1--) + 10;
 		}
 	}
 
@@ -2062,7 +2059,8 @@ namespace def
 			x1 += a;
 		}
 
-		if (y > y1) y = y1;
+		if (y > y1)
+			y = y1;
 
 		y += (b + 1) / 2;
 		y1 = y - b1;
@@ -2076,13 +2074,16 @@ namespace def
 			Draw(x, y, p);
 			Draw(x, y1, p);
 			Draw(x1, y1, p);
+
 			int e2 = 2 * err;
+
 			if (e2 <= dy)
 			{
 				y++;
 				y1--;
 				err += dy += a;
 			}
+
 			if (e2 >= dx || 2 * err > dy)
 			{
 				x++;
@@ -2107,7 +2108,8 @@ namespace def
 
 		auto drawLine = [&](int32_t sx, int32_t ex, int32_t ny)
 		{
-			for (int i = sx; i <= ex; i++) Draw(i, ny, p);
+			for (int i = sx; i <= ex; i++)
+				Draw(i, ny, p);
 		};
 
 		int a = abs(x1 - x);
@@ -2125,7 +2127,8 @@ namespace def
 			x1 += a;
 		}
 
-		if (y > y1) y = y1;
+		if (y > y1)
+			y = y1;
 
 		y += (b + 1) / 2;
 		y1 = y - b1;
@@ -2453,8 +2456,8 @@ namespace def
 				m_DrawTarget->sprite->SetPixel({ x, y }, p);
 	}
 
-	KeyState GameEngine::GetKey(uint32_t k) const { return m_Keys[k]; }
-	KeyState GameEngine::GetMouse(uint32_t k) const { return m_Mouse[k]; }
+	KeyState GameEngine::GetKey(Key k) const { return m_Keys[static_cast<size_t>(k)]; }
+	KeyState GameEngine::GetMouse(Button k) const { return m_Mouse[static_cast<size_t>(k)]; }
 
 	int32_t GameEngine::MouseX() const { return m_MousePos.x; }
 	int32_t GameEngine::MouseY() const { return m_MousePos.y; }
@@ -2464,7 +2467,7 @@ namespace def
 
 	bool GameEngine::IsFullScreen() const { return m_IsFullScreen; }
 	bool GameEngine::IsVSync() const { return m_IsVSync; }
-	bool GameEngine::IsFocused() const { return (bool)glfwGetWindowAttrib(m_Window, GLFW_FOCUSED); }
+	bool GameEngine::IsFocused() const { return static_cast<bool>(glfwGetWindowAttrib(m_Window, GLFW_FOCUSED)); }
 
 	void GameEngine::SetIcon(std::string_view fileName)
 	{
@@ -2484,8 +2487,15 @@ namespace def
 		m_DrawTarget->UpdateTexture();
 	}
 
-	Graphic* GameEngine::GetDrawTarget() { return m_DrawTarget; }
-	void GameEngine::SetTitle(std::string_view title) { m_AppName = title; }
+	Graphic* GameEngine::GetDrawTarget()
+	{
+		return m_DrawTarget;
+	}
+
+	void GameEngine::SetTitle(std::string_view title)
+	{
+		m_AppName = title;
+	}
 
 	WindowState GameEngine::GetWindowState() const
 	{
@@ -2495,14 +2505,35 @@ namespace def
 		return static_cast<WindowState>(f);
 	}
 
-	GLFWwindow* GameEngine::GetWindow() const { return m_Window; }
-	std::vector<std::string>& GameEngine::GetDropped() { return s_DropCache; }
+	GLFWwindow* GameEngine::GetWindow() const
+	{
+		return m_Window;
+	}
 
-	void GameEngine::SetPixelMode(Pixel::Mode pixelMode) { m_PixelMode = pixelMode; }
-	Pixel::Mode GameEngine::GetPixelMode() const { return m_PixelMode; }
+	std::vector<std::string>& GameEngine::GetDropped()
+	{
+		return s_DropCache;
+	}
 
-	void GameEngine::SetTextureStructure(Texture::Structure textureStructure) { m_TextureStructure = textureStructure; }
-	Texture::Structure GameEngine::GetTextureStructure() const { return m_TextureStructure; }
+	void GameEngine::SetPixelMode(Pixel::Mode pixelMode)
+	{
+		m_PixelMode = pixelMode;
+	}
+
+	Pixel::Mode GameEngine::GetPixelMode() const
+	{
+		return m_PixelMode;
+	}
+
+	void GameEngine::SetTextureStructure(Texture::Structure textureStructure)
+	{
+		m_TextureStructure = textureStructure;
+	}
+
+	Texture::Structure GameEngine::GetTextureStructure() const
+	{
+		return m_TextureStructure;
+	}
 
 	bool GameEngine::Draw(const vi2d& pos, Pixel p)
 	{
@@ -2599,13 +2630,24 @@ namespace def
 		DrawString(pos.x, pos.y, text, p);
 	}
 
-	vi2d GameEngine::ScreenSize() const { return m_ScreenSize; }
-	vi2d GameEngine::MaxWindowSize() const { return m_MaxWindowSize; };
-	vi2d GameEngine::GetMouse() const { return m_MousePos; }
+	vi2d GameEngine::ScreenSize() const
+	{
+		return m_ScreenSize;
+	}
+
+	vi2d GameEngine::MaxWindowSize() const
+	{
+		return m_MaxWindowSize;
+	}
+
+	vi2d GameEngine::GetMouse() const
+	{
+		return m_MousePos;
+	}
 
 	void GameEngine::ClearBuffer(const Pixel& p)
 	{
-		glClearColor(ByteToFloat(p.r), ByteToFloat(p.g), ByteToFloat(p.b), ByteToFloat(p.a));
+		glClearColor((float)p.r / 255.0f, (float)p.g / 255.0f, (float)p.b / 255.0f, (float)p.a / 255.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
