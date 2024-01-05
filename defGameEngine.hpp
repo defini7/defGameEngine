@@ -4,7 +4,7 @@
 #pragma region license
 /***
 *	BSD 3-Clause License
-	Copyright (c) 2022, 2023 Alex
+	Copyright (c) 2022, 2023, 2024 Alex
 	All rights reserved.
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -219,6 +219,7 @@ namespace def
 		constexpr auto dot(const vec2d& v) const;
 		constexpr auto cross(const vec2d& v) const;
 
+		constexpr auto angle(const vec2d& v) const;
 		constexpr auto length() const;
 
 		constexpr auto mag() const;
@@ -719,42 +720,56 @@ namespace def
 		return { std::clamp(x, start.x, end.x), std::clamp(y, start.y, end.y) };
 	}
 
-	template <class T> constexpr auto vec2d<T>::dot(const vec2d& v) const
+	template <class T>
+	constexpr auto vec2d<T>::dot(const vec2d& v) const
 	{
 		return x * v.x + y * v.y;
 	}
 
-	template <class T> constexpr auto vec2d<T>::cross(const vec2d& v) const
+	template <class T>
+	constexpr auto vec2d<T>::cross(const vec2d& v) const
 	{
 		return x * v.y - y * v.x;
 	}
 	
-	template <class T> constexpr auto vec2d<T>::length() const
+	template<typename T>
+	constexpr auto vec2d<T>::angle(const vec2d& v) const
+	{
+		return acos(dot(v) / (length() + v.length()));
+	}
+
+	template <class T>
+	constexpr auto vec2d<T>::length() const
 	{
 		return std::sqrtf(dot(*this));
 	}
 
-	template <class T> constexpr auto vec2d<T>::mag() const
+	template <class T>
+	constexpr auto vec2d<T>::mag() const
 	{
 		return static_cast<T>(std::sqrtf(x * x + y * y));
 	}
 
-	template <class T> constexpr auto vec2d<T>::mag2() const
+	template <class T>
+	constexpr auto vec2d<T>::mag2() const
 	{
 		return static_cast<T>(x * x + y * y);
 	}
 
-	template <class T> constexpr auto vec2d<T>::man(const vec2d& v) const
+	template <class T>
+	constexpr auto vec2d<T>::man(const vec2d& v) const
 	{
 		return std::abs(x - v.x) + std::abs(y - v.y);
 	}
 
-	template <class T> constexpr vec2d<T> vec2d<T>::max(const vec2d& v) const
+	template <class T>
+	constexpr vec2d<T> vec2d<T>::max(const vec2d& v) const
 	{
 		return vec2d(std::max(x, v.x), std::max(y, v.y));
 	}
 
-	template <class T> constexpr vec2d<T> vec2d<T>::min(const vec2d& v) const
+	template <class T>
+	constexpr vec2d<T> vec2d<T>::min(const vec2d& v) const
 	{
 		return vec2d(std::min(x, v.x), std::min(y, v.y)); 
 	}
