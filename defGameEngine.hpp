@@ -4,7 +4,7 @@
 #pragma region license
 /***
 *	BSD 3-Clause License
-	Copyright (c) 2022, 2023, 2024 Alex
+	Copyright (c) 2022 - 2024 Alex
 	All rights reserved.
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -613,6 +613,12 @@ namespace def
 
 		Key AnyKey(bool pressed = true, bool held = false, bool released = false);
 		std::vector<Key> AnyKeys(bool pressed = true, bool held = false, bool released = false);
+
+		void Translate(const vf2d& offset);
+		virtual void Translate(float offsetX, float offsetY);
+
+		void Scale(const vf2d& scale);
+		virtual void Scale(float scaleX, float scaleY);
 	};
 
 #ifdef DGE_APPLICATION
@@ -1383,7 +1389,8 @@ namespace def
 			float deltaTime = std::chrono::duration<float>(tp2 - tp1).count();
 			tp1 = tp2;
 
-			m_IsAppRunning = !glfwWindowShouldClose(m_Window);
+			if (glfwWindowShouldClose(m_Window))
+				m_IsAppRunning = false;
 
 			for (int i = 0; i < 512; i++)
 			{
@@ -1439,7 +1446,8 @@ namespace def
 			m_MousePos.x = (int)mouseX / m_PixelSize.x;
 			m_MousePos.y = (int)mouseY / m_PixelSize.y;
 
-			if (!OnUserUpdate(deltaTime)) m_IsAppRunning = false;
+			if (!OnUserUpdate(deltaTime))
+				m_IsAppRunning = false;
 
 			ClearBuffer(BLACK);
 
@@ -1454,7 +1462,8 @@ namespace def
 			for (const auto& ti : m_Textures) DrawTexture(ti);
 			m_Textures.clear();
 
-			if (!OnAfterDraw()) m_IsAppRunning = false;
+			if (!OnAfterDraw())
+				m_IsAppRunning = false;
 
 			if (m_IsVSync)
 				glfwSwapBuffers(m_Window);
@@ -2699,6 +2708,26 @@ namespace def
 		}
 
 		return keys;
+	}
+
+	void GameEngine::Translate(const vf2d& offset)
+	{
+		Translate(offset.x, offset.y);
+	}
+
+	void GameEngine::Translate(float offsetX, float offsetY)
+	{
+		glTranslatef(-offsetX, offsetY, 0.0f);
+	}
+
+	void GameEngine::Scale(const vf2d& scale)
+	{
+		Scale(scale.x, scale.y);
+	}
+
+	void GameEngine::Scale(float scaleX, float scaleY)
+	{
+		glScalef(scaleX, scaleY, 1.0f);
 	}
 
 #endif
