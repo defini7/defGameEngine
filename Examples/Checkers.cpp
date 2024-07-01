@@ -23,6 +23,13 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// TODO:
+/*
+* - Capture multiple checkers
+* - Add game ending
+* - Add game restarting
+*/
+
 #define DGE_APPLICATION
 #include "defGameEngine.hpp"
 
