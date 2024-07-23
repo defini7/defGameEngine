@@ -508,10 +508,10 @@ namespace def
 		virtual void FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& p = WHITE);
 
 		void DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void DrawRectangle(int x, int y, int sx, int sy, const Pixel& p = WHITE);
+		virtual void DrawRectangle(int x, int y, int sizeX, int sizeY, const Pixel& p = WHITE);
 
 		void FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void FillRectangle(int x, int y, int sx, int sy, const Pixel& p = WHITE);
+		virtual void FillRectangle(int x, int y, int sizeX, int sizeY, const Pixel& p = WHITE);
 
 		void DrawCircle(const vi2d& pos, int radius, const Pixel& p = WHITE);
 		virtual void DrawCircle(int x, int y, int radius, const Pixel& p = WHITE);
@@ -520,21 +520,21 @@ namespace def
 		virtual void FillCircle(int x, int y, int radius, const Pixel& p = WHITE);
 
 		void DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void DrawEllipse(int x, int y, int sx, int sy, const Pixel& p = WHITE);
+		virtual void DrawEllipse(int x, int y, int sizeX, int sizeY, const Pixel& p = WHITE);
 
 		void FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void FillEllipse(int x, int y, int sx, int sy, const Pixel& p = WHITE);
+		virtual void FillEllipse(int x, int y, int sizeX, int sizeY, const Pixel& p = WHITE);
 
 		void DrawSprite(const vi2d& pos, const Sprite* sprite);
 		virtual void DrawSprite(int x, int y, const Sprite* sprite);
 
-		void DrawPartialSprite(const vi2d& pos, const vi2d& fpos, const vi2d& fsize, const Sprite* sprite);
-		virtual void DrawPartialSprite(int x, int y, int fx, int fy, int fsizeX, int fsizeY, const Sprite* sprite);
+		void DrawPartialSprite(const vi2d& pos, const vi2d& filePos, const vi2d& fileSize, const Sprite* sprite);
+		virtual void DrawPartialSprite(int x, int y, int fileX, int fileY, int fileSizeX, int fileSizeY, const Sprite* sprite);
 
 		void DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		virtual void DrawTexture(float x, float y, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		void DrawPartialTexture(const vf2d& pos, const vi2d& filePos, const vi2d& fileSize, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		void DrawPartialTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		virtual void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
 		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint = WHITE);
@@ -542,8 +542,8 @@ namespace def
 		void DrawRotatedTexture(const vf2d& pos, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		virtual void DrawRotatedTexture(float x, float y, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		void DrawPartialRotatedTexture(const vf2d& pos, const vf2d& fpos, const vf2d& fsize, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+		void DrawPartialRotatedTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		virtual void DrawPartialRotatedTexture(float x, float y, float filePosX, float filePosY, float fileWidth, float fileHeight, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
 		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
 		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
@@ -556,8 +556,8 @@ namespace def
 
 		virtual void Clear(const Pixel& p);
 
-		KeyState GetKey(Key k) const;
-		KeyState GetMouse(Button k) const;
+		KeyState GetKey(Key key) const;
+		KeyState GetMouse(Button button) const;
 
 		vi2d GetMouse() const;
 
@@ -586,7 +586,7 @@ namespace def
 
 		std::vector<std::string>& GetDropped();
 
-		void DrawTexture(const TextureInstance& tex);
+		void DrawTexture(const TextureInstance& texture);
 
 		void SetPixelMode(Pixel::Mode pixelMode);
 		Pixel::Mode GetPixelMode() const;
@@ -595,9 +595,9 @@ namespace def
 		Texture::Structure GetTextureStructure() const;
 
 		void ClearBuffer(const Pixel& p);
-		void SetTint(const Pixel& p);
+		void SetTint(const Pixel& tint);
 
-		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur));
+		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& previous, const Pixel& current));
 
 		Key AnyKey(bool pressed = true, bool held = false, bool released = false);
 		std::vector<Key> AnyKeys(bool pressed = true, bool held = false, bool released = false);
@@ -860,10 +860,10 @@ namespace def
 	constexpr Pixel Pixel::mix(const Pixel& rhs, const float factor) const
 	{
 		return Pixel(
-			std::lerp(r, rhs.r, factor),
-			std::lerp(g, rhs.g, factor),
-			std::lerp(b, rhs.b, factor),
-			std::lerp(a, rhs.a, factor)
+			(uint8_t)std::lerp(r, rhs.r, factor),
+			(uint8_t)std::lerp(g, rhs.g, factor),
+			(uint8_t)std::lerp(b, rhs.b, factor),
+			(uint8_t)std::lerp(a, rhs.a, factor)
 		);
 	}
 
@@ -874,137 +874,137 @@ namespace def
 
 	constexpr Pixel& Pixel::operator+=(const float rhs)
 	{
-		r = std::clamp((float)r + rhs, 0.0f, 255.0f);
-		g = std::clamp((float)g + rhs, 0.0f, 255.0f);
-		b = std::clamp((float)b + rhs, 0.0f, 255.0f);
+		r = uint8_t(std::clamp((float)r + rhs, 0.0f, 255.0f));
+		g = uint8_t(std::clamp((float)g + rhs, 0.0f, 255.0f));
+		b = uint8_t(std::clamp((float)b + rhs, 0.0f, 255.0f));
 		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator-=(const float rhs)
 	{
-		r = std::clamp((float)r - rhs, 0.0f, 255.0f);
-		g = std::clamp((float)g - rhs, 0.0f, 255.0f);
-		b = std::clamp((float)b - rhs, 0.0f, 255.0f);
+		r = uint8_t(std::clamp((float)r - rhs, 0.0f, 255.0f));
+		g = uint8_t(std::clamp((float)g - rhs, 0.0f, 255.0f));
+		b = uint8_t(std::clamp((float)b - rhs, 0.0f, 255.0f));
 		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator*=(const float rhs)
 	{
-		r = std::clamp((float)r * rhs, 0.0f, 255.0f);
-		g = std::clamp((float)g * rhs, 0.0f, 255.0f);
-		b = std::clamp((float)b * rhs, 0.0f, 255.0f);
+		r = uint8_t(std::clamp((float)r * rhs, 0.0f, 255.0f));
+		g = uint8_t(std::clamp((float)g * rhs, 0.0f, 255.0f));
+		b = uint8_t(std::clamp((float)b * rhs, 0.0f, 255.0f));
 		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator/=(const float rhs)
 	{
-		r = std::clamp((float)r / rhs, 0.0f, 255.0f);
-		g = std::clamp((float)g / rhs, 0.0f, 255.0f);
-		b = std::clamp((float)b / rhs, 0.0f, 255.0f);
+		r = uint8_t(std::clamp((float)r / rhs, 0.0f, 255.0f));
+		g = uint8_t(std::clamp((float)g / rhs, 0.0f, 255.0f));
+		b = uint8_t(std::clamp((float)b / rhs, 0.0f, 255.0f));
 		return *this;
 	}
 
 	constexpr Pixel Pixel::operator+(const float rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r + rhs, 0.0f, 255.0f),
-			std::clamp((float)g + rhs, 0.0f, 255.0f),
-			std::clamp((float)b + rhs, 0.0f, 255.0f)
+			uint8_t(std::clamp((float)r + rhs, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)g + rhs, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)b + rhs, 0.0f, 255.0f))
 		);
 	}
 
 	constexpr Pixel Pixel::operator-(const float rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r - rhs, 0.0f, 255.0f),
-			std::clamp((float)g - rhs, 0.0f, 255.0f),
-			std::clamp((float)b - rhs, 0.0f, 255.0f)
+			uint8_t(std::clamp((float)r - rhs, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)g - rhs, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)b - rhs, 0.0f, 255.0f))
 		);
 	}
 
 	constexpr Pixel Pixel::operator*(const float rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r * rhs, 0.0f, 255.0f),
-			std::clamp((float)g * rhs, 0.0f, 255.0f),
-			std::clamp((float)b * rhs, 0.0f, 255.0f)
+			uint8_t(std::clamp((float)r * rhs, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)g * rhs, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)b * rhs, 0.0f, 255.0f))
 		);
 	}
 
 	constexpr Pixel Pixel::operator/(const float rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r / rhs, 0.0f, 255.0f),
-			std::clamp((float)g / rhs, 0.0f, 255.0f),
-			std::clamp((float)b / rhs, 0.0f, 255.0f)
+			uint8_t(std::clamp((float)r / rhs, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)g / rhs, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)b / rhs, 0.0f, 255.0f))
 		);
 	}
 
 	constexpr Pixel& Pixel::operator+=(const Pixel& rhs)
 	{
-		r = std::clamp((int)r + (int)rhs.r, 0, 255);
-		g = std::clamp((int)g + (int)rhs.g, 0, 255);
-		b = std::clamp((int)b + (int)rhs.b, 0, 255);
+		r = uint8_t(std::clamp((int)r + (int)rhs.r, 0, 255));
+		g = uint8_t(std::clamp((int)g + (int)rhs.g, 0, 255));
+		b = uint8_t(std::clamp((int)b + (int)rhs.b, 0, 255));
 		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator-=(const Pixel& rhs)
 	{
-		r = std::clamp((int)r - (int)rhs.r, 0, 255);
-		g = std::clamp((int)g - (int)rhs.g, 0, 255);
-		b = std::clamp((int)b - (int)rhs.b, 0, 255);
+		r = uint8_t(std::clamp((int)r - (int)rhs.r, 0, 255));
+		g = uint8_t(std::clamp((int)g - (int)rhs.g, 0, 255));
+		b = uint8_t(std::clamp((int)b - (int)rhs.b, 0, 255));
 		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator*=(const Pixel& rhs)
 	{
-		r = std::clamp((int)r * (int)rhs.r, 0, 255);
-		g = std::clamp((int)g * (int)rhs.g, 0, 255);
-		b = std::clamp((int)b * (int)rhs.b, 0, 255);
+		r = uint8_t(std::clamp((int)r * (int)rhs.r, 0, 255));
+		g = uint8_t(std::clamp((int)g * (int)rhs.g, 0, 255));
+		b = uint8_t(std::clamp((int)b * (int)rhs.b, 0, 255));
 		return *this;
 	}
 
 	constexpr Pixel& Pixel::operator/=(const Pixel& rhs)
 	{
-		r = std::clamp((int)r / (int)rhs.r, 0, 255);
-		g = std::clamp((int)g / (int)rhs.g, 0, 255);
-		b = std::clamp((int)b / (int)rhs.b, 0, 255);
+		r = uint8_t(std::clamp((int)r / (int)rhs.r, 0, 255));
+		g = uint8_t(std::clamp((int)g / (int)rhs.g, 0, 255));
+		b = uint8_t(std::clamp((int)b / (int)rhs.b, 0, 255));
 		return *this;
 	}
 
 	constexpr Pixel Pixel::operator+(const Pixel& rhs) const
 	{
 		return Pixel(
-			std::clamp((int)r + (int)rhs.r, 0, 255),
-			std::clamp((int)g + (int)rhs.g, 0, 255),
-			std::clamp((int)b + (int)rhs.b, 0, 255)
+			uint8_t(std::clamp((int)r + (int)rhs.r, 0, 255)),
+			uint8_t(std::clamp((int)g + (int)rhs.g, 0, 255)),
+			uint8_t(std::clamp((int)b + (int)rhs.b, 0, 255))
 		);
 	}
 
 	constexpr Pixel Pixel::operator-(const Pixel& rhs) const
 	{
 		return Pixel(
-			std::clamp((int)r - (int)rhs.r, 0, 255),
-			std::clamp((int)g - (int)rhs.g, 0, 255),
-			std::clamp((int)b - (int)rhs.b, 0, 255)
+			uint8_t(std::clamp((int)r - (int)rhs.r, 0, 255)),
+			uint8_t(std::clamp((int)g - (int)rhs.g, 0, 255)),
+			uint8_t(std::clamp((int)b - (int)rhs.b, 0, 255))
 		);
 	}
 
 	constexpr Pixel Pixel::operator*(const Pixel& rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r * (float)rhs.r / 255.0f, 0.0f, 255.0f),
-			std::clamp((float)g * (float)rhs.g / 255.0f, 0.0f, 255.0f),
-			std::clamp((float)b * (float)rhs.b / 255.0f, 0.0f, 255.0f)
+			uint8_t(std::clamp((float)r * (float)rhs.r / 255.0f, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)g * (float)rhs.g / 255.0f, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)b * (float)rhs.b / 255.0f, 0.0f, 255.0f))
 		);
 	}
 
 	constexpr Pixel Pixel::operator/(const Pixel& rhs) const
 	{
 		return Pixel(
-			std::clamp((float)r / (float)rhs.r, 0.0f, 255.0f),
-			std::clamp((float)g / (float)rhs.g, 0.0f, 255.0f),
-			std::clamp((float)b / (float)rhs.b, 0.0f, 255.0f)
+			uint8_t(std::clamp((float)r / (float)rhs.r, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)g / (float)rhs.g, 0.0f, 255.0f)),
+			uint8_t(std::clamp((float)b / (float)rhs.b, 0.0f, 255.0f))
 		);
 	}
 
@@ -1029,7 +1029,7 @@ namespace def
 
 	constexpr Pixel Pixel::Float(float r, float g, float b, float a)
 	{
-		return Pixel(r * 255.0f, g * 255.0f, b * 255.0f, a * 255.0f);
+		return Pixel(uint8_t(r * 255.0f), uint8_t(g * 255.0f), uint8_t(b * 255.0f), uint8_t(a * 255.0f));
 	}
 
 	Sprite::Sprite(const vi2d& size)
@@ -1078,7 +1078,7 @@ namespace def
 
 	void Sprite::Save(std::string_view fileName, const FileType type) const
 	{
-		int err;
+		int err = 0;
 
 		switch (type)
 		{
@@ -1681,9 +1681,9 @@ namespace def
 		{
 			Pixel d = target->GetPixel({ x, y });
 
-			uint8_t r = std::lerp(d.r, p.r, (float)p.a / 255.0f);
-			uint8_t g = std::lerp(d.g, p.g, (float)p.a / 255.0f);
-			uint8_t b = std::lerp(d.b, p.b, (float)p.a / 255.0f);
+			uint8_t r = uint8_t(std::lerp(d.r, p.r, (float)p.a / 255.0f));
+			uint8_t g = uint8_t(std::lerp(d.g, p.g, (float)p.a / 255.0f));
+			uint8_t b = uint8_t(std::lerp(d.b, p.b, (float)p.a / 255.0f));
 
 			return target->SetPixel({ x, y }, { r, g, b });
 		}
@@ -2314,10 +2314,10 @@ namespace def
 		vf2d scale = vf2d(scaleX, scaleY);
 
 		ti.vertices = {
-			(vf2d(0.0f, 0.0f) - center) * scale,
+			-1.0f * center * scale,
 			(vf2d(0.0f, (float)tex->size.y) - center) * scale,
 			(vf2d((float)tex->size.x, (float)tex->size.y) - center) * scale,
-			(vf2d((float)tex->size.y, 0.0f) - center) * scale
+			(vf2d((float)tex->size.x, 0.0f) - center) * scale
 		};
 
 		float c = cos(r), s = sin(r);
@@ -2418,11 +2418,12 @@ namespace def
 		size_t verts = modelCoordinates.size();
 
 		std::vector<vf2d> coordinates(verts);
+		float cs = cosf(r), sn = sinf(r);
 
 		for (size_t i = 0; i < verts; i++)
 		{
-			coordinates[i].x = (modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r)) * s + x;
-			coordinates[i].y = (modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r)) * s + y;
+			coordinates[i].x = (modelCoordinates[i].x * cs - modelCoordinates[i].y * sn) * s + x;
+			coordinates[i].y = (modelCoordinates[i].x * sn + modelCoordinates[i].y * cs) * s + y;
 		}
 
 		for (size_t i = 0; i < verts + 1; i++)
@@ -2519,9 +2520,7 @@ namespace def
 
 	void GameEngine::Clear(const Pixel& p)
 	{
-		for (int x = 0; x < m_DrawTarget->sprite->size.x; x++)
-			for (int y = 0; y < m_DrawTarget->sprite->size.y; y++)
-				m_DrawTarget->sprite->SetPixel({ x, y }, p);
+		m_DrawTarget->sprite->SetPixelData(p);
 	}
 
 	KeyState GameEngine::GetKey(Key k) const { return m_Keys[static_cast<size_t>(k)]; }
@@ -2668,7 +2667,7 @@ namespace def
 		DrawTexture(pos.x, pos.y, tex, scale.x, scale.y, tint);
 	}
 
-	void GameEngine::DrawPartialTexture(const vf2d& pos, const vi2d& filePos, const vi2d& fileSize, const Texture* tex, const vf2d& scale, const Pixel& tint)
+	void GameEngine::DrawPartialTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, const Texture* tex, const vf2d& scale, const Pixel& tint)
 	{
 		DrawPartialTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, tex, scale.x, scale.y, tint);
 	}
