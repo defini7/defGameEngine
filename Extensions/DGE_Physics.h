@@ -1,9 +1,9 @@
 #pragma once
 
-#pragma region license
+#pragma region License
 /***
 *	BSD 3-Clause License
-	Copyright (c) 2021, 2022, 2023 Alex
+	Copyright (c) 2021, 2022, 2023, 2024 Alex
 	All rights reserved.
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -28,188 +28,361 @@
 ***/
 #pragma endregion
 
+#include <vector>
+
 namespace def
 {
-	struct Shape
+	constexpr double epsilon = 0.001;
+
+	namespace utils
 	{
-		vf2d velocity;
-		vf2d pos;
-	};
+		template <class T1, class T2>
+		constexpr auto equal(T1 lhs, T2 rhs);
+	}
 
-	struct Point : Shape {};
-
-	struct Rectangle : Shape
+	template <class T>
+	struct circle
 	{
-		Rectangle() = default;
-		Rectangle(const vf2d& v, const vf2d& p, const vf2d& s);
+		constexpr circle() = default;
+		constexpr circle(const vec2d<T>& p, float r);
 
-		vf2d size;
-
-		Rectangle* contact[4];
-	};
-
-	struct Circle : Shape
-	{
-		Circle() = default;
-		Circle(const vf2d& v, const vf2d& p, float r);
-
+		vec2d<T> pos;
 		float radius;
 	};
 
-	struct Line : Shape
+	template <class T>
+	struct line
 	{
-		Line() = default;
-		Line(const vf2d& v, const vf2d& p, const vf2d& s);
+		constexpr line() = default;
+		constexpr line(const vec2d<T>& p1, const vec2d<T>& p2);
 
-		vf2d size;
+		constexpr vec2d<T> vector() const;
+
+		vec2d<T> pos[2];
 	};
 
-	class Physics
+	template <class T>
+	struct rect
 	{
-	public:
-		bool PointVsCircle(const Point& p, const Circle& c);
-		bool PointVsRect(const Point& p, const Rectangle& r);
-		bool RectVsRect(const Rectangle& r1, const Rectangle& r2);
-		bool LineVsRect(const Line& l, const Rectangle& r, vf2d& contactPoint, vf2d& contactNormal, float& hitTime);
+		constexpr rect() = default;
+		constexpr rect(const vec2d<T>& p, const vec2d<T>& s);
 
-		bool ResolveLineVsRect(const Line& l, const Rectangle& r, vf2d& contactPoint, vf2d& contactNormal);
-		bool DynamicRectVsRect(const Rectangle& dynamicRect, const float timeStep, const Rectangle& staticRect,
-			vf2d& contactPoint, vf2d& contactNormal, float& contactTime);
-		bool ResolveDynamicRectVsRect(Rectangle& dynamicRect, const float timeStep, Rectangle* staticRect);
+		enum side : uint32_t
+		{
+			LEFT,
+			TOP,
+			RIGHT,
+			BOTTOM
+		};
+
+		constexpr line<T> left() const;
+		constexpr line<T> top() const;
+		constexpr line<T> right() const;
+		constexpr line<T> bottom() const;
+		
+		constexpr line<T> side(uint32_t i) const;
+		constexpr vec2d<T> end() const;
+
+		vec2d<T> pos;
+		vec2d<T> size;
+
+		static constexpr uint32_t SIDES = 4;
 	};
+
+	// Checks if p1 and p2 have the same coordinates
+	template <class T1, class T2>
+	constexpr bool contains(const vec2d<T1>& p1, const vec2d<T2>& p2);
+
+	// Checks if p is inside c
+	template <class T1, class T2>
+	constexpr bool contains(const circle<T1>& c, const vec2d<T2>& p);
+
+	// Checks if r contains p
+	template <class T1, class T2>
+	constexpr bool contains(const rect<T1>& r, const vec2d<T2>& p);
+
+	// Checks if r1 contains r2
+	template <class T1, class T2>
+	constexpr bool contains(const rect<T1>& r1, const rect<T2>& r2);
+
+	// Checks if r contains l
+	template <class T1, class T2>
+	constexpr bool contains(const rect<T1>& r, const line<T2>& l);
+
+	// Checks if l1 contains l2
+	template <class T1, class T2>
+	constexpr bool contains(const line<T1>& l1, const line<T2>& l2);
+
+	// Checks if l contains p
+	template <class T1, class T2>
+	constexpr bool contains(const line<T1>& l, const vec2d<T2>& p);
+
+	// Checks if p1 and p2 have the same coordinates
+	template <class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const vec2d<T1>& p1, const vec2d<T2>& p2);
+
+	// Checks if p intersects c
+	template <class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const circle<T1>& c, const vec2d<T2>& p);
+
+	// Checks if r intersects p
+	template <class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const rect<T1>& r, const vec2d<T2>& p);
+
+	// Checks if r1 intersects r2
+	template <class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const rect<T1>& r1, const rect<T2>& r2);
+
+	// Checks if l1 intersects l2
+	template <class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const line<T1>& l1, const line<T2>& l2);
+
+	// Checks if r intersects l
+	template <class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const rect<T1>& r, const line<T2>& l);
+
+	// Checks if l intersects p
+	template <class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const line<T1>& l, const vec2d<T2>& p);
 
 #ifdef DGE_PHYSICS
 #undef DGE_PHYSICS
 
-	Rectangle::Rectangle(const vf2d& v, const vf2d& p, const vf2d& s)
+	template <class T1, class T2>
+	constexpr auto utils::equal(T1 lhs, T2 rhs)
 	{
-		velocity = v;
-		pos = p;
-		size = s;
-
-		contact[0] = nullptr;
-		contact[1] = nullptr;
-		contact[2] = nullptr;
-		contact[3] = nullptr;
+		return abs(lhs - rhs) <= epsilon;
 	}
 
-	Circle::Circle(const vf2d& v, const vf2d& p, float r)
+	template <class T>
+	constexpr rect<T>::rect(const vec2d<T>& p, const vec2d<T>& s)
 	{
-		velocity = v;
+		pos = p;
+		size = s;
+	}
+
+	template <class T>
+	constexpr line<T> rect<T>::left() const
+	{
+		return { pos, { pos.x, pos.y + size.y } };
+	}
+
+	template <class T>
+	constexpr line<T> rect<T>::top() const
+	{
+		return { pos, { pos.x + size.x, pos.y } };
+	}
+
+	template <class T>
+	constexpr line<T> rect<T>::right() const
+	{
+		return { { pos.x + size.x, pos.y }, end() };
+	}
+
+	template <class T>
+	constexpr line<T> rect<T>::bottom() const
+	{
+		return { { pos.x, pos.y + size.y }, end() };
+	}
+
+	template<class T>
+	constexpr line<T> rect<T>::side(uint32_t i) const
+	{
+		switch (i)
+		{
+		case side::LEFT: return left();
+		case side::TOP: return top();
+		case side::RIGHT: return right();
+		case side::BOTTOM: return bottom();
+		}
+
+		return {};
+	}
+
+	template<class T>
+	constexpr vec2d<T> rect<T>::end() const
+	{
+		return pos + size;
+	}
+
+	template <class T>
+	constexpr circle<T>::circle(const vec2d<T>& p, float r)
+	{
 		pos = p;
 		radius = r;
 	}
 
-	Line::Line(const vf2d& v, const vf2d& p, const vf2d& s)
+	template <class T>
+	constexpr line<T>::line(const vec2d<T>& p1, const vec2d<T>& p2)
 	{
-		velocity = v;
-		pos = p;
-		size = s;
+		pos[0] = p1;
+		pos[1] = p2;
 	}
 
-	bool Physics::PointVsCircle(const Point& p, const Circle& c)
+	template <class T>
+	constexpr vec2d<T> line<T>::vector() const
 	{
-		return (c.pos - p.pos).mag2() <= c.radius * c.radius;
+		return pos[1] - pos[0];
 	}
 
-	bool Physics::PointVsRect(const Point& p, const Rectangle& r)
+	template <class T1, class T2>
+	constexpr bool contains(const vec2d<T1>& p1, const vec2d<T2>& p2)
 	{
-		return p.pos > r.pos - 1 && p.pos <= r.pos + r.size;
+		return utils::equal(p1.x, p2.x) && utils::equal(p1.y, p2.y);
 	}
 
-	bool Physics::RectVsRect(const Rectangle& r1, const Rectangle& r2)
+	template <class T1, class T2>
+	constexpr bool contains(const circle<T1>& c, const vec2d<T2>& p)
 	{
-		return r1.pos - 1 < r2.pos + r2.size && r1.pos + r1.size + 1 > r2.pos;
+		return (c.pos - p).mag2() <= c.radius * c.radius;
 	}
 
-	bool Physics::LineVsRect(const Line& l, const Rectangle& r, vf2d& contactPoint, vf2d& contactNormal, float& hitTime)
+	template <class T1, class T2>
+	constexpr bool contains(const rect<T1>& r, const vec2d<T2>& p)
 	{
-		contactNormal = { 0,0 };
-		contactPoint = { 0,0 };
+		return p >= r.pos && p <= r.end();
+	}
 
-		vf2d invdir = vf2d(1.0f, 1.0f) / l.size;
+	template <class T1, class T2>
+	constexpr bool contains(const rect<T1>& r1, const rect<T2>& r2)
+	{
+		return r1.pos <= r2.pos && r1.end() >= r2.end();
+	}
 
-		vf2d timeNear = (r.pos - l.pos) * invdir;
-		vf2d timeFar = (r.pos + r.size - l.pos) * invdir;
+	template <class T1, class T2>
+	constexpr bool contains(const rect<T1>& r, const line<T2>& l)
+	{
+		return l.pos[0] >= r.pos && l.pos[1] >= r.pos && l.pos[0] <= r.end() && l.pos[1] <= r.end();
+	}
 
-		if (isnan(timeFar.y) || isnan(timeFar.x)) return false;
-		if (isnan(timeNear.y) || isnan(timeNear.x)) return false;
+	template <class T1, class T2>
+	constexpr bool contains(const line<T1>& l1, const line<T2>& l2)
+	{
+		return (contains(l1.pos[0], l2.pos[0]) && contains(l1.pos[1], l2.pos[1])) || (contains(l1.pos[0], l2.pos[1]) && contains(l1.pos[1], l2.pos[0]));
+	}
 
-		if (timeNear.x > timeFar.x) std::swap(timeNear.x, timeFar.x);
-		if (timeNear.y > timeFar.y) std::swap(timeNear.y, timeFar.y);
+	template<class T1, class T2>
+	constexpr bool contains(const line<T1>& l, const vec2d<T2>& p)
+	{
+		vec2d<T1> vec = l.vector();
 
-		if (timeNear.x > timeFar.y || timeNear.y > timeFar.x) return false;
+		auto dp = vec.dot(p - l.pos[0]) / vec.mag2();
 
-		hitTime = std::max(timeNear.x, timeNear.y);
-
-		float t_hitimeFar = std::min(timeFar.x, timeFar.y);
-
-		if (t_hitimeFar < 0.0f)
+		if (dp < 0 || dp > 1)
 			return false;
 
-		contactPoint = l.pos + l.size * hitTime;
+		vec2d<T2> proj = l.pos[0].lerp(l.pos[1], dp);
 
-		if (timeNear.x > timeNear.y)
-			if (invdir.x < 0)
-				contactNormal = { 1, 0 };
-			else
-				contactNormal = { -1, 0 };
-		else if (timeNear.x < timeNear.y)
-			if (invdir.y < 0)
-				contactNormal = { 0, 1 };
-			else
-				contactNormal = { 0, -1 };
-
-		return true;
+		// We need to find a proper epsilon value
+		return p.dist(proj) < 1;
 	}
 
-	bool Physics::ResolveLineVsRect(const Line& l, const Rectangle& r, vf2d& contactPoint, vf2d& contactNormal)
+	template<class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const vec2d<T1>& p1, const vec2d<T2>& p2)
 	{
-		float hitTime;
-		return LineVsRect(l, r, contactPoint, contactNormal, hitTime) && hitTime < 1.0f;
+		if (contains(p1, p2))
+			return { p2 };
+
+		return {};
 	}
 
-	bool Physics::DynamicRectVsRect(const Rectangle& dynamicRect, const float timeStep, const Rectangle& staticRect,
-		vf2d& contactPoint, vf2d& contactNormal, float& contact_time)
+	template<class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const circle<T1>& c, const vec2d<T2>& p)
 	{
-		if (dynamicRect.velocity.x == 0 && dynamicRect.velocity.y == 0)
-			return false;
+		if (utils::equal((c.pos - p).mag2(), c.radius * c.radius))
+			return { p };
 
-		Rectangle expanded_target;
-
-		expanded_target.pos = staticRect.pos - dynamicRect.size / 2;
-		expanded_target.size = staticRect.size + dynamicRect.size;
-
-		Line l;
-		l.pos = dynamicRect.pos + dynamicRect.size / 2;
-		l.size = dynamicRect.velocity * timeStep;
-
-		if (LineVsRect(l, expanded_target, contactPoint, contactNormal, contact_time))
-			return (contact_time >= 0.0f && contact_time < 1.0f);
-		else
-			return false;
+		return {};
 	}
 
-	bool Physics::ResolveDynamicRectVsRect(Rectangle& dynamicRect, const float timeStep, Rectangle* staticRect)
+	template<class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const rect<T1>& r, const vec2d<T2>& p)
 	{
-		vf2d contactPoint, contactNormal;
-		float contactTime = 0.0f;
-
-		if (DynamicRectVsRect(dynamicRect, timeStep, *staticRect, contactPoint, contactNormal, contactTime))
+		for (uint32_t i = 0; i < r.SIDES; i++)
 		{
-			if (contactNormal.y > 0) dynamicRect.contact[0] = staticRect; else nullptr;
-			if (contactNormal.x < 0) dynamicRect.contact[1] = staticRect; else nullptr;
-			if (contactNormal.y < 0) dynamicRect.contact[2] = staticRect; else nullptr;
-			if (contactNormal.x > 0) dynamicRect.contact[3] = staticRect; else nullptr;
-
-			dynamicRect.velocity += contactNormal * dynamicRect.velocity.abs() * (1 - contactTime);
-
-			return true;
+			if (contains(r.side(i), p))
+				return { p };
 		}
 
-		return false;
+		return {};
 	}
-	
+
+	template<class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const rect<T1>& r1, const rect<T2>& r2)
+	{
+		std::vector<vec2d<T2>> intersections;
+
+		for (uint32_t i = 0; i < r1.SIDES; i++)
+		{
+			line<T1> side = r1.side(i);
+
+			for (uint32_t j = 0; j < r2.SIDES; j++)
+			{
+				auto points = intersects(side, r2.side(j));
+
+				if (!points.empty())
+					intersections.push_back(points[0]);
+			}
+		}
+
+		return intersections;	
+	}
+
+	template<class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const line<T1>& l1, const line<T2>& l2)
+	{
+		// l1: a1 * x + b1 * y = -c1
+		// l2: a2 * x + b2 * y = -c2
+
+		auto a1 = l1.pos[0].y - l1.pos[1].y;
+		auto b1 = l1.pos[1].x - l1.pos[0].x;
+		auto c1 = l1.pos[0].x * l1.pos[1].y - l1.pos[1].x * l1.pos[0].y;
+
+		auto a2 = l2.pos[0].y - l2.pos[1].y;
+		auto b2 = l2.pos[1].x - l2.pos[0].x;
+		auto c2 = l2.pos[0].x * l2.pos[1].y - l2.pos[1].x * l2.pos[0].y;
+
+		auto det = a1 * b2 - b1 * a2;
+
+		if (det == 0)
+		{
+			// Determinant is 0 so there are no intersection points and lines are parallel
+			return {};
+		}
+
+		vec2d<T2> point = { (b1 * c2 - b2 * c1) / det, (a2 * c1 - a1 * c2) / det };
+
+		if (contains(l1, point) && contains(l2, point))
+			return { point };
+
+		return {};
+	}
+
+	template<class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const rect<T1>& r, const line<T2>& l)
+	{
+		std::vector<vec2d<T2>> intersections;
+
+		for (uint32_t i = 0; i < r.SIDES; i++)
+		{
+			auto points = intersects(l, r.side(i));
+
+			if (!points.empty())
+				intersections.push_back(points[0]);
+		}
+
+		return intersections;
+	}
+
+	template<class T1, class T2>
+	constexpr std::vector<vec2d<T2>> intersects(const line<T1>& l, const vec2d<T2>& p)
+	{
+		if (contains(l, p))
+			return { p };
+
+		return {};
+	}
+
 #endif
 
 }
