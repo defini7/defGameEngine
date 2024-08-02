@@ -1,44 +1,44 @@
 /*
-* BSD 3-Clause License
-Copyright (c) 2023, Alex
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*	BSD 3-Clause License
+	Copyright (c) 2023, Alex
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions are met:
+	1. Redistributions of source code must retain the above copyright notice, this
+	   list of conditions and the following disclaimer.
+	2. Redistributions in binary form must reproduce the above copyright notice,
+	   this list of conditions and the following disclaimer in the documentation
+	   and/or other materials provided with the distribution.
+	3. Neither the name of the copyright holder nor the names of its
+	   contributors may be used to endorse or promote products derived from
+	   this software without specific prior written permission.
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+	DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+	FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+	DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+	SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+	OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "defGameEngine.hpp"
 
 #include <algorithm>
 
 struct Object
 {
-	def::vf2d vPos;
-	def::vf2d vVel;
+	def::vf2d pos;
+	def::vf2d vel;
 
-	float fSpeed;
+	float speed;
 
-	uint32_t nType;
-	uint32_t nId;
+	uint32_t type;
+	uint32_t id;
 
-	bool bRemove = false;
+	bool toRemove = false;
 };
 
 class RayCasting : public def::GameEngine
@@ -51,8 +51,8 @@ public:
 
 	virtual ~RayCasting()
 	{
-		delete sprTiles;
-		delete[] fDepthBuffer;
+		delete tiles;
+		delete[] depthBuffer;
 	}
 
 private:
@@ -78,35 +78,35 @@ private:
 		WALL
 	};
 
-	def::Sprite* sprTiles = nullptr;
+	def::Sprite* tiles = nullptr;
 
-	int nMapCellSize = 3;
+	int mapCellSize = 3;
 
-	int nFloorId = Objects::GREYSTONE;
-	int nCeilingId = Objects::WOOD;
+	int floorId = Objects::GREYSTONE;
+	int ceilingId = Objects::WOOD;
 
-	std::string sMap;
+	std::string map;
 
-	def::vi2d vMapSize = { 32, 32 };
-	def::vi2d vTexSize = { 64, 64 };
+	def::vi2d mapSize = { 32, 32 };
+	def::vi2d texSize = { 64, 64 };
 
-	def::vf2d vPlayerPos = { 7.0f, 3.0f };
-	def::vf2d vPlayerVel = { -1.0, 0.0f };
-	def::vf2d vPlayerPlane = { 0.0f, 0.66f };
+	def::vf2d playerPos = { 7.0f, 3.0f };
+	def::vf2d playerVel = { -1.0, 0.0f };
+	def::vf2d playerPlane = { 0.0f, 0.66f };
 
-	float fMoveSpeed = 5.0f;
-	float fRotSpeed = 3.0f;
-	float fDepth = 16.0f;
+	float moveSpeed = 5.0f;
+	float rotSpeed = 3.0f;
+	float depth = 16.0f;
 
-	std::vector<Object> vecObjects;
-	float* fDepthBuffer = nullptr;
+	std::vector<Object> objects;
+	float* depthBuffer = nullptr;
 
 protected:
 	bool OnUserCreate() override
 	{
-		sprTiles = new def::Sprite("tileset.png");
+		tiles = new def::Sprite("Assets/tileset.png");
 
-		sMap =
+		map =
 			"77777777777777777.........777777"
 			"7..............................7"
 			"7...8...............8..........7"
@@ -140,11 +140,11 @@ protected:
 			"7..............................."
 			"777777..................77777777";
 
-		vecObjects.push_back({ {8.5f, 8.5f}, {0.0f, 0.0f}, 0.0f, Objects::BARREL });
-		vecObjects.push_back({ {7.5f, 7.5f}, {0.0f, 0.0f}, 0.0f, Objects::BARREL });
-		vecObjects.push_back({ {10.0f, 3.0f}, {0.0f, 0.0f}, 0.0f, Objects::BARREL });
+		objects.push_back({ {8.5f, 8.5f}, {0.0f, 0.0f}, 0.0f, Objects::BARREL });
+		objects.push_back({ {7.5f, 7.5f}, {0.0f, 0.0f}, 0.0f, Objects::BARREL });
+		objects.push_back({ {10.0f, 3.0f}, {0.0f, 0.0f}, 0.0f, Objects::BARREL });
 
-		fDepthBuffer = new float[ScreenWidth()];
+		depthBuffer = new float[ScreenWidth()];
 
 		return true;
 	}
@@ -152,68 +152,68 @@ protected:
 	bool OnUserUpdate(float fDeltaTime) override
 	{
 		// Remove redundant objects
-		auto itRemove = std::remove_if(vecObjects.begin(), vecObjects.end(), [](const Object& o) { return o.bRemove; });
-		if (itRemove != vecObjects.end()) vecObjects.erase(itRemove);
+		auto removeIter = std::remove_if(objects.begin(), objects.end(), [](const Object& o) { return o.toRemove; });
+		if (removeIter != objects.end()) objects.erase(removeIter);
 
 		if (GetKey(def::Key::W).held)
 		{
-			def::vf2d vNewPlayerPos = vPlayerPos + vPlayerVel * fMoveSpeed * fDeltaTime;
+			def::vf2d newPlayerPos = playerPos + playerVel * moveSpeed * fDeltaTime;
 
-			if (vNewPlayerPos >= def::vf2d(0, 0) && vNewPlayerPos < def::vf2d(vMapSize))
+			if (newPlayerPos >= def::vf2d(0, 0) && newPlayerPos < mapSize)
 			{
-				if (sMap[(int)vNewPlayerPos.y * vMapSize.x + vNewPlayerPos.x] == '.')
-					vPlayerPos = vNewPlayerPos;
+				if (map[(int)newPlayerPos.y * mapSize.x + newPlayerPos.x] == '.')
+					playerPos = newPlayerPos;
 			}
 		}
 
 		if (GetKey(def::Key::S).held)
 		{
-			def::vf2d vNewPlayerPos = vPlayerPos - vPlayerVel * fMoveSpeed * fDeltaTime;
+			def::vf2d newPlayerPos = playerPos - playerVel * moveSpeed * fDeltaTime;
 
-			if (vNewPlayerPos >= def::vf2d(0, 0) && vNewPlayerPos < def::vf2d(vMapSize))
+			if (newPlayerPos >= def::vf2d(0, 0) && newPlayerPos < mapSize)
 			{
-				if (sMap[(int)vNewPlayerPos.y * vMapSize.x + vNewPlayerPos.x] == '.')
-					vPlayerPos = vNewPlayerPos;
+				if (map[(int)newPlayerPos.y * mapSize.x + newPlayerPos.x] == '.')
+					playerPos = newPlayerPos;
 			}
 		}
 
 		if (GetKey(def::Key::A).held)
 		{
-			float fOldVelX = vPlayerVel.x;
-			float fOldPlaneX = vPlayerPlane.x;
+			float oldVelX = playerVel.x;
+			float oldPlaneX = playerPlane.x;
 
-			vPlayerVel.x = vPlayerVel.x * cos(fRotSpeed * fDeltaTime) - vPlayerVel.y * sin(fRotSpeed * fDeltaTime);
-			vPlayerVel.y = fOldVelX * sin(fRotSpeed * fDeltaTime) + vPlayerVel.y * cos(fRotSpeed * fDeltaTime);
+			playerVel.x = playerVel.x * cos(rotSpeed * fDeltaTime) - playerVel.y * sin(rotSpeed * fDeltaTime);
+			playerVel.y = oldVelX * sin(rotSpeed * fDeltaTime) + playerVel.y * cos(rotSpeed * fDeltaTime);
 
-			vPlayerPlane.x = vPlayerPlane.x * cos(fRotSpeed * fDeltaTime) - vPlayerPlane.y * sin(fRotSpeed * fDeltaTime);
-			vPlayerPlane.y = fOldPlaneX * sin(fRotSpeed * fDeltaTime) + vPlayerPlane.y * cos(fRotSpeed * fDeltaTime);
+			playerPlane.x = playerPlane.x * cos(rotSpeed * fDeltaTime) - playerPlane.y * sin(rotSpeed * fDeltaTime);
+			playerPlane.y = oldPlaneX * sin(rotSpeed * fDeltaTime) + playerPlane.y * cos(rotSpeed * fDeltaTime);
 		}
 
 		if (GetKey(def::Key::D).held)
 		{
-			float fOldVelX = vPlayerVel.x;
-			float fOldPlaneX = vPlayerPlane.x;
+			float oldVelX = playerVel.x;
+			float oldPlaneX = playerPlane.x;
 
-			vPlayerVel.x = vPlayerVel.x * cos(-fRotSpeed * fDeltaTime) - vPlayerVel.y * sin(-fRotSpeed * fDeltaTime);
-			vPlayerVel.y = fOldVelX * sin(-fRotSpeed * fDeltaTime) + vPlayerVel.y * cos(-fRotSpeed * fDeltaTime);
+			playerVel.x = playerVel.x * cos(-rotSpeed * fDeltaTime) - playerVel.y * sin(-rotSpeed * fDeltaTime);
+			playerVel.y = oldVelX * sin(-rotSpeed * fDeltaTime) + playerVel.y * cos(-rotSpeed * fDeltaTime);
 
-			vPlayerPlane.x = vPlayerPlane.x * cos(-fRotSpeed * fDeltaTime) - vPlayerPlane.y * sin(-fRotSpeed * fDeltaTime);
-			vPlayerPlane.y = fOldPlaneX * sin(-fRotSpeed * fDeltaTime) + vPlayerPlane.y * cos(-fRotSpeed * fDeltaTime);
+			playerPlane.x = playerPlane.x * cos(-rotSpeed * fDeltaTime) - playerPlane.y * sin(-rotSpeed * fDeltaTime);
+			playerPlane.y = oldPlaneX * sin(-rotSpeed * fDeltaTime) + playerPlane.y * cos(-rotSpeed * fDeltaTime);
 		}
 
 		// Check for collision
-		for (auto& o1 : vecObjects)
+		for (auto& o1 : objects)
 		{
-			for (auto& o2 : vecObjects)
+			for (auto& o2 : objects)
 			{
-				if (o1.nId != o2.nId)
+				if (o1.id != o2.id)
 				{
-					if (o1.vPos.round() == o2.vPos.round())
+					if (o1.pos.round() == o2.pos.round())
 					{
-						if (o1.nType == Objects::BULLET || o2.nType == Objects::BULLET)
+						if (o1.type == Objects::BULLET || o2.type == Objects::BULLET)
 						{
-							o1.bRemove = true;
-							o2.bRemove = true;
+							o1.toRemove = true;
+							o2.toRemove = true;
 						}
 					}
 				}
@@ -225,199 +225,199 @@ protected:
 		// Perform DDA raycast algorithm
 		for (int x = 0; x < ScreenWidth(); x++)
 		{
-			float fPlayerA = 2.0f * (float)x / (float)ScreenWidth() - 1.0f;
+			float playerAngle = 2.0f * (float)x / (float)ScreenWidth() - 1.0f;
 
-			def::vf2d vRayDir = vPlayerVel + vPlayerPlane * fPlayerA;
-			def::vf2d vDistance = (1.0f / vRayDir).abs();
+			def::vf2d rayDir = playerVel + playerPlane * playerAngle;
+			def::vf2d distance = (1.0f / rayDir).abs();
 
-			bool bHitWall = false;
-			bool bNoWall = false;
-			int nSide = 0;
+			bool doesHitWall = false;
+			bool noWall = false;
+			int side = 0;
 
-			def::vi2d vStep;
-			def::vf2d vFromCurrentDistance;
-			def::vi2d vMapPos = vPlayerPos;
+			def::vi2d step;
+			def::vf2d fromCurrentDistance;
+			def::vi2d mapPos = playerPos;
 
-			float fDistanceToWall;
+			float distanceToWall;
 
-			if (vRayDir.x < 0.0f)
+			if (rayDir.x < 0.0f)
 			{
-				vStep.x = -1;
-				vFromCurrentDistance.x = (vPlayerPos.x - (float)vMapPos.x) * vDistance.x;
+				step.x = -1;
+				fromCurrentDistance.x = (playerPos.x - (float)mapPos.x) * distance.x;
 			}
 			else
 			{
-				vStep.x = 1;
-				vFromCurrentDistance.x = ((float)vMapPos.x + 1.0f - vPlayerPos.x) * vDistance.x;
+				step.x = 1;
+				fromCurrentDistance.x = ((float)mapPos.x + 1.0f - playerPos.x) * distance.x;
 			}
 
-			if (vRayDir.y < 0.0f)
+			if (rayDir.y < 0.0f)
 			{
-				vStep.y = -1;
-				vFromCurrentDistance.y = (vPlayerPos.y - (float)vMapPos.y) * vDistance.y;
+				step.y = -1;
+				fromCurrentDistance.y = (playerPos.y - (float)mapPos.y) * distance.y;
 			}
 			else
 			{
-				vStep.y = 1;
-				vFromCurrentDistance.y = ((float)vMapPos.y + 1.0f - vPlayerPos.y) * vDistance.y;
+				step.y = 1;
+				fromCurrentDistance.y = ((float)mapPos.y + 1.0f - playerPos.y) * distance.y;
 			}
 
-			while (!bHitWall && !bNoWall)
+			while (!doesHitWall && !noWall)
 			{
-				if (vFromCurrentDistance.x < vFromCurrentDistance.y)
+				if (fromCurrentDistance.x < fromCurrentDistance.y)
 				{
-					vFromCurrentDistance.x += vDistance.x;
-					vMapPos.x += vStep.x;
-					nSide = 0;
+					fromCurrentDistance.x += distance.x;
+					mapPos.x += step.x;
+					side = 0;
 				}
 				else
 				{
-					vFromCurrentDistance.y += vDistance.y;
-					vMapPos.y += vStep.y;
-					nSide = 1;
+					fromCurrentDistance.y += distance.y;
+					mapPos.y += step.y;
+					side = 1;
 				}
 
-				if (vMapPos.y < 0 || vMapPos.y >= vMapSize.y || vMapPos.x < 0 || vMapPos.x >= vMapSize.x)
+				if (mapPos.y < 0 || mapPos.y >= mapSize.y || mapPos.x < 0 || mapPos.x >= mapSize.x)
 				{
-					fDistanceToWall = fDepth;
-					bNoWall = true;
+					distanceToWall = depth;
+					noWall = true;
 				}
 
-				if (!bNoWall && std::isdigit(sMap[vMapPos.y * vMapSize.x + vMapPos.x]))
-					bHitWall = true;
+				if (!noWall && std::isdigit(map[mapPos.y * mapSize.x + mapPos.x]))
+					doesHitWall = true;
 			}
 
-			if (nSide == 0)
-				fDistanceToWall = vFromCurrentDistance.x - vDistance.x;
+			if (side == 0)
+				distanceToWall = fromCurrentDistance.x - distance.x;
 			else
-				fDistanceToWall = vFromCurrentDistance.y - vDistance.y;
+				distanceToWall = fromCurrentDistance.y - distance.y;
 
-			int nLineHeight = int((float)ScreenHeight() / fDistanceToWall);
+			int lineHeight = int((float)ScreenHeight() / distanceToWall);
 
-			int nCeiling = std::max(-nLineHeight + ScreenHeight() / 2, 0);
-			int nFloor = std::min(nLineHeight + ScreenHeight() / 2, ScreenHeight() - 1);
+			int ceilingPos = std::max(-lineHeight + ScreenHeight() / 2, 0);
+			int floorPos = std::min(lineHeight + ScreenHeight() / 2, ScreenHeight() - 1);
 
-			float fTestPoint;
-			float fTexStep, fTexPos;
+			float testPoint;
+			float texStep, texPos;
 
-			if (nSide == 0)
-				fTestPoint = vPlayerPos.y + vRayDir.y * fDistanceToWall;
+			if (side == 0)
+				testPoint = playerPos.y + rayDir.y * distanceToWall;
 			else
-				fTestPoint = vPlayerPos.x + vRayDir.x * fDistanceToWall;
+				testPoint = playerPos.x + rayDir.x * distanceToWall;
 
-			fTestPoint -= floorf(fTestPoint);
+			testPoint -= floorf(testPoint);
 
-			def::vi2d vTex = { int(fTestPoint * (float)vTexSize.x), 0 };
+			def::vi2d tex = { int(testPoint * (float)texSize.x), 0 };
 
-			if ((nSide == 0 && vRayDir.x > 0.0f) || (nSide == 1 && vRayDir.y < 0.0f))
-				vTex.x = vTexSize.x - vTex.x - 1;
+			if ((side == 0 && rayDir.x > 0.0f) || (side == 1 && rayDir.y < 0.0f))
+				tex.x = texSize.x - tex.x - 1;
 
-			fTexStep = (float)vTexSize.y / (float)nLineHeight / 2;
-			fTexPos = float(nCeiling - ScreenHeight() / 2 + nLineHeight) * fTexStep;
+			texStep = (float)texSize.y / (float)lineHeight / 2;
+			texPos = float(ceilingPos - ScreenHeight() / 2 + lineHeight) * texStep;
 
-			for (int y = 0; y <= nFloor; y++)
+			for (int y = 0; y <= floorPos; y++)
 			{
-				if (y <= nCeiling) // ceiling and floor
+				if (y <= ceilingPos) // ceiling and floor
 				{
-					float fPlaneZ = float(ScreenHeight() / 2) / float(ScreenHeight() / 2 - y);
+					float planeZ = float(ScreenHeight() / 2) / float(ScreenHeight() / 2 - y);
 
-					def::vf2d vPlanePoint = vPlayerPos + 2.0f * vRayDir * fPlaneZ;
-					def::vf2d vPlaneSample = vPlanePoint - vPlanePoint.floor();
+					def::vf2d planePoint = playerPos + 2.0f * rayDir * planeZ;
+					def::vf2d planeSample = planePoint - planePoint.floor();
 
-					def::vi2d vTexPos = (vPlaneSample * def::vf2d(vTexSize)).min(vTexSize);
+					def::vi2d texPos = (planeSample * texSize).min(texSize);
 
-					Draw(x, y, sprTiles->GetPixel({ nCeilingId * vTexSize.x + vTexPos.x, vTexPos.y })); // ceiling
-					Draw(x, ScreenHeight() - y, sprTiles->GetPixel({ nFloorId * vTexSize.x + vTexPos.x, vTexPos.y })); // floor
+					Draw(x, y, tiles->GetPixel({ ceilingId * texSize.x + texPos.x, texPos.y })); // ceiling
+					Draw(x, ScreenHeight() - y, tiles->GetPixel({ floorId * texSize.x + texPos.x, texPos.y })); // floor
 				}
-				else if (y > nCeiling && !bNoWall) // wall
+				else if (y > ceilingPos && !noWall) // wall
 				{
-					if (fDistanceToWall < fDepth)
+					if (distanceToWall < depth)
 					{
-						vTex.y = (int)fTexPos % (vTexSize.y - 1);
-						fTexPos += fTexStep;
+						tex.y = (int)texPos % (texSize.y - 1);
+						texPos += texStep;
 
-						Draw(x, y, sprTiles->GetPixel({ ((int)sMap[vMapPos.y * vMapSize.x + vMapPos.x] - 48) * vTexSize.x + vTex.x, vTex.y }));
+						Draw(x, y, tiles->GetPixel({ ((int)map[mapPos.y * mapSize.x + mapPos.x] - 48) * texSize.x + tex.x, tex.y }));
 					}
 				}
 			}
 
-			fDepthBuffer[x] = fDistanceToWall;
+			depthBuffer[x] = distanceToWall;
 		}
 
 		// Update and draw textured objects
-		for (auto& o : vecObjects)
+		for (auto& o : objects)
 		{
-			o.vPos += o.vVel * o.fSpeed * fDeltaTime;
+			o.pos += o.vel * o.speed * fDeltaTime;
 
-			if (o.vPos.floor() >= def::vf2d(0, 0) && o.vPos.floor() < def::vf2d(vMapSize) && !std::isdigit(sMap[(int)o.vPos.y * vMapSize.x + (int)o.vPos.x]))
+			if (o.pos.floor() >= def::vf2d(0, 0) && o.pos.floor() < mapSize && !std::isdigit(map[(int)o.pos.y * mapSize.x + (int)o.pos.x]))
 			{
-				def::vf2d vObjectPos = o.vPos - vPlayerPos;
+				def::vf2d objectPos = o.pos - playerPos;
 
-				float fInvDet = 1.0f / (vPlayerPlane.x * vPlayerVel.y - vPlayerPlane.y * vPlayerVel.x);
+				float invDet = 1.0f / (playerPlane.x * playerVel.y - playerPlane.y * playerVel.x);
 
-				def::vf2d vTransform =
+				def::vf2d transform =
 				{
-					fInvDet * (vPlayerVel.y * vObjectPos.x - vPlayerVel.x * vObjectPos.y),
-					fInvDet * (-vPlayerPlane.y * vObjectPos.x + vPlayerPlane.x * vObjectPos.y)
+					invDet * (playerVel.y * objectPos.x - playerVel.x * objectPos.y),
+					invDet * (-playerPlane.y * objectPos.x + playerPlane.x * objectPos.y)
 				};
 
-				float fAspectRatio = vTransform.x / vTransform.y;
+				float aspectRatio = transform.x / transform.y;
 
-				def::vi2d vObjectScreenPos = { int(float(ScreenWidth() / 2) * (1.0f + fAspectRatio)), ScreenHeight() / 2 };
-				int nObjectScreenSize = int((float)ScreenHeight() / vTransform.y);
+				def::vi2d objectScreenPos = { int(float(ScreenWidth() / 2) * (1.0f + aspectRatio)), ScreenHeight() / 2 };
+				int objectScreenSize = int((float)ScreenHeight() / transform.y);
 
-				def::vi2d vCeiling = def::vi2d(nObjectScreenSize, nObjectScreenSize) / -2 + vObjectScreenPos;
-				def::vi2d vFloor = def::vi2d(nObjectScreenSize, nObjectScreenSize) / 2 + vObjectScreenPos;
+				def::vi2d ceilingPos = def::vi2d(objectScreenSize, objectScreenSize) / -2 + objectScreenPos;
+				def::vi2d floorPos = def::vi2d(objectScreenSize, objectScreenSize) / 2 + objectScreenPos;
 
-				vCeiling = vCeiling.max(def::vi2d(0, 0)).min(ScreenSize());
-				vFloor = vFloor.max(def::vi2d(0, 0)).min(ScreenSize());
+				ceilingPos = ceilingPos.max(def::vi2d(0, 0)).min(ScreenSize());
+				floorPos = floorPos.max(def::vi2d(0, 0)).min(ScreenSize());
 
-				SetPixelMode(def::Pixel::MASK);
+				SetPixelMode(def::Pixel::Mode::MASK);
 
-				for (int x = vCeiling.x; x < vFloor.x; x++)
+				for (int x = ceilingPos.x; x < floorPos.x; x++)
 				{
-					int nTexX = (256 * (x - (-nObjectScreenSize / 2 + vObjectScreenPos.x)) * vTexSize.x / nObjectScreenSize) / 256;
+					int nTexX = (ScreenWidth() * (x - (-objectScreenSize / 2 + objectScreenPos.x)) * texSize.x / objectScreenSize) / ScreenWidth();
 
-					if (vTransform.y >= 0 && x >= 0 && x < ScreenWidth() && vTransform.y < fDepthBuffer[x])
+					if (transform.y >= 0 && x >= 0 && x < ScreenWidth() && transform.y < depthBuffer[x])
 					{
-						for (int y = vCeiling.y; y < vFloor.y; y++)
+						for (int y = ceilingPos.y; y < floorPos.y; y++)
 						{
-							int d = y * 256 - ScreenHeight() * 128 + nObjectScreenSize * 128;
-							int nTexY = (d * vTexSize.y / nObjectScreenSize) / 256;
+							int d = y * ScreenWidth() - ScreenHeight() * ScreenWidth() / 2 + objectScreenSize * ScreenWidth() / 2;
+							int nTexY = (d * texSize.y / objectScreenSize) / ScreenWidth();
 
-							Draw(x, y, sprTiles->GetPixel({ (int)o.nType * vTexSize.x + nTexX, nTexY }));
-							fDepthBuffer[x] = vTransform.y;
+							Draw(x, y, tiles->GetPixel({ (int)o.type * texSize.x + nTexX, nTexY }));
+							depthBuffer[x] = transform.y;
 						}
 					}
 				}
 
-				SetPixelMode(def::Pixel::DEFAULT);
+				SetPixelMode(def::Pixel::Mode::DEFAULT);
 			}
 			else
-				o.bRemove = true;
+				o.toRemove = true;
 		}
 
 		// Draw map
-		for (int x = 0; x < vMapSize.x; x++)
-			for (int y = 0; y < vMapSize.y; y++)
+		for (int x = 0; x < mapSize.x; x++)
+			for (int y = 0; y < mapSize.y; y++)
 			{
-				if (sMap[y * vMapSize.x + x] == '.')
+				if (map[y * mapSize.x + x] == '.')
 					FillRectangle(x * 2, y * 2, 2, 2, def::GREY);
 				else
 					FillRectangle(x * 2, y * 2, 2, 2, def::WHITE);
 			}
 
-		FillRectangle((int)vPlayerPos.x * 2, (int)vPlayerPos.y * 2, 2, 2, def::YELLOW);
+		FillRectangle((int)playerPos.x * 2, (int)playerPos.y * 2, 2, 2, def::YELLOW);
 
-		if (GetMouse(0).pressed)
+		if (GetMouse(def::Button::LEFT).pressed)
 		{
 			Object o;
-			o.vPos = vPlayerPos;
-			o.vVel = vPlayerVel;
-			o.fSpeed = 5.0f;
-			o.nType = Objects::BULLET;
-			o.nId = vecObjects.size();
-			vecObjects.push_back(o);
+			o.pos = playerPos;
+			o.vel = playerVel;
+			o.speed = 5.0f;
+			o.type = Objects::BULLET;
+			o.id = objects.size();
+			objects.push_back(o);
 		}
 
 		return true;
@@ -429,7 +429,7 @@ int main()
 {
 	RayCasting demo;
 
-	demo.Construct(256, 240, 4, 4);
+	demo.Construct(1024, 768, 1, 1);
 	demo.Run();
 
 	return 0;
