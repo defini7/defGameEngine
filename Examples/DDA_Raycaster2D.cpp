@@ -112,12 +112,7 @@ protected:
 
 		def::vf2d rayStart = start / tileSize;
 		def::vf2d rayDirection = (end / tileSize - rayStart).norm();
-
-		def::vf2d stepSize =
-		{
-			sqrtf(1.0f + rayDirection.y * rayDirection.y / (rayDirection.x * rayDirection.x)),
-			sqrtf(1.0f + rayDirection.x * rayDirection.x / (rayDirection.y * rayDirection.y))
-		};
+		def::vf2d stepSize = (1.0f / rayDirection).abs();
 
 		def::vf2d side, step;
 		def::vi2d mapPos = rayStart;
@@ -180,15 +175,11 @@ protected:
 
 		def::vi2d p;
 		for (; p.y < tilesCount.y; p.y++)
-		{
-			for (; p.x < tilesCount.x; p.x++)
+			for (p.x = 0; p.x < tilesCount.x; p.x++)
 			{
 				if (GetTile(p))
 					FillRectangle(p * tileSize, tileSize, def::BLUE);
 			}
-
-			p.x = 0;
-		}
 
 		DrawLine(start, end, def::GREY);
 
