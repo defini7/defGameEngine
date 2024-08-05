@@ -325,7 +325,9 @@ namespace def
 		void Load(std::string_view fileName);
 		void Save(std::string_view fileName, const FileType type) const;
 
+		bool SetPixel(int x, int y, const Pixel& p);
 		bool SetPixel(const vi2d& pos, const Pixel& p);
+		Pixel GetPixel(int x, int y, const WrapMethod wrap = WrapMethod::NONE) const;
 		Pixel GetPixel(const vi2d& pos, const WrapMethod wrap = WrapMethod::NONE) const;
 
 		void SetPixelData(const Pixel& col);
@@ -1217,53 +1219,65 @@ namespace def
 		Assert(err == 1, "[stb_image_write Error] Code: ", std::to_string(err).c_str());
 	}
 
-	bool Sprite::SetPixel(const vi2d& pos, const Pixel& p)
+	bool Sprite::SetPixel(int x, int y, const Pixel& p)
 	{
-		if (pos.x >= 0 && pos.y >= 0 && pos < size)
+		if (x >= 0 && y >= 0 && x < size.x && y < size.y)
 		{
-			pixels[pos.y * size.x + pos.x] = p;
+			pixels[y * size.x + x] = p;
 			return true;
 		}
 
 		return false;
 	}
 
-	Pixel Sprite::GetPixel(const vi2d& pos, const WrapMethod wrap) const
+	bool Sprite::SetPixel(const vi2d& pos, const Pixel& p)
 	{
-		auto GetPixel = [&pixels = pixels, &size = size](const vi2d& p)
+		return SetPixel(pos.x, pos.y, p);
+	}
+
+	Pixel Sprite::GetPixel(int x, int y, const WrapMethod wrap) const
+	{
+		auto GetPixel = [&pixels = pixels, &size = size](int x, int y)
 			{
-				return pixels[p.y * size.x + p.x];
+				return pixels[y * size.x + x];
 			};
 
 		switch (wrap)
 		{
 		case WrapMethod::NONE:
 		{
-			if (pos >= vi2d(0, 0) && pos < size)
-				return GetPixel(pos);
+			if (x >= 0 && y >= 0 && x < size.x && y < size.y)
+				return GetPixel(x, y);
 		}
 		break;
 
 		case WrapMethod::REPEAT:
-			return GetPixel(pos.abs() % size);
+			return GetPixel(abs(x) % size.x, abs(y) % size.y);
 
 		case WrapMethod::MIRROR:
 		{
-			vi2d m =
-			{
-				(pos.x < 0) ? size.x - 1 - abs(pos.x) % size.x : abs(pos.x) % size.x,
-				(pos.y < 0) ? size.y - 1 - abs(pos.y) % size.y : abs(pos.y) % size.y
-			};
+			int mx = (x < 0) ? size.x - 1 - abs(x) % size.x : abs(x) % size.x;
+			int my = (y < 0) ? size.y - 1 - abs(y) % size.y : abs(y) % size.y;
 
-			return GetPixel(m);
+			return GetPixel(mx, my);
 		}
 
 		case WrapMethod::CLAMP:
-			return GetPixel(pos.clamp({ 0, 0 }, { size.x - 1, size.y - 1 }));
+		{
+			int cx = std::clamp(x, 0, size.x - 1);
+			int cy = std::clamp(y, 0, size.y - 1);
+
+			return GetPixel(cx, cy);
+		}
 
 		}
 
 		return BLACK;
+	}
+
+	Pixel Sprite::GetPixel(const vi2d& pos, const WrapMethod wrap) const
+	{
+		return GetPixel(pos.x, pos.y, wrap);
 	}
 
 	void Sprite::SetPixelData(const Pixel& col)
@@ -1278,7 +1292,7 @@ namespace def
 		switch (sample)
 		{
 		case SampleMethod::LINEAR:
-			return GetPixel(denorm.floor(), wrap);
+			return GetPixel(denorm, wrap);
 
 		case SampleMethod::BILINEAR:
 		{
@@ -1311,11 +1325,11 @@ namespace def
 
 			Pixelf splineX[4][4];
 
-			vi2d s;
+			vec2d<size_t> s;
 			for (s.y = 0; s.y < 4; s.y++)
 				for (s.x = 0; s.x < 4; s.x++)
 				{
-					Pixel p = GetPixel(center + s - vi2d(1, 1), wrap);
+					Pixel p = GetPixel(center + s - 1, wrap);
 					splineX[s.y][s.x] = { (float)p.r, (float)p.g, (float)p.b, (float)p.a };
 				}
 
@@ -1325,25 +1339,23 @@ namespace def
 
 			vf2d q[4];
 			q[0] = 0.5f * (-1.0f * ttt + 2.0f * tt - t);
-			q[1] = 0.5f * (3.0f * ttt - 5.0f * tt + vf2d(2.0f, 2.0f));
+			q[1] = 0.5f * (3.0f * ttt - 5.0f * tt + 2.0f);
 			q[2] = 0.5f * (-3.0f * ttt + 4.0f * tt + t);
 			q[3] = 0.5f * (ttt - tt);
 
 			Pixelf splineY[4];
 
-			for (int s = 0; s < 4; s++)
-			{
-				for (int i = 0; i < 4; i++)
+			for (size_t s = 0; s < 4; s++)
+				for (size_t i = 0; i < 4; i++)
 				{
 					splineY[s].r += splineX[s][i].r * q[i].x;
 					splineY[s].g += splineX[s][i].g * q[i].x;
 					splineY[s].b += splineX[s][i].b * q[i].x;
 					splineY[s].a += splineX[s][i].a * q[i].x;
 				}
-			}
 
 			Pixelf pix;
-			for (int i = 0; i < 4; i++)
+			for (size_t i = 0; i < 4; i++)
 			{
 				pix.r += splineY[i].r * q[i].y;
 				pix.g += splineY[i].g * q[i].y;
@@ -1381,7 +1393,8 @@ namespace def
 		uvScale = 1.0f / vf2d(sprite->size);
 		size = sprite->size;
 
-		if (deleteSprite) delete sprite;
+		if (deleteSprite)
+			delete sprite;
 	}
 
 	void Texture::Load(Sprite* sprite)
@@ -1412,12 +1425,29 @@ namespace def
 	void Texture::Update(Sprite* sprite)
 	{
 		glBindTexture(GL_TEXTURE_2D, id);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sprite->size.x, sprite->size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, sprite->pixels.data());
+
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0, GL_RGBA,
+			sprite->size.x,
+			sprite->size.y,
+			0, GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			sprite->pixels.data()
+		);
+		
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	Graphic::Graphic(std::string_view fileName) { Load(fileName); }
-	Graphic::Graphic(const vi2d& size) { Load(size); }
+	Graphic::Graphic(std::string_view fileName)
+	{
+		Load(fileName);
+	}
+
+	Graphic::Graphic(const vi2d& size)
+	{
+		Load(size);
+	}
 
 	Graphic::~Graphic()
 	{
@@ -1437,8 +1467,15 @@ namespace def
 		texture = new Texture(sprite);
 	}
 
-	void Graphic::Save(std::string_view fileName, const Sprite::FileType type) const { return sprite->Save(fileName, type); }
-	void Graphic::UpdateTexture() { texture->Update(sprite); }
+	void Graphic::Save(std::string_view fileName, const Sprite::FileType type) const
+	{
+		return sprite->Save(fileName, type);
+	}
+
+	void Graphic::UpdateTexture()
+	{
+		texture->Update(sprite);
+	}
 
 	GameEngine::GameEngine()
 	{
@@ -1504,8 +1541,11 @@ namespace def
 		while (m_IsAppRunning)
 		{
 			endTime = std::chrono::system_clock::now();
+
 			float deltaTime = std::chrono::duration<float>(endTime - startTime).count();
 			startTime = endTime;
+
+			m_TickTimer += deltaTime;
 
 			if (glfwWindowShouldClose(m_Window))
 				m_IsAppRunning = false;
@@ -1600,7 +1640,6 @@ namespace def
 
 			glfwPollEvents();
 
-			m_TickTimer += deltaTime;
 			if (m_TickTimer >= 1.0f)
 			{
 				title = "github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: " + std::to_string(int(1.0f / deltaTime));
@@ -1646,6 +1685,7 @@ namespace def
 	void GameEngine::Run()
 	{
 		m_IsAppRunning = true;
+
 		AppThread();
 	}
 
@@ -1656,8 +1696,9 @@ namespace def
 			std::cout << "[GLFW Error] Code: "
 				<< "0x000" << std::hex << errorCode
 				<< ", text: " << description << std::endl;
-                     
+
 			s_Engine->Destroy();
+
 			exit(1);
 		}
 	}
@@ -1673,7 +1714,10 @@ namespace def
 			cache[i] = paths[i];
 	}
 
-	bool GameEngine::OnAfterDraw() { return true; }
+	bool GameEngine::OnAfterDraw()
+	{
+		return true;
+	}
 
 	bool GameEngine::Construct(int screenWidth, int screenHeight, int pixelWidth, int pixelHeight, bool fullScreen, bool vsync, bool dirtyPixel)
 	{
@@ -1692,31 +1736,42 @@ namespace def
 		m_IsDirtyPixel = dirtyPixel;
 
 		m_Monitor = glfwGetPrimaryMonitor();
-		if (!m_Monitor) return false;
 
-		const GLFWvidmode* vmode = glfwGetVideoMode(m_Monitor);
-		if (!vmode) return false;
+		if (!m_Monitor)
+			return false;
 
-		m_MaxWindowSize = { vmode->width, vmode->height };
+		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
+
+		if (!videoMode)
+			return false;
+
+		m_MaxWindowSize = { videoMode->width, videoMode->height };
 
 		if (!m_IsVSync)
 			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
 		if (m_IsFullScreen)
 		{
-			m_WindowSize = vi2d(vmode->width, vmode->height);
+			m_WindowSize = m_MaxWindowSize;
 			m_ScreenSize = m_WindowSize / m_PixelSize;
 
 			m_Window = glfwCreateWindow(m_WindowSize.x, m_WindowSize.y, "", m_Monitor, NULL);
 			if (!m_Window) return false;
 
-			glfwSetWindowMonitor(m_Window, m_Monitor,
-				0, 0, m_WindowSize.x, m_WindowSize.y, vmode->refreshRate);
+			glfwSetWindowMonitor(
+				m_Window,
+				m_Monitor,
+				0, 0,
+				m_WindowSize.x, m_WindowSize.y,
+				videoMode->refreshRate
+			);
 		}
 		else
 		{
 			m_Window = glfwCreateWindow(m_WindowSize.x, m_WindowSize.y, "", NULL, NULL);
-			if (!m_Window) return false;
+
+			if (!m_Window)
+				return false;
 		}
 
 		glfwMakeContextCurrent(m_Window);
@@ -1730,7 +1785,7 @@ namespace def
 		if (m_IsVSync)
 		{
 			glfwSwapInterval(1);
-			glfwWindowHint(GLFW_REFRESH_RATE, vmode->refreshRate);
+			glfwWindowHint(GLFW_REFRESH_RATE, videoMode->refreshRate);
 		}
 
 		m_Screen = new Graphic(m_ScreenSize);
@@ -1756,8 +1811,10 @@ namespace def
 			"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
 			"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
 
-		m_Font = new Sprite(vi2d(128, 48));
-		vi2d p;
+		m_Font = new Sprite({ 128, 48 });
+
+		int px = 0;
+		int py = 0;
 
 		for (size_t b = 0; b < 1024; b += 4)
 		{
@@ -1770,8 +1827,14 @@ namespace def
 			for (int i = 0; i < 24; i++)
 			{
 				uint8_t k = (r & (1 << i)) ? 255 : 0;
-				m_Font->SetPixel({ p.x, p.y }, { k, k, k, k });
-				if (++p.y == 48) { p.x++; p.y = 0; }
+
+				m_Font->SetPixel(px, py, { k, k, k, k });
+
+				if (++py == 48)
+				{
+					px++;
+					py = 0;
+				}
 			}
 		}
 
@@ -1782,33 +1845,35 @@ namespace def
 
 	bool GameEngine::Draw(int x, int y, Pixel p)
 	{
-		if (!m_DrawTarget) return false;
+		if (!m_DrawTarget)
+			return false;
+
 		Sprite* target = m_DrawTarget->sprite;
 
 		switch (m_PixelMode)
 		{
 		case Pixel::Mode::CUSTOM:
-			return target->SetPixel({ x, y }, m_Shader({ x, y }, target->GetPixel({ x, y }), p));
+			return target->SetPixel(x, y, m_Shader({ x, y }, target->GetPixel(x, y), p));
 
 		case Pixel::Mode::DEFAULT:
-			return target->SetPixel({ x, y }, p);
-
+			return target->SetPixel(x, y, p);
+			
 		case Pixel::Mode::MASK:
 		{
 			if (p.a == 255)
-				return target->SetPixel({ x, y }, p);
+				return target->SetPixel(x, y, p);
 		}
 		break;
 
 		case Pixel::Mode::ALPHA:
 		{
-			Pixel d = target->GetPixel({ x, y });
+			Pixel d = target->GetPixel(x, y);
 
 			uint8_t r = uint8_t(std::lerp(d.r, p.r, (float)p.a / 255.0f));
 			uint8_t g = uint8_t(std::lerp(d.g, p.g, (float)p.a / 255.0f));
 			uint8_t b = uint8_t(std::lerp(d.b, p.b, (float)p.a / 255.0f));
 
-			return target->SetPixel({ x, y }, { r, g, b });
+			return target->SetPixel(x, y, { r, g, b });
 		}
 
 		}
@@ -2360,14 +2425,14 @@ namespace def
 	{
 		for (int i = 0; i < sprite->size.x; i++)
 			for (int j = 0; j < sprite->size.y; j++)
-				Draw(x + i, y + j, sprite->GetPixel({ i, j }));
+				Draw(x + i, y + j, sprite->GetPixel(i, j));
 	}
 
 	void GameEngine::DrawPartialSprite(int x, int y, int fx, int fy, int fsx, int fsy, const Sprite* sprite)
 	{
 		for (int i = 0, x1 = 0; i < fsx; i++, x1++)
 			for (int j = 0, y1 = 0; j < fsy; j++, y1++)
-				Draw(x + x1, y + y1, sprite->GetPixel({ fx + i, fy + j }));
+				Draw(x + x1, y + y1, sprite->GetPixel(fx + i, fy + j));
 	}
 
 	void GameEngine::DrawTexture(float x, float y, const Texture* tex, float scaleX, float scaleY, const Pixel& tint)
@@ -2632,7 +2697,7 @@ namespace def
 				for (int i = 0; i < 8; i++)
 					for (int j = 0; j < 8; j++)
 					{
-						if (m_Font->GetPixel({ i + ox * 8, j + oy * 8 }).r > 0)
+						if (m_Font->GetPixel(i + ox * 8, j + oy * 8).r > 0)
 							Draw(x + sx + i, y + sy + j, p);
 					}
 
