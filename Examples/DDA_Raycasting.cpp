@@ -149,7 +149,12 @@ protected:
 		return true;
 	}
 
-	bool OnUserUpdate(float fDeltaTime) override
+	bool PointOnMap(int x, int y)
+	{
+		return x >= 0 && y >= 0 && x < mapSize.x && y < mapSize.y;
+	}
+
+	bool OnUserUpdate(float deltaTime) override
 	{
 		// Remove redundant objects
 		auto removeIter = std::remove_if(objects.begin(), objects.end(), [](const Object& o) { return o.toRemove; });
@@ -157,24 +162,24 @@ protected:
 
 		if (GetKey(def::Key::W).held)
 		{
-			def::vf2d newPlayerPos = playerPos + playerVel * moveSpeed * fDeltaTime;
+			def::vf2d vel = playerVel * moveSpeed * deltaTime;
 
-			if (newPlayerPos >= def::vf2d(0, 0) && newPlayerPos < mapSize)
-			{
-				if (map[(int)newPlayerPos.y * mapSize.x + newPlayerPos.x] == '.')
-					playerPos = newPlayerPos;
-			}
+			if (PointOnMap(int(playerPos.x + vel.x), (int)playerPos.y) && map[(int)playerPos.y * mapSize.x + int(playerPos.x + vel.x)] == '.')
+				playerPos.x += vel.x;
+
+			if (PointOnMap((int)playerPos.x, int(playerPos.y + vel.y)) && map[int(playerPos.y + vel.y) * mapSize.x + (int)playerPos.x] == '.')
+				playerPos.y += vel.y;
 		}
 
 		if (GetKey(def::Key::S).held)
 		{
-			def::vf2d newPlayerPos = playerPos - playerVel * moveSpeed * fDeltaTime;
+			def::vf2d vel = playerVel * moveSpeed * deltaTime;
 
-			if (newPlayerPos >= def::vf2d(0, 0) && newPlayerPos < mapSize)
-			{
-				if (map[(int)newPlayerPos.y * mapSize.x + newPlayerPos.x] == '.')
-					playerPos = newPlayerPos;
-			}
+			if (PointOnMap(int(playerPos.x - vel.x), (int)playerPos.y) && map[(int)playerPos.y * mapSize.x + int(playerPos.x - vel.x)] == '.')
+				playerPos.x -= vel.x;
+
+			if (PointOnMap((int)playerPos.x, int(playerPos.y - vel.y)) && map[int(playerPos.y - vel.y) * mapSize.x + (int)playerPos.x] == '.')
+				playerPos.y -= vel.y;
 		}
 
 		if (GetKey(def::Key::A).held)
@@ -182,11 +187,11 @@ protected:
 			float oldVelX = playerVel.x;
 			float oldPlaneX = playerPlane.x;
 
-			playerVel.x = playerVel.x * cos(rotSpeed * fDeltaTime) - playerVel.y * sin(rotSpeed * fDeltaTime);
-			playerVel.y = oldVelX * sin(rotSpeed * fDeltaTime) + playerVel.y * cos(rotSpeed * fDeltaTime);
+			playerVel.x = playerVel.x * cos(rotSpeed * deltaTime) - playerVel.y * sin(rotSpeed * deltaTime);
+			playerVel.y = oldVelX * sin(rotSpeed * deltaTime) + playerVel.y * cos(rotSpeed * deltaTime);
 
-			playerPlane.x = playerPlane.x * cos(rotSpeed * fDeltaTime) - playerPlane.y * sin(rotSpeed * fDeltaTime);
-			playerPlane.y = oldPlaneX * sin(rotSpeed * fDeltaTime) + playerPlane.y * cos(rotSpeed * fDeltaTime);
+			playerPlane.x = playerPlane.x * cos(rotSpeed * deltaTime) - playerPlane.y * sin(rotSpeed * deltaTime);
+			playerPlane.y = oldPlaneX * sin(rotSpeed * deltaTime) + playerPlane.y * cos(rotSpeed * deltaTime);
 		}
 
 		if (GetKey(def::Key::D).held)
@@ -194,11 +199,11 @@ protected:
 			float oldVelX = playerVel.x;
 			float oldPlaneX = playerPlane.x;
 
-			playerVel.x = playerVel.x * cos(-rotSpeed * fDeltaTime) - playerVel.y * sin(-rotSpeed * fDeltaTime);
-			playerVel.y = oldVelX * sin(-rotSpeed * fDeltaTime) + playerVel.y * cos(-rotSpeed * fDeltaTime);
+			playerVel.x = playerVel.x * cos(-rotSpeed * deltaTime) - playerVel.y * sin(-rotSpeed * deltaTime);
+			playerVel.y = oldVelX * sin(-rotSpeed * deltaTime) + playerVel.y * cos(-rotSpeed * deltaTime);
 
-			playerPlane.x = playerPlane.x * cos(-rotSpeed * fDeltaTime) - playerPlane.y * sin(-rotSpeed * fDeltaTime);
-			playerPlane.y = oldPlaneX * sin(-rotSpeed * fDeltaTime) + playerPlane.y * cos(-rotSpeed * fDeltaTime);
+			playerPlane.x = playerPlane.x * cos(-rotSpeed * deltaTime) - playerPlane.y * sin(-rotSpeed * deltaTime);
+			playerPlane.y = oldPlaneX * sin(-rotSpeed * deltaTime) + playerPlane.y * cos(-rotSpeed * deltaTime);
 		}
 
 		// Check for collision
@@ -326,18 +331,15 @@ protected:
 
 					def::vi2d texPos = (planeSample * texSize).min(texSize);
 
-					Draw(x, y, tiles->GetPixel({ ceilingId * texSize.x + texPos.x, texPos.y })); // ceiling
-					Draw(x, ScreenHeight() - y, tiles->GetPixel({ floorId * texSize.x + texPos.x, texPos.y })); // floor
+					Draw(x, y, tiles->GetPixel(ceilingId * texSize.x + texPos.x, texPos.y)); // ceiling
+					Draw(x, ScreenHeight() - y, tiles->GetPixel(floorId * texSize.x + texPos.x, texPos.y)); // floor
 				}
 				else if (y > ceilingPos && !noWall) // wall
 				{
-					if (distanceToWall < depth)
-					{
-						tex.y = (int)texPos % (texSize.y - 1);
-						texPos += texStep;
+					tex.y = (int)texPos % (texSize.y - 1);
+					texPos += texStep;
 
-						Draw(x, y, tiles->GetPixel({ ((int)map[mapPos.y * mapSize.x + mapPos.x] - 48) * texSize.x + tex.x, tex.y }));
-					}
+					Draw(x, y, tiles->GetPixel(((int)map[mapPos.y * mapSize.x + mapPos.x] - 48) * texSize.x + tex.x, tex.y));
 				}
 			}
 
@@ -347,7 +349,7 @@ protected:
 		// Update and draw textured objects
 		for (auto& o : objects)
 		{
-			o.pos += o.vel * o.speed * fDeltaTime;
+			o.pos += o.vel * o.speed * deltaTime;
 
 			if (o.pos.floor() >= def::vf2d(0, 0) && o.pos.floor() < mapSize && !std::isdigit(map[(int)o.pos.y * mapSize.x + (int)o.pos.x]))
 			{
@@ -376,16 +378,16 @@ protected:
 
 				for (int x = ceilingPos.x; x < floorPos.x; x++)
 				{
-					int nTexX = (ScreenWidth() * (x - (-objectScreenSize / 2 + objectScreenPos.x)) * texSize.x / objectScreenSize) / ScreenWidth();
+					int texX = (ScreenWidth() * (x - (-objectScreenSize / 2 + objectScreenPos.x)) * texSize.x / objectScreenSize) / ScreenWidth();
 
 					if (transform.y >= 0 && x >= 0 && x < ScreenWidth() && transform.y < depthBuffer[x])
 					{
 						for (int y = ceilingPos.y; y < floorPos.y; y++)
 						{
 							int d = y * ScreenWidth() - ScreenHeight() * ScreenWidth() / 2 + objectScreenSize * ScreenWidth() / 2;
-							int nTexY = (d * texSize.y / objectScreenSize) / ScreenWidth();
+							int texY = (d * texSize.y / objectScreenSize) / ScreenWidth();
 
-							Draw(x, y, tiles->GetPixel({ (int)o.type * texSize.x + nTexX, nTexY }));
+							Draw(x, y, tiles->GetPixel((int)o.type * texSize.x + texX, texY));
 							depthBuffer[x] = transform.y;
 						}
 					}
