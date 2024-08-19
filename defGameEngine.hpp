@@ -156,16 +156,14 @@ namespace def
 
 	enum class Button
 	{
-		LEFT,
-		RIGHT,
-		WHEEL,
-		MOUSE4,
-		MOUSE5
+		LEFT, RIGHT, WHEEL,
+		MOUSE4, MOUSE5, MOUSE6,
+		MOUSE7, MOUSE8
 	};
 
 #ifndef DGE_IGNORE_VEC2D
 
-	template <typename T>
+	template <class T>
 	struct vec2d
 	{
 		static_assert(std::is_arithmetic<T>::value, "def::vec2d<T> must be numeric");
@@ -207,7 +205,6 @@ namespace def
 		constexpr vec2d cart() const;
 		constexpr vec2d polar() const;
 
-		constexpr operator std::string() const;
 		constexpr std::string str() const;
 
 		template <class F>
@@ -235,7 +232,7 @@ namespace def
 
 	struct Pixel
 	{
-		constexpr Pixel();
+		constexpr Pixel(uint32_t rgba = 0x000000FF);
 		constexpr Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
 
 		enum class Mode
@@ -249,7 +246,8 @@ namespace def
 		union
 		{
 			struct { uint8_t r, g, b, a; };
-			uint8_t rgba[4];
+			uint32_t rgba_n;
+			uint8_t rgba_v[4];
 		};
 
 		constexpr Pixel mix(const Pixel& rhs, const float factor) const;
@@ -325,14 +323,16 @@ namespace def
 		void Load(std::string_view fileName);
 		void Save(std::string_view fileName, const FileType type) const;
 
-		bool SetPixel(int x, int y, const Pixel& p);
-		bool SetPixel(const vi2d& pos, const Pixel& p);
+		bool SetPixel(int x, int y, const Pixel& col);
+		bool SetPixel(const vi2d& pos, const Pixel& col);
+
 		Pixel GetPixel(int x, int y, const WrapMethod wrap = WrapMethod::NONE) const;
 		Pixel GetPixel(const vi2d& pos, const WrapMethod wrap = WrapMethod::NONE) const;
 
 		void SetPixelData(const Pixel& col);
 
-		Pixel Sample(const vf2d& uv, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
+		Pixel Sample(int x, int y, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
+		Pixel Sample(const vi2d& pos, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
 	};
 
 	struct Texture
@@ -409,7 +409,6 @@ namespace def
 		vi2d m_ScreenSize;
 		vf2d m_InvScreenSize;
 		vi2d m_PixelSize;
-		vi2d m_MaxWindowSize;
 
 		GLFWwindow* m_Window;
 		GLFWmonitor* m_Monitor;
@@ -429,8 +428,6 @@ namespace def
 		bool m_MouseNewState[5];
 
 		vi2d m_MousePos;
-		vf2d m_Offset;
-		vf2d m_Scale;
 
 		Sprite* m_Font;
 
@@ -446,12 +443,53 @@ namespace def
 
 		std::vector<std::string> m_DropCache;
 
+		std::string m_TextInput;
+		size_t m_CursorPos;
+		
+		bool m_CaptureText;
+		bool m_Caps;
+
 		float m_TickTimer;
 
 		Pixel (*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
 
 	public:
 		inline static GameEngine* s_Engine;
+		inline static std::unordered_map<def::Key, std::pair<char, char>> s_KeyboardUS =
+		{
+			{ def::Key::SPACE, { ' ', ' ' } }, { def::Key::APOSTROPHE, { '\'', '"' } },
+			{ def::Key::COMMA, { ',', '<' } }, { def::Key::MINUS, { '-', '_' } },
+			{ def::Key::PERIOD, { '.', '>' } }, { def::Key::SLASH, { '/', '?' } },
+			{ def::Key::K0, { '0', ')' } }, { def::Key::K1, { '1', '!' } },
+			{ def::Key::K2, { '2', '@' } }, { def::Key::K3, { '3', '#' } },
+			{ def::Key::K4, { '4', '$' } }, { def::Key::K5, { '5', '%' } },
+			{ def::Key::K6, { '6', '^' } }, { def::Key::K7, { '7', '&' } },
+			{ def::Key::K8, { '8', '*' } }, { def::Key::K9, { '9', '(' } },
+			{ def::Key::SEMICOLON, { ';', ':' } }, { def::Key::EQUAL, { '=', '+' } },
+			{ def::Key::A, { 'a', 'A' } }, { def::Key::B, { 'b', 'B' } },
+			{ def::Key::C, { 'c', 'C' } }, { def::Key::D, { 'd', 'D' } },
+			{ def::Key::E, { 'e', 'E' } }, { def::Key::F, { 'f', 'F' } },
+			{ def::Key::G, { 'g', 'G' } }, { def::Key::H, { 'h', 'H' } },
+			{ def::Key::I, { 'i', 'I' } }, { def::Key::J, { 'j', 'J' } },
+			{ def::Key::K, { 'k', 'K' } }, { def::Key::L, { 'l', 'L' } },
+			{ def::Key::M, { 'm', 'M' } }, { def::Key::N, { 'n', 'N' } },
+			{ def::Key::O, { 'o', 'O' } }, { def::Key::P, { 'p', 'P' } },
+			{ def::Key::Q, { 'q', 'Q' } }, { def::Key::R, { 'r', 'R' } },
+			{ def::Key::S, { 's', 'S' } }, { def::Key::T, { 't', 'T' } },
+			{ def::Key::U, { 'u', 'U' } }, { def::Key::V, { 'v', 'V' } },
+			{ def::Key::W, { 'w', 'W' } }, { def::Key::X, { 'x', 'X' } },
+			{ def::Key::Y, { 'y', 'Y' } }, { def::Key::Z, { 'z', 'Z' } },
+			{ def::Key::LEFT_BRACKET, { '[', '{' } }, { def::Key::BACKSLASH, { '\\', '|' } },
+			{ def::Key::RIGHT_BRACKET, { ']', '}' } }, { def::Key::GRAVE_ACCENT, { '`', '~' } },
+			{ def::Key::NP_0, { '0', '0' } }, { def::Key::NP_1, { '1', '1' } },
+			{ def::Key::NP_2, { '2', '2' } }, { def::Key::NP_3, { '3', '3' } },
+			{ def::Key::NP_4, { '4', '4' } }, { def::Key::NP_5, { '5', '5' } },
+			{ def::Key::NP_6, { '6', '6' } }, { def::Key::NP_7, { '7', '7' } },
+			{ def::Key::NP_8, { '8', '8' } }, { def::Key::NP_9, { '9', '9' } },
+			{ def::Key::NP_DIVIDE, { '/', '/' } }, { def::Key::NP_MULTIPLY, { '*', '*' } },
+			{ def::Key::NP_SUBTRACT, { '-', '-' } }, { def::Key::NP_ADD, { '+', '+' } },
+			{ def::Key::NP_EQUAL, { '=', '+' } }
+		};
 
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float deltaTime) = 0;
@@ -465,41 +503,43 @@ namespace def
 		void AppThread();
 
 		static void DrawQuad(const Pixel& tint);
+		static void DrawTexture(const TextureInstance& texture);
+
 		static void ErrorCallback(int errorCode, const char* description);
 		static void DropCallback(GLFWwindow* window, int pathCount, const char* paths[]);
 
 	public:
-		bool Draw(const vi2d& pos, Pixel p = WHITE);
-		virtual bool Draw(int x, int y, Pixel p = WHITE);
+		bool Draw(const vi2d& pos, Pixel col = WHITE);
+		virtual bool Draw(int x, int y, Pixel col = WHITE);
 
-		void DrawHorizontalLine(int startX, int endX, int y, const Pixel& p = WHITE);
+		void DrawHorizontalLine(int startX, int endX, int y, const Pixel& col = WHITE);
 
-		void DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& p = WHITE);
-		virtual void DrawLine(int x1, int y1, int x2, int y2, const Pixel& p = WHITE);
+		void DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col = WHITE);
+		virtual void DrawLine(int x1, int y1, int x2, int y2, const Pixel& col = WHITE);
 
-		void DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& p = WHITE);
-		virtual void DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& p = WHITE);
+		void DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col = WHITE);
+		virtual void DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& col = WHITE);
 
-		void FillTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& p = WHITE);
-		virtual void FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& p = WHITE);
+		void FillTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col = WHITE);
+		virtual void FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& col = WHITE);
 
-		void DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void DrawRectangle(int x, int y, int sizeX, int sizeY, const Pixel& p = WHITE);
+		void DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		virtual void DrawRectangle(int x, int y, int sizeX, int sizeY, const Pixel& col = WHITE);
 
-		void FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void FillRectangle(int x, int y, int sizeX, int sizeY, const Pixel& p = WHITE);
+		void FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		virtual void FillRectangle(int x, int y, int sizeX, int sizeY, const Pixel& col = WHITE);
 
-		void DrawCircle(const vi2d& pos, int radius, const Pixel& p = WHITE);
-		virtual void DrawCircle(int x, int y, int radius, const Pixel& p = WHITE);
+		void DrawCircle(const vi2d& pos, int radius, const Pixel& col = WHITE);
+		virtual void DrawCircle(int x, int y, int radius, const Pixel& col = WHITE);
 
-		void FillCircle(const vi2d& pos, int radius, const Pixel& p = WHITE);
-		virtual void FillCircle(int x, int y, int radius, const Pixel& p = WHITE);
+		void FillCircle(const vi2d& pos, int radius, const Pixel& col = WHITE);
+		virtual void FillCircle(int x, int y, int radius, const Pixel& col = WHITE);
 
-		void DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void DrawEllipse(int x, int y, int sizeX, int sizeY, const Pixel& p = WHITE);
+		void DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		virtual void DrawEllipse(int x, int y, int sizeX, int sizeY, const Pixel& col = WHITE);
 
-		void FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& p = WHITE);
-		virtual void FillEllipse(int x, int y, int sizeX, int sizeY, const Pixel& p = WHITE);
+		void FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		virtual void FillEllipse(int x, int y, int sizeX, int sizeY, const Pixel& col = WHITE);
 
 		void DrawSprite(const vi2d& pos, const Sprite* sprite);
 		virtual void DrawSprite(int x, int y, const Sprite* sprite);
@@ -515,35 +555,34 @@ namespace def
 
 		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint = WHITE);
 
-		void DrawRotatedTexture(const vf2d& pos, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawRotatedTexture(float x, float y, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+		void DrawRotatedTexture(const vf2d& pos, float rot, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		virtual void DrawRotatedTexture(float x, float y, float rot, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
 		void DrawPartialRotatedTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		virtual void DrawPartialRotatedTexture(float x, float y, float filePosX, float filePosY, float fileWidth, float fileHeight, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
-		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
-		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
+		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
 
-		void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
-		virtual void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& p = WHITE);
+		void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
+		virtual void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
 
-		void DrawString(const vi2d& pos, std::string_view text, const Pixel& p = WHITE);
-		virtual void DrawString(int x, int y, std::string_view text, const Pixel& p = WHITE);
+		void DrawString(const vi2d& pos, std::string_view text, const Pixel& col = WHITE);
+		virtual void DrawString(int x, int y, std::string_view text, const Pixel& col = WHITE);
 
-		virtual void Clear(const Pixel& p);
+		virtual void Clear(const Pixel& col);
 
 		KeyState GetKey(Key key) const;
 		KeyState GetMouse(Button button) const;
 
-		vi2d GetMouse() const;
+		vi2d GetMousePos() const;
 
-		int MouseX() const;
-		int MouseY() const;
+		int GetMouseX() const;
+		int GetMouseY() const;
 
 		void SetTitle(std::string_view title);
 
-		vi2d ScreenSize() const;
-		vi2d MaxWindowSize() const;
+		vi2d GetScreenSize() const;
 
 		int ScreenWidth() const;
 		int ScreenHeight() const;
@@ -562,21 +601,24 @@ namespace def
 
 		std::vector<std::string>& GetDropped();
 
-		void DrawTexture(const TextureInstance& texture);
-
 		void SetPixelMode(Pixel::Mode pixelMode);
 		Pixel::Mode GetPixelMode() const;
 
 		void SetTextureStructure(Texture::Structure textureStructure);
 		Texture::Structure GetTextureStructure() const;
 
-		void ClearBuffer(const Pixel& p);
+		void ClearBuffer(const Pixel& col);
 		void SetTint(const Pixel& tint);
 
-		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& previous, const Pixel& current));
+		void SetShader(Pixel (*func)(const vi2d& pos, const Pixel& previous, const Pixel& current));
 
-		Key AnyKey(bool pressed = true, bool held = false, bool released = false);
-		std::vector<Key> AnyKeys(bool pressed = true, bool held = false, bool released = false);
+		void CaptureText(bool enable);
+		bool IsCapturingText() const;
+		
+		std::string GetCapturedText() const;
+		size_t GetCursorPos() const;
+
+		void ClearCapturedText();
 	};
 
 #ifdef DGE_APPLICATION
@@ -943,15 +985,9 @@ namespace def
 	}
 
 	template <class T>
-	constexpr vec2d<T>::operator std::string() const
-	{
-		return "(" + std::to_string(x) + ", " + std::to_string(y) + ")";
-	}
-
-	template <class T>
 	constexpr std::string vec2d<T>::str() const
 	{
-		return operator std::string();
+		return "(" + std::to_string(x) + ", " + std::to_string(y) + ")";
 	}
 
 #endif
@@ -967,7 +1003,7 @@ namespace def
 
 	}
 
-	constexpr Pixel::Pixel() : r(0), g(0), b(0), a(255)
+	constexpr Pixel::Pixel(uint32_t rgba) : rgba_n(rgba)
 	{
 
 	}
@@ -1219,20 +1255,20 @@ namespace def
 		Assert(err == 1, "[stb_image_write Error] Code: ", std::to_string(err).c_str());
 	}
 
-	bool Sprite::SetPixel(int x, int y, const Pixel& p)
+	bool Sprite::SetPixel(int x, int y, const Pixel& col)
 	{
 		if (x >= 0 && y >= 0 && x < size.x && y < size.y)
 		{
-			pixels[y * size.x + x] = p;
+			pixels[y * size.x + x] = col;
 			return true;
 		}
 
 		return false;
 	}
 
-	bool Sprite::SetPixel(const vi2d& pos, const Pixel& p)
+	bool Sprite::SetPixel(const vi2d& pos, const Pixel& col)
 	{
-		return SetPixel(pos.x, pos.y, p);
+		return SetPixel(pos.x, pos.y, col);
 	}
 
 	Pixel Sprite::GetPixel(int x, int y, const WrapMethod wrap) const
@@ -1285,19 +1321,22 @@ namespace def
 		std::fill(pixels.begin(), pixels.end(), col);
 	}
 
-	Pixel Sprite::Sample(const vf2d& uv, const SampleMethod sample, const WrapMethod wrap) const
+	Pixel Sprite::Sample(int x, int y, const SampleMethod sample, const WrapMethod wrap) const
 	{
-		vf2d denorm = uv * vf2d(size);
+		return Sample({ x, y }, sample, wrap);
+	}
 
+	Pixel Sprite::Sample(const vi2d& pos, const SampleMethod sample, const WrapMethod wrap) const
+	{
 		switch (sample)
 		{
 		case SampleMethod::LINEAR:
-			return GetPixel(denorm, wrap);
+			return GetPixel(pos, wrap);
 
 		case SampleMethod::BILINEAR:
 		{
-			vf2d cell = denorm.floor();
-			vf2d offset = denorm - cell;
+			vf2d cell = pos.floor();
+			vf2d offset = pos - cell;
 
 			Pixel tl = GetPixel(cell + vf2d(0, 0), wrap);
 			Pixel tr = GetPixel(cell + vf2d(1, 0), wrap);
@@ -1312,8 +1351,8 @@ namespace def
 
 		case SampleMethod::TRILINEAR:
 		{
-			vi2d center = (denorm - vf2d(0.5f, 0.5f)).floor();
-			vf2d offset = (denorm - vf2d(0.5f, 0.5f)) - vf2d(center);
+			vi2d center = (pos - vf2d(0.5f, 0.5f)).floor();
+			vf2d offset = (pos - vf2d(0.5f, 0.5f)) - vf2d(center);
 
 			struct Pixelf
 			{
@@ -1493,6 +1532,9 @@ namespace def
 		m_PixelMode = Pixel::Mode::DEFAULT;
 		m_TextureStructure = Texture::Structure::FAN;
 
+		m_CaptureText = false;
+		m_Caps = false;
+
 		m_TickTimer = 0.0f;
 
 		m_Shader = nullptr;
@@ -1550,10 +1592,9 @@ namespace def
 			if (glfwWindowShouldClose(m_Window))
 				m_IsAppRunning = false;
 
-			// Check def::Key for keycodes
 			for (int i = 0; i < 512; i++)
 			{
-				m_KeyNewState[i] = glfwGetKey(m_Window, i);
+				m_KeyNewState[i] = (glfwGetKey(m_Window, i) == GLFW_PRESS);
 
 				m_Keys[i].pressed = false;
 				m_Keys[i].released = false;
@@ -1575,10 +1616,9 @@ namespace def
 				m_KeyOldState[i] = m_KeyNewState[i];
 			}
 
-			// Check def::Button for button 
-			for (int i = 0; i < 5; i++)
+			for (int i = 0; i < 8; i++)
 			{
-				m_MouseNewState[i] = glfwGetMouseButton(m_Window, i);
+				m_MouseNewState[i] = (glfwGetMouseButton(m_Window, i) == GLFW_PRESS);
 
 				m_Mouse[i].pressed = false;
 				m_Mouse[i].released = false;
@@ -1606,16 +1646,59 @@ namespace def
 			m_MousePos.x = (int)mouseX / m_PixelSize.x;
 			m_MousePos.y = (int)mouseY / m_PixelSize.y;
 
+			if (m_Keys[280].pressed) // Caps Lock
+				m_Caps = !m_Caps;
+
+			if (m_CaptureText)
+			{
+				// Left, right shifts
+				bool isUp = m_Keys[340].held || m_Keys[344].held;
+
+				for (const auto& [key, chars] : s_KeyboardUS)
+				{
+					if (GetKey(key).pressed)
+					{
+						if (m_Caps || isUp)
+							m_TextInput.insert(m_CursorPos, 1, chars.second);
+						else
+							m_TextInput.insert(m_CursorPos, 1, chars.first);
+
+						m_CursorPos++;
+					}
+				}
+
+				if (m_Keys[259].pressed) // Backspace
+				{
+					if (m_CursorPos > 0)
+					{
+						m_TextInput.erase(m_CursorPos - 1, 1);
+						m_CursorPos--;
+					}
+				}
+
+				if (m_Keys[261].pressed) // Delete
+				{
+					if (m_CursorPos < m_TextInput.length())
+						m_TextInput.erase(m_CursorPos, 1);
+				}
+
+				if (m_Keys[263].pressed) // Left arrow
+				{
+					if (m_CursorPos > 0)
+						m_CursorPos--;
+				}
+
+				if (m_Keys[262].pressed) // Right arrow
+				{
+					if (m_CursorPos < m_TextInput.length() - 1)
+						m_CursorPos++;
+				}
+			}
+
 			if (!OnUserUpdate(deltaTime))
 				m_IsAppRunning = false;
 
 			ClearBuffer(BLACK);
-
-			m_Offset.x = 0.0f;
-			m_Offset.y = 0.0f;
-
-			m_Scale.x = 0.0f;
-			m_Scale.y = 0.0f;
 
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1650,22 +1733,22 @@ namespace def
 		}
 	}
 
-	void GameEngine::DrawTexture(const TextureInstance& ti)
+	void GameEngine::DrawTexture(const TextureInstance& texInst)
 	{
-		glBindTexture(GL_TEXTURE_2D, ti.texture ? ti.texture->id : 0);
+		glBindTexture(GL_TEXTURE_2D, texInst.texture ? texInst.texture->id : 0);
 
-		switch (ti.structure)
+		switch (texInst.structure)
 		{
 		case Texture::Structure::DEFAULT:	glBegin(GL_TRIANGLES);		break;
 		case Texture::Structure::FAN:		glBegin(GL_TRIANGLE_FAN);	break;
 		case Texture::Structure::STRIP:		glBegin(GL_TRIANGLE_STRIP);	break;
 		}
 
-		for (int i = 0; i < ti.points; i++)
+		for (int i = 0; i < texInst.points; i++)
 		{
-			glColor4ub(ti.tint[i].r, ti.tint[i].g, ti.tint[i].b, ti.tint[i].a);
-			glTexCoord2f(ti.uv[i].x, ti.uv[i].y);
-			glVertex2f(ti.vertices[i].x, ti.vertices[i].y);
+			glColor4ub(texInst.tint[i].r, texInst.tint[i].g, texInst.tint[i].b, texInst.tint[i].a);
+			glTexCoord2f(texInst.uv[i].x, texInst.uv[i].y);
+			glVertex2f(texInst.vertices[i].x, texInst.vertices[i].y);
 		}
 
 		glEnd();
@@ -1726,7 +1809,7 @@ namespace def
 		glfwInit();
 
 		m_ScreenSize = { screenWidth, screenHeight };
-		m_InvScreenSize = 1.0f / vf2d(m_ScreenSize);
+		m_InvScreenSize = { 1.0f / (float)screenWidth, 1.0f / (float)screenHeight };
 		m_PixelSize = { pixelWidth, pixelHeight };
 		m_WindowSize = m_ScreenSize * m_PixelSize;
 
@@ -1745,14 +1828,12 @@ namespace def
 		if (!videoMode)
 			return false;
 
-		m_MaxWindowSize = { videoMode->width, videoMode->height };
-
 		if (!m_IsVSync)
 			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
 		if (m_IsFullScreen)
 		{
-			m_WindowSize = m_MaxWindowSize;
+			m_WindowSize = { videoMode->width, videoMode->height };
 			m_ScreenSize = m_WindowSize / m_PixelSize;
 
 			m_Window = glfwCreateWindow(m_WindowSize.x, m_WindowSize.y, "", m_Monitor, NULL);
@@ -1843,7 +1924,7 @@ namespace def
 		return true;
 	}
 
-	bool GameEngine::Draw(int x, int y, Pixel p)
+	bool GameEngine::Draw(int x, int y, Pixel col)
 	{
 		if (!m_DrawTarget)
 			return false;
@@ -1853,15 +1934,15 @@ namespace def
 		switch (m_PixelMode)
 		{
 		case Pixel::Mode::CUSTOM:
-			return target->SetPixel(x, y, m_Shader({ x, y }, target->GetPixel(x, y), p));
+			return target->SetPixel(x, y, m_Shader({ x, y }, target->GetPixel(x, y), col));
 
 		case Pixel::Mode::DEFAULT:
-			return target->SetPixel(x, y, p);
+			return target->SetPixel(x, y, col);
 			
 		case Pixel::Mode::MASK:
 		{
-			if (p.a == 255)
-				return target->SetPixel(x, y, p);
+			if (col.a == 255)
+				return target->SetPixel(x, y, col);
 		}
 		break;
 
@@ -1869,9 +1950,9 @@ namespace def
 		{
 			Pixel d = target->GetPixel(x, y);
 
-			uint8_t r = uint8_t(std::lerp(d.r, p.r, (float)p.a / 255.0f));
-			uint8_t g = uint8_t(std::lerp(d.g, p.g, (float)p.a / 255.0f));
-			uint8_t b = uint8_t(std::lerp(d.b, p.b, (float)p.a / 255.0f));
+			uint8_t r = uint8_t(std::lerp(d.r, col.r, (float)col.a / 255.0f));
+			uint8_t g = uint8_t(std::lerp(d.g, col.g, (float)col.a / 255.0f));
+			uint8_t b = uint8_t(std::lerp(d.b, col.b, (float)col.a / 255.0f));
 
 			return target->SetPixel(x, y, { r, g, b });
 		}
@@ -1881,13 +1962,13 @@ namespace def
 		return false;
 	}
 
-	void GameEngine::DrawHorizontalLine(int startX, int endX, int y, const Pixel& p)
+	void GameEngine::DrawHorizontalLine(int startX, int endX, int y, const Pixel& col)
 	{
 		for (int i = startX; i <= endX; i++)
-			Draw(i, y, p);
+			Draw(i, y, col);
 	}
 
-	void GameEngine::DrawLine(int x1, int y1, int x2, int y2, const Pixel& p)
+	void GameEngine::DrawLine(int x1, int y1, int x2, int y2, const Pixel& col)
 	{
 		int dx = x2 - x1;
 		int dy = y2 - y1;
@@ -1915,7 +1996,7 @@ namespace def
 				xe = x1;
 			}
 
-			Draw(x, y, p);
+			Draw(x, y, col);
 
 			while (x < xe)
 			{
@@ -1929,7 +2010,7 @@ namespace def
 					px = px + 2 * (dy1 - dx1);
 				}
 
-				Draw(x, y, p);
+				Draw(x, y, col);
 			}
 		}
 		else
@@ -1947,7 +2028,7 @@ namespace def
 				ye = y1;
 			}
 
-			Draw(x, y, p);
+			Draw(x, y, col);
 
 			while (y < ye)
 			{
@@ -1961,19 +2042,19 @@ namespace def
 					py = py + 2 * (dx1 - dy1);
 				}
 
-				Draw(x, y, p);
+				Draw(x, y, col);
 			}
 		}
 	}
 
-	void GameEngine::DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& p)
+	void GameEngine::DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& col)
 	{
-		DrawLine(x1, y1, x2, y2, p);
-		DrawLine(x2, y2, x3, y3, p);
-		DrawLine(x3, y3, x1, y1, p);
+		DrawLine(x1, y1, x2, y2, col);
+		DrawLine(x2, y2, x3, y3, col);
+		DrawLine(x3, y3, x1, y1, col);
 	}
 
-	void GameEngine::FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& p)
+	void GameEngine::FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& col)
 	{
 		int t1x, t2x, y, minx, maxx, t1xp, t2xp;
 
@@ -2107,7 +2188,7 @@ namespace def
 			if (maxx < t1x) maxx = t1x;
 			if (maxx < t2x) maxx = t2x;
 
-			DrawHorizontalLine(minx, maxx, y, p);
+			DrawHorizontalLine(minx, maxx, y, col);
 
 			if (!changed1)
 				t1x += signx1;
@@ -2215,7 +2296,7 @@ namespace def
 			if (maxx < t1x) maxx = t1x;
 			if (maxx < t2x) maxx = t2x;
 
-			DrawHorizontalLine(minx, maxx, y, p);
+			DrawHorizontalLine(minx, maxx, y, col);
 
 			if (!changed1)
 				t1x += signx1;
@@ -2233,78 +2314,92 @@ namespace def
 		}
 	}
 
-	void GameEngine::DrawRectangle(int x, int y, int sx, int sy, const Pixel& p)
+	void GameEngine::DrawRectangle(int x, int y, int sizeX, int sizeY, const Pixel& col)
 	{
-		for (int i = 0; i < sx; i++)
+		for (int i = 0; i < sizeX; i++)
 		{
-			Draw(x + i, y, p);
-			Draw(x + i, y + sy, p);
+			Draw(x + i, y, col);
+			Draw(x + i, y + sizeY, col);
 		}
 
-		for (int i = 0; i < sy; i++)
+		for (int i = 0; i < sizeY; i++)
 		{
-			Draw(x, y + i, p);
-			Draw(x + sx, y + i, p);
+			Draw(x, y + i, col);
+			Draw(x + sizeX, y + i, col);
 		}
 
-		Draw(x + sx, y + sy, p);
+		Draw(x + sizeX, y + sizeY, col);
 	}
 
-	void GameEngine::FillRectangle(int x, int y, int sx, int sy, const Pixel& p)
+	void GameEngine::FillRectangle(int x, int y, int sizeX, int sizeY, const Pixel& col)
 	{
-		for (int i = 0; i < sx; i++)
-			for (int j = 0; j < sy; j++)
-				Draw(x + i, y + j, p);
+		for (int i = 0; i < sizeX; i++)
+			for (int j = 0; j < sizeY; j++)
+				Draw(x + i, y + j, col);
 	}
 
-	void GameEngine::DrawCircle(int x, int y, int r, const Pixel& p)
+	void GameEngine::DrawCircle(int x, int y, int radius, const Pixel& col)
 	{
 		int x1 = 0;
-		int y1 = r;
-		int p1 = 3 - 2 * r;
+		int y1 = radius;
+		int p1 = 3 - 2 * radius;
 
 		while (y1 >= x1)
 		{
-			Draw(x - x1, y - y1, p);
-			Draw(x - y1, y - x1, p);
-			Draw(x + y1, y - x1, p);
-			Draw(x + x1, y - y1, p);
-			Draw(x - x1, y + y1, p);
-			Draw(x - y1, y + x1, p);
-			Draw(x + y1, y + x1, p);
-			Draw(x + x1, y + y1, p);
+			Draw(x - x1, y - y1, col);
+			Draw(x - y1, y - x1, col);
+			Draw(x + y1, y - x1, col);
+			Draw(x + x1, y - y1, col);
+			Draw(x - x1, y + y1, col);
+			Draw(x - y1, y + x1, col);
+			Draw(x + y1, y + x1, col);
+			Draw(x + x1, y + y1, col);
 
 			if (p1 < 0)
-				p1 += 4 * x1++ + 6;
+			{
+				p1 += 4 * x1 + 6;
+				x1++;
+			}
 			else
-				p1 += 4 * (x1++ - y1--) + 10;
+			{
+				p1 += 4 * (x1 - y1) + 10;
+				x1++;
+				y1--;
+			}
 		}
 	}
 
-	void GameEngine::FillCircle(int x, int y, int r, const Pixel& p)
+	void GameEngine::FillCircle(int x, int y, int radius, const Pixel& col)
 	{
 		int x1 = 0;
-		int y1 = r;
-		int p1 = 3 - 2 * r;
+		int y1 = radius;
+		int p1 = 3 - 2 * radius;
 
 		while (y1 >= x1)
 		{
-			DrawHorizontalLine(x - x1, x + x1, y - y1, p);
-			DrawHorizontalLine(x - y1, x + y1, y - x1, p);
-			DrawHorizontalLine(x - x1, x + x1, y + y1, p);
-			DrawHorizontalLine(x - y1, x + y1, y + x1, p);
+			DrawHorizontalLine(x - x1, x + x1, y - y1, col);
+			DrawHorizontalLine(x - y1, x + y1, y - x1, col);
+			DrawHorizontalLine(x - x1, x + x1, y + y1, col);
+			DrawHorizontalLine(x - y1, x + y1, y + x1, col);
 
 			if (p1 < 0)
-				p1 += 4 * x1++ + 6;
+			{
+				p1 += 4 * x1 + 6;
+				x1++;
+			}
 			else
-				p1 += 4 * (x1++ - y1--) + 10;
+			{
+				p1 += 4 * (x1 - y1) + 10;
+				x1++;
+				y1--;
+			}
 		}
 	}
 
-	void GameEngine::DrawEllipse(int x, int y, int sx, int sy, const Pixel& p)
+	void GameEngine::DrawEllipse(int x, int y, int sizeX, int sizeY, const Pixel& col)
 	{
-		int x1 = x + sx;
-		int y1 = y + sy;
+		int x1 = x + sizeX;
+		int y1 = y + sizeY;
 
 		int a = abs(x1 - x);
 		int b = abs(y1 - y);
@@ -2332,10 +2427,10 @@ namespace def
 
 		do
 		{
-			Draw(x1, y, p);
-			Draw(x, y, p);
-			Draw(x, y1, p);
-			Draw(x1, y1, p);
+			Draw(x1, y, col);
+			Draw(x, y, col);
+			Draw(x, y1, col);
+			Draw(x1, y1, col);
 
 			int e2 = 2 * err;
 
@@ -2356,17 +2451,17 @@ namespace def
 
 		while (y - y1 < b)
 		{
-			Draw(x - 1, y, p);
-			Draw(x1 + 1, y++, p);
-			Draw(x - 1, y1, p);
-			Draw(x1 + 1, y1--, p);
+			Draw(x - 1, y, col);
+			Draw(x1 + 1, y++, col);
+			Draw(x - 1, y1, col);
+			Draw(x1 + 1, y1--, col);
 		}
 	}
 
-	void GameEngine::FillEllipse(int x, int y, int sx, int sy, const Pixel& p)
+	void GameEngine::FillEllipse(int x, int y, int sizeX, int sizeY, const Pixel& col)
 	{
-		int x1 = x + sx;
-		int y1 = y + sy;
+		int x1 = x + sizeX;
+		int y1 = y + sizeY;
 
 		int a = abs(x1 - x);
 		int b = abs(y1 - y);
@@ -2396,28 +2491,31 @@ namespace def
 
 		do
 		{
-			DrawHorizontalLine(x, x1, y, p);
-			DrawHorizontalLine(x, x1, y1, p);
+			DrawHorizontalLine(x, x1, y, col);
+			DrawHorizontalLine(x, x1, y1, col);
 
 			int e2 = 2 * err;
+
 			if (e2 <= dy)
 			{
 				y++;
 				y1--;
 				err += dy += a;
 			}
+
 			if (e2 >= dx || 2 * err > dy)
 			{
 				x++;
 				x1--;
 				err += dx += b1;
 			}
-		} while (x <= x1);
+		}
+		while (x <= x1);
 
 		while (y - y1 < b)
 		{
-			DrawHorizontalLine(x - 1, x1 + 1, y++, p);
-			DrawHorizontalLine(x - 1, x1 + 1, y1--, p);
+			DrawHorizontalLine(x - 1, x1 + 1, y++, col);
+			DrawHorizontalLine(x - 1, x1 + 1, y1--, col);
 		}
 	}
 
@@ -2428,36 +2526,36 @@ namespace def
 				Draw(x + i, y + j, sprite->GetPixel(i, j));
 	}
 
-	void GameEngine::DrawPartialSprite(int x, int y, int fx, int fy, int fsx, int fsy, const Sprite* sprite)
+	void GameEngine::DrawPartialSprite(int x, int y, int fileX, int fileY, int fileSizeX, int fileSizeY, const Sprite* sprite)
 	{
-		for (int i = 0, x1 = 0; i < fsx; i++, x1++)
-			for (int j = 0, y1 = 0; j < fsy; j++, y1++)
-				Draw(x + x1, y + y1, sprite->GetPixel(fx + i, fy + j));
+		for (int i = 0, x1 = 0; i < fileSizeX; i++, x1++)
+			for (int j = 0, y1 = 0; j < fileSizeY; j++, y1++)
+				Draw(x + x1, y + y1, sprite->GetPixel(fileX + i, fileY + j));
 	}
 
 	void GameEngine::DrawTexture(float x, float y, const Texture* tex, float scaleX, float scaleY, const Pixel& tint)
 	{
 		vf2d screenPos =
 		{
-			(x * m_InvScreenSize.x) * 2.0f - 1.0f,
-			((y * m_InvScreenSize.y) * 2.0f - 1.0f) * -1.0f
+			x * m_InvScreenSize.x * 2.0f - 1.0f,
+			1.0f - y * m_InvScreenSize.y * 2.0f
 		};
 
 		vf2d screenSize =
 		{
-			screenPos.x + (2.0f * (float(tex->size.x) * m_InvScreenSize.x)) * scaleX,
-			screenPos.y - (2.0f * (float(tex->size.y) * m_InvScreenSize.y)) * scaleY
+			screenPos.x + 2.0f * float(tex->size.x) * m_InvScreenSize.x * scaleX,
+			screenPos.y - 2.0f * float(tex->size.y) * m_InvScreenSize.y * scaleY
 		};
 
-		TextureInstance ti;
-		ti.texture = tex;
-		ti.points = 4;
-		ti.structure = m_TextureStructure;
-		ti.tint = { tint, tint, tint, tint };
-		ti.vertices = { screenPos, { screenPos.x, screenSize.y }, screenSize, { screenSize.x, screenPos.y } };
-		ti.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+		TextureInstance texInst;
+		texInst.texture = tex;
+		texInst.points = 4;
+		texInst.structure = m_TextureStructure;
+		texInst.tint = { tint, tint, tint, tint };
+		texInst.vertices = { screenPos, { screenPos.x, screenSize.y }, screenSize, { screenSize.x, screenPos.y } };
+		texInst.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
 
-		m_Textures.push_back(ti);
+		m_Textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, const Texture* tex, float scaleX, float scaleY, const Pixel& tint)
@@ -2477,57 +2575,63 @@ namespace def
 		vf2d quantisedPos = ((screenSpacePos * vf2d(m_WindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_WindowSize);
 		vf2d quantisedSize = ((screenSpaceSize * vf2d(m_WindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_WindowSize);
 
-		vf2d tl = (vf2d(filePosX, filePosY) + vf2d(0.0001f, 0.0001f)) * tex->uvScale;
-		vf2d br = (vf2d(filePosX, filePosY) + vf2d(fileSizeX, fileSizeY) - vf2d(0.0001f, 0.0001f)) * tex->uvScale;
+		float tlX = (filePosX + 0.0001f) * tex->uvScale.x;
+		float tlY = (filePosY + 0.0001f) * tex->uvScale.y;
 
-		TextureInstance ti;
-		ti.texture = tex;
-		ti.points = 4;
-		ti.structure = m_TextureStructure;
-		ti.tint = { tint, tint, tint, tint };
-		ti.vertices = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
-		ti.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
-		m_Textures.push_back(ti);
+		float brX = (filePosX + fileSizeX - 0.0001f) * tex->uvScale.x;
+		float brY = (filePosY + fileSizeY - 0.0001f) * tex->uvScale.y;
+
+		TextureInstance texInst;
+
+		texInst.texture = tex;
+		texInst.points = 4;
+		texInst.structure = m_TextureStructure;
+		texInst.tint = { tint, tint, tint, tint };
+		texInst.vertices = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
+		texInst.uv = { { tlX, tlY }, { tlX, brY }, { brX, brY }, { brX, tlY } };
+
+		m_Textures.push_back(texInst);
 	}
 
-	void GameEngine::DrawRotatedTexture(float x, float y, float r, const Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
+	void GameEngine::DrawRotatedTexture(float x, float y, float rot, const Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
 	{
-		TextureInstance ti;
-		ti.texture = tex;
-		ti.points = 4;
-		ti.structure = m_TextureStructure;
-		ti.tint = { tint, tint, tint, tint };
+		TextureInstance texInst;
 
-		vf2d center = vf2d(centerX, centerY) * vf2d(tex->size);
-		vf2d scale = vf2d(scaleX, scaleY);
+		texInst.texture = tex;
+		texInst.points = 4;
+		texInst.structure = m_TextureStructure;
+		texInst.tint = { tint, tint, tint, tint };
 
-		ti.vertices = {
-			-1.0f * center * scale,
-			(vf2d(0.0f, (float)tex->size.y) - center) * scale,
-			(vf2d((float)tex->size.x, (float)tex->size.y) - center) * scale,
-			(vf2d((float)tex->size.x, 0.0f) - center) * scale
+		float denormCenterX = centerX * tex->size.x;
+		float denormCenterY = centerY * tex->size.y;
+
+		texInst.vertices = {
+			{ -1.0f * denormCenterX * scaleX, -1.0f * denormCenterY * scaleY },
+			{ -denormCenterX * scaleX, ((float)tex->size.y - denormCenterY) * scaleY },
+			{ ((float)tex->size.x - denormCenterX) * scaleX, ((float)tex->size.y - denormCenterY) * scaleY },
+			{ ((float)tex->size.x - denormCenterX) * scaleY, -denormCenterY * scaleY}
 		};
 
-		float c = cos(r), s = sin(r);
-		for (int i = 0; i < ti.points; i++)
+		float c = cos(rot), s = sin(rot);
+		for (int i = 0; i < texInst.points; i++)
 		{
-			vf2d o = { ti.vertices[i].x * c - ti.vertices[i].y * s, ti.vertices[i].x * s + ti.vertices[i].y * c };
-			ti.vertices[i] = vf2d(x, y) + o;
-			ti.vertices[i] = ti.vertices[i] * m_InvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
-			ti.vertices[i].y *= -1.0f;
+			vf2d o = { texInst.vertices[i].x * c - texInst.vertices[i].y * s, texInst.vertices[i].x * s + texInst.vertices[i].y * c };
+			texInst.vertices[i] = vf2d(x, y) + o;
+			texInst.vertices[i] = texInst.vertices[i] * m_InvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
+			texInst.vertices[i].y *= -1.0f;
 		}
 
-		ti.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
-		m_Textures.push_back(ti);
+		texInst.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+		m_Textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, const Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
 	{
-		TextureInstance ti;
-		ti.texture = tex;
-		ti.points = 4;
-		ti.structure = m_TextureStructure;
-		ti.tint = { tint, tint, tint, tint };
+		TextureInstance texInst;
+		texInst.texture = tex;
+		texInst.points = 4;
+		texInst.structure = m_TextureStructure;
+		texInst.tint = { tint, tint, tint, tint };
 
 		vf2d screenSpacePos =
 		{
@@ -2547,30 +2651,30 @@ namespace def
 		vf2d tl = (vf2d(fx, fy) + vf2d(0.0001f, 0.0001f)) * tex->uvScale;
 		vf2d br = (vf2d(fx, fy) + vf2d(fx, fy) - vf2d(0.0001f, 0.0001f)) * tex->uvScale;
 
-		ti.vertices = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
+		texInst.vertices = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
 
 		float c = cos(r), s = sin(r);
-		for (int i = 0; i < ti.points; i++)
+		for (int i = 0; i < texInst.points; i++)
 		{
-			vf2d o = { ti.vertices[i].x * c - ti.vertices[i].y * s, ti.vertices[i].x * s + ti.vertices[i].y * c };
-			ti.vertices[i] = vf2d(x, y) + o;
-			ti.vertices[i] = ti.vertices[i] * m_InvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
-			ti.vertices[i].y *= -1.0f;
+			vf2d o = { texInst.vertices[i].x * c - texInst.vertices[i].y * s, texInst.vertices[i].x * s + texInst.vertices[i].y * c };
+			texInst.vertices[i] = vf2d(x, y) + o;
+			texInst.vertices[i] = texInst.vertices[i] * m_InvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
+			texInst.vertices[i].y *= -1.0f;
 		}
 
-		ti.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
-		m_Textures.push_back(ti);
+		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
+		m_Textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint)
 	{
-		TextureInstance ti;
-		ti.texture = tex;
-		ti.structure = m_TextureStructure;
-		ti.points = 4;
-		ti.tint = { tint, tint, tint, tint };
-		ti.vertices.resize(ti.points);
-		ti.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+		TextureInstance texInst;
+		texInst.texture = tex;
+		texInst.structure = m_TextureStructure;
+		texInst.points = 4;
+		texInst.tint = { tint, tint, tint, tint };
+		texInst.vertices.resize(texInst.points);
+		texInst.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
 
 		float rd = ((points[2].x - points[0].x) * (points[3].y - points[1].y) - (points[3].x - points[1].x) * (points[2].y - points[0].y));
 
@@ -2593,15 +2697,15 @@ namespace def
 			for (int i = 0; i < 4; i++)
 			{
 				float q = d[i] == 0.0f ? 1.0f : (d[i] + d[(i + 2) & 3]) / d[(i + 2) & 3];
-				ti.uv[i] *= q;
-				ti.vertices[i] = { (points[i].x * m_InvScreenSize.x) * 2.0f - 1.0f, ((points[i].y * m_InvScreenSize.y) * 2.0f - 1.0f) * -1.0f };
+				texInst.uv[i] *= q;
+				texInst.vertices[i] = { (points[i].x * m_InvScreenSize.x) * 2.0f - 1.0f, ((points[i].y * m_InvScreenSize.y) * 2.0f - 1.0f) * -1.0f };
 			}
 
-			m_Textures.push_back(ti);
+			m_Textures.push_back(texInst);
 		}
 	}
 
-	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& p)
+	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& col)
 	{
 		size_t verts = modelCoordinates.size();
 
@@ -2615,10 +2719,10 @@ namespace def
 		}
 
 		for (size_t i = 0; i < verts + 1; i++)
-			DrawLine(coordinates[i % verts], coordinates[(i + 1) % verts], p);
+			DrawLine(coordinates[i % verts], coordinates[(i + 1) % verts], col);
 	}
 
-	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& p)
+	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& col)
 	{
 		size_t verts = modelCoordinates.size();
 
@@ -2671,11 +2775,11 @@ namespace def
 			for (point.y = min.y; point.y < max.y; point.y++)
 			{
 				if (PointInPolygon(point))
-					Draw(point, p);
+					Draw(point, col);
 			}
 	}
 
-	void GameEngine::DrawString(int x, int y, std::string_view s, const Pixel& p)
+	void GameEngine::DrawString(int x, int y, std::string_view s, const Pixel& col)
 	{
 		int sx = 0;
 		int sy = 0;
@@ -2698,7 +2802,7 @@ namespace def
 					for (int j = 0; j < 8; j++)
 					{
 						if (m_Font->GetPixel(i + ox * 8, j + oy * 8).r > 0)
-							Draw(x + sx + i, y + sy + j, p);
+							Draw(x + sx + i, y + sy + j, col);
 					}
 
 				sx += 8;
@@ -2706,23 +2810,27 @@ namespace def
 		}
 	}
 
-	void GameEngine::Clear(const Pixel& p)
+	void GameEngine::Clear(const Pixel& col)
 	{
-		m_DrawTarget->sprite->SetPixelData(p);
+		m_DrawTarget->sprite->SetPixelData(col);
 	}
 
 	KeyState GameEngine::GetKey(Key k) const { return m_Keys[static_cast<size_t>(k)]; }
 	KeyState GameEngine::GetMouse(Button k) const { return m_Mouse[static_cast<size_t>(k)]; }
 
-	int GameEngine::MouseX() const { return m_MousePos.x; }
-	int GameEngine::MouseY() const { return m_MousePos.y; }
+	int GameEngine::GetMouseX() const { return m_MousePos.x; }
+	int GameEngine::GetMouseY() const { return m_MousePos.y; }
 
 	int GameEngine::ScreenWidth() const { return m_ScreenSize.x; }
 	int GameEngine::ScreenHeight() const { return m_ScreenSize.y; }
 
 	bool GameEngine::IsFullScreen() const { return m_IsFullScreen; }
 	bool GameEngine::IsVSync() const { return m_IsVSync; }
-	bool GameEngine::IsFocused() const { return static_cast<bool>(glfwGetWindowAttrib(m_Window, GLFW_FOCUSED)); }
+
+	bool GameEngine::IsFocused() const
+	{
+		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) == 1;
+	}
 
 	void GameEngine::SetIcon(std::string_view fileName)
 	{
@@ -2754,9 +2862,9 @@ namespace def
 
 	WindowState GameEngine::GetWindowState() const
 	{
-		int f = static_cast<int>(WindowState::NONE);
-		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED)) f |= static_cast<int>(WindowState::FOCUSED);
+		int f = 0;
 		if (glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED)) f |= static_cast<int>(WindowState::MAXIMIZED);
+		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED)) f |= static_cast<int>(WindowState::FOCUSED);
 		return static_cast<WindowState>(f);
 	}
 
@@ -2795,49 +2903,49 @@ namespace def
 		return Draw(pos.x, pos.y, p);
 	}
 
-	void GameEngine::DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& p)
+	void GameEngine::DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col)
 	{
-		DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, p);
+		DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, col);
 	}
 
-	void GameEngine::DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& p)
+	void GameEngine::DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col)
 	{
-		DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
+		DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, col);
 	}
 
-	void GameEngine::FillTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& p)
+	void GameEngine::FillTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col)
 	{
-		FillTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, p);
+		FillTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, col);
 	}
 
-	void GameEngine::DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& p)
+	void GameEngine::DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& col)
 	{
-		DrawRectangle(pos.x, pos.y, size.x, size.y, p);
+		DrawRectangle(pos.x, pos.y, size.x, size.y, col);
 	}
 
-	void GameEngine::FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& p)
+	void GameEngine::FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& col)
 	{
-		FillRectangle(pos.x, pos.y, size.x, size.y, p);
+		FillRectangle(pos.x, pos.y, size.x, size.y, col);
 	}
 
-	void GameEngine::DrawCircle(const vi2d& pos, int r, const Pixel& p)
+	void GameEngine::DrawCircle(const vi2d& pos, int r, const Pixel& col)
 	{
-		DrawCircle(pos.x, pos.y, r, p);
+		DrawCircle(pos.x, pos.y, r, col);
 	}
 
-	void GameEngine::FillCircle(const vi2d& pos, int r, const Pixel& p)
+	void GameEngine::FillCircle(const vi2d& pos, int r, const Pixel& col)
 	{
-		FillCircle(pos.x, pos.y, r, p);
+		FillCircle(pos.x, pos.y, r, col);
 	}
 
-	void GameEngine::DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& p)
+	void GameEngine::DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& col)
 	{
-		DrawEllipse(pos.x, pos.y, size.x, size.y, p);
+		DrawEllipse(pos.x, pos.y, size.x, size.y, col);
 	}
 
-	void GameEngine::FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& p)
+	void GameEngine::FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& col)
 	{
-		FillEllipse(pos.x, pos.y, size.x, size.y, p);
+		FillEllipse(pos.x, pos.y, size.x, size.y, col);
 	}
 
 	void GameEngine::DrawSprite(const vi2d& pos, const Sprite* spr)
@@ -2870,75 +2978,72 @@ namespace def
 		DrawPartialRotatedTexture(pos.x, pos.y, fpos.x, fpos.y, fsize.x, fsize.y, r, tex, center.x, center.y, scale.x, scale.y, tint);
 	}
 
-	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r, float s, const Pixel& p)
+	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r, float s, const Pixel& col)
 	{
-		DrawWireFrameModel(modelCoordinates, pos.x, pos.y, r, s, p);
+		DrawWireFrameModel(modelCoordinates, pos.x, pos.y, r, s, col);
 	}
 
-	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r, float s, const Pixel& p)
+	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r, float s, const Pixel& col)
 	{
-		FillWireFrameModel(modelCoordinates, pos.x, pos.y, r, s, p);
+		FillWireFrameModel(modelCoordinates, pos.x, pos.y, r, s, col);
 	}
 
-	void GameEngine::DrawString(const vi2d& pos, std::string_view text, const Pixel& p)
+	void GameEngine::DrawString(const vi2d& pos, std::string_view text, const Pixel& col)
 	{
-		DrawString(pos.x, pos.y, text, p);
+		DrawString(pos.x, pos.y, text, col);
 	}
 
-	vi2d GameEngine::ScreenSize() const
+	vi2d GameEngine::GetScreenSize() const
 	{
 		return m_ScreenSize;
 	}
 
-	vi2d GameEngine::MaxWindowSize() const
-	{
-		return m_MaxWindowSize;
-	}
-
-	vi2d GameEngine::GetMouse() const
+	vi2d GameEngine::GetMousePos() const
 	{
 		return m_MousePos;
 	}
 
-	void GameEngine::ClearBuffer(const Pixel& p)
+	void GameEngine::ClearBuffer(const Pixel& col)
 	{
-		glClearColor((float)p.r / 255.0f, (float)p.g / 255.0f, (float)p.b / 255.0f, (float)p.a / 255.0f);
+		glClearColor((float)col.r / 255.0f, (float)col.g / 255.0f, (float)col.b / 255.0f, (float)col.a / 255.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
-	void GameEngine::SetTint(const Pixel& p)
+	void GameEngine::SetTint(const Pixel& col)
 	{
-		m_Tint = p;
+		m_Tint = col;
 	}
 
-	void GameEngine::SetShader(Pixel(*func)(const vi2d& pos, const Pixel& prev, const Pixel& cur))
+	void GameEngine::SetShader(Pixel (*func)(const vi2d& pos, const Pixel& previous, const Pixel& current))
 	{
 		m_Shader = func;
 		m_PixelMode = m_Shader ? Pixel::Mode::CUSTOM : Pixel::Mode::DEFAULT;
 	}
 
-	Key GameEngine::AnyKey(bool pressed, bool held, bool released)
+	void GameEngine::CaptureText(bool enable)
 	{
-		for (uint32_t i = 0; i < 512U; i++)
-		{
-			if (m_Keys[i].pressed && pressed || m_Keys[i].held && held || m_Keys[i].released && released)
-				return Key(i);
-		}
-
-		return Key::NONE;
+		m_CaptureText = enable;
 	}
 
-	std::vector<Key> GameEngine::AnyKeys(bool pressed, bool held, bool released)
+	std::string GameEngine::GetCapturedText() const
 	{
-		std::vector<Key> keys;
+		return m_TextInput;
+	}
 
-		for (uint32_t i = 0; i < 512U; i++)
-		{
-			if (m_Keys[i].pressed && pressed || m_Keys[i].held && held || m_Keys[i].released && released)
-				keys.push_back(Key(i));
-		}
+	size_t GameEngine::GetCursorPos() const
+	{
+		return m_CursorPos;
+	}
 
-		return keys;
+	void GameEngine::ClearCapturedText()
+	{
+		m_TextInput.clear();
+		m_CursorPos = 0;
+	}
+
+	bool GameEngine::IsCapturingText() const
+	{
+		return m_CaptureText;
 	}
 
 #endif
