@@ -410,13 +410,13 @@ namespace def
 		vf2d m_InvScreenSize;
 		vi2d m_PixelSize;
 
-		GLFWwindow* m_Window;
 		GLFWmonitor* m_Monitor;
+		GLFWwindow* m_Window;
 
 		bool m_IsAppRunning;
 		bool m_IsFullScreen;
-		bool m_IsVSync;
 		bool m_IsDirtyPixel;
+		bool m_IsVSync;
 
 		KeyState m_Keys[512];
 		KeyState m_Mouse[5];
@@ -431,15 +431,16 @@ namespace def
 
 		Sprite* m_Font;
 
-		Graphic* m_Screen;
 		Graphic* m_DrawTarget;
+		Graphic* m_Screen;
 
 		std::vector<TextureInstance> m_Textures;
 
+		//Pixel m_ConsoleBackgroundColour;
 		Pixel m_Tint;
 
-		Pixel::Mode m_PixelMode;
 		Texture::Structure m_TextureStructure;
+		Pixel::Mode m_PixelMode;
 
 		std::vector<std::string> m_DropCache;
 
@@ -447,8 +448,20 @@ namespace def
 		size_t m_CursorPos;
 		
 		bool m_CaptureText;
+		bool m_ShowConsole;
 		bool m_Caps;
 
+		struct ConsoleEntry
+		{
+			std::string command;
+			std::string output;
+			
+			def::Pixel outputColour;
+		};
+
+		std::vector<ConsoleEntry> m_ConsoleHistory;
+		size_t m_PickedConsoleHistoryCommand;
+		
 		float m_TickTimer;
 
 		Pixel (*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
@@ -494,6 +507,9 @@ namespace def
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float deltaTime) = 0;
 		virtual bool OnAfterDraw();
+		
+		virtual void OnTextCapturingComplete(const std::string& text);
+		virtual bool OnConsoleCommand(const std::string& command, std::stringstream& output, def::Pixel& colour);
 
 		bool Construct(int screenWidth, int screenHeight, int pixelWidth, int pixelHeight, bool fullScreen = false, bool vsync = false, bool dirtyPixel = false);
 		void Run();
@@ -619,6 +635,11 @@ namespace def
 		size_t GetCursorPos() const;
 
 		void ClearCapturedText();
+
+		void ShowConsole(bool enable);
+		//void SetConsoleBackgroundColour(const Pixel& col);
+
+		void ClearConsole();
 	};
 
 #ifdef DGE_APPLICATION
@@ -1528,17 +1549,21 @@ namespace def
 		m_DrawTarget = nullptr;
 
 		m_Tint = { 255, 255, 255, 255 };
+		//m_ConsoleBackgroundColour = { 0, 0, 255, 100 };
 
 		m_PixelMode = Pixel::Mode::DEFAULT;
 		m_TextureStructure = Texture::Structure::FAN;
 
 		m_CaptureText = false;
 		m_Caps = false;
+		m_ShowConsole = false;
 
 		m_TickTimer = 0.0f;
 
 		m_Shader = nullptr;
 		s_Engine = this;
+
+		m_PickedConsoleHistoryCommand = 0;
 	}
 
 	GameEngine::~GameEngine()
@@ -1586,7 +1611,7 @@ namespace def
 
 			float deltaTime = std::chrono::duration<float>(endTime - startTime).count();
 			startTime = endTime;
-
+			
 			m_TickTimer += deltaTime;
 
 			if (glfwWindowShouldClose(m_Window))
@@ -1690,13 +1715,92 @@ namespace def
 
 				if (m_Keys[262].pressed) // Right arrow
 				{
-					if (m_CursorPos < m_TextInput.length() - 1)
+					if (m_CursorPos < m_TextInput.length())
 						m_CursorPos++;
+				}
+
+				if (m_Keys[257].pressed) // Enter
+				{
+					OnTextCapturingComplete(m_TextInput);
+
+					if (m_ShowConsole)
+					{
+						std::stringstream output;
+						def::Pixel colour = def::WHITE;
+
+						if (OnConsoleCommand(m_TextInput, output, colour))
+						{
+							m_ConsoleHistory.push_back({ m_TextInput, output.str(), colour });
+							m_PickedConsoleHistoryCommand = m_ConsoleHistory.size();
+						}
+					}
+
+					m_TextInput.clear();
+					m_CursorPos = 0;
+				}
+
+				// TODO: Pick a command from a history
+				if (m_ShowConsole)
+				{
+					if (!m_ConsoleHistory.empty())
+					{
+						bool moved = false;
+
+						if (m_Keys[265].pressed) // Up arrow
+						{
+							if (m_PickedConsoleHistoryCommand > 0)
+							{
+								m_PickedConsoleHistoryCommand--;
+								moved = true;
+							}
+						}
+
+						if (m_Keys[264].pressed) // Down arrow
+						{
+							if (m_PickedConsoleHistoryCommand < m_ConsoleHistory.size() - 1)
+							{
+								m_PickedConsoleHistoryCommand++;
+								moved = true;
+							}
+						}
+
+						if (moved)
+						{
+							m_TextInput = m_ConsoleHistory[m_PickedConsoleHistoryCommand].command;
+							m_CursorPos = m_TextInput.length();
+						}
+					}
 				}
 			}
 
 			if (!OnUserUpdate(deltaTime))
 				m_IsAppRunning = false;
+
+			if (m_ShowConsole)
+			{	
+				// Too sloooooowwww!!!
+				/*SetPixelMode(def::Pixel::Mode::ALPHA);
+
+				for (int y = 0; y < m_ScreenSize.y; y++)
+					for (int x = 0; x < m_ScreenSize.x; x++)
+						Draw(x, y, m_ConsoleBackgroundColour);
+
+				SetPixelMode(def::Pixel::Mode::DEFAULT);*/
+
+				for (int i = 0; i < m_ConsoleHistory.size(); i++)
+				{
+					auto& entry = m_ConsoleHistory[i];
+
+					DrawString(10, 10 + i * 20, "> " + entry.command);
+					DrawString(10, 20 + i * 20, entry.output, entry.outputColour);
+				}
+
+				int cursorX = GetCursorPos() * 8 + 36;
+				int inputY = ScreenHeight() - 18;
+
+				DrawString(20, inputY, "> " + GetCapturedText(), def::YELLOW);
+				DrawLine(cursorX, inputY, cursorX, inputY + 8, def::RED);
+			}
 
 			ClearBuffer(BLACK);
 
@@ -1800,6 +1904,16 @@ namespace def
 	bool GameEngine::OnAfterDraw()
 	{
 		return true;
+	}
+
+	void GameEngine::OnTextCapturingComplete(const std::string& text)
+	{
+
+	}
+
+	bool GameEngine::OnConsoleCommand(const std::string& command, std::stringstream& output, def::Pixel& colour)
+	{
+		return false;
 	}
 
 	bool GameEngine::Construct(int screenWidth, int screenHeight, int pixelWidth, int pixelHeight, bool fullScreen, bool vsync, bool dirtyPixel)
@@ -3039,6 +3153,23 @@ namespace def
 	{
 		m_TextInput.clear();
 		m_CursorPos = 0;
+	}
+
+	void GameEngine::ShowConsole(bool enable)
+	{
+		m_ShowConsole = enable;
+		m_CaptureText = enable;
+	}
+
+	/*void GameEngine::SetConsoleBackgroundColour(const Pixel& col)
+	{
+		m_ConsoleBackgroundColour = col;
+	}*/
+
+	void GameEngine::ClearConsole()
+	{
+		m_PickedConsoleHistoryCommand = 0;
+		m_ConsoleHistory.clear();
 	}
 
 	bool GameEngine::IsCapturingText() const
