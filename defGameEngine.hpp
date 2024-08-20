@@ -1787,12 +1787,15 @@ namespace def
 
 				SetPixelMode(def::Pixel::Mode::DEFAULT);*/
 
-				for (int i = 0; i < m_ConsoleHistory.size(); i++)
+				int printCount = std::min(ScreenHeight() / 22, (int)m_ConsoleHistory.size());
+				int start = m_ConsoleHistory.size() - printCount;
+
+				for (int i = start; i < m_ConsoleHistory.size(); i++)
 				{
 					auto& entry = m_ConsoleHistory[i];
 
-					DrawString(10, 10 + i * 20, "> " + entry.command);
-					DrawString(10, 20 + i * 20, entry.output, entry.outputColour);
+					DrawString(10, 10 + (i - start) * 20, "> " + entry.command);
+					DrawString(10, 20 + (i - start) * 20, entry.output, entry.outputColour);
 				}
 
 				int cursorX = GetCursorPos() * 8 + 36;
@@ -2635,8 +2638,8 @@ namespace def
 
 	void GameEngine::DrawSprite(int x, int y, const Sprite* sprite)
 	{
-		for (int i = 0; i < sprite->size.x; i++)
-			for (int j = 0; j < sprite->size.y; j++)
+		for (int j = 0; j < sprite->size.y; j++)
+			for (int i = 0; i < sprite->size.x; i++)
 				Draw(x + i, y + j, sprite->GetPixel(i, j));
 	}
 
@@ -2977,8 +2980,13 @@ namespace def
 	WindowState GameEngine::GetWindowState() const
 	{
 		int f = 0;
-		if (glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED)) f |= static_cast<int>(WindowState::MAXIMIZED);
-		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED)) f |= static_cast<int>(WindowState::FOCUSED);
+
+		if (glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED))
+			f |= static_cast<int>(WindowState::MAXIMIZED);
+
+		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED))
+			f |= static_cast<int>(WindowState::FOCUSED);
+		
 		return static_cast<WindowState>(f);
 	}
 
