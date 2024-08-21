@@ -341,7 +341,8 @@ namespace def
 		{
 			DEFAULT,
 			FAN,
-			STRIP
+			STRIP,
+			WIREFRAME
 		};
 
 		Texture(Sprite* sprite);
@@ -467,42 +468,9 @@ namespace def
 		Pixel (*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
 
 	public:
-		inline static GameEngine* s_Engine;
-		inline static std::unordered_map<def::Key, std::pair<char, char>> s_KeyboardUS =
-		{
-			{ def::Key::SPACE, { ' ', ' ' } }, { def::Key::APOSTROPHE, { '\'', '"' } },
-			{ def::Key::COMMA, { ',', '<' } }, { def::Key::MINUS, { '-', '_' } },
-			{ def::Key::PERIOD, { '.', '>' } }, { def::Key::SLASH, { '/', '?' } },
-			{ def::Key::K0, { '0', ')' } }, { def::Key::K1, { '1', '!' } },
-			{ def::Key::K2, { '2', '@' } }, { def::Key::K3, { '3', '#' } },
-			{ def::Key::K4, { '4', '$' } }, { def::Key::K5, { '5', '%' } },
-			{ def::Key::K6, { '6', '^' } }, { def::Key::K7, { '7', '&' } },
-			{ def::Key::K8, { '8', '*' } }, { def::Key::K9, { '9', '(' } },
-			{ def::Key::SEMICOLON, { ';', ':' } }, { def::Key::EQUAL, { '=', '+' } },
-			{ def::Key::A, { 'a', 'A' } }, { def::Key::B, { 'b', 'B' } },
-			{ def::Key::C, { 'c', 'C' } }, { def::Key::D, { 'd', 'D' } },
-			{ def::Key::E, { 'e', 'E' } }, { def::Key::F, { 'f', 'F' } },
-			{ def::Key::G, { 'g', 'G' } }, { def::Key::H, { 'h', 'H' } },
-			{ def::Key::I, { 'i', 'I' } }, { def::Key::J, { 'j', 'J' } },
-			{ def::Key::K, { 'k', 'K' } }, { def::Key::L, { 'l', 'L' } },
-			{ def::Key::M, { 'm', 'M' } }, { def::Key::N, { 'n', 'N' } },
-			{ def::Key::O, { 'o', 'O' } }, { def::Key::P, { 'p', 'P' } },
-			{ def::Key::Q, { 'q', 'Q' } }, { def::Key::R, { 'r', 'R' } },
-			{ def::Key::S, { 's', 'S' } }, { def::Key::T, { 't', 'T' } },
-			{ def::Key::U, { 'u', 'U' } }, { def::Key::V, { 'v', 'V' } },
-			{ def::Key::W, { 'w', 'W' } }, { def::Key::X, { 'x', 'X' } },
-			{ def::Key::Y, { 'y', 'Y' } }, { def::Key::Z, { 'z', 'Z' } },
-			{ def::Key::LEFT_BRACKET, { '[', '{' } }, { def::Key::BACKSLASH, { '\\', '|' } },
-			{ def::Key::RIGHT_BRACKET, { ']', '}' } }, { def::Key::GRAVE_ACCENT, { '`', '~' } },
-			{ def::Key::NP_0, { '0', '0' } }, { def::Key::NP_1, { '1', '1' } },
-			{ def::Key::NP_2, { '2', '2' } }, { def::Key::NP_3, { '3', '3' } },
-			{ def::Key::NP_4, { '4', '4' } }, { def::Key::NP_5, { '5', '5' } },
-			{ def::Key::NP_6, { '6', '6' } }, { def::Key::NP_7, { '7', '7' } },
-			{ def::Key::NP_8, { '8', '8' } }, { def::Key::NP_9, { '9', '9' } },
-			{ def::Key::NP_DIVIDE, { '/', '/' } }, { def::Key::NP_MULTIPLY, { '*', '*' } },
-			{ def::Key::NP_SUBTRACT, { '-', '-' } }, { def::Key::NP_ADD, { '+', '+' } },
-			{ def::Key::NP_EQUAL, { '=', '+' } }
-		};
+		static GameEngine* s_Engine;
+		static std::unordered_map<def::Key, std::pair<char, char>> s_KeyboardUS;
+		inline static std::vector<vf2d> s_UnitCircle;
 
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float deltaTime) = 0;
@@ -520,6 +488,7 @@ namespace def
 
 		static void DrawQuad(const Pixel& tint);
 		static void DrawTexture(const TextureInstance& texture);
+		static void MakeUnitCircle(std::vector<vf2d>& circle, const size_t verts);
 
 		static void ErrorCallback(int errorCode, const char* description);
 		static void DropCallback(GLFWwindow* window, int pathCount, const char* paths[]);
@@ -588,6 +557,16 @@ namespace def
 
 		virtual void Clear(const Pixel& col);
 
+		void DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<def::Pixel>& cols, Texture::Structure structure);
+
+		void DrawTextureLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col = WHITE);
+		void DrawTextureTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col = WHITE);
+		void FillTextureTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col = WHITE);
+		void DrawTextureRectangle(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		void FillTextureRectangle(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		void DrawTextureCircle(const vi2d& pos, int radius, const Pixel& col = WHITE);
+		void FillTextureCircle(const vi2d& pos, int radius, const Pixel& col = WHITE);
+
 		KeyState GetKey(Key key) const;
 		KeyState GetMouse(Button button) const;
 
@@ -634,16 +613,55 @@ namespace def
 		std::string GetCapturedText() const;
 		size_t GetCursorPos() const;
 
-		void ClearCapturedText();
-
 		void ShowConsole(bool enable);
+		void ClearCapturedText();
+		void ClearConsole();
+
 		//void SetConsoleBackgroundColour(const Pixel& col);
 
-		void ClearConsole();
+		bool IsConsoleEnabled() const;
 	};
 
 #ifdef DGE_APPLICATION
 #undef DGE_APPLICATION
+
+	std::unordered_map<def::Key, std::pair<char, char>> GameEngine::s_KeyboardUS =
+	{
+		{ def::Key::SPACE, { ' ', ' ' } }, { def::Key::APOSTROPHE, { '\'', '"' } },
+		{ def::Key::COMMA, { ',', '<' } }, { def::Key::MINUS, { '-', '_' } },
+		{ def::Key::PERIOD, { '.', '>' } }, { def::Key::SLASH, { '/', '?' } },
+		{ def::Key::K0, { '0', ')' } }, { def::Key::K1, { '1', '!' } },
+		{ def::Key::K2, { '2', '@' } }, { def::Key::K3, { '3', '#' } },
+		{ def::Key::K4, { '4', '$' } }, { def::Key::K5, { '5', '%' } },
+		{ def::Key::K6, { '6', '^' } }, { def::Key::K7, { '7', '&' } },
+		{ def::Key::K8, { '8', '*' } }, { def::Key::K9, { '9', '(' } },
+		{ def::Key::SEMICOLON, { ';', ':' } }, { def::Key::EQUAL, { '=', '+' } },
+		{ def::Key::A, { 'a', 'A' } }, { def::Key::B, { 'b', 'B' } },
+		{ def::Key::C, { 'c', 'C' } }, { def::Key::D, { 'd', 'D' } },
+		{ def::Key::E, { 'e', 'E' } }, { def::Key::F, { 'f', 'F' } },
+		{ def::Key::G, { 'g', 'G' } }, { def::Key::H, { 'h', 'H' } },
+		{ def::Key::I, { 'i', 'I' } }, { def::Key::J, { 'j', 'J' } },
+		{ def::Key::K, { 'k', 'K' } }, { def::Key::L, { 'l', 'L' } },
+		{ def::Key::M, { 'm', 'M' } }, { def::Key::N, { 'n', 'N' } },
+		{ def::Key::O, { 'o', 'O' } }, { def::Key::P, { 'p', 'P' } },
+		{ def::Key::Q, { 'q', 'Q' } }, { def::Key::R, { 'r', 'R' } },
+		{ def::Key::S, { 's', 'S' } }, { def::Key::T, { 't', 'T' } },
+		{ def::Key::U, { 'u', 'U' } }, { def::Key::V, { 'v', 'V' } },
+		{ def::Key::W, { 'w', 'W' } }, { def::Key::X, { 'x', 'X' } },
+		{ def::Key::Y, { 'y', 'Y' } }, { def::Key::Z, { 'z', 'Z' } },
+		{ def::Key::LEFT_BRACKET, { '[', '{' } }, { def::Key::BACKSLASH, { '\\', '|' } },
+		{ def::Key::RIGHT_BRACKET, { ']', '}' } }, { def::Key::GRAVE_ACCENT, { '`', '~' } },
+		{ def::Key::NP_0, { '0', '0' } }, { def::Key::NP_1, { '1', '1' } },
+		{ def::Key::NP_2, { '2', '2' } }, { def::Key::NP_3, { '3', '3' } },
+		{ def::Key::NP_4, { '4', '4' } }, { def::Key::NP_5, { '5', '5' } },
+		{ def::Key::NP_6, { '6', '6' } }, { def::Key::NP_7, { '7', '7' } },
+		{ def::Key::NP_8, { '8', '8' } }, { def::Key::NP_9, { '9', '9' } },
+		{ def::Key::NP_DIVIDE, { '/', '/' } }, { def::Key::NP_MULTIPLY, { '*', '*' } },
+		{ def::Key::NP_SUBTRACT, { '-', '-' } }, { def::Key::NP_ADD, { '+', '+' } },
+		{ def::Key::NP_EQUAL, { '=', '+' } }
+	};
+
+	GameEngine* GameEngine::s_Engine = nullptr;
 
 	template <class... T>
 	void Assert(bool expr, T&&... args)
@@ -654,7 +672,7 @@ namespace def
 			(values.emplace_back(std::move(args)), ...);
 
 			for (const auto& val : values)
-				std::cout << val << std::endl;
+				std::cerr << val << std::endl;
 
 			std::cerr << std::endl;
 
@@ -665,10 +683,9 @@ namespace def
 #ifndef DGE_IGNORE_VEC2D
 
 	template <class T>
-	constexpr vec2d<T>::vec2d(const T& x, const T& y)
+	constexpr vec2d<T>::vec2d(const T& x, const T& y) : x(x), y(y)
 	{
-		this->x = x;
-		this->y = y;
+
 	}
 
 	template <class T1, class T2>
@@ -1564,6 +1581,8 @@ namespace def
 		s_Engine = this;
 
 		m_PickedConsoleHistoryCommand = 0;
+
+		MakeUnitCircle(s_UnitCircle, 64);
 	}
 
 	GameEngine::~GameEngine()
@@ -1798,11 +1817,11 @@ namespace def
 					DrawString(10, 20 + (i - start) * 20, entry.output, entry.outputColour);
 				}
 
-				int cursorX = GetCursorPos() * 8 + 36;
-				int inputY = ScreenHeight() - 18;
+				int x = GetCursorPos() * 8 + 36;
+				int y = ScreenHeight() - 18;
 
-				DrawString(20, inputY, "> " + GetCapturedText(), def::YELLOW);
-				DrawLine(cursorX, inputY, cursorX, inputY + 8, def::RED);
+				DrawString(20, y, "> " + GetCapturedText(), def::YELLOW);
+				DrawLine(x, y, x, y + 8, def::RED);
 			}
 
 			ClearBuffer(BLACK);
@@ -1849,6 +1868,7 @@ namespace def
 		case Texture::Structure::DEFAULT:	glBegin(GL_TRIANGLES);		break;
 		case Texture::Structure::FAN:		glBegin(GL_TRIANGLE_FAN);	break;
 		case Texture::Structure::STRIP:		glBegin(GL_TRIANGLE_STRIP);	break;
+		case Texture::Structure::WIREFRAME:	glBegin(GL_LINE_LOOP);		break;
 		}
 
 		for (int i = 0; i < texInst.points; i++)
@@ -1859,6 +1879,20 @@ namespace def
 		}
 
 		glEnd();
+	}
+
+	void GameEngine::MakeUnitCircle(std::vector<vf2d>& circle, const size_t verts)
+	{
+		circle.resize(verts);
+		float step = 2.0f * 3.14159f / float(verts - 1);
+
+		for (size_t i = 0; i < verts; i++)
+		{
+			float angle = step * (float)i;
+
+			circle[i].x = cos(angle);
+			circle[i].y = sin(angle);
+		}
 	}
 
 	void GameEngine::DrawQuad(const Pixel& tint)
@@ -2564,7 +2598,8 @@ namespace def
 				x1--;
 				err += dx += b1;
 			}
-		} while (x <= x1);
+		}
+		while (x <= x1);
 
 		while (y - y1 < b)
 		{
@@ -2932,6 +2967,43 @@ namespace def
 		m_DrawTarget->sprite->SetPixelData(col);
 	}
 
+	void GameEngine::DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<def::Pixel>& cols, Texture::Structure structure)
+	{
+		TextureInstance texInst;
+
+		texInst.texture = nullptr;
+		texInst.points = verts.size();
+		texInst.structure = structure;
+
+		texInst.tint.resize(verts.size());
+
+		if (cols.size() > 1)
+		{
+			std::copy(
+				cols.begin(),
+				cols.end(),
+				texInst.tint.begin());
+		}
+		else
+		{
+			std::fill(
+				texInst.tint.begin(),
+				texInst.tint.end(),
+				cols[0]);
+		}
+
+		texInst.uv.resize(verts.size());
+		texInst.vertices.resize(verts.size());
+
+		for (size_t i = 0; i < verts.size(); i++)
+		{
+			texInst.vertices[i].x = verts[i].x * m_InvScreenSize.x * 2.0f - 1.0f;
+			texInst.vertices[i].y = 1.0f - verts[i].y * m_InvScreenSize.y * 2.0f;
+		}
+
+		m_Textures.push_back(texInst);
+	}
+
 	KeyState GameEngine::GetKey(Key k) const { return m_Keys[static_cast<size_t>(k)]; }
 	KeyState GameEngine::GetMouse(Button k) const { return m_Mouse[static_cast<size_t>(k)]; }
 
@@ -2946,7 +3018,7 @@ namespace def
 
 	bool GameEngine::IsFocused() const
 	{
-		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) == 1;
+		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) == GLFW_TRUE;
 	}
 
 	void GameEngine::SetIcon(std::string_view fileName)
@@ -3028,6 +3100,51 @@ namespace def
 	void GameEngine::DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col)
 	{
 		DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, col);
+	}
+
+	void GameEngine::DrawTextureLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col)
+	{
+		DrawTexturePolygon({ pos1, pos2 }, { col, col }, Texture::Structure::WIREFRAME);
+	}
+
+	void GameEngine::DrawTextureTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col)
+	{
+		DrawTexturePolygon({ pos1, pos2, pos3 }, { col, col, col }, Texture::Structure::WIREFRAME);
+	}
+
+	void GameEngine::FillTextureTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col)
+	{
+		DrawTexturePolygon({ pos1, pos2, pos3 }, { col, col, col }, Texture::Structure::FAN);
+	}
+
+	void GameEngine::DrawTextureRectangle(const vi2d& pos, const vi2d& size, const Pixel& col)
+	{
+		DrawTexturePolygon({ pos, { float(pos.x + size.x), (float)pos.y }, pos + size, { (float)pos.x, float(pos.y + size.y) } }, { col, col, col, col }, Texture::Structure::WIREFRAME);
+	}
+
+	void GameEngine::FillTextureRectangle(const vi2d& pos, const vi2d& size, const Pixel& col)
+	{
+		DrawTexturePolygon({ pos, { float(pos.x + size.x), (float)pos.y }, pos + size, { (float)pos.x, float(pos.y + size.y) } }, { col, col, col, col }, Texture::Structure::FAN);
+	}
+
+	void GameEngine::DrawTextureCircle(const vi2d& pos, int radius, const Pixel& col)
+	{
+		std::vector<vf2d> verts(s_UnitCircle.size());
+
+		for (size_t i = 0; i < verts.size(); i++)
+			verts[i] = s_UnitCircle[i] * (float)radius + pos;
+
+		DrawTexturePolygon(verts, { col }, Texture::Structure::WIREFRAME);
+	}
+
+	void GameEngine::FillTextureCircle(const vi2d& pos, int radius, const Pixel& col)
+	{
+		std::vector<vf2d> verts(s_UnitCircle.size());
+
+		for (size_t i = 0; i < verts.size(); i++)
+			verts[i] = s_UnitCircle[i] * (float)radius + pos;
+
+		DrawTexturePolygon(verts, { col }, Texture::Structure::FAN);
 	}
 
 	void GameEngine::DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col)
@@ -3183,6 +3300,11 @@ namespace def
 	bool GameEngine::IsCapturingText() const
 	{
 		return m_CaptureText;
+	}
+
+	bool GameEngine::IsConsoleEnabled() const
+	{
+		return m_ShowConsole;
 	}
 
 #endif
