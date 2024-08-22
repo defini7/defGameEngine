@@ -73,7 +73,7 @@ public:
     bool OnUserCreate() override
     {
         vCellSize = { 32, 32 };
-        vFieldSize = ScreenSize() / vCellSize;
+        vFieldSize = GetScreenSize() / vCellSize;
 
         vecCells.resize(vFieldSize.x * vFieldSize.y);
 
@@ -112,7 +112,7 @@ public:
     {
         if (GetMouse(def::Button::LEFT).pressed)
         {
-            def::vi2d vMouse = GetMouse() / vCellSize;
+            def::vi2d vMouse = GetMousePos() / vCellSize;
 
             if (vMouse.x >= 0 && vMouse.y >= 0 && vMouse.x < vFieldSize.x && vMouse.y < vFieldSize.y)
             {
@@ -221,7 +221,9 @@ public:
 int main()
 {
     Checkers demo;
-    demo.Construct(256, 256, 2, 2);
-    demo.Run();
+
+    if (demo.Construct(256, 256, 2, 2))
+        demo.Run();
+
     return 0;
 }
