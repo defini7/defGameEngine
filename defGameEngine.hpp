@@ -439,7 +439,6 @@ namespace def
 
 		//Pixel m_ConsoleBackgroundColour;
 		Pixel m_ClearBufferColour;
-		Pixel m_Tint;
 
 		Texture::Structure m_TextureStructure;
 		Pixel::Mode m_PixelMode;
@@ -480,7 +479,7 @@ namespace def
 		virtual void OnTextCapturingComplete(const std::string& text);
 		virtual bool OnConsoleCommand(const std::string& command, std::stringstream& output, def::Pixel& colour);
 
-		bool Construct(int screenWidth, int screenHeight, int pixelWidth, int pixelHeight, bool fullScreen = false, bool vsync = false, bool dirtyPixel = false);
+		bool Construct(int screenWidth, int screenHeight, int pixelWidth, int pixelHeight, bool fullScreen = false, bool vsync = false, bool dirtyPixel = true);
 		void Run();
 
 	private:
@@ -558,6 +557,7 @@ namespace def
 
 		virtual void Clear(const Pixel& col);
 		void ClearTexture(const Pixel& col);
+		void ClearBuffer(const Pixel& col);
 
 		void DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<def::Pixel>& cols, Texture::Structure structure);
 
@@ -608,9 +608,6 @@ namespace def
 
 		void SetTextureStructure(Texture::Structure textureStructure);
 		Texture::Structure GetTextureStructure() const;
-
-		void ClearBuffer(const Pixel& col);
-		void SetTint(const Pixel& tint);
 
 		void SetShader(Pixel (*func)(const vi2d& pos, const Pixel& previous, const Pixel& current));
 
@@ -1572,8 +1569,7 @@ namespace def
 		m_Font = nullptr;
 		m_DrawTarget = nullptr;
 
-		m_Tint = { 255, 255, 255, 255 };
-		m_ClearBufferColour = { 0, 0, 0, 255 };
+		m_ClearBufferColour = { 255, 255, 255, 255 };
 		//m_ConsoleBackgroundColour = { 0, 0, 255, 100 };
 
 		m_PixelMode = Pixel::Mode::DEFAULT;
@@ -1826,8 +1822,6 @@ namespace def
 
 			DrawQuad(m_ClearBufferColour);
 
-			m_ClearBufferColour = def::BLACK;
-
 			for (const auto& texture : m_Textures)
 				DrawTexture(texture);
 
@@ -1836,10 +1830,9 @@ namespace def
 			if (!OnAfterDraw())
 				m_IsAppRunning = false;
 
-			/*glfwSwapBuffers(m_Window);
+			glfwSwapBuffers(m_Window);
 
 			if (m_IsVSync)
-				*/
 				glFlush();
 
 			glfwPollEvents();
@@ -3251,11 +3244,6 @@ namespace def
 	{
 		glClearColor((float)col.r / 255.0f, (float)col.g / 255.0f, (float)col.b / 255.0f, (float)col.a / 255.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-	}
-
-	void GameEngine::SetTint(const Pixel& col)
-	{
-		m_Tint = col;
 	}
 
 	void GameEngine::ClearTexture(const Pixel& col)
