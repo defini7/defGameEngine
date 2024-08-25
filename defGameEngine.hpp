@@ -166,7 +166,7 @@ namespace def
 	template <class T>
 	struct vec2d
 	{
-		static_assert(std::is_arithmetic<T>::value, "def::vec2d<T> must be numeric");
+		static_assert(std::is_arithmetic<T>::value, "vec2d<T> must be numeric");
 
 		constexpr vec2d() = default;
 		constexpr vec2d(const T& x, const T& y);
@@ -430,7 +430,8 @@ namespace def
 
 		vi2d m_MousePos;
 
-		Sprite* m_Font;
+		Graphic m_Font;
+		int m_TabSize = 4;
 
 		Graphic* m_DrawTarget;
 		Graphic* m_Screen;
@@ -447,7 +448,7 @@ namespace def
 
 		std::string m_TextInput;
 		size_t m_CursorPos;
-		
+
 		bool m_CaptureText;
 		bool m_ShowConsole;
 		bool m_Caps;
@@ -456,28 +457,28 @@ namespace def
 		{
 			std::string command;
 			std::string output;
-			
-			def::Pixel outputColour;
+
+			Pixel outputColour;
 		};
 
 		std::vector<ConsoleEntry> m_ConsoleHistory;
 		size_t m_PickedConsoleHistoryCommand;
-		
+
 		float m_TickTimer;
 
-		Pixel (*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
+		Pixel(*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
 
 	public:
 		static GameEngine* s_Engine;
-		static std::unordered_map<def::Key, std::pair<char, char>> s_KeyboardUS;
+		static std::unordered_map<Key, std::pair<char, char>> s_KeyboardUS;
 		inline static std::vector<vf2d> s_UnitCircle;
 
 		virtual bool OnUserCreate() = 0;
 		virtual bool OnUserUpdate(float deltaTime) = 0;
 		virtual bool OnAfterDraw();
-		
+
 		virtual void OnTextCapturingComplete(const std::string& text);
-		virtual bool OnConsoleCommand(const std::string& command, std::stringstream& output, def::Pixel& colour);
+		virtual bool OnConsoleCommand(const std::string& command, std::stringstream& output, Pixel& colour);
 
 		bool Construct(int screenWidth, int screenHeight, int pixelWidth, int pixelHeight, bool fullScreen = false, bool vsync = false, bool dirtyPixel = true);
 		void Run();
@@ -552,14 +553,14 @@ namespace def
 		void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
 		virtual void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
 
-		void DrawString(const vi2d& pos, std::string_view text, const Pixel& col = WHITE);
-		virtual void DrawString(int x, int y, std::string_view text, const Pixel& col = WHITE);
+		void DrawString(const vi2d& pos, std::string_view text, const Pixel& col = WHITE, const vi2d& scale = { 1, 1 });
+		virtual void DrawString(int x, int y, std::string_view text, const Pixel& col = WHITE, int scaleX = 1, int scaleY = 1);
 
 		virtual void Clear(const Pixel& col);
 		void ClearTexture(const Pixel& col);
 		void ClearBuffer(const Pixel& col);
 
-		void DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<def::Pixel>& cols, Texture::Structure structure);
+		void DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<Pixel>& cols, Texture::Structure structure);
 
 		void DrawTextureLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col = WHITE);
 
@@ -573,6 +574,8 @@ namespace def
 
 		void GradientTextureTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col1 = WHITE, const Pixel& col2 = WHITE, const Pixel& col3 = WHITE);
 		void GradientTextureRectangle(const vi2d& pos, const vi2d& size, const Pixel& colTL = WHITE, const Pixel& colTR = WHITE, const Pixel& colBR = WHITE, const Pixel& colBL = WHITE);
+
+		void DrawTextureString(const vi2d& pos, std::string_view text, const Pixel& col, const vi2d& scale = { 1, 1 });
 
 		KeyState GetKey(Key key) const;
 		KeyState GetMouse(Button button) const;
@@ -609,11 +612,11 @@ namespace def
 		void SetTextureStructure(Texture::Structure textureStructure);
 		Texture::Structure GetTextureStructure() const;
 
-		void SetShader(Pixel (*func)(const vi2d& pos, const Pixel& previous, const Pixel& current));
+		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& previous, const Pixel& current));
 
 		void CaptureText(bool enable);
 		bool IsCapturingText() const;
-		
+
 		std::string GetCapturedText() const;
 		size_t GetCursorPos() const;
 
@@ -629,40 +632,40 @@ namespace def
 #ifdef DGE_APPLICATION
 #undef DGE_APPLICATION
 
-	std::unordered_map<def::Key, std::pair<char, char>> GameEngine::s_KeyboardUS =
+	std::unordered_map<Key, std::pair<char, char>> GameEngine::s_KeyboardUS =
 	{
-		{ def::Key::SPACE, { ' ', ' ' } }, { def::Key::APOSTROPHE, { '\'', '"' } },
-		{ def::Key::COMMA, { ',', '<' } }, { def::Key::MINUS, { '-', '_' } },
-		{ def::Key::PERIOD, { '.', '>' } }, { def::Key::SLASH, { '/', '?' } },
-		{ def::Key::K0, { '0', ')' } }, { def::Key::K1, { '1', '!' } },
-		{ def::Key::K2, { '2', '@' } }, { def::Key::K3, { '3', '#' } },
-		{ def::Key::K4, { '4', '$' } }, { def::Key::K5, { '5', '%' } },
-		{ def::Key::K6, { '6', '^' } }, { def::Key::K7, { '7', '&' } },
-		{ def::Key::K8, { '8', '*' } }, { def::Key::K9, { '9', '(' } },
-		{ def::Key::SEMICOLON, { ';', ':' } }, { def::Key::EQUAL, { '=', '+' } },
-		{ def::Key::A, { 'a', 'A' } }, { def::Key::B, { 'b', 'B' } },
-		{ def::Key::C, { 'c', 'C' } }, { def::Key::D, { 'd', 'D' } },
-		{ def::Key::E, { 'e', 'E' } }, { def::Key::F, { 'f', 'F' } },
-		{ def::Key::G, { 'g', 'G' } }, { def::Key::H, { 'h', 'H' } },
-		{ def::Key::I, { 'i', 'I' } }, { def::Key::J, { 'j', 'J' } },
-		{ def::Key::K, { 'k', 'K' } }, { def::Key::L, { 'l', 'L' } },
-		{ def::Key::M, { 'm', 'M' } }, { def::Key::N, { 'n', 'N' } },
-		{ def::Key::O, { 'o', 'O' } }, { def::Key::P, { 'p', 'P' } },
-		{ def::Key::Q, { 'q', 'Q' } }, { def::Key::R, { 'r', 'R' } },
-		{ def::Key::S, { 's', 'S' } }, { def::Key::T, { 't', 'T' } },
-		{ def::Key::U, { 'u', 'U' } }, { def::Key::V, { 'v', 'V' } },
-		{ def::Key::W, { 'w', 'W' } }, { def::Key::X, { 'x', 'X' } },
-		{ def::Key::Y, { 'y', 'Y' } }, { def::Key::Z, { 'z', 'Z' } },
-		{ def::Key::LEFT_BRACKET, { '[', '{' } }, { def::Key::BACKSLASH, { '\\', '|' } },
-		{ def::Key::RIGHT_BRACKET, { ']', '}' } }, { def::Key::GRAVE_ACCENT, { '`', '~' } },
-		{ def::Key::NP_0, { '0', '0' } }, { def::Key::NP_1, { '1', '1' } },
-		{ def::Key::NP_2, { '2', '2' } }, { def::Key::NP_3, { '3', '3' } },
-		{ def::Key::NP_4, { '4', '4' } }, { def::Key::NP_5, { '5', '5' } },
-		{ def::Key::NP_6, { '6', '6' } }, { def::Key::NP_7, { '7', '7' } },
-		{ def::Key::NP_8, { '8', '8' } }, { def::Key::NP_9, { '9', '9' } },
-		{ def::Key::NP_DIVIDE, { '/', '/' } }, { def::Key::NP_MULTIPLY, { '*', '*' } },
-		{ def::Key::NP_SUBTRACT, { '-', '-' } }, { def::Key::NP_ADD, { '+', '+' } },
-		{ def::Key::NP_EQUAL, { '=', '+' } }, { def::Key::TAB, { '\t', '\t' } }
+		{ Key::SPACE, { ' ', ' ' } }, { Key::APOSTROPHE, { '\'', '"' } },
+		{ Key::COMMA, { ',', '<' } }, { Key::MINUS, { '-', '_' } },
+		{ Key::PERIOD, { '.', '>' } }, { Key::SLASH, { '/', '?' } },
+		{ Key::K0, { '0', ')' } }, { Key::K1, { '1', '!' } },
+		{ Key::K2, { '2', '@' } }, { Key::K3, { '3', '#' } },
+		{ Key::K4, { '4', '$' } }, { Key::K5, { '5', '%' } },
+		{ Key::K6, { '6', '^' } }, { Key::K7, { '7', '&' } },
+		{ Key::K8, { '8', '*' } }, { Key::K9, { '9', '(' } },
+		{ Key::SEMICOLON, { ';', ':' } }, { Key::EQUAL, { '=', '+' } },
+		{ Key::A, { 'a', 'A' } }, { Key::B, { 'b', 'B' } },
+		{ Key::C, { 'c', 'C' } }, { Key::D, { 'd', 'D' } },
+		{ Key::E, { 'e', 'E' } }, { Key::F, { 'f', 'F' } },
+		{ Key::G, { 'g', 'G' } }, { Key::H, { 'h', 'H' } },
+		{ Key::I, { 'i', 'I' } }, { Key::J, { 'j', 'J' } },
+		{ Key::K, { 'k', 'K' } }, { Key::L, { 'l', 'L' } },
+		{ Key::M, { 'm', 'M' } }, { Key::N, { 'n', 'N' } },
+		{ Key::O, { 'o', 'O' } }, { Key::P, { 'p', 'P' } },
+		{ Key::Q, { 'q', 'Q' } }, { Key::R, { 'r', 'R' } },
+		{ Key::S, { 's', 'S' } }, { Key::T, { 't', 'T' } },
+		{ Key::U, { 'u', 'U' } }, { Key::V, { 'v', 'V' } },
+		{ Key::W, { 'w', 'W' } }, { Key::X, { 'x', 'X' } },
+		{ Key::Y, { 'y', 'Y' } }, { Key::Z, { 'z', 'Z' } },
+		{ Key::LEFT_BRACKET, { '[', '{' } }, { Key::BACKSLASH, { '\\', '|' } },
+		{ Key::RIGHT_BRACKET, { ']', '}' } }, { Key::GRAVE_ACCENT, { '`', '~' } },
+		{ Key::NP_0, { '0', '0' } }, { Key::NP_1, { '1', '1' } },
+		{ Key::NP_2, { '2', '2' } }, { Key::NP_3, { '3', '3' } },
+		{ Key::NP_4, { '4', '4' } }, { Key::NP_5, { '5', '5' } },
+		{ Key::NP_6, { '6', '6' } }, { Key::NP_7, { '7', '7' } },
+		{ Key::NP_8, { '8', '8' } }, { Key::NP_9, { '9', '9' } },
+		{ Key::NP_DIVIDE, { '/', '/' } }, { Key::NP_MULTIPLY, { '*', '*' } },
+		{ Key::NP_SUBTRACT, { '-', '-' } }, { Key::NP_ADD, { '+', '+' } },
+		{ Key::NP_EQUAL, { '=', '+' } }, { Key::TAB, { '\t', '\t' } }
 	};
 
 	GameEngine* GameEngine::s_Engine = nullptr;
@@ -1454,7 +1457,7 @@ namespace def
 
 		}
 
-		return def::NONE;
+		return NONE;
 	}
 
 	Texture::Texture(Sprite* sprite)
@@ -1516,7 +1519,7 @@ namespace def
 			GL_UNSIGNED_BYTE,
 			sprite->pixels.data()
 		);
-		
+
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
@@ -1566,7 +1569,6 @@ namespace def
 		m_Window = nullptr;
 		m_Monitor = nullptr;
 
-		m_Font = nullptr;
 		m_DrawTarget = nullptr;
 
 		m_ClearBufferColour = { 255, 255, 255, 255 };
@@ -1597,7 +1599,6 @@ namespace def
 	void GameEngine::Destroy()
 	{
 		delete m_Screen;
-		delete m_Font;
 
 		glfwDestroyWindow(m_Window);
 		glfwTerminate();
@@ -1636,13 +1637,13 @@ namespace def
 
 			float deltaTime = std::chrono::duration<float>(endTime - startTime).count();
 			startTime = endTime;
-			
+
 			m_TickTimer += deltaTime;
 
 			if (glfwWindowShouldClose(m_Window))
 				m_IsAppRunning = false;
 
-			auto Scan = [&](def::KeyState* data, bool* newState, bool* oldState, size_t count, int (*Get)(GLFWwindow*, int))
+			auto Scan = [&](KeyState* data, bool* newState, bool* oldState, size_t count, int (*Get)(GLFWwindow*, int))
 				{
 					for (int i = 0; i < count; i++)
 					{
@@ -1651,7 +1652,7 @@ namespace def
 						data[i].pressed = false;
 						data[i].released = false;
 
-						if (newState[i] !=  oldState[i])
+						if (newState[i] != oldState[i])
 						{
 							if (newState[i])
 							{
@@ -1733,7 +1734,7 @@ namespace def
 					if (m_ShowConsole)
 					{
 						std::stringstream output;
-						def::Pixel colour = def::WHITE;
+						Pixel colour = WHITE;
 
 						if (OnConsoleCommand(m_TextInput, output, colour))
 						{
@@ -1784,15 +1785,15 @@ namespace def
 				m_IsAppRunning = false;
 
 			if (m_ShowConsole)
-			{	
+			{
 				// Too sloooooowwww!!!
-				/*SetPixelMode(def::Pixel::Mode::ALPHA);
+				/*SetPixelMode(Pixel::Mode::ALPHA);
 
 				for (int y = 0; y < m_ScreenSize.y; y++)
 					for (int x = 0; x < m_ScreenSize.x; x++)
 						Draw(x, y, m_ConsoleBackgroundColour);
 
-				SetPixelMode(def::Pixel::Mode::DEFAULT);*/
+				SetPixelMode(Pixel::Mode::DEFAULT);*/
 
 				int printCount = std::min(ScreenHeight() / 22, (int)m_ConsoleHistory.size());
 				int start = m_ConsoleHistory.size() - printCount;
@@ -1808,8 +1809,8 @@ namespace def
 				int x = GetCursorPos() * 8 + 36;
 				int y = ScreenHeight() - 18;
 
-				DrawString(20, y, "> " + GetCapturedText(), def::YELLOW);
-				DrawLine(x, y, x, y + 8, def::RED);
+				DrawString(20, y, "> " + GetCapturedText(), YELLOW);
+				DrawLine(x, y, x, y + 8, RED);
 			}
 
 			ClearBuffer(m_ClearBufferColour);
@@ -1830,9 +1831,9 @@ namespace def
 			if (!OnAfterDraw())
 				m_IsAppRunning = false;
 
-			glfwSwapBuffers(m_Window);
-
 			if (m_IsVSync)
+				glfwSwapBuffers(m_Window);
+			else
 				glFlush();
 
 			glfwPollEvents();
@@ -1938,7 +1939,7 @@ namespace def
 
 	}
 
-	bool GameEngine::OnConsoleCommand(const std::string& command, std::stringstream& output, def::Pixel& colour)
+	bool GameEngine::OnConsoleCommand(const std::string& command, std::stringstream& output, Pixel& colour)
 	{
 		return false;
 	}
@@ -2033,7 +2034,7 @@ namespace def
 			"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
 			"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
 
-		m_Font = new Sprite({ 128, 48 });
+		m_Font.Load({ 124, 48 });
 
 		int px = 0;
 		int py = 0;
@@ -2050,7 +2051,7 @@ namespace def
 			{
 				uint8_t k = (r & (1 << i)) ? 255 : 0;
 
-				m_Font->SetPixel(px, py, { k, k, k, k });
+				m_Font.sprite->SetPixel(px, py, { k });
 
 				if (++py == 48)
 				{
@@ -2059,6 +2060,8 @@ namespace def
 				}
 			}
 		}
+
+		m_Font.UpdateTexture();
 
 		glfwSetDropCallback(m_Window, DropCallback);
 
@@ -2079,7 +2082,7 @@ namespace def
 
 		case Pixel::Mode::DEFAULT:
 			return target->SetPixel(x, y, col);
-			
+
 		case Pixel::Mode::MASK:
 		{
 			if (col.a == 255)
@@ -2588,8 +2591,7 @@ namespace def
 				x1--;
 				err += dx += b1;
 			}
-		}
-		while (x <= x1);
+		} while (x <= x1);
 
 		while (y - y1 < b)
 		{
@@ -2651,8 +2653,7 @@ namespace def
 				x1--;
 				err += dx += b1;
 			}
-		}
-		while (x <= x1);
+		} while (x <= x1);
 
 		while (y - y1 < b)
 		{
@@ -2919,7 +2920,7 @@ namespace def
 			}
 	}
 
-	void GameEngine::DrawString(int x, int y, std::string_view s, const Pixel& col)
+	void GameEngine::DrawString(int x, int y, std::string_view s, const Pixel& col, int scaleX, int scaleY)
 	{
 		int sx = 0;
 		int sy = 0;
@@ -2929,23 +2930,39 @@ namespace def
 			if (c == '\n')
 			{
 				sx = 0;
-				sy += 8;
+				sy += 8 * scaleY;
 			}
 			else if (c == '\t')
-				sx += 32;
+				sx += 8 * m_TabSize * scaleX;
 			else
 			{
 				int ox = (c - 32) % 16;
 				int oy = (c - 32) / 16;
 
-				for (int i = 0; i < 8; i++)
-					for (int j = 0; j < 8; j++)
-					{
-						if (m_Font->GetPixel(i + ox * 8, j + oy * 8).r > 0)
-							Draw(x + sx + i, y + sy + j, col);
-					}
+				if (scaleX > 1 || scaleY > 1)
+				{
+					for (uint32_t i = 0; i < 8; i++)
+						for (uint32_t j = 0; j < 8; j++)
+						{
+							if (m_Font.sprite->GetPixel(i + ox * 8, j + oy * 8).r > 0)
+							{
+								for (uint32_t is = 0; is < scaleX; is++)
+									for (uint32_t js = 0; js < scaleY; js++)
+										Draw(x + sx + i * scaleX + is, y + sy + j * scaleY + js, col);
+							}
+						}
+				}
+				else
+				{
+					for (uint32_t i = 0; i < 8; i++)
+						for (uint32_t j = 0; j < 8; j++)
+						{
+							if (m_Font.sprite->GetPixel(i + ox * 8, j + oy * 8).r > 0)
+								Draw(x + sx + i, y + sy + j, col);
+						}
+				}
 
-				sx += 8;
+				sx += 8 * scaleX;
 			}
 		}
 	}
@@ -3009,7 +3026,7 @@ namespace def
 
 		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED))
 			f |= static_cast<int>(WindowState::FOCUSED);
-		
+
 		return static_cast<WindowState>(f);
 	}
 
@@ -3053,7 +3070,7 @@ namespace def
 		DrawLine(pos1.x, pos1.y, pos2.x, pos2.y, col);
 	}
 
-	void GameEngine::DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<def::Pixel>& cols, Texture::Structure structure)
+	void GameEngine::DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<Pixel>& cols, Texture::Structure structure)
 	{
 		TextureInstance texInst;
 
@@ -3145,6 +3162,31 @@ namespace def
 		DrawTexturePolygon({ pos, { float(pos.x + size.x), (float)pos.y }, pos + size, { (float)pos.x, float(pos.y + size.y) } }, { colTL, colTR, colBR, colBL }, Texture::Structure::FAN);
 	}
 
+	void GameEngine::DrawTextureString(const vi2d& pos, std::string_view text, const Pixel& col, const vi2d& scale)
+	{
+		vf2d p = { 0.0f, 0.0f };
+
+		for (auto c : text)
+		{
+			if (c == '\n')
+			{
+				p.x = 0;
+				p.y += 8.0f * scale.y;
+			}
+			else if (c == '\t')
+			{
+				p.x += 8.0f * float(m_TabSize) * scale.x;
+			}
+			else
+			{
+				vf2d offset((c - 32) % 16, (c - 32) / 16);
+
+				DrawPartialTexture(pos + p, offset * 8, { 8, 8 }, m_Font.texture, scale, col);
+				p.x += 8.0f * scale.x;
+			}
+		}
+	}
+
 	void GameEngine::DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col)
 	{
 		DrawTriangle(pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y, col);
@@ -3225,9 +3267,9 @@ namespace def
 		FillWireFrameModel(modelCoordinates, pos.x, pos.y, r, s, col);
 	}
 
-	void GameEngine::DrawString(const vi2d& pos, std::string_view text, const Pixel& col)
+	void GameEngine::DrawString(const vi2d& pos, std::string_view text, const Pixel& col, const vi2d& scale)
 	{
-		DrawString(pos.x, pos.y, text, col);
+		DrawString(pos.x, pos.y, text, col, scale.x, scale.y);
 	}
 
 	vi2d GameEngine::GetScreenSize() const
@@ -3251,7 +3293,7 @@ namespace def
 		m_ClearBufferColour = col;
 	}
 
-	void GameEngine::SetShader(Pixel (*func)(const vi2d& pos, const Pixel& previous, const Pixel& current))
+	void GameEngine::SetShader(Pixel(*func)(const vi2d& pos, const Pixel& previous, const Pixel& current))
 	{
 		m_Shader = func;
 		m_PixelMode = m_Shader ? Pixel::Mode::CUSTOM : Pixel::Mode::DEFAULT;
