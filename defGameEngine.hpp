@@ -81,6 +81,7 @@
 #include <algorithm>
 #include <functional>
 
+#define GLFW_INCLUDE_GLU
 #include "GLFW/glfw3.h"
 
 #ifndef STB_IMAGE_IMPLEMENTATION
@@ -106,6 +107,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#pragma comment(lib, "glu32.lib")
 #pragma comment(lib, "glfw3.lib")
 #pragma comment(lib, "opengl32.lib")
 
@@ -117,6 +119,8 @@
 #endif
 
 #pragma endregion
+
+#define UNUSED(x) (void)(x)
 
 namespace def
 {
@@ -410,6 +414,10 @@ namespace def
 		vi2d m_ScreenSize;
 		vf2d m_InvScreenSize;
 		vi2d m_PixelSize;
+		
+		vf2d m_Offset;
+		vf2d m_Scale;
+		vf2d m_PanPrev;
 
 		GLFWmonitor* m_Monitor;
 		GLFWwindow* m_Window;
@@ -418,6 +426,7 @@ namespace def
 		bool m_IsFullScreen;
 		bool m_IsDirtyPixel;
 		bool m_IsVSync;
+		bool m_OnlyTextures;
 
 		KeyState m_Keys[512];
 		KeyState m_Mouse[5];
@@ -428,7 +437,7 @@ namespace def
 		bool m_MouseOldState[5];
 		bool m_MouseNewState[5];
 
-		vi2d m_MousePos;
+		vf2d m_MousePos;
 
 		Graphic m_Font;
 		int m_TabSize = 4;
@@ -445,6 +454,7 @@ namespace def
 		Pixel::Mode m_PixelMode;
 
 		std::vector<std::string> m_DropCache;
+		int m_ScrollDelta;
 
 		std::string m_TextInput;
 		size_t m_CursorPos;
@@ -493,6 +503,8 @@ namespace def
 
 		static void ErrorCallback(int errorCode, const char* description);
 		static void DropCallback(GLFWwindow* window, int pathCount, const char* paths[]);
+		static void ScrollCallback(GLFWwindow* window, double x, double y);
+		static void MousePosCallback(GLFWwindow* window, double x, double y);
 
 	public:
 		bool Draw(const vi2d& pos, Pixel col = WHITE);
@@ -575,19 +587,21 @@ namespace def
 		void GradientTextureTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col1 = WHITE, const Pixel& col2 = WHITE, const Pixel& col3 = WHITE);
 		void GradientTextureRectangle(const vi2d& pos, const vi2d& size, const Pixel& colTL = WHITE, const Pixel& colTR = WHITE, const Pixel& colBR = WHITE, const Pixel& colBL = WHITE);
 
-		void DrawTextureString(const vi2d& pos, std::string_view text, const Pixel& col, const vi2d& scale = { 1, 1 });
+		void DrawTextureString(const vi2d& pos, std::string_view text, const Pixel& col = def::WHITE, const vf2d& scale = { 1.0f, 1.0f });
 
 		KeyState GetKey(Key key) const;
 		KeyState GetMouse(Button button) const;
 
-		vi2d GetMousePos() const;
+		vf2d GetMousePos() const;
+		int GetMouseWheelDelta() const;
 
-		int GetMouseX() const;
-		int GetMouseY() const;
+		float GetMouseX() const;
+		float GetMouseY() const;
 
 		void SetTitle(std::string_view title);
 
 		vi2d GetScreenSize() const;
+		vi2d GetWindowSize() const;
 
 		int ScreenWidth() const;
 		int ScreenHeight() const;
@@ -627,6 +641,31 @@ namespace def
 		//void SetConsoleBackgroundColour(const Pixel& col);
 
 		bool IsConsoleEnabled() const;
+
+		vf2d GetScale() const;
+		vf2d GetOffset() const;
+
+		float GetScaleX() const;
+		float GetScaleY() const;
+
+		float GetOffsetX() const;
+		float GetOffsetY() const;
+
+		void SetScale(float x, float y);
+		void SetScale(const vf2d& scale);
+
+		void SetOffset(float x, float y);
+		void SetOffset(const vf2d& offset);
+
+		void Zoom(float factor);
+
+		void StartPan(float x, float y);
+		void StartPan(const vf2d& pos);
+
+		void UpdatePan(float x, float y);
+		void UpdatePan(const vf2d& pos);
+
+		void UseOnlyTextures(bool enable);
 	};
 
 #ifdef DGE_APPLICATION
@@ -1485,7 +1524,7 @@ namespace def
 	{
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
-
+		
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -1588,7 +1627,11 @@ namespace def
 
 		m_PickedConsoleHistoryCommand = 0;
 
-		MakeUnitCircle(s_UnitCircle, 64);
+		MakeUnitCircle(s_UnitCircle, 128); // TODO: Make 128 (vertices count) as constant
+
+		m_Scale = { 1.0f, 1.0f };
+
+		m_OnlyTextures = false;
 	}
 
 	GameEngine::~GameEngine()
@@ -1672,12 +1715,6 @@ namespace def
 
 			Scan(m_Keys, m_KeyNewState, m_KeyOldState, 512, glfwGetKey);
 			Scan(m_Mouse, m_MouseNewState, m_MouseOldState, 8, glfwGetMouseButton);
-
-			double mouseX, mouseY;
-			glfwGetCursorPos(m_Window, &mouseX, &mouseY);
-
-			m_MousePos.x = (int)mouseX / m_PixelSize.x;
-			m_MousePos.y = (int)mouseY / m_PixelSize.y;
 
 			if (m_Keys[280].pressed) // Caps Lock
 				m_Caps = !m_Caps;
@@ -1784,6 +1821,8 @@ namespace def
 			if (!OnUserUpdate(deltaTime))
 				m_IsAppRunning = false;
 
+			m_ScrollDelta = 0;
+
 			if (m_ShowConsole)
 			{
 				// Too sloooooowwww!!!
@@ -1815,13 +1854,21 @@ namespace def
 
 			ClearBuffer(m_ClearBufferColour);
 
+			glPushMatrix();
+
+			glScalef(m_Scale.x, m_Scale.y, 0.0f);
+			glTranslatef(-2.0f * (float)m_Offset.x / (float)ScreenWidth(), 2.0f * (float)m_Offset.y / (float)ScreenHeight(), 0.0f);
+
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			m_DrawTarget->UpdateTexture();
-			glBindTexture(GL_TEXTURE_2D, m_DrawTarget->texture->id);
+			if (!m_OnlyTextures)
+			{
+				m_DrawTarget->UpdateTexture();
+				glBindTexture(GL_TEXTURE_2D, m_DrawTarget->texture->id);
 
-			DrawQuad(m_ClearBufferColour);
+				DrawQuad(m_ClearBufferColour);
+			}
 
 			for (const auto& texture : m_Textures)
 				DrawTexture(texture);
@@ -1830,6 +1877,8 @@ namespace def
 
 			if (!OnAfterDraw())
 				m_IsAppRunning = false;
+
+			glPopMatrix();
 
 			if (m_IsVSync)
 				glfwSwapBuffers(m_Window);
@@ -1927,6 +1976,26 @@ namespace def
 
 		for (int i = 0; i < pathCount; i++)
 			cache[i] = paths[i];
+	}
+
+	void GameEngine::ScrollCallback(GLFWwindow* window, double x, double y)
+	{
+		UNUSED(x);
+		s_Engine->m_ScrollDelta = y;
+	}
+
+	void GameEngine::MousePosCallback(GLFWwindow* window, double x, double y)
+	{
+		if (s_Engine->m_OnlyTextures)
+		{
+			s_Engine->m_MousePos.x = (float)x;
+			s_Engine->m_MousePos.y = (float)y;
+		}
+		else
+		{
+			s_Engine->m_MousePos.x = float((int)x / s_Engine->m_PixelSize.x);
+			s_Engine->m_MousePos.y = float((int)y / s_Engine->m_PixelSize.y);
+		}
 	}
 
 	bool GameEngine::OnAfterDraw()
@@ -2034,7 +2103,7 @@ namespace def
 			"O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000"
 			"?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020";
 
-		m_Font.Load({ 124, 48 });
+		m_Font.Load({ 128, 48 });
 
 		int px = 0;
 		int py = 0;
@@ -2051,7 +2120,7 @@ namespace def
 			{
 				uint8_t k = (r & (1 << i)) ? 255 : 0;
 
-				m_Font.sprite->SetPixel(px, py, { k });
+				m_Font.sprite->SetPixel(px, py, { k, k, k, k });
 
 				if (++py == 48)
 				{
@@ -2064,6 +2133,8 @@ namespace def
 		m_Font.UpdateTexture();
 
 		glfwSetDropCallback(m_Window, DropCallback);
+		glfwSetScrollCallback(m_Window, ScrollCallback);
+		glfwSetCursorPosCallback(m_Window, MousePosCallback);
 
 		return true;
 	}
@@ -2975,8 +3046,8 @@ namespace def
 	KeyState GameEngine::GetKey(Key k) const { return m_Keys[static_cast<size_t>(k)]; }
 	KeyState GameEngine::GetMouse(Button k) const { return m_Mouse[static_cast<size_t>(k)]; }
 
-	int GameEngine::GetMouseX() const { return m_MousePos.x; }
-	int GameEngine::GetMouseY() const { return m_MousePos.y; }
+	float GameEngine::GetMouseX() const { return m_MousePos.x; }
+	float GameEngine::GetMouseY() const { return m_MousePos.y; }
 
 	int GameEngine::ScreenWidth() const { return m_ScreenSize.x; }
 	int GameEngine::ScreenHeight() const { return m_ScreenSize.y; }
@@ -3162,7 +3233,7 @@ namespace def
 		DrawTexturePolygon({ pos, { float(pos.x + size.x), (float)pos.y }, pos + size, { (float)pos.x, float(pos.y + size.y) } }, { colTL, colTR, colBR, colBL }, Texture::Structure::FAN);
 	}
 
-	void GameEngine::DrawTextureString(const vi2d& pos, std::string_view text, const Pixel& col, const vi2d& scale)
+	void GameEngine::DrawTextureString(const vi2d& pos, std::string_view text, const Pixel& col, const vf2d& scale)
 	{
 		vf2d p = { 0.0f, 0.0f };
 
@@ -3181,7 +3252,7 @@ namespace def
 			{
 				vf2d offset((c - 32) % 16, (c - 32) / 16);
 
-				DrawPartialTexture(pos + p, offset * 8, { 8, 8 }, m_Font.texture, scale, col);
+				DrawPartialTexture(pos + p, offset * 8.0f, { 8.0f, 8.0f }, m_Font.texture, scale, col);
 				p.x += 8.0f * scale.x;
 			}
 		}
@@ -3277,9 +3348,19 @@ namespace def
 		return m_ScreenSize;
 	}
 
-	vi2d GameEngine::GetMousePos() const
+	vi2d GameEngine::GetWindowSize() const
+	{
+		return m_WindowSize;
+	}
+
+	vf2d GameEngine::GetMousePos() const
 	{
 		return m_MousePos;
+	}
+
+	int GameEngine::GetMouseWheelDelta() const
+	{
+		return m_ScrollDelta;
 	}
 
 	void GameEngine::ClearBuffer(const Pixel& col)
@@ -3345,6 +3426,93 @@ namespace def
 	bool GameEngine::IsConsoleEnabled() const
 	{
 		return m_ShowConsole;
+	}
+
+	vf2d GameEngine::GetScale() const
+	{
+		return m_Scale;
+	}
+
+	vf2d GameEngine::GetOffset() const
+	{
+		return m_Offset;
+	}
+
+	float GameEngine::GetScaleX() const
+	{
+		return m_Scale.x;
+	}
+
+	float GameEngine::GetScaleY() const
+	{
+		return m_Scale.y;
+	}
+
+	float GameEngine::GetOffsetX() const
+	{
+		return m_Offset.x;
+	}
+
+	float GameEngine::GetOffsetY() const
+	{
+		return m_Offset.y;
+	}
+
+	void GameEngine::SetScale(float x, float y)
+	{
+		m_Scale.x = x;
+		m_Scale.y = y;
+	}
+
+	void GameEngine::SetScale(const vf2d& scale)
+	{
+		m_Scale = scale;
+	}
+
+	void GameEngine::SetOffset(float x, float y)
+	{
+		m_Offset.x = x;
+		m_Offset.y = y;
+	}
+
+	void GameEngine::SetOffset(const vf2d& offset)
+	{
+		m_Offset = offset;
+	}
+
+	void GameEngine::Zoom(float factor)
+	{
+		m_Scale.x *= factor;
+		m_Scale.y *= factor;
+	}
+
+	void GameEngine::StartPan(float x, float y)
+	{
+		m_PanPrev.x = x;
+		m_PanPrev.y = y;
+	}
+
+	void GameEngine::StartPan(const vf2d& pos)
+	{
+		m_PanPrev = pos;
+	}
+
+	void GameEngine::UpdatePan(float x, float y)
+	{
+		m_Offset.x -= (x - m_PanPrev.x) / m_Scale.x;
+		m_Offset.y -= (y - m_PanPrev.y) / m_Scale.y;
+
+		StartPan(x, y);
+	}
+
+	void GameEngine::UpdatePan(const vf2d& pos)
+	{
+		UpdatePan(pos.x, pos.y);
+	}
+
+	void GameEngine::UseOnlyTextures(bool enable)
+	{
+		m_OnlyTextures = enable;
 	}
 
 #endif
