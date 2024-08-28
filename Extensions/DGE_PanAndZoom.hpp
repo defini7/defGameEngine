@@ -78,6 +78,8 @@ namespace def
 		void UpdatePan(float x, float y);
 		void UpdatePan(const vf2d& pos);
 
+		bool IsVisible(const vf2d& point);
+
 	public:
 		void DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		void DrawTexture(float x, float y, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
@@ -211,6 +213,13 @@ namespace def
 	{
 		m_Offset -= (pos - m_PanPrev) / m_Scale;
 		StartPan(pos);
+	}
+
+	bool PanAndZoom::IsVisible(const vf2d& point)
+	{
+		vf2d transformed = WorldToScreen(point);
+
+		return transformed >= vf2d(0.0f, 0.0f) && transformed < m_Engine->GetScreenSize();
 	}
 
 	void PanAndZoom::DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale, const Pixel& tint)
