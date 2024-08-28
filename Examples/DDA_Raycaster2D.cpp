@@ -85,7 +85,7 @@ protected:
 	bool OnUserCreate() override
 	{
 		tileSize = { 8, 8 };
-		tilesCount = ScreenSize() / tileSize;
+		tilesCount = GetScreenSize() / tileSize;
 
 		map = new bool[tilesCount.x * tilesCount.y] { false };
 
@@ -102,7 +102,7 @@ protected:
 
 		if (GetMouse(def::Button::RIGHT).pressed)
 		{
-			def::vi2d tilePos = GetMouse() / tileSize;
+			def::vi2d tilePos = GetMousePos() / tileSize;
 
 			SetTile(tilePos, !GetTile(tilePos));
 		}
