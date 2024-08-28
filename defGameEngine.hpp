@@ -427,15 +427,15 @@ namespace def
 		bool m_DrawBeforeTransforms;
 
 		KeyState m_Keys[512];
-		KeyState m_Mouse[5];
+		KeyState m_Mouse[8];
 
 		bool m_KeyOldState[512];
 		bool m_KeyNewState[512];
 
-		bool m_MouseOldState[5];
-		bool m_MouseNewState[5];
+		bool m_MouseOldState[8];
+		bool m_MouseNewState[8];
 
-		vf2d m_MousePos;
+		vi2d m_MousePos;
 
 		Graphic m_Font;
 		int m_TabSize = 4;
@@ -590,11 +590,11 @@ namespace def
 		KeyState GetKey(Key key) const;
 		KeyState GetMouse(Button button) const;
 
-		vf2d GetMousePos() const;
+		vi2d GetMousePos() const;
 		int GetMouseWheelDelta() const;
 
-		float GetMouseX() const;
-		float GetMouseY() const;
+		int GetMouseX() const;
+		int GetMouseY() const;
 
 		void SetTitle(std::string_view title);
 
@@ -1958,13 +1958,13 @@ namespace def
 	{
 		if (s_Engine->m_OnlyTextures)
 		{
-			s_Engine->m_MousePos.x = (float)x;
-			s_Engine->m_MousePos.y = (float)y;
+			s_Engine->m_MousePos.x = (int)x;
+			s_Engine->m_MousePos.y = (int)y;
 		}
 		else
 		{
-			s_Engine->m_MousePos.x = float((int)x / s_Engine->m_PixelSize.x);
-			s_Engine->m_MousePos.y = float((int)y / s_Engine->m_PixelSize.y);
+			s_Engine->m_MousePos.x = (int)x / s_Engine->m_PixelSize.x;
+			s_Engine->m_MousePos.y = (int)y / s_Engine->m_PixelSize.y;
 		}
 	}
 
@@ -3036,8 +3036,8 @@ namespace def
 	KeyState GameEngine::GetKey(Key k) const { return m_Keys[static_cast<size_t>(k)]; }
 	KeyState GameEngine::GetMouse(Button k) const { return m_Mouse[static_cast<size_t>(k)]; }
 
-	float GameEngine::GetMouseX() const { return m_MousePos.x; }
-	float GameEngine::GetMouseY() const { return m_MousePos.y; }
+	int GameEngine::GetMouseX() const { return m_MousePos.x; }
+	int GameEngine::GetMouseY() const { return m_MousePos.y; }
 
 	int GameEngine::ScreenWidth() const { return m_ScreenSize.x; }
 	int GameEngine::ScreenHeight() const { return m_ScreenSize.y; }
@@ -3345,7 +3345,7 @@ namespace def
 		return m_WindowSize;
 	}
 
-	vf2d GameEngine::GetMousePos() const
+	vi2d GameEngine::GetMousePos() const
 	{
 		return m_MousePos;
 	}
