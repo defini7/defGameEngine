@@ -415,10 +415,6 @@ namespace def
 		vi2d m_ScreenSize;
 		vf2d m_InvScreenSize;
 		vi2d m_PixelSize;
-		
-		vf2d m_Offset;
-		vf2d m_Scale;
-		vf2d m_PanPrev;
 
 		GLFWmonitor* m_Monitor;
 		GLFWwindow* m_Window;
@@ -547,20 +543,6 @@ namespace def
 		void DrawPartialSprite(const vi2d& pos, const vi2d& filePos, const vi2d& fileSize, const Sprite* sprite);
 		virtual void DrawPartialSprite(int x, int y, int fileX, int fileY, int fileSizeX, int fileSizeY, const Sprite* sprite);
 
-		void DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawTexture(float x, float y, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
-
-		void DrawPartialTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
-
-		virtual void DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint = WHITE);
-
-		void DrawRotatedTexture(const vf2d& pos, float rot, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawRotatedTexture(float x, float y, float rot, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
-
-		void DrawPartialRotatedTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		virtual void DrawPartialRotatedTexture(float x, float y, float filePosX, float filePosY, float fileWidth, float fileHeight, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
-
 		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
 		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
 
@@ -573,6 +555,20 @@ namespace def
 		virtual void Clear(const Pixel& col);
 		void ClearTexture(const Pixel& col);
 		void ClearBuffer(const Pixel& col);
+
+		void DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		void DrawTexture(float x, float y, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+
+		void DrawPartialTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+
+		void DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint = WHITE);
+
+		void DrawRotatedTexture(const vf2d& pos, float rot, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		void DrawRotatedTexture(float x, float y, float rot, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+
+		void DrawPartialRotatedTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		void DrawPartialRotatedTexture(float x, float y, float filePosX, float filePosY, float fileWidth, float fileHeight, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
 
 		void DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<Pixel>& cols, Texture::Structure structure);
 
@@ -628,7 +624,7 @@ namespace def
 		void SetTextureStructure(Texture::Structure textureStructure);
 		Texture::Structure GetTextureStructure() const;
 
-		void SetShader(Pixel(*func)(const vi2d& pos, const Pixel& previous, const Pixel& current));
+		void SetShader(Pixel (*func)(const vi2d&, const Pixel&, const Pixel&));
 
 		void CaptureText(bool enable);
 		bool IsCapturingText() const;
@@ -636,36 +632,11 @@ namespace def
 		std::string GetCapturedText() const;
 		size_t GetCursorPos() const;
 
+		void SetConsoleBackgroundColour(const Pixel& col);
 		void ShowConsole(bool enable);
+		bool IsConsoleEnabled() const;
 		void ClearCapturedText();
 		void ClearConsole();
-
-		void SetConsoleBackgroundColour(const Pixel& col);
-
-		bool IsConsoleEnabled() const;
-
-		vf2d GetScale() const;
-		vf2d GetOffset() const;
-
-		float GetScaleX() const;
-		float GetScaleY() const;
-
-		float GetOffsetX() const;
-		float GetOffsetY() const;
-
-		void SetScale(float x, float y);
-		void SetScale(const vf2d& scale);
-
-		void SetOffset(float x, float y);
-		void SetOffset(const vf2d& offset);
-
-		void Zoom(float factor);
-
-		void StartPan(float x, float y);
-		void StartPan(const vf2d& pos);
-
-		void UpdatePan(float x, float y);
-		void UpdatePan(const vf2d& pos);
 
 		void UseOnlyTextures(bool enable);
 	};
@@ -1624,9 +1595,7 @@ namespace def
 
 		m_PickedConsoleHistoryCommand = 0;
 
-		MakeUnitCircle(s_UnitCircle, 128); // TODO: Make 128 (vertices count) as constant
-
-		m_Scale = { 1.0f, 1.0f };
+		MakeUnitCircle(s_UnitCircle, 64); // TODO: Make 64 (vertices count) as constant
 
 		m_OnlyTextures = false;
 		m_DrawBeforeTransforms = false;
@@ -1860,12 +1829,7 @@ namespace def
 					DrawTexture(texture);
 			}
 
-			if (m_OnlyTextures)
-			{
-				glScalef(m_Scale.x, m_Scale.y, 0.0f);
-				glTranslatef(-2.0f * (float)m_Offset.x / (float)ScreenWidth(), 2.0f * (float)m_Offset.y / (float)ScreenHeight(), 0.0f);
-			}
-			else
+			if (!m_OnlyTextures)
 			{
 				m_DrawTarget->UpdateTexture();
 				glBindTexture(GL_TEXTURE_2D, m_DrawTarget->texture->id);
@@ -3402,7 +3366,7 @@ namespace def
 		m_ClearBufferColour = col;
 	}
 
-	void GameEngine::SetShader(Pixel(*func)(const vi2d& pos, const Pixel& previous, const Pixel& current))
+	void GameEngine::SetShader(Pixel (*func)(const vi2d&, const Pixel&, const Pixel&))
 	{
 		m_Shader = func;
 		m_PixelMode = m_Shader ? Pixel::Mode::CUSTOM : Pixel::Mode::DEFAULT;
@@ -3454,88 +3418,6 @@ namespace def
 	bool GameEngine::IsConsoleEnabled() const
 	{
 		return m_ShowConsole;
-	}
-
-	vf2d GameEngine::GetScale() const
-	{
-		return m_Scale;
-	}
-
-	vf2d GameEngine::GetOffset() const
-	{
-		return m_Offset;
-	}
-
-	float GameEngine::GetScaleX() const
-	{
-		return m_Scale.x;
-	}
-
-	float GameEngine::GetScaleY() const
-	{
-		return m_Scale.y;
-	}
-
-	float GameEngine::GetOffsetX() const
-	{
-		return m_Offset.x;
-	}
-
-	float GameEngine::GetOffsetY() const
-	{
-		return m_Offset.y;
-	}
-
-	void GameEngine::SetScale(float x, float y)
-	{
-		m_Scale.x = x;
-		m_Scale.y = y;
-	}
-
-	void GameEngine::SetScale(const vf2d& scale)
-	{
-		m_Scale = scale;
-	}
-
-	void GameEngine::SetOffset(float x, float y)
-	{
-		m_Offset.x = x;
-		m_Offset.y = y;
-	}
-
-	void GameEngine::SetOffset(const vf2d& offset)
-	{
-		m_Offset = offset;
-	}
-
-	void GameEngine::Zoom(float factor)
-	{
-		m_Scale.x *= factor;
-		m_Scale.y *= factor;
-	}
-
-	void GameEngine::StartPan(float x, float y)
-	{
-		m_PanPrev.x = x;
-		m_PanPrev.y = y;
-	}
-
-	void GameEngine::StartPan(const vf2d& pos)
-	{
-		m_PanPrev = pos;
-	}
-
-	void GameEngine::UpdatePan(float x, float y)
-	{
-		m_Offset.x -= (x - m_PanPrev.x) / m_Scale.x;
-		m_Offset.y -= (y - m_PanPrev.y) / m_Scale.y;
-
-		StartPan(x, y);
-	}
-
-	void GameEngine::UpdatePan(const vf2d& pos)
-	{
-		UpdatePan(pos.x, pos.y);
 	}
 
 	void GameEngine::UseOnlyTextures(bool enable)
