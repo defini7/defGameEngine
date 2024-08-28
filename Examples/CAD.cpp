@@ -1,7 +1,8 @@
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "defGameEngine.hpp"
 
-constexpr int32_t NODE_SIZE = 12;
+#define DGE_PAN_AND_ZOOM
+#include "DGE_PanAndZoom.hpp"
 
 struct Shape;
 
@@ -18,7 +19,7 @@ struct Shape
 	size_t maxNodes;
 	bool expired = false;
 
-	virtual void DrawYourself(def::GameEngine* pge) = 0;
+	virtual void DrawYourself(def::PanAndZoom& vendor) = 0;
 
 	Node* GetNextNode(const def::vf2d& pos)
 	{
@@ -33,10 +34,10 @@ struct Shape
 		return &nodes.back();
 	}
 
-	void DrawNodes(def::GameEngine* pge)
+	void DrawNodes(def::PanAndZoom& vendor)
 	{
 		for (const auto& n : nodes)
-			pge->FillCircle(n.pos, 2, def::RED);
+			vendor.FillTextureCircle(n.pos, 2, def::RED);
 	}
 
 	Node* HitNode(const def::vi2d& vPos)
@@ -59,13 +60,13 @@ struct Line : Shape
 		maxNodes = 2;
 	}
 
-	virtual void DrawYourself(def::GameEngine* pge) override
+	virtual void DrawYourself(def::PanAndZoom& vendor) override
 	{
-		pge->FillCircle(nodes[0].pos, 2, def::RED);
-		pge->FillCircle(nodes[1].pos, 2, def::RED);
+		vendor.FillTextureCircle(nodes[0].pos, 2, def::RED);
+		vendor.FillTextureCircle(nodes[1].pos, 2, def::RED);
 
-		pge->DrawLine(nodes[0].pos, nodes[1].pos, def::WHITE);
-		pge->DrawLine(nodes[0].pos, nodes[1].pos);
+		vendor.DrawTextureLine(nodes[0].pos, nodes[1].pos, def::WHITE);
+		vendor.DrawTextureLine(nodes[0].pos, nodes[1].pos, def::WHITE);
 	}
 };
 
@@ -77,12 +78,12 @@ struct Circle : Shape
 		maxNodes = 2;
 	}
 
-	virtual void DrawYourself(def::GameEngine* pge) override
+	virtual void DrawYourself(def::PanAndZoom& vendor) override
 	{
-		pge->DrawLine(nodes[0].pos, nodes[1].pos, def::WHITE);
+		vendor.DrawTextureLine(nodes[0].pos, nodes[1].pos, def::WHITE);
 
 		uint32_t radius = uint32_t((nodes[1].pos - nodes[0].pos).mag());
-		pge->DrawCircle(nodes[0].pos, radius);
+		vendor.DrawTextureCircle(nodes[0].pos, radius);
 	}
 };
 
@@ -94,13 +95,13 @@ struct Rect : Shape
 		maxNodes = 2;
 	}
 
-	virtual void DrawYourself(def::GameEngine* pge) override
+	virtual void DrawYourself(def::PanAndZoom& vendor) override
 	{
 		def::vi2d p1 = nodes[0].pos;
 		def::vi2d p2 = nodes[1].pos;
 		if (p1 > p2) std::swap(p1, p2);
 
-		pge->DrawRectangle(p1, p2 - p1, def::WHITE);
+		vendor.DrawTextureRectangle(p1, p2 - p1, def::WHITE);
 	}
 };
 
@@ -112,15 +113,15 @@ struct Curve : Shape
 		maxNodes = 3;
 	}
 
-	virtual void DrawYourself(def::GameEngine* pge) override
+	virtual void DrawYourself(def::PanAndZoom& vendor) override
 	{
 		if (nodes.size() == 2)
-			pge->DrawLine(nodes[0].pos, nodes[1].pos, def::WHITE);
+			vendor.DrawTextureLine(nodes[0].pos, nodes[1].pos, def::WHITE);
 
 		if (nodes.size() == 3)
 		{
-			pge->DrawLine(nodes[0].pos, nodes[1].pos, def::WHITE);
-			pge->DrawLine(nodes[1].pos, nodes[2].pos, def::WHITE);
+			vendor.DrawTextureLine(nodes[0].pos, nodes[1].pos, def::WHITE);
+			vendor.DrawTextureLine(nodes[1].pos, nodes[2].pos, def::WHITE);
 
 			def::vi2d op = nodes[0].pos;
 			def::vi2d np = op;
@@ -128,7 +129,7 @@ struct Curve : Shape
 			for (float t = 0.0f; t <= 1.0f; t += 0.01f)
 			{
 				np = (1 - t) * (1 - t) * nodes[0].pos + 2 * (1 - t) * t * nodes[1].pos + t * t * nodes[2].pos;
-				pge->DrawLine(op, np);
+				vendor.DrawTextureLine(op, np);
 				op = np;
 			}
 		}
@@ -141,6 +142,7 @@ public:
 	SimpleCAD()
 	{
 		SetTitle("SimpleCAD");
+		UseOnlyTextures(true);
 	}
 
 	virtual ~SimpleCAD()
@@ -160,36 +162,32 @@ public:
 			if (first > second)
 				std::swap(first, second);
 
-			SetPixelMode(def::Pixel::ALPHA);
+			SetPixelMode(def::Pixel::Mode::ALPHA);
 			FillRectangle(first, second - first, def::Pixel(255, 255, 255, 122));
-			SetPixelMode(def::Pixel::DEFAULT);
+			SetPixelMode(def::Pixel::Mode::DEFAULT);
 		}
 	}
 
 	bool OnUserCreate() override
 	{
-		top.x = ScreenWidth() / 2 - (ScreenWidth() / 2) % NODE_SIZE;
-		top.y = 0;
-
-		bottom.x = top.x;
-		bottom.y = ScreenHeight();
-
-		left.x = 0;
-		left.y = ScreenHeight() / 2 - (ScreenHeight() / 2) % NODE_SIZE;
-
-		right.x = ScreenWidth();
-		right.y = left.y;
-
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		Clear(def::DARK_BLUE);
+		if (GetMouse(def::Button::WHEEL).pressed)
+			pz.StartPan(GetMousePos());
 
-		def::vi2d cursor;
-		cursor.x = MouseX() - MouseX() % NODE_SIZE;
-		cursor.y = MouseY() - MouseY() % NODE_SIZE;
+		if (GetMouse(def::Button::WHEEL).held)
+			pz.UpdatePan(GetMousePos());
+
+		if (GetMouseWheelDelta() > 0)
+			pz.Zoom(1.1f, GetMousePos());
+
+		if (GetMouseWheelDelta() < 0)
+			pz.Zoom(0.9f, GetMousePos());
+
+		def::vi2d cursor = pz.ScreenToWorld(GetMousePos());
 
 		if (GetKey(def::Key::L).pressed)
 		{
@@ -223,7 +221,7 @@ public:
 			selected = tempShape->GetNextNode(cursor);
 		}
 
-		if (GetMouse(1).pressed)
+		if (GetMouse(def::Button::RIGHT).pressed)
 		{
 			for (const auto& shape : shapes)
 			{
@@ -243,7 +241,7 @@ public:
 			}
 		}
 
-		if (GetMouse(1).held)
+		if (GetMouse(def::Button::RIGHT).held)
 		{
 			if (!selected)
 				selectedArea.second = cursor;
@@ -253,8 +251,8 @@ public:
 		{
 			if (selectedArea.second != def::vi2d(-1, -1))
 			{
-				for (int32_t x = selectedArea.first.x; x <= selectedArea.second.x; x += NODE_SIZE)
-					for (int32_t y = selectedArea.first.y; y <= selectedArea.second.y; y += NODE_SIZE)
+				for (int32_t x = selectedArea.first.x; x <= selectedArea.second.x; x++)
+					for (int32_t y = selectedArea.first.y; y <= selectedArea.second.y; y++)
 					{
 						for (const auto& shape : shapes)
 						{
@@ -287,7 +285,7 @@ public:
 		if (selected)
 			selected->pos = cursor;
 
-		if (GetMouse(0).released)
+		if (GetMouse(def::Button::LEFT).released)
 		{
 			if (tempShape)
 			{
@@ -302,14 +300,15 @@ public:
 				selected = nullptr;
 		}
 
-		DrawCircle(cursor, 2, def::DARK_GREY);
+		ClearTexture(def::DARK_BLUE);
 
-		for (int32_t x = 0; x < ScreenWidth(); x += NODE_SIZE)
-			for (int32_t y = 0; y < ScreenHeight(); y += NODE_SIZE)
-				Draw(x, y, def::DARK_BLUE);
+		pz.DrawTextureCircle(cursor, 2, def::DARK_GREY);
 
-		DrawLine(top, bottom, def::GREY);
-		DrawLine(left, right, def::GREY);
+		def::vi2d origin = pz.GetOrigin();
+		def::vi2d end = pz.GetEnd();
+
+		pz.DrawTextureLine({ ScreenWidth() / 2, origin.y }, { ScreenWidth() / 2, end.y }, def::GREY);
+		pz.DrawTextureLine({ origin.x, ScreenHeight() / 2 }, { end.x, ScreenHeight() / 2 }, def::GREY);
 
 		for (size_t i = 0; i < shapes.size(); i++)
 		{
@@ -321,14 +320,14 @@ public:
 				continue;
 			}
 
-			shape->DrawYourself(this);
-			shape->DrawNodes(this);
+			shape->DrawYourself(pz);
+			shape->DrawNodes(pz);
 		}
 
 		if (tempShape)
 		{
-			tempShape->DrawYourself(this);
-			tempShape->DrawNodes(this);
+			tempShape->DrawYourself(pz);
+			tempShape->DrawNodes(pz);
 		}
 
 		DrawSelectedArea();
@@ -339,12 +338,12 @@ public:
 private:
 	std::vector<Shape*> shapes;
 
-	def::vi2d top, bottom, left, right;
-
 	Shape* tempShape = nullptr;
 	Node* selected = nullptr;
 
 	std::pair<def::vi2d, def::vi2d> selectedArea;
+
+	def::PanAndZoom pz;
 
 };
 
