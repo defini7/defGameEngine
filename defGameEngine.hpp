@@ -53,7 +53,7 @@
 		{
 			for (int i = 0; i < ScreenWidth(); i++)
 				for (int j = 0; j < ScreenHeight(); j++)
-					Draw(i, j, def::Pixel::Random());
+					Draw(i, j, def::Pixel(rand() % 256, rand() % 256, rand() % 256));
 
 			return true;
 		}
@@ -237,7 +237,7 @@ namespace def
 	struct Pixel
 	{
 		constexpr Pixel(uint32_t rgba = 0x000000FF);
-		constexpr Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
+		constexpr Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF);
 
 		enum class Mode
 		{
@@ -254,7 +254,7 @@ namespace def
 			uint8_t rgba_v[4];
 		};
 
-		constexpr Pixel mix(const Pixel& rhs, const float factor) const;
+		constexpr Pixel lerp(const Pixel& rhs, const float factor) const;
 		constexpr std::string str() const;
 
 		constexpr Pixel operator+(const float rhs) const;
@@ -291,7 +291,6 @@ namespace def
 		constexpr bool operator>=(const float rhs) const;
 		constexpr bool operator<=(const float rhs) const;
 
-		constexpr static Pixel Random(bool randomAlpha = false);
 		constexpr static Pixel Float(float r, float g, float b, float a = 1.0f);
 	};
 
@@ -399,6 +398,8 @@ namespace def
 		std::vector<Pixel> tint;
 		std::vector<vf2d> vertices;
 		std::vector<vf2d> uv;
+
+		bool drawBeforeTransforms = false;
 	};
 
 	class GameEngine
@@ -427,6 +428,7 @@ namespace def
 		bool m_IsDirtyPixel;
 		bool m_IsVSync;
 		bool m_OnlyTextures;
+		bool m_DrawBeforeTransforms;
 
 		KeyState m_Keys[512];
 		KeyState m_Mouse[5];
@@ -447,7 +449,7 @@ namespace def
 
 		std::vector<TextureInstance> m_Textures;
 
-		//Pixel m_ConsoleBackgroundColour;
+		Pixel m_ConsoleBackgroundColour;
 		Pixel m_ClearBufferColour;
 
 		Texture::Structure m_TextureStructure;
@@ -638,7 +640,7 @@ namespace def
 		void ClearCapturedText();
 		void ClearConsole();
 
-		//void SetConsoleBackgroundColour(const Pixel& col);
+		void SetConsoleBackgroundColour(const Pixel& col);
 
 		bool IsConsoleEnabled() const;
 
@@ -704,7 +706,7 @@ namespace def
 		{ Key::NP_8, { '8', '8' } }, { Key::NP_9, { '9', '9' } },
 		{ Key::NP_DIVIDE, { '/', '/' } }, { Key::NP_MULTIPLY, { '*', '*' } },
 		{ Key::NP_SUBTRACT, { '-', '-' } }, { Key::NP_ADD, { '+', '+' } },
-		{ Key::NP_EQUAL, { '=', '+' } }, { Key::TAB, { '\t', '\t' } }
+		{ Key::NP_EQUAL, { '=', '+' } }
 	};
 
 	GameEngine* GameEngine::s_Engine = nullptr;
@@ -1097,7 +1099,7 @@ namespace def
 
 	}
 
-	constexpr Pixel Pixel::mix(const Pixel& rhs, const float factor) const
+	constexpr Pixel Pixel::lerp(const Pixel& rhs, const float factor) const
 	{
 		return Pixel(
 			(uint8_t)std::lerp(r, rhs.r, factor),
@@ -1261,11 +1263,6 @@ namespace def
 	constexpr bool Pixel::operator<(const float rhs) const { return r < rhs && g < rhs && b < rhs; }
 	constexpr bool Pixel::operator>=(const float rhs) const { return r >= rhs && g >= rhs && b >= rhs; }
 	constexpr bool Pixel::operator<=(const float rhs) const { return r <= rhs && g <= rhs && b <= rhs; }
-
-	constexpr Pixel Pixel::Random(bool randomAlpha)
-	{
-		return Pixel(rand() % 256, rand() % 256, rand() % 256, randomAlpha ? rand() % 256 : 255);
-	}
 
 	constexpr Pixel Pixel::Float(float r, float g, float b, float a)
 	{
@@ -1611,7 +1608,7 @@ namespace def
 		m_DrawTarget = nullptr;
 
 		m_ClearBufferColour = { 255, 255, 255, 255 };
-		//m_ConsoleBackgroundColour = { 0, 0, 255, 100 };
+		m_ConsoleBackgroundColour = { 0, 0, 255, 100 };
 
 		m_PixelMode = Pixel::Mode::DEFAULT;
 		m_TextureStructure = Texture::Structure::FAN;
@@ -1632,6 +1629,7 @@ namespace def
 		m_Scale = { 1.0f, 1.0f };
 
 		m_OnlyTextures = false;
+		m_DrawBeforeTransforms = false;
 	}
 
 	GameEngine::~GameEngine()
@@ -1825,14 +1823,9 @@ namespace def
 
 			if (m_ShowConsole)
 			{
-				// Too sloooooowwww!!!
-				/*SetPixelMode(Pixel::Mode::ALPHA);
+				m_DrawBeforeTransforms = true;
 
-				for (int y = 0; y < m_ScreenSize.y; y++)
-					for (int x = 0; x < m_ScreenSize.x; x++)
-						Draw(x, y, m_ConsoleBackgroundColour);
-
-				SetPixelMode(Pixel::Mode::DEFAULT);*/
+				FillTextureRectangle({ 0, 0 }, m_ScreenSize, m_ConsoleBackgroundColour);
 
 				int printCount = std::min(ScreenHeight() / 22, (int)m_ConsoleHistory.size());
 				int start = m_ConsoleHistory.size() - printCount;
@@ -1841,28 +1834,38 @@ namespace def
 				{
 					auto& entry = m_ConsoleHistory[i];
 
-					DrawString(10, 10 + (i - start) * 20, "> " + entry.command);
-					DrawString(10, 20 + (i - start) * 20, entry.output, entry.outputColour);
+					DrawTextureString({ 10, 10 + (i - start) * 20 }, "> " + entry.command);
+					DrawTextureString({ 10, 20 + (i - start) * 20 }, entry.output, entry.outputColour);
 				}
 
 				int x = GetCursorPos() * 8 + 36;
 				int y = ScreenHeight() - 18;
 
-				DrawString(20, y, "> " + GetCapturedText(), YELLOW);
-				DrawLine(x, y, x, y + 8, RED);
+				DrawTextureString({ 20, y }, "> " + GetCapturedText(), YELLOW);
+				DrawTextureLine({ x, y }, { x, y + 8 }, RED);
+
+				m_DrawBeforeTransforms = false;
 			}
 
 			ClearBuffer(m_ClearBufferColour);
 
-			glPushMatrix();
-
-			glScalef(m_Scale.x, m_Scale.y, 0.0f);
-			glTranslatef(-2.0f * (float)m_Offset.x / (float)ScreenWidth(), 2.0f * (float)m_Offset.y / (float)ScreenHeight(), 0.0f);
-
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			if (!m_OnlyTextures)
+			glPushMatrix();
+
+			for (const auto& texture : m_Textures)
+			{
+				if (texture.drawBeforeTransforms)
+					DrawTexture(texture);
+			}
+
+			if (m_OnlyTextures)
+			{
+				glScalef(m_Scale.x, m_Scale.y, 0.0f);
+				glTranslatef(-2.0f * (float)m_Offset.x / (float)ScreenWidth(), 2.0f * (float)m_Offset.y / (float)ScreenHeight(), 0.0f);
+			}
+			else
 			{
 				m_DrawTarget->UpdateTexture();
 				glBindTexture(GL_TEXTURE_2D, m_DrawTarget->texture->id);
@@ -1871,7 +1874,10 @@ namespace def
 			}
 
 			for (const auto& texture : m_Textures)
-				DrawTexture(texture);
+			{
+				if (!texture.drawBeforeTransforms)
+					DrawTexture(texture);
+			}
 
 			m_Textures.clear();
 
@@ -2019,10 +2025,20 @@ namespace def
 
 		glfwInit();
 
-		m_ScreenSize = { screenWidth, screenHeight };
-		m_InvScreenSize = { 1.0f / (float)screenWidth, 1.0f / (float)screenHeight };
-		m_PixelSize = { pixelWidth, pixelHeight };
-		m_WindowSize = m_ScreenSize * m_PixelSize;
+		if (m_OnlyTextures)
+		{
+			m_ScreenSize = { screenWidth * pixelWidth, screenHeight * pixelHeight };
+			m_PixelSize = { 1, 1 };
+			m_WindowSize = m_ScreenSize;
+		}
+		else
+		{
+			m_ScreenSize = { screenWidth, screenHeight };
+			m_PixelSize = { pixelWidth, pixelHeight };
+			m_WindowSize = m_ScreenSize * m_PixelSize;
+		}
+
+		m_InvScreenSize = { 1.0f / (float)m_ScreenSize.x, 1.0f / (float)m_ScreenSize.y };
 
 		m_IsFullScreen = fullScreen;
 		m_IsVSync = vsync;
@@ -2080,10 +2096,11 @@ namespace def
 			glfwWindowHint(GLFW_REFRESH_RATE, videoMode->refreshRate);
 		}
 
-		m_Screen = new Graphic(m_ScreenSize);
-		m_DrawTarget = m_Screen;
-
-		Clear(BLACK);
+		if (!m_OnlyTextures)
+		{
+			m_Screen = new Graphic(m_ScreenSize);
+			m_DrawTarget = m_Screen;
+		}
 
 		std::string data =
 			"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
@@ -2768,6 +2785,7 @@ namespace def
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices = { screenPos, { screenPos.x, screenSize.y }, screenSize, { screenSize.x, screenPos.y } };
 		texInst.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
 
 		m_Textures.push_back(texInst);
 	}
@@ -2803,6 +2821,7 @@ namespace def
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
 		texInst.uv = { { tlX, tlY }, { tlX, brY }, { brX, brY }, { brX, tlY } };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
 
 		m_Textures.push_back(texInst);
 	}
@@ -2836,12 +2855,15 @@ namespace def
 		}
 
 		texInst.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+
 		m_Textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, const Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
 	{
 		TextureInstance texInst;
+
 		texInst.texture = tex;
 		texInst.points = 4;
 		texInst.structure = m_TextureStructure;
@@ -2880,18 +2902,22 @@ namespace def
 		}
 
 		texInst.uv = { { tl_x, tl_y }, {tl_x, br_y}, { br_x, br_y }, { br_x, tl_y } };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+
 		m_Textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint)
 	{
 		TextureInstance texInst;
+
 		texInst.texture = tex;
 		texInst.structure = m_TextureStructure;
 		texInst.points = 4;
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices.resize(texInst.points);
 		texInst.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
 
 		float rd = ((points[2].x - points[0].x) * (points[3].y - points[1].y) - (points[3].x - points[1].x) * (points[2].y - points[0].y));
 
@@ -3175,6 +3201,8 @@ namespace def
 			texInst.vertices[i].y = 1.0f - verts[i].y * m_InvScreenSize.y * 2.0f;
 		}
 
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+
 		m_Textures.push_back(texInst);
 	}
 
@@ -3407,10 +3435,10 @@ namespace def
 		m_CaptureText = enable;
 	}
 
-	/*void GameEngine::SetConsoleBackgroundColour(const Pixel& col)
+	void GameEngine::SetConsoleBackgroundColour(const Pixel& col)
 	{
 		m_ConsoleBackgroundColour = col;
-	}*/
+	}
 
 	void GameEngine::ClearConsole()
 	{
