@@ -63,6 +63,9 @@ namespace def
 		float GetOffsetX() const;
 		float GetOffsetY() const;
 
+		vf2d GetOrigin();
+		vf2d GetEnd();
+
 		void SetScale(float x, float y);
 		void SetScale(const vf2d& scale);
 
@@ -160,6 +163,16 @@ namespace def
 		return m_Offset.y;
 	}
 
+	vf2d PanAndZoom::GetOrigin()
+	{
+		return ScreenToWorld({ 0, 0 });
+	}
+
+	vf2d PanAndZoom::GetEnd()
+	{
+		return ScreenToWorld(m_Engine->GetScreenSize());
+	}
+
 	void PanAndZoom::SetScale(float x, float y)
 	{
 		m_Scale.x = x;
@@ -189,8 +202,11 @@ namespace def
 
 	void PanAndZoom::Zoom(float factor, const vf2d& pos)
 	{
-		m_Offset += (factor - 1.0f) * pos;
+		vf2d before = ScreenToWorld(pos);
 		m_Scale *= factor;
+		vf2d after = ScreenToWorld(pos);
+
+		m_Offset += before - after;
 	}
 
 	void PanAndZoom::StartPan(float x, float y)
@@ -217,9 +233,9 @@ namespace def
 
 	bool PanAndZoom::IsVisible(const vf2d& point)
 	{
-		vf2d transformed = WorldToScreen(point);
+		vf2d p = WorldToScreen(point);
 
-		return transformed >= vf2d(0.0f, 0.0f) && transformed < m_Engine->GetScreenSize();
+		return p.x >= 0.0f && p.y >= 0.0f && p.x < m_Engine->ScreenWidth() && p.y < m_Engine->ScreenHeight();
 	}
 
 	void PanAndZoom::DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale, const Pixel& tint)
@@ -309,12 +325,12 @@ namespace def
 
 	void PanAndZoom::DrawTextureCircle(const vi2d& pos, int radius, const Pixel& col)
 	{
-		m_Engine->DrawTextureCircle(WorldToScreen(pos), radius * m_Scale.x, col);
+		m_Engine->DrawTextureCircle(WorldToScreen(pos), int((float)radius * m_Scale.x), col);
 	}
 
 	void PanAndZoom::FillTextureCircle(const vi2d& pos, int radius, const Pixel& col)
 	{
-		m_Engine->FillTextureCircle(WorldToScreen(pos), radius * m_Scale.x, col);
+		m_Engine->FillTextureCircle(WorldToScreen(pos), int((float)radius * m_Scale.x), col);
 	}
 
 	void PanAndZoom::GradientTextureTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col1, const Pixel& col2, const Pixel& col3)
