@@ -81,7 +81,6 @@
 #include <algorithm>
 #include <functional>
 
-#define GLFW_INCLUDE_GLU
 #include "GLFW/glfw3.h"
 
 #ifndef STB_IMAGE_IMPLEMENTATION
@@ -1997,18 +1996,9 @@ namespace def
 
 		glfwInit();
 
-		if (m_OnlyTextures)
-		{
-			m_ScreenSize = { screenWidth * pixelWidth, screenHeight * pixelHeight };
-			m_PixelSize = { 1, 1 };
-			m_WindowSize = m_ScreenSize;
-		}
-		else
-		{
-			m_ScreenSize = { screenWidth, screenHeight };
-			m_PixelSize = { pixelWidth, pixelHeight };
-			m_WindowSize = m_ScreenSize * m_PixelSize;
-		}
+		m_ScreenSize = { screenWidth, screenHeight };
+		m_PixelSize = { pixelWidth, pixelHeight };
+		m_WindowSize = m_ScreenSize * m_PixelSize;
 
 		m_InvScreenSize = { 1.0f / (float)m_ScreenSize.x, 1.0f / (float)m_ScreenSize.y };
 
@@ -3121,7 +3111,7 @@ namespace def
 			{
 				vf2d offset((c - 32) % 16, (c - 32) / 16);
 
-				DrawPartialTexture(pos + p, m_Font.texture, offset * 8.0f, { 8.0f, 8.0f }, scale, col);
+				DrawPartialRotatedTexture(pos + p, m_Font.texture, offset * 8.0f, { 8.0f, 8.0f }, 3.14159f / 4.0f, { 0.5f, 0.5f}, scale, col);
 				p.x += 8.0f * scale.x;
 			}
 		}
@@ -3196,11 +3186,14 @@ namespace def
 
 	void GameEngine::DrawPartialTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, const vf2d& scale, const Pixel& tint)
 	{
-		vf2d pos1 = (pos * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
-		vf2d pos2 = pos1 + 2.0f * tex->size * m_InvScreenSize * scale * vf2d(1.0f, -1.0f);
+		vf2d screenPos1 = (pos * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
+		vf2d screenPos2 = ((pos + fileSize * scale) * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
 
-		vf2d tl = filePos * tex->uvScale;
-		vf2d br = (filePos + fileSize) * tex->uvScale;
+		vf2d quantPos1 = (screenPos1 * vf2d(m_WindowSize) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_WindowSize);
+		vf2d quantPos2 = (screenPos2 * vf2d(m_WindowSize) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_WindowSize);
+
+		vf2d tl = (filePos + 0.0001f) * tex->uvScale;
+		vf2d br = (filePos + fileSize - 0.0001f) * tex->uvScale;
 
 		TextureInstance texInst;
 
@@ -3208,7 +3201,7 @@ namespace def
 		texInst.points = 4;
 		texInst.structure = m_TextureStructure;
 		texInst.tint = { tint, tint, tint, tint };
-		texInst.vertices = { pos1, { pos1.x, pos2.y }, pos2, { pos2.x, pos1.y } };
+		texInst.vertices = { quantPos1, { quantPos1.x, quantPos2.y }, quantPos2, { quantPos2.x, quantPos1.y } };
 		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
 		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
 
@@ -3259,14 +3252,16 @@ namespace def
 		texInst.points = 4;
 		texInst.structure = m_TextureStructure;
 		texInst.tint = { tint, tint, tint, tint };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
 
-		vf2d pos1 = ((pos - center * tex->size) * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
-		vf2d pos2 = ((pos - center * tex->size + fileSize * scale) * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
+		vf2d denormCenter = center * fileSize;
 
-		vf2d tl = filePos * tex->uvScale;
-		vf2d br = (filePos + fileSize ) * tex->uvScale;
-
-		texInst.vertices = { pos1, { pos1.x, pos2.y }, pos2, { pos2.x, pos1.y } };
+		texInst.vertices = {
+			-denormCenter * scale,
+			(vf2d(0.0f, fileSize.y) - denormCenter) * scale,
+			(fileSize - denormCenter) * scale,
+			(vf2d(fileSize.x, 0.0f) - denormCenter) * scale
+		};
 
 		float c = cos(rotation), s = sin(rotation);
 		for (int i = 0; i < texInst.points; i++)
@@ -3282,8 +3277,10 @@ namespace def
 			texInst.vertices[i].y *= -1.0f;
 		}
 
+		vf2d tl = filePos * tex->uvScale;
+		vf2d br = tl + fileSize * tex->uvScale;
+
 		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
 
 		m_Textures.push_back(texInst);
 	}
