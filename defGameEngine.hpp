@@ -390,16 +390,18 @@ namespace def
 
 	struct TextureInstance
 	{
-		const Texture* texture = nullptr;
+		TextureInstance();
 
-		Texture::Structure structure = Texture::Structure::FAN;
-		int points = 0;
+		const Texture* texture;
+
+		Texture::Structure structure;
+		uint32_t points;
 
 		std::vector<Pixel> tint;
 		std::vector<vf2d> vertices;
 		std::vector<vf2d> uv;
 
-		bool drawBeforeTransforms = false;
+		bool drawBeforeTransforms;
 	};
 
 	class GameEngine
@@ -543,11 +545,11 @@ namespace def
 		void DrawPartialSprite(const vi2d& pos, const vi2d& filePos, const vi2d& fileSize, const Sprite* sprite);
 		virtual void DrawPartialSprite(int x, int y, int fileX, int fileY, int fileSizeX, int fileSizeY, const Sprite* sprite);
 
-		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
-		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
+		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
+		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
 
-		void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
-		virtual void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, const Pixel& col = WHITE);
+		void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
+		virtual void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
 
 		void DrawString(const vi2d& pos, std::string_view text, const Pixel& col = WHITE, const vi2d& scale = { 1, 1 });
 		virtual void DrawString(int x, int y, std::string_view text, const Pixel& col = WHITE, int scaleX = 1, int scaleY = 1);
@@ -557,19 +559,13 @@ namespace def
 		void ClearBuffer(const Pixel& col);
 
 		void DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		void DrawTexture(float x, float y, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
-
-		void DrawPartialTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		void DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, const Texture* tex, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
+		void DrawPartialTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 
 		void DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint = WHITE);
 
-		void DrawRotatedTexture(const vf2d& pos, float rot, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		void DrawRotatedTexture(float x, float y, float rot, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
-
-		void DrawPartialRotatedTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, float r, const Texture* tex, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		void DrawPartialRotatedTexture(float x, float y, float filePosX, float filePosY, float fileWidth, float fileHeight, float r, const Texture* tex, float centerX = 0.0f, float centerY = 0.0f, float scaleX = 1.0f, float scaleY = 1.0f, const Pixel& tint = WHITE);
-
+		void DrawRotatedTexture(const vf2d& pos, const Texture* tex, float rotation, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		void DrawPartialRotatedTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, float rotation, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
+		
 		void DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<Pixel>& cols, Texture::Structure structure);
 
 		void DrawTextureLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col = WHITE);
@@ -1566,6 +1562,18 @@ namespace def
 	void Graphic::UpdateTexture()
 	{
 		texture->Update(sprite);
+	}
+
+	TextureInstance::TextureInstance()
+	{
+		texture = nullptr;
+
+		structure = Texture::Structure::FAN;
+		points = 0;
+
+		uv = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } };
+
+		drawBeforeTransforms = false;
 	}
 
 	GameEngine::GameEngine()
@@ -2728,149 +2736,6 @@ namespace def
 				Draw(x + x1, y + y1, sprite->GetPixel(fileX + i, fileY + j));
 	}
 
-	void GameEngine::DrawTexture(float x, float y, const Texture* tex, float scaleX, float scaleY, const Pixel& tint)
-	{
-		vf2d screenPos =
-		{
-			x * m_InvScreenSize.x * 2.0f - 1.0f,
-			1.0f - y * m_InvScreenSize.y * 2.0f
-		};
-
-		vf2d screenSize =
-		{
-			screenPos.x + 2.0f * float(tex->size.x) * m_InvScreenSize.x * scaleX,
-			screenPos.y - 2.0f * float(tex->size.y) * m_InvScreenSize.y * scaleY
-		};
-
-		TextureInstance texInst;
-		texInst.texture = tex;
-		texInst.points = 4;
-		texInst.structure = m_TextureStructure;
-		texInst.tint = { tint, tint, tint, tint };
-		texInst.vertices = { screenPos, { screenPos.x, screenSize.y }, screenSize, { screenSize.x, screenPos.y } };
-		texInst.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
-
-		m_Textures.push_back(texInst);
-	}
-
-	void GameEngine::DrawPartialTexture(float x, float y, float filePosX, float filePosY, float fileSizeX, float fileSizeY, const Texture* tex, float scaleX, float scaleY, const Pixel& tint)
-	{
-		vf2d screenSpacePos =
-		{
-			  (x * m_InvScreenSize.x) * 2.0f - 1.0f,
-			-((y * m_InvScreenSize.y) * 2.0f - 1.0f)
-		};
-
-		vf2d screenSpaceSize =
-		{
-			  ((x + fileSizeX * scaleX) * m_InvScreenSize.x) * 2.0f - 1.0f,
-			-(((y + fileSizeY * scaleY) * m_InvScreenSize.y) * 2.0f - 1.0f)
-		};
-
-		vf2d quantisedPos = ((screenSpacePos * vf2d(m_WindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_WindowSize);
-		vf2d quantisedSize = ((screenSpaceSize * vf2d(m_WindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_WindowSize);
-
-		float tlX = (filePosX + 0.0001f) * tex->uvScale.x;
-		float tlY = (filePosY + 0.0001f) * tex->uvScale.y;
-
-		float brX = (filePosX + fileSizeX - 0.0001f) * tex->uvScale.x;
-		float brY = (filePosY + fileSizeY - 0.0001f) * tex->uvScale.y;
-
-		TextureInstance texInst;
-
-		texInst.texture = tex;
-		texInst.points = 4;
-		texInst.structure = m_TextureStructure;
-		texInst.tint = { tint, tint, tint, tint };
-		texInst.vertices = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
-		texInst.uv = { { tlX, tlY }, { tlX, brY }, { brX, brY }, { brX, tlY } };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
-
-		m_Textures.push_back(texInst);
-	}
-
-	void GameEngine::DrawRotatedTexture(float x, float y, float rot, const Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
-	{
-		TextureInstance texInst;
-
-		texInst.texture = tex;
-		texInst.points = 4;
-		texInst.structure = m_TextureStructure;
-		texInst.tint = { tint, tint, tint, tint };
-
-		float denormCenterX = centerX * tex->size.x;
-		float denormCenterY = centerY * tex->size.y;
-
-		texInst.vertices = {
-			{ -1.0f * denormCenterX * scaleX, -1.0f * denormCenterY * scaleY },
-			{ -denormCenterX * scaleX, ((float)tex->size.y - denormCenterY) * scaleY },
-			{ ((float)tex->size.x - denormCenterX) * scaleX, ((float)tex->size.y - denormCenterY) * scaleY },
-			{ ((float)tex->size.x - denormCenterX) * scaleY, -denormCenterY * scaleY}
-		};
-
-		float c = cos(rot), s = sin(rot);
-		for (int i = 0; i < texInst.points; i++)
-		{
-			vf2d o = { texInst.vertices[i].x * c - texInst.vertices[i].y * s, texInst.vertices[i].x * s + texInst.vertices[i].y * c };
-			texInst.vertices[i] = vf2d(x, y) + o;
-			texInst.vertices[i] = texInst.vertices[i] * m_InvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
-			texInst.vertices[i].y *= -1.0f;
-		}
-
-		texInst.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
-
-		m_Textures.push_back(texInst);
-	}
-
-	void GameEngine::DrawPartialRotatedTexture(float x, float y, float fx, float fy, float fw, float fh, float r, const Texture* tex, float centerX, float centerY, float scaleX, float scaleY, const Pixel& tint)
-	{
-		TextureInstance texInst;
-
-		texInst.texture = tex;
-		texInst.points = 4;
-		texInst.structure = m_TextureStructure;
-		texInst.tint = { tint, tint, tint, tint };
-
-		vf2d screenSpacePos =
-		{
-			  ((x - centerX * tex->size.x) * m_InvScreenSize.x) * 2.0f - 1.0f,
-			-(((y - centerY * tex->size.y) * m_InvScreenSize.y) * 2.0f - 1.0f)
-		};
-
-		vf2d screenSpaceSize =
-		{
-			  ((x - centerX * tex->size.x + fw * scaleX) * m_InvScreenSize.x) * 2.0f - 1.0f,
-			-(((y - centerY * tex->size.y + fh * scaleY) * m_InvScreenSize.y) * 2.0f - 1.0f)
-		};
-
-		vf2d quantisedPos = ((screenSpacePos * vf2d(m_WindowSize)) + vf2d(0.5f, 0.5f)).floor() / vf2d(m_WindowSize);
-		vf2d quantisedSize = ((screenSpaceSize * vf2d(m_WindowSize)) + vf2d(0.5f, -0.5f)).ceil() / vf2d(m_WindowSize);
-
-		float tl_x = (fx + 0.0001f) * tex->uvScale.x;
-		float tl_y = (fy + 0.0001f) * tex->uvScale.y;
-
-		float br_x = (fx * 2.0f - 0.0001f) * tex->uvScale.x;
-		float br_y = (fy * 2.0f - 0.0001f) * tex->uvScale.y;
-
-		texInst.vertices = { quantisedPos, { quantisedPos.x, quantisedSize.y }, quantisedSize, { quantisedSize.x, quantisedPos.y } };
-
-		float c = cos(r), s = sin(r);
-		for (int i = 0; i < texInst.points; i++)
-		{
-			vf2d o = { texInst.vertices[i].x * c - texInst.vertices[i].y * s, texInst.vertices[i].x * s + texInst.vertices[i].y * c };
-			texInst.vertices[i] = vf2d(x, y) + o;
-			texInst.vertices[i] = texInst.vertices[i] * m_InvScreenSize * 2.0f - vf2d(1.0f, 1.0f);
-			texInst.vertices[i].y *= -1.0f;
-		}
-
-		texInst.uv = { { tl_x, tl_y }, {tl_x, br_y}, { br_x, br_y }, { br_x, tl_y } };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
-
-		m_Textures.push_back(texInst);
-	}
-
 	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint)
 	{
 		TextureInstance texInst;
@@ -2912,34 +2777,34 @@ namespace def
 		}
 	}
 
-	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& col)
+	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float rotation, float scale, const Pixel& col)
 	{
 		size_t verts = modelCoordinates.size();
 
 		std::vector<vf2d> coordinates(verts);
-		float cs = cosf(r), sn = sinf(r);
+		float cs = cosf(rotation), sn = sinf(rotation);
 
 		for (size_t i = 0; i < verts; i++)
 		{
-			coordinates[i].x = (modelCoordinates[i].x * cs - modelCoordinates[i].y * sn) * s + x;
-			coordinates[i].y = (modelCoordinates[i].x * sn + modelCoordinates[i].y * cs) * s + y;
+			coordinates[i].x = (modelCoordinates[i].x * cs - modelCoordinates[i].y * sn) * scale + x;
+			coordinates[i].y = (modelCoordinates[i].x * sn + modelCoordinates[i].y * cs) * scale + y;
 		}
 
 		for (size_t i = 0; i <= verts; i++)
 			DrawLine(coordinates[i % verts], coordinates[(i + 1) % verts], col);
 	}
 
-	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float r, float s, const Pixel& col)
+	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float rotation, float scale, const Pixel& col)
 	{
 		size_t verts = modelCoordinates.size();
 
-		std::vector<vf2d> coordinates;
-		coordinates.resize(verts);
+		std::vector<vf2d> coordinates(verts);
+		float cs = cosf(rotation), sn = sinf(rotation);
 
 		for (size_t i = 0; i < verts; i++)
 		{
-			coordinates[i].x = (modelCoordinates[i].x * cosf(r) - modelCoordinates[i].y * sinf(r)) * s + x;
-			coordinates[i].y = (modelCoordinates[i].x * sinf(r) + modelCoordinates[i].y * cosf(r)) * s + y;
+			coordinates[i].x = (modelCoordinates[i].x * cs - modelCoordinates[i].y * sn) * scale + x;
+			coordinates[i].y = (modelCoordinates[i].x * sn + modelCoordinates[i].y * cs) * scale + y;
 		}
 
 		auto GetAngle = [](const vf2d& p1, const vf2d& p2)
@@ -3244,7 +3109,7 @@ namespace def
 			{
 				vf2d offset((c - 32) % 16, (c - 32) / 16);
 
-				DrawPartialTexture(pos + p, offset * 8.0f, { 8.0f, 8.0f }, m_Font.texture, scale, col);
+				DrawPartialTexture(pos + p, m_Font.texture, offset * 8.0f, { 8.0f, 8.0f }, scale, col);
 				p.x += 8.0f * scale.x;
 			}
 		}
@@ -3302,32 +3167,123 @@ namespace def
 
 	void GameEngine::DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale, const Pixel& tint)
 	{
-		DrawTexture(pos.x, pos.y, tex, scale.x, scale.y, tint);
+		vf2d pos1 = (pos * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
+		vf2d pos2 = pos1 + 2.0f * tex->size * m_InvScreenSize * scale * vf2d(1.0f, -1.0f);
+
+		TextureInstance texInst;
+
+		texInst.texture = tex;
+		texInst.points = 4;
+		texInst.structure = m_TextureStructure;
+		texInst.tint = { tint, tint, tint, tint };
+		texInst.vertices = { pos1, { pos1.x, pos2.y }, pos2, { pos2.x, pos1.y } };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+
+		m_Textures.push_back(texInst);
 	}
 
-	void GameEngine::DrawPartialTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, const Texture* tex, const vf2d& scale, const Pixel& tint)
+	void GameEngine::DrawPartialTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, const vf2d& scale, const Pixel& tint)
 	{
-		DrawPartialTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, tex, scale.x, scale.y, tint);
+		vf2d pos1 = (pos * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
+		vf2d pos2 = pos1 + 2.0f * tex->size * m_InvScreenSize * scale * vf2d(1.0f, -1.0f);
+
+		vf2d tl = filePos * tex->uvScale;
+		vf2d br = (filePos + fileSize) * tex->uvScale;
+
+		TextureInstance texInst;
+
+		texInst.texture = tex;
+		texInst.points = 4;
+		texInst.structure = m_TextureStructure;
+		texInst.tint = { tint, tint, tint, tint };
+		texInst.vertices = { pos1, { pos1.x, pos2.y }, pos2, { pos2.x, pos1.y } };
+		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+
+		m_Textures.push_back(texInst);
 	}
 
-	void GameEngine::DrawRotatedTexture(const vf2d& pos, float r, const Texture* tex, const vf2d& center, const vf2d& scale, const Pixel& tint)
+	void GameEngine::DrawRotatedTexture(const vf2d& pos, const Texture* tex, float rotation, const vf2d& center, const vf2d& scale, const Pixel& tint)
 	{
-		DrawRotatedTexture(pos.x, pos.y, r, tex, center.x, center.y, scale.x, scale.y, tint);
+		TextureInstance texInst;
+
+		texInst.texture = tex;
+		texInst.points = 4;
+		texInst.structure = m_TextureStructure;
+		texInst.tint = { tint, tint, tint, tint };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+
+		vf2d denormCenter = center * tex->size;
+
+		texInst.vertices = {
+			-denormCenter * scale,
+			(vf2d(0.0f, tex->size.y) - denormCenter) * scale,
+			(tex->size - denormCenter) * scale,
+			(vf2d(tex->size.x, 0.0f) - denormCenter) * scale
+		};
+
+		float c = cos(rotation), s = sin(rotation);
+		for (int i = 0; i < texInst.points; i++)
+		{
+			vf2d offset =
+			{
+				texInst.vertices[i].x * c - texInst.vertices[i].y * s,
+				texInst.vertices[i].x * s + texInst.vertices[i].y * c
+			};
+			
+			texInst.vertices[i] = pos + offset;
+			texInst.vertices[i] = texInst.vertices[i] * m_InvScreenSize * 2.0f - 1.0f;
+			texInst.vertices[i].y *= -1.0f;
+		}
+
+		m_Textures.push_back(texInst);
 	}
 
-	void GameEngine::DrawPartialRotatedTexture(const vf2d& pos, const vf2d& filePos, const vf2d& fileSize, float rot, const Texture* tex, const vf2d& center, const vf2d& scale, const Pixel& tint)
+	void GameEngine::DrawPartialRotatedTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, float rotation, const vf2d& center, const vf2d& scale, const Pixel& tint)
 	{
-		DrawPartialRotatedTexture(pos.x, pos.y, filePos.x, filePos.y, fileSize.x, fileSize.y, rot, tex, center.x, center.y, scale.x, scale.y, tint);
+		TextureInstance texInst;
+
+		texInst.texture = tex;
+		texInst.points = 4;
+		texInst.structure = m_TextureStructure;
+		texInst.tint = { tint, tint, tint, tint };
+
+		vf2d pos1 = ((pos - center * tex->size) * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
+		vf2d pos2 = ((pos - center * tex->size + fileSize * scale) * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
+
+		vf2d tl = filePos * tex->uvScale;
+		vf2d br = (filePos + fileSize ) * tex->uvScale;
+
+		texInst.vertices = { pos1, { pos1.x, pos2.y }, pos2, { pos2.x, pos1.y } };
+
+		float c = cos(rotation), s = sin(rotation);
+		for (int i = 0; i < texInst.points; i++)
+		{
+			vf2d offset =
+			{
+				texInst.vertices[i].x * c - texInst.vertices[i].y * s,
+				texInst.vertices[i].x * s + texInst.vertices[i].y * c
+			};
+
+			texInst.vertices[i] = pos + offset;
+			texInst.vertices[i] = texInst.vertices[i] * m_InvScreenSize * 2.0f - 1.0f;
+			texInst.vertices[i].y *= -1.0f;
+		}
+
+		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
+		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+
+		m_Textures.push_back(texInst);
 	}
 
-	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r, float s, const Pixel& col)
+	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation, float scale, const Pixel& col)
 	{
-		DrawWireFrameModel(modelCoordinates, pos.x, pos.y, r, s, col);
+		DrawWireFrameModel(modelCoordinates, pos.x, pos.y, rotation, scale, col);
 	}
 
-	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float r, float s, const Pixel& col)
+	void GameEngine::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation, float scale, const Pixel& col)
 	{
-		FillWireFrameModel(modelCoordinates, pos.x, pos.y, r, s, col);
+		FillWireFrameModel(modelCoordinates, pos.x, pos.y, rotation, scale, col);
 	}
 
 	void GameEngine::DrawString(const vi2d& pos, std::string_view text, const Pixel& col, const vi2d& scale)
