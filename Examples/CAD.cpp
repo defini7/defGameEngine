@@ -1,8 +1,8 @@
 #define DGE_APPLICATION
 #include "defGameEngine.hpp"
 
-#define DGE_PAN_AND_ZOOM
-#include "DGE_PanAndZoom.hpp"
+#define DGE_AFFINE_TRANSFORMS
+#include "DGE_AffineTransforms.hpp"
 
 struct Shape;
 
@@ -19,7 +19,7 @@ struct Shape
 	size_t maxNodes;
 	bool expired = false;
 
-	virtual void DrawYourself(def::PanAndZoom& vendor) = 0;
+	virtual void DrawYourself(def::AffineTransforms& vendor) = 0;
 
 	Node* GetNextNode(const def::vf2d& pos)
 	{
@@ -34,7 +34,7 @@ struct Shape
 		return &nodes.back();
 	}
 
-	void DrawNodes(def::PanAndZoom& vendor)
+	void DrawNodes(def::AffineTransforms& vendor)
 	{
 		for (const auto& n : nodes)
 			vendor.FillTextureCircle(n.pos, 2, def::RED);
@@ -60,7 +60,7 @@ struct Line : Shape
 		maxNodes = 2;
 	}
 
-	virtual void DrawYourself(def::PanAndZoom& vendor) override
+	virtual void DrawYourself(def::AffineTransforms& vendor) override
 	{
 		vendor.FillTextureCircle(nodes[0].pos, 2, def::RED);
 		vendor.FillTextureCircle(nodes[1].pos, 2, def::RED);
@@ -78,7 +78,7 @@ struct Circle : Shape
 		maxNodes = 2;
 	}
 
-	virtual void DrawYourself(def::PanAndZoom& vendor) override
+	virtual void DrawYourself(def::AffineTransforms& vendor) override
 	{
 		vendor.DrawTextureLine(nodes[0].pos, nodes[1].pos, def::WHITE);
 
@@ -95,7 +95,7 @@ struct Rect : Shape
 		maxNodes = 2;
 	}
 
-	virtual void DrawYourself(def::PanAndZoom& vendor) override
+	virtual void DrawYourself(def::AffineTransforms& vendor) override
 	{
 		def::vi2d p1 = nodes[0].pos;
 		def::vi2d p2 = nodes[1].pos;
@@ -113,7 +113,7 @@ struct Curve : Shape
 		maxNodes = 3;
 	}
 
-	virtual void DrawYourself(def::PanAndZoom& vendor) override
+	virtual void DrawYourself(def::AffineTransforms& vendor) override
 	{
 		if (nodes.size() == 2)
 			vendor.DrawTextureLine(nodes[0].pos, nodes[1].pos, def::WHITE);
@@ -162,9 +162,7 @@ public:
 			if (first > second)
 				std::swap(first, second);
 
-			SetPixelMode(def::Pixel::Mode::ALPHA);
-			FillRectangle(first, second - first, def::Pixel(255, 255, 255, 122));
-			SetPixelMode(def::Pixel::Mode::DEFAULT);
+			at.FillTextureRectangle(first, second - first, def::Pixel(255, 255, 255, 122));
 		}
 	}
 
@@ -173,21 +171,21 @@ public:
 		return true;
 	}
 
-	bool OnUserUpdate(float fElapsedTime) override
+	bool OnUserUpdate(float deltaTime) override
 	{
 		if (GetMouse(def::Button::WHEEL).pressed)
-			pz.StartPan(GetMousePos());
+			at.StartPan(GetMousePos());
 
 		if (GetMouse(def::Button::WHEEL).held)
-			pz.UpdatePan(GetMousePos());
+			at.UpdatePan(GetMousePos());
 
 		if (GetMouseWheelDelta() > 0)
-			pz.Zoom(1.1f, GetMousePos());
+			at.Zoom(1.1f, GetMousePos());
 
 		if (GetMouseWheelDelta() < 0)
-			pz.Zoom(0.9f, GetMousePos());
+			at.Zoom(0.9f, GetMousePos());
 
-		def::vi2d cursor = pz.ScreenToWorld(GetMousePos());
+		def::vi2d cursor = at.ScreenToWorld(GetMousePos());
 
 		if (GetKey(def::Key::L).pressed)
 		{
@@ -302,13 +300,13 @@ public:
 
 		ClearTexture(def::DARK_BLUE);
 
-		pz.DrawTextureCircle(cursor, 2, def::DARK_GREY);
+		at.DrawTextureCircle(cursor, 2, def::DARK_GREY);
 
-		def::vi2d origin = pz.GetOrigin();
-		def::vi2d end = pz.GetEnd();
+		def::vi2d origin = at.GetOrigin();
+		def::vi2d end = at.GetEnd();
 
-		pz.DrawTextureLine({ ScreenWidth() / 2, origin.y }, { ScreenWidth() / 2, end.y }, def::GREY);
-		pz.DrawTextureLine({ origin.x, ScreenHeight() / 2 }, { end.x, ScreenHeight() / 2 }, def::GREY);
+		at.DrawTextureLine({ ScreenWidth() / 2, origin.y }, { ScreenWidth() / 2, end.y }, def::GREY);
+		at.DrawTextureLine({ origin.x, ScreenHeight() / 2 }, { end.x, ScreenHeight() / 2 }, def::GREY);
 
 		for (size_t i = 0; i < shapes.size(); i++)
 		{
@@ -320,14 +318,14 @@ public:
 				continue;
 			}
 
-			shape->DrawYourself(pz);
-			shape->DrawNodes(pz);
+			shape->DrawYourself(at);
+			shape->DrawNodes(at);
 		}
 
 		if (tempShape)
 		{
-			tempShape->DrawYourself(pz);
-			tempShape->DrawNodes(pz);
+			tempShape->DrawYourself(at);
+			tempShape->DrawNodes(at);
 		}
 
 		DrawSelectedArea();
@@ -343,7 +341,7 @@ private:
 
 	std::pair<def::vi2d, def::vi2d> selectedArea;
 
-	def::PanAndZoom pz;
+	def::AffineTransforms at;
 
 };
 
