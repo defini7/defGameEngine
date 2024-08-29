@@ -1,10 +1,10 @@
 #ifndef DGE_PATHFINDER_HPP
 #define DGE_PATHFINDER_HPP
 
-#pragma region license
+#pragma region License
 /***
 *	BSD 3-Clause License
-	Copyright (c) 2021, 2022 Alex
+	Copyright (c) 2022 - 2024 Alex
 	All rights reserved.
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -29,12 +29,14 @@
 ***/
 #pragma endregion
 
-#pragma region includes
+#pragma region Includes
 
 #include <list>
 #include <cmath>
 #include <functional>
 #include <vector>
+
+#include "defGameEngine.hpp"
 
 #pragma endregion
 
@@ -266,11 +268,9 @@ namespace def
 		while (!nodesToTest.empty() && current != m_Goal)
 		{
 			nodesToTest.sort(
-				[](const Node* lhs, const Node* rhs)
-				{
+				[](const Node* lhs, const Node* rhs) {
 					return lhs->globalGoal < rhs->globalGoal;
-				}
-			);
+				});
 
 			while (!nodesToTest.empty() && nodesToTest.front()->isVisited)
 				nodesToTest.pop_front();
@@ -285,12 +285,12 @@ namespace def
 				if (!n->isVisited && !n->isObstacle)
 					nodesToTest.push_back(n);
 
-				float possiblyLowerGoal = current->localGoal + dist(current, n);
+				float newGoal = current->localGoal + dist(current, n);
 
-				if (possiblyLowerGoal < n->localGoal)
+				if (newGoal < n->localGoal)
 				{
 					n->parent = current;
-					n->localGoal = possiblyLowerGoal;
+					n->localGoal = newGoal;
 					n->globalGoal = n->localGoal + heuristic(n, m_Goal);
 				}
 			}
