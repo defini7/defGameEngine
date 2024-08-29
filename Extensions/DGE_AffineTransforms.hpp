@@ -68,9 +68,52 @@ namespace def
 		void StartPan(const vf2d& pos);
 		void UpdatePan(const vf2d& pos);
 
-		bool IsVisible(const vf2d& point);
+		bool IsPointVisible(const vf2d& point);
+		bool IsRectVisible(const vf2d& pos, const vf2d& size);
 
 	public:
+		bool Draw(const vi2d& pos, Pixel col = WHITE);
+		virtual bool Draw(int x, int y, Pixel col = WHITE);
+
+		void DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col = WHITE);
+		virtual void DrawLine(int x1, int y1, int x2, int y2, const Pixel& col = WHITE);
+
+		void DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col = WHITE);
+		virtual void DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& col = WHITE);
+
+		void FillTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col = WHITE);
+		virtual void FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& col = WHITE);
+
+		void DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		virtual void DrawRectangle(int x, int y, int sizeX, int sizeY, const Pixel& col = WHITE);
+
+		void FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		virtual void FillRectangle(int x, int y, int sizeX, int sizeY, const Pixel& col = WHITE);
+
+		void DrawCircle(const vi2d& pos, int radius, const Pixel& col = WHITE);
+		virtual void DrawCircle(int x, int y, int radius, const Pixel& col = WHITE);
+
+		void FillCircle(const vi2d& pos, int radius, const Pixel& col = WHITE);
+		virtual void FillCircle(int x, int y, int radius, const Pixel& col = WHITE);
+
+		void DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		virtual void DrawEllipse(int x, int y, int sizeX, int sizeY, const Pixel& col = WHITE);
+
+		void FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& col = WHITE);
+		virtual void FillEllipse(int x, int y, int sizeX, int sizeY, const Pixel& col = WHITE);
+
+		void DrawSprite(const vi2d& pos, const Sprite* sprite);
+		virtual void DrawSprite(int x, int y, const Sprite* sprite);
+
+		void DrawPartialSprite(const vi2d& pos, const vi2d& filePos, const vi2d& fileSize, const Sprite* sprite);
+		virtual void DrawPartialSprite(int x, int y, int fileX, int fileY, int fileSizeX, int fileSizeY, const Sprite* sprite);
+
+		void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
+		virtual void DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
+
+		void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
+		virtual void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
+
 		void DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		void DrawPartialTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 
@@ -164,11 +207,205 @@ namespace def
 		StartPan(pos);
 	}
 
-	bool AffineTransforms::IsVisible(const vf2d& point)
+	bool AffineTransforms::IsPointVisible(const vf2d& point)
 	{
 		vf2d p = WorldToScreen(point);
 
 		return p.x >= 0.0f && p.y >= 0.0f && p.x < m_Engine->ScreenWidth() && p.y < m_Engine->ScreenHeight();
+	}
+
+	bool AffineTransforms::IsRectVisible(const vf2d& pos, const vf2d& size)
+	{
+		vf2d p = WorldToScreen(pos);
+		vf2d s = size * m_Scale;
+
+		return p.x + s.x >= 0.0f && p.y + s.y >= 0.0f && p.x < m_Engine->ScreenWidth() && p.y < m_Engine->ScreenHeight();
+	}
+
+	bool AffineTransforms::Draw(const vi2d& pos, Pixel col)
+	{
+		return m_Engine->Draw(WorldToScreen(pos), col);
+	}
+
+	bool AffineTransforms::Draw(int x, int y, Pixel col)
+	{
+		return Draw({ x, y }, col);
+	}
+
+	void AffineTransforms::DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col)
+	{
+		m_Engine->DrawLine(WorldToScreen(pos1), WorldToScreen(pos2), col);
+	}
+
+	void AffineTransforms::DrawLine(int x1, int y1, int x2, int y2, const Pixel& col)
+	{
+		DrawLine({ x1, y1 }, { x2, y2 }, col);
+	}
+
+	void AffineTransforms::DrawTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col)
+	{
+		m_Engine->DrawTriangle(WorldToScreen(pos1), WorldToScreen(pos2), WorldToScreen(pos3), col);
+	}
+
+	void AffineTransforms::DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& col)
+	{
+		DrawTriangle({ x1, y1 }, { x2, y2 }, { x3, y3 }, col);
+	}
+
+	void AffineTransforms::FillTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col)
+	{
+		m_Engine->FillTriangle(WorldToScreen(pos1), WorldToScreen(pos2), WorldToScreen(pos3), col);
+	}
+
+	void AffineTransforms::FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& col)
+	{
+		FillTriangle({ x1, y1 }, { x2, y2 }, { x3, y3 }, col);
+	}
+
+	void AffineTransforms::DrawRectangle(const vi2d& pos, const vi2d& size, const Pixel& col)
+	{
+		m_Engine->DrawRectangle(WorldToScreen(pos), size * m_Scale, col);
+	}
+
+	void AffineTransforms::DrawRectangle(int x, int y, int sizeX, int sizeY, const Pixel& col)
+	{
+		DrawRectangle({ x, y }, { sizeX, sizeY }, col);
+	}
+
+	void AffineTransforms::FillRectangle(const vi2d& pos, const vi2d& size, const Pixel& col)
+	{
+		m_Engine->FillRectangle(WorldToScreen(pos), size * m_Scale, col);
+	}
+
+	void AffineTransforms::FillRectangle(int x, int y, int sizeX, int sizeY, const Pixel& col)
+	{
+		FillRectangle({ x, y }, { sizeX, sizeY }, col);
+	}
+
+	void AffineTransforms::DrawCircle(const vi2d& pos, int radius, const Pixel& col)
+	{
+		m_Engine->DrawCircle(WorldToScreen(pos), (float)radius * m_Scale.x, col);
+	}
+
+	void AffineTransforms::DrawCircle(int x, int y, int radius, const Pixel& col)
+	{
+		DrawCircle({ x, y }, radius, col);
+	}
+
+	void AffineTransforms::FillCircle(const vi2d& pos, int radius, const Pixel& col)
+	{
+		m_Engine->FillCircle(WorldToScreen(pos), (float)radius * m_Scale.x, col);
+	}
+
+	void AffineTransforms::FillCircle(int x, int y, int radius, const Pixel& col)
+	{
+		FillCircle({ x, y }, radius, col);
+	}
+
+	void AffineTransforms::DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& col)
+	{
+		m_Engine->DrawEllipse(WorldToScreen(pos), size * m_Scale, col);
+	}
+
+	void AffineTransforms::DrawEllipse(int x, int y, int sizeX, int sizeY, const Pixel& col)
+	{
+		DrawEllipse({ x, y }, { sizeX, sizeY }, col);
+	}
+
+	void AffineTransforms::FillEllipse(const vi2d& pos, const vi2d& size, const Pixel& col)
+	{
+		m_Engine->FillEllipse(WorldToScreen(pos), size * m_Scale, col);
+	}
+
+	void AffineTransforms::FillEllipse(int x, int y, int sizeX, int sizeY, const Pixel& col)
+	{
+		FillEllipse({ x, y }, { sizeX, sizeY }, col);
+	}
+
+	void AffineTransforms::DrawSprite(const vi2d& pos, const Sprite* sprite)
+	{
+		vf2d size = vf2d(sprite->size) * m_Scale;
+
+		if (IsRectVisible(pos, sprite->size))
+		{
+			vi2d spriteStart = WorldToScreen(pos);
+			vi2d spriteEnd = WorldToScreen(pos + sprite->size);
+
+			vi2d screenStart = spriteStart.max({ 0, 0 });
+			vi2d screenEnd = spriteEnd.min(m_Engine->GetScreenSize());
+
+			vf2d step = 1.0f / size;
+
+			vi2d pixel;
+			for (pixel.y = screenStart.y; pixel.y < screenEnd.y; pixel.y++)
+				for (pixel.x = screenStart.x; pixel.x < screenEnd.x; pixel.x++)
+				{
+					vf2d sampled = vf2d(pixel - spriteStart) * step;
+					m_Engine->Draw(pixel, sprite->Sample(sampled, Sprite::SampleMethod::LINEAR, Sprite::WrapMethod::NONE));
+				}
+		}
+	}
+
+	void AffineTransforms::DrawSprite(int x, int y, const Sprite* sprite)
+	{
+		DrawSprite({ x, y }, sprite);
+	}
+
+	void AffineTransforms::DrawPartialSprite(const vi2d& pos, const vi2d& filePos, const vi2d& fileSize, const Sprite* sprite)
+	{
+		vf2d size = sprite->size * m_Scale;
+
+		if (IsRectVisible(pos, size))
+		{
+			vf2d spriteStep = 1.0f / sprite->size;
+			vf2d screenStep = 1.0f / size;
+
+			vi2d start = WorldToScreen(pos);
+			vi2d end = start + size;
+
+			vi2d pixel;
+			for (pixel.y = start.y; pixel.y < end.y; pixel.y++)
+				for (pixel.x = start.x; pixel.x < end.x; pixel.x++)
+				{
+					vf2d sampled = (vf2d(pixel - start) * screenStep * vf2d(size) + vf2d(filePos)) * spriteStep;
+					m_Engine->Draw(pixel, sprite->Sample(sampled, Sprite::SampleMethod::LINEAR, Sprite::WrapMethod::NONE));
+				}
+		}
+	}
+
+	void AffineTransforms::DrawPartialSprite(int x, int y, int fileX, int fileY, int fileSizeX, int fileSizeY, const Sprite* sprite)
+	{
+		DrawPartialSprite({ x, y }, { fileX, fileY }, { fileSizeX, fileSizeY }, sprite);
+	}
+
+	void AffineTransforms::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation, float scale, const Pixel& col)
+	{
+		std::vector<vf2d> transformed(modelCoordinates.size());
+
+		std::transform(modelCoordinates.begin(), modelCoordinates.end(), transformed.begin(),
+			[&](const vf2d& p) { return p * m_Scale; });
+
+		m_Engine->DrawWireFrameModel(transformed, WorldToScreen(pos), rotation, scale, col);
+	}
+
+	void AffineTransforms::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float rotation, float scale, const Pixel& col)
+	{
+		DrawWireFrameModel(modelCoordinates, { x, y }, rotation, scale, col);
+	}
+
+	void AffineTransforms::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation, float scale, const Pixel& col)
+	{
+		std::vector<vf2d> transformed(modelCoordinates.size());
+
+		std::transform(modelCoordinates.begin(), modelCoordinates.end(), transformed.begin(),
+			[&](const vf2d& p) { return p * m_Scale; });
+
+		m_Engine->FillWireFrameModel(transformed, WorldToScreen(pos), rotation, scale, col);
+	}
+
+	void AffineTransforms::FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float rotation, float scale, const Pixel& col)
+	{
+		FillWireFrameModel(modelCoordinates, { x, y }, rotation, scale, col);
 	}
 
 	void AffineTransforms::DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale, const Pixel& tint)
