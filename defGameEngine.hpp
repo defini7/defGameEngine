@@ -334,8 +334,8 @@ namespace def
 
 		void SetPixelData(const Pixel& col);
 
-		Pixel Sample(int x, int y, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
-		Pixel Sample(const vi2d& pos, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
+		Pixel Sample(float x, float y, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
+		Pixel Sample(const vf2d& pos, const SampleMethod sampleMethod, const WrapMethod wrapMethod) const;
 	};
 
 	struct Texture
@@ -509,8 +509,6 @@ namespace def
 	public:
 		bool Draw(const vi2d& pos, Pixel col = WHITE);
 		virtual bool Draw(int x, int y, Pixel col = WHITE);
-
-		void DrawHorizontalLine(int startX, int endX, int y, const Pixel& col = WHITE);
 
 		void DrawLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col = WHITE);
 		virtual void DrawLine(int x1, int y1, int x2, int y2, const Pixel& col = WHITE);
@@ -1369,22 +1367,24 @@ namespace def
 		std::fill(pixels.begin(), pixels.end(), col);
 	}
 
-	Pixel Sprite::Sample(int x, int y, const SampleMethod sample, const WrapMethod wrap) const
+	Pixel Sprite::Sample(float x, float y, const SampleMethod sample, const WrapMethod wrap) const
 	{
 		return Sample({ x, y }, sample, wrap);
 	}
 
-	Pixel Sprite::Sample(const vi2d& pos, const SampleMethod sample, const WrapMethod wrap) const
+	Pixel Sprite::Sample(const vf2d& pos, const SampleMethod sample, const WrapMethod wrap) const
 	{
+		vf2d denorm = pos * vf2d(size);
+
 		switch (sample)
 		{
 		case SampleMethod::LINEAR:
-			return GetPixel(pos, wrap);
+			return GetPixel(denorm, wrap);
 
 		case SampleMethod::BILINEAR:
 		{
-			vf2d cell = pos.floor();
-			vf2d offset = pos - cell;
+			vf2d cell = denorm.floor();
+			vf2d offset = denorm - cell;
 
 			Pixel tl = GetPixel(cell + vf2d(0, 0), wrap);
 			Pixel tr = GetPixel(cell + vf2d(1, 0), wrap);
@@ -1399,8 +1399,8 @@ namespace def
 
 		case SampleMethod::TRILINEAR:
 		{
-			vi2d center = (pos - vf2d(0.5f, 0.5f)).floor();
-			vf2d offset = (pos - vf2d(0.5f, 0.5f)) - vf2d(center);
+			vi2d center = (denorm - vf2d(0.5f, 0.5f)).floor();
+			vf2d offset = (denorm - vf2d(0.5f, 0.5f)) - vf2d(center);
 
 			struct Pixelf
 			{
@@ -2166,12 +2166,6 @@ namespace def
 		return false;
 	}
 
-	void GameEngine::DrawHorizontalLine(int startX, int endX, int y, const Pixel& col)
-	{
-		for (int i = startX; i <= endX; i++)
-			Draw(i, y, col);
-	}
-
 	void GameEngine::DrawLine(int x1, int y1, int x2, int y2, const Pixel& col)
 	{
 		int dx = x2 - x1;
@@ -2260,6 +2254,12 @@ namespace def
 
 	void GameEngine::FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const Pixel& col)
 	{
+		auto draw_line = [&](int start, int end, int y)
+			{
+				for (int i = start; i <= end; i++)
+					Draw(i, y, col);
+			};
+
 		int t1x, t2x, y, minx, maxx, t1xp, t2xp;
 
 		bool changed1 = false;
@@ -2392,7 +2392,7 @@ namespace def
 			if (maxx < t1x) maxx = t1x;
 			if (maxx < t2x) maxx = t2x;
 
-			DrawHorizontalLine(minx, maxx, y, col);
+			draw_line(minx, maxx, y);
 
 			if (!changed1)
 				t1x += signx1;
@@ -2500,7 +2500,7 @@ namespace def
 			if (maxx < t1x) maxx = t1x;
 			if (maxx < t2x) maxx = t2x;
 
-			DrawHorizontalLine(minx, maxx, y, col);
+			draw_line(minx, maxx, y);
 
 			if (!changed1)
 				t1x += signx1;
@@ -2575,16 +2575,22 @@ namespace def
 
 	void GameEngine::FillCircle(int x, int y, int radius, const Pixel& col)
 	{
+		auto draw_line = [&](int start, int end, int y)
+			{
+				for (int i = start; i <= end; i++)
+					Draw(i, y, col);
+			};
+
 		int x1 = 0;
 		int y1 = radius;
 		int p1 = 3 - 2 * radius;
 
 		while (y1 >= x1)
 		{
-			DrawHorizontalLine(x - x1, x + x1, y - y1, col);
-			DrawHorizontalLine(x - y1, x + y1, y - x1, col);
-			DrawHorizontalLine(x - x1, x + x1, y + y1, col);
-			DrawHorizontalLine(x - y1, x + y1, y + x1, col);
+			draw_line(x - x1, x + x1, y - y1);
+			draw_line(x - y1, x + y1, y - x1);
+			draw_line(x - x1, x + x1, y + y1);
+			draw_line(x - y1, x + y1, y + x1);
 
 			if (p1 < 0)
 			{
@@ -2664,6 +2670,12 @@ namespace def
 
 	void GameEngine::FillEllipse(int x, int y, int sizeX, int sizeY, const Pixel& col)
 	{
+		auto draw_line = [&](int start, int end, int y)
+			{
+				for (int i = start; i <= end; i++)
+					Draw(i, y, col);
+			};
+
 		int x1 = x + sizeX;
 		int y1 = y + sizeY;
 
@@ -2695,8 +2707,8 @@ namespace def
 
 		do
 		{
-			DrawHorizontalLine(x, x1, y, col);
-			DrawHorizontalLine(x, x1, y1, col);
+			draw_line(x, x1, y);
+			draw_line(x, x1, y1);
 
 			int e2 = 2 * err;
 
@@ -2717,8 +2729,8 @@ namespace def
 
 		while (y - y1 < b)
 		{
-			DrawHorizontalLine(x - 1, x1 + 1, y++, col);
-			DrawHorizontalLine(x - 1, x1 + 1, y1--, col);
+			draw_line(x - 1, x1 + 1, y++);
+			draw_line(x - 1, x1 + 1, y1--);
 		}
 	}
 
@@ -3135,14 +3147,14 @@ namespace def
 		FillRectangle(pos.x, pos.y, size.x, size.y, col);
 	}
 
-	void GameEngine::DrawCircle(const vi2d& pos, int r, const Pixel& col)
+	void GameEngine::DrawCircle(const vi2d& pos, int radius, const Pixel& col)
 	{
-		DrawCircle(pos.x, pos.y, r, col);
+		DrawCircle(pos.x, pos.y, radius, col);
 	}
 
-	void GameEngine::FillCircle(const vi2d& pos, int r, const Pixel& col)
+	void GameEngine::FillCircle(const vi2d& pos, int radius, const Pixel& col)
 	{
-		FillCircle(pos.x, pos.y, r, col);
+		FillCircle(pos.x, pos.y, radius, col);
 	}
 
 	void GameEngine::DrawEllipse(const vi2d& pos, const vi2d& size, const Pixel& col)
