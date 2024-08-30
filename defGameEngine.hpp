@@ -83,10 +83,7 @@
 
 #include "GLFW/glfw3.h"
 
-#ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#endif
-
 #include "stb_image.h"
 
 #pragma warning(disable : 4996)
@@ -94,17 +91,12 @@
 // Oh, dear stb_image...
 #define SAFE_STBI_FAILURE_REASON() (stbi_failure_reason() ? stbi_failure_reason() : "")
 
-#ifndef STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#endif
-
 #include "stb_image_write.h"
 
 #ifdef _WIN32
 
-#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
-#endif
 
 #pragma comment(lib, "glu32.lib")
 #pragma comment(lib, "glfw3.lib")
@@ -220,6 +212,99 @@ namespace def
 	typedef vec2d<int> vi2d;
 	typedef vec2d<float> vf2d;
 	typedef vec2d<double> vd2d;
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator+=(vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator-=(vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator*=(vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator/=(vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator%=(vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator+=(vec2d<T1>& v1, const T2& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator-=(vec2d<T1>& v1, const T2& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator*=(vec2d<T1>& v1, const T2& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator/=(vec2d<T1>& v1, const T2& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<T1>& operator%=(vec2d<T1>& v1, const T2& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator+(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator-(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator*(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator/(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator%(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator+(const vec2d<T1>& v1, const T2& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator-(const vec2d<T1>& v1, const T2& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator*(const vec2d<T1>& v1, const T2& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator/(const vec2d<T1>& v1, const T2& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator+(const T1& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator-(const T1& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator*(const T1& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator/(const T1& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator%(const T1& v1, const vec2d<T2>& v2);
+
+	template <class T>
+	constexpr vec2d<T> operator-(const vec2d<T>& v);
+
+	template <class T1, class T2>
+	constexpr bool operator==(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr bool operator<=(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr bool operator>=(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr bool operator<(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr bool operator>(const vec2d<T1>& v1, const vec2d<T2>& v2);
+
+	template <class T1, class T2>
+	constexpr bool operator!=(const vec2d<T1>& v1, const vec2d<T2>& v2);
 
 #endif
 
@@ -781,91 +866,91 @@ namespace def
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator+(const vec2d<T1>& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator+(const vec2d<T1>& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1.x + v2.x, v1.y + v2.y);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator-(const vec2d<T1>& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator-(const vec2d<T1>& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1.x - v2.x, v1.y - v2.y);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator*(const vec2d<T1>& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator*(const vec2d<T1>& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1.x * v2.x, v1.y * v2.y);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator/(const vec2d<T1>& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator/(const vec2d<T1>& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1.x / v2.x, v1.y / v2.y);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator%(const vec2d<T1>& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator%(const vec2d<T1>& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1.x % v2.x, v1.y % v2.y);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator+(const vec2d<T1>& v1, const T2& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator+(const vec2d<T1>& v1, const T2& v2)
 	{
 		return vec2d(v1.x + v2, v1.y + v2);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator-(const vec2d<T1>& v1, const T2& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator-(const vec2d<T1>& v1, const T2& v2)
 	{
 		return vec2d(v1.x - v2, v1.y - v2);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator*(const vec2d<T1>& v1, const T2& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator*(const vec2d<T1>& v1, const T2& v2)
 	{
 		return vec2d(v1.x * v2, v1.y * v2);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator/(const vec2d<T1>& v1, const T2& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator/(const vec2d<T1>& v1, const T2& v2)
 	{
 		return vec2d(v1.x / v2, v1.y / v2);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator+(const T1& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator+(const T1& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1 + v2.x, v1 + v2.y);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator-(const T1& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator-(const T1& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1 - v2.x, v1 - v2.y);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator*(const T1& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator*(const T1& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1 * v2.x, v1 * v2.y);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator/(const T1& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator/(const T1& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1 / v2.x, v1 / v2.y);
 	}
 
 	template <class T1, class T2>
-	constexpr auto operator%(const T1& v1, const vec2d<T2>& v2)
+	constexpr vec2d<decltype(T1(1) + T2(1))> operator%(const T1& v1, const vec2d<T2>& v2)
 	{
 		return vec2d(v1 % v2.x, v1 % v2.y);
 	}
 
 	template <class T>
-	constexpr auto operator-(const vec2d<T>& v)
+	constexpr vec2d<T> operator-(const vec2d<T>& v)
 	{
 		return vec2d(-v.x, -v.y);
 	}
@@ -3111,7 +3196,7 @@ namespace def
 			{
 				vf2d offset((c - 32) % 16, (c - 32) / 16);
 
-				DrawPartialRotatedTexture(pos + p, m_Font.texture, offset * 8.0f, { 8.0f, 8.0f }, 3.14159f / 4.0f, { 0.5f, 0.5f}, scale, col);
+				DrawPartialTexture(pos + p, m_Font.texture, offset * 8.0f, { 8.0f, 8.0f }, scale, col);
 				p.x += 8.0f * scale.x;
 			}
 		}
