@@ -2,7 +2,6 @@
 #define DGE_AFFINE_TRANSFORMS_HPP
 
 #pragma region License
-
 /*
 *	BSD 3-Clause License
 
