@@ -30,7 +30,7 @@ protected:
 
 		size = { 20, 20 };
 
-		spr = new def::Sprite("kart.png");
+		spr = new def::Sprite("some_image.png");
 
 		return true;
 	}
