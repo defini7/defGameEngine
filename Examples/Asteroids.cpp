@@ -58,6 +58,8 @@ public:
 
 	Player player;
 
+	int score;
+
 private:
 	void CreateAsteroid(const def::vf2d& pos, const def::vf2d& vel, float radiusMultiplier = 1.0f)
 	{
@@ -94,18 +96,15 @@ private:
 		if (y >= (float)ScreenHeight()) y -= (float)ScreenHeight();
 	}
 
-protected:
-	bool OnUserCreate() override
+	void Reset()
 	{
 		player.pos = GetScreenSize() / 2;
-		player.model = 
-		{
-			{ 0.0f, -5.5f },
-			{ -2.5f, 2.5f },
-			{ 2.5f, 2.5f }
-		};
+		player.vel = { 0, 0 };
 
 		player.angle = 0.0f;
+
+		controllables.clear();
+		bullets.clear();
 
 		randomEngine.seed(std::chrono::system_clock::now().time_since_epoch().count());
 
@@ -125,6 +124,21 @@ protected:
 			CreateAsteroid({ (float)px, (float)py }, { vx, vy });
 		}
 
+		score = 0;
+	}
+
+protected:
+	bool OnUserCreate() override
+	{
+		player.model = 
+		{
+			{ 0.0f, -5.5f },
+			{ -2.5f, 2.5f },
+			{ 2.5f, 2.5f }
+		};
+
+		Reset();
+
 		return true;
 	}
 
@@ -137,6 +151,12 @@ protected:
 		{
 			player.vel.x += sinf(player.angle) * 20.0f * deltaTime;
 			player.vel.y -= cosf(player.angle) * 20.0f * deltaTime;
+		}
+
+		if (GetKey(def::Key::S).held)
+		{
+			player.vel.x -= sinf(player.angle) * 20.0f * deltaTime;
+			player.vel.y += cosf(player.angle) * 20.0f * deltaTime;
 		}
 
 		if (GetMouse(def::Button::LEFT).pressed)
@@ -158,6 +178,8 @@ protected:
 						b.redundant = true;
 						c.health--;
 
+						score++;
+
 						if (c.health <= 0)
 						{
 							c.redundant = true;
@@ -178,6 +200,15 @@ protected:
 		{
 			c.pos += c.vel * deltaTime;
 			WrapCoordinates(c.pos.x, c.pos.y);
+
+			for (const auto& vert : player.model)
+			{
+				if (IsPointInPolygon(c.pos, c.model, player.pos + vert))
+				{
+					Reset();
+					return true;
+				}
+			}
 		}
 
 		player.pos += player.vel * deltaTime;
@@ -192,9 +223,11 @@ protected:
 			Draw(b.pos.x, b.pos.y);
 
 		for (const auto& c : controllables)
-			DrawWireFrameModel(c.model, c.pos, atan2f(c.vel.y, c.vel.x) + 3.14159f * 0.5f);
+			DrawWireFrameModel(c.model, c.pos, atan2f(c.vel.y, c.vel.x) + 3.14159f * 0.5f, 1.0f, def::YELLOW);
 
 		DrawWireFrameModel(player.model, player.pos, player.angle);
+
+		DrawString(5, 5, "Score: " + std::to_string(score));
 
 		return true;
 	}
