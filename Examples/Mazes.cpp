@@ -1,30 +1,30 @@
 /*
-* BSD 3-Clause License
-Copyright (c) 2023, Alex
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*	BSD 3-Clause License
+	Copyright (c) 2022 - 2024 Alex
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions are met:
+	1. Redistributions of source code must retain the above copyright notice, this
+	   list of conditions and the following disclaimer.
+	2. Redistributions in binary form must reproduce the above copyright notice,
+	   this list of conditions and the following disclaimer in the documentation
+	   and/or other materials provided with the distribution.
+	3. Neither the name of the copyright holder nor the names of its
+	   contributors may be used to endorse or promote products derived from
+	   this software without specific prior written permission.
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+	DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+	FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+	DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+	SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+	OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DGE_APPLICATION
-#include "../defGameEngine.h"
+#include "defGameEngine.hpp"
 
 #include <stack>
 
@@ -38,8 +38,8 @@ public:
 
 private:
 	std::stack<def::vi2d> stack;
-	int nVisited;
 	std::vector<int> maze;
+	int nVisited;
 
 	enum
 	{
@@ -64,7 +64,7 @@ protected:
 		nVisited = 0;
 
 		// Update stack
-		stack.push({ 0, 0});
+		stack.push({ 0, 0 });
 		maze[0] = CELL_VISITED;
 		nVisited = 1;
 
@@ -73,11 +73,11 @@ protected:
 
 	bool OnUserUpdate(float fDeltaTime) override
 	{
-
 		auto offset = [&](int ox, int oy)
-		{
-			return (stack.top().y + oy) * vMazeSize.x + (stack.top().x + ox);
-		};
+			{
+				def::vi2d& top = stack.top();
+				return (top.y + oy) * vMazeSize.x + (top.x + ox);
+			};
 
 		if (nVisited < vMazeSize.x * vMazeSize.y)
 		{
@@ -148,7 +148,7 @@ protected:
 			def::vi2d p = { i % vMazeSize.x, i / vMazeSize.x };
 
 			if (maze[i] & CELL_VISITED)
-				FillRectangle(p * (nCellSize + 1) + 1, def::vi2d() + nCellSize, def::GREEN);
+				FillRectangle(p * (nCellSize + 1) + 1, def::vi2d(nCellSize, nCellSize), def::GREEN);
 
 			for (int c = 0; c < nCellSize; c++)
 			{
