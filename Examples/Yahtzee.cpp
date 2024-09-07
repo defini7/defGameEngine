@@ -1,6 +1,6 @@
 /*
 * BSD 3-Clause License
-Copyright (c) 2023, Alex
+Copyright (c) 2022 - 2024, Alex
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice, this
