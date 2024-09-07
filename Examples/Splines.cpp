@@ -1,6 +1,6 @@
 /*
 *   BSD 3-Clause License
-	Copyright (c) 2024, Alex
+	Copyright (c) 2022 - 2024, Alex
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
 	1. Redistributions of source code must retain the above copyright notice, this
@@ -179,24 +179,24 @@ protected:
 
 	bool OnUserUpdate(float fDeltaTime) override
 	{
-		if (GetKey(def::Key::Z).bPressed)
+		if (GetKey(def::Key::Z).pressed)
 			nSelectedPoint--;
 
-		if (GetKey(def::Key::X).bPressed)
+		if (GetKey(def::Key::X).pressed)
 			nSelectedPoint++;
-		
+
 		nSelectedPoint %= path.points.size();
 
-		if (GetKey(def::Key::UP).bHeld)
+		if (GetKey(def::Key::UP).held)
 			path.points[nSelectedPoint].coord.y -= fMoveSpeed * fDeltaTime;
 
-		if (GetKey(def::Key::DOWN).bHeld)
+		if (GetKey(def::Key::DOWN).held)
 			path.points[nSelectedPoint].coord.y += fMoveSpeed * fDeltaTime;
 
-		if (GetKey(def::Key::LEFT).bHeld)
+		if (GetKey(def::Key::LEFT).held)
 			path.points[nSelectedPoint].coord.x -= fMoveSpeed * fDeltaTime;
 
-		if (GetKey(def::Key::RIGHT).bHeld)
+		if (GetKey(def::Key::RIGHT).held)
 			path.points[nSelectedPoint].coord.x += fMoveSpeed * fDeltaTime;
 
 		fMarker += fMoveSpeed * fDeltaTime;
@@ -207,7 +207,7 @@ protected:
 		{
 			Point p = path.GetPoint(t, true);
 			Point g = path.GetGradient(t, true);
-			
+
 			float r = atan2f(-g.coord.y, g.coord.x);
 
 			def::vf2d vDir = 5.0f * def::vf2d(sin(r), cos(r));
