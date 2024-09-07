@@ -124,12 +124,12 @@ struct Table
 
 	void UpdateCue(def::GameEngine* dge)
 	{
-		if (dge->GetMouse(0).pressed)
+		if (dge->GetMouse(def::Button::LEFT).pressed)
 		{
 			selected = nullptr;
 			for (auto& ball : balls)
 			{
-				if (ball.type == Ball::BLACK && ball.IsInside(dge->GetMouse()))
+				if (ball.type == Ball::BLACK && ball.IsInside(dge->GetMousePos()))
 				{
 					selected = &ball;
 					break;
@@ -137,10 +137,10 @@ struct Table
 			}
 		}
 
-		if (dge->GetMouse(0).released)
+		if (dge->GetMouse(def::Button::LEFT).released)
 		{
 			if (selected)
-				selected->vel = FORCE_ACC * (selected->pos - def::vf2d(dge->GetMouse()));
+				selected->vel = FORCE_ACC * (selected->pos - def::vf2d(dge->GetMousePos()));
 
 			selected = nullptr;
 		}
@@ -240,7 +240,7 @@ struct Table
 	void DrawCue(def::GameEngine* dge, const def::Pixel& col = def::DARK_GREY)
 	{
 		if (selected)
-			dge->DrawLine(selected->pos, dge->GetMouse(), col);
+			dge->DrawLine(selected->pos, dge->GetMousePos(), col);
 	}
 
 	void DrawBoundary(def::GameEngine* dge, const def::Pixel& col = def::BROWN)
@@ -344,14 +344,14 @@ public:
 
 	void DrawScore(const def::Pixel& col = def::GREY)
 	{
-		DrawString(2, 2, "Score: " + std::to_string(score), col);
+		DrawString(2, 2, "Score: " + std::to_string(score), col, 3, 3);
 	}
 
 private:
 	bool OnUserCreate() override
 	{
 		topLeft = { 0.0f, 0.0f };
-		bottomRight = ScreenSize();
+		bottomRight = GetScreenSize();
 
 		table = new Table(topLeft, bottomRight, BORDER_WIDTH, POCKET_RADIUS);
 
