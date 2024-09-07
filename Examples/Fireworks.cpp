@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.h"
+#include "defGameEngine.hpp"
 
 struct Particle
 {
@@ -75,7 +75,7 @@ private:
 			Particle p;
 			p.offset = { 0.0f, 0.0f };
 			p.speed = float((rand() % 10) + 5);
-			p.col = def::RandomPixel();
+			p.col = def::Pixel(rand() % 256, rand() % 256, rand() % 256);
 
 			float angle = 2.0f * 3.1415926f * ((float)rand() / (float)RAND_MAX);
 			p.velocity = { cos(angle), sin(angle) };
@@ -92,7 +92,7 @@ public:
 		srand(time(NULL));
 
 		timer = 0.0f;
-		appearTime = 1.0f;
+		appearTime = 0.5f;
 
 		return true;
 	}
