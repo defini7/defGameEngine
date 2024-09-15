@@ -37,12 +37,12 @@ protected:
 		stars[i].distance = RandFloat(bound / 10.0f * 0.5f, bound * 0.5f);
 		
 		float lum = RandFloat(0.5f, 1.0f);
-		stars[i].col = def::PixelF(lum, lum, lum);
+		stars[i].col = def::Pixel::Float(lum, lum, lum);
 	}
 
 	bool OnUserCreate() override
 	{
-		origin = ScreenSize() / 2;
+		origin = GetScreenSize() / 2;
 		bound = float(std::max(ScreenWidth(), ScreenHeight())) * 0.8f;
 
 		stars.resize(STARS_COUNT);
