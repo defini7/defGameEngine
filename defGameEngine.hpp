@@ -200,7 +200,7 @@ namespace def
 		constexpr vec2d cart() const;
 		constexpr vec2d polar() const;
 
-		constexpr std::string str() const;
+		std::string str() const;
 
 		template <class F>
 		constexpr operator vec2d<F>() const
@@ -339,7 +339,7 @@ namespace def
 		};
 
 		constexpr Pixel lerp(const Pixel& rhs, const float factor) const;
-		constexpr std::string str() const;
+		std::string str() const;
 
 		constexpr Pixel operator+(const float rhs) const;
 		constexpr Pixel operator-(const float rhs) const;
@@ -1125,7 +1125,7 @@ namespace def
 	}
 
 	template <class T>
-	constexpr std::string vec2d<T>::str() const
+	std::string vec2d<T>::str() const
 	{
 		return "(" + std::to_string(x) + ", " + std::to_string(y) + ")";
 	}
@@ -1163,7 +1163,7 @@ namespace def
 		);
 	}
 
-	constexpr std::string Pixel::str() const
+	std::string Pixel::str() const
 	{
 		return "(" + std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b) + ", " + std::to_string(a) + ")";
 	}
