@@ -13,6 +13,8 @@ Linux:
 
 For all platforms:
 - Download [defGameEngine.hpp](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.hpp).
+- Download [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h).
+- Download [stb_image_write.h](https://github.com/nothings/stb/blob/master/stb_image_write.h).
 
 # Setup
 
