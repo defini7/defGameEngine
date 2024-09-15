@@ -1727,7 +1727,7 @@ namespace def
 			s_Engine->m_KeyNewState[i] = false;
 		}
 
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < 8; i++)
 		{
 			s_Engine->m_Mouse[i] = { false, false, false };
 			s_Engine->m_MouseOldState[i] = false;
