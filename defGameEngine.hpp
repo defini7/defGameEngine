@@ -82,7 +82,12 @@
 #include <functional>
 #include <list>
 
+#define PLATFORM_GL
+#define PLATFORM_GLFW
+
+#ifdef PLATFORM_GLFW
 #include "GLFW/glfw3.h"
+#endif
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -99,8 +104,13 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#pragma comment(lib, "glfw3.lib")
+#ifdef PLATFORM_GL
 #pragma comment(lib, "opengl32.lib")
+#endif
+
+#ifdef PLATFORM_GLFW
+#pragma comment(lib, "glfw3.lib")
+#endif
 
 #else
 /*
@@ -445,6 +455,7 @@ namespace def
 
 	private:
 		void Construct(Sprite* sprite, bool deleteSprite);
+
 	};
 
 	struct Graphic
@@ -488,11 +499,113 @@ namespace def
 		bool drawBeforeTransforms;
 	};
 
+	class Platform
+	{
+	public:
+		virtual void Destroy() const = 0;
+		virtual void SetTitle(const std::string& text) const = 0;
+
+		virtual bool IsWindowClose() const = 0;
+		virtual bool IsWindowFocused() const = 0;
+
+		virtual bool GetKey(int key) const = 0;
+		virtual bool GetMouse(int button) const = 0;
+
+		virtual void ClearBuffer(const Pixel& col) const = 0;
+
+		virtual void OnBeforeDraw() = 0;
+		virtual void OnAfterDraw() = 0;
+
+		virtual void FlushScreen(bool vsync) const = 0;
+		virtual void PollEvents() const = 0;
+
+		virtual void DrawQuad(const Pixel& tint) const = 0;
+		virtual void DrawTexture(const TextureInstance& texInst) const = 0;
+
+		virtual void BindTexture(int id) const = 0;
+
+		virtual bool ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) = 0;
+		
+		virtual void SetIcon(Sprite& icon) const = 0;
+	};
+
+#ifdef PLATFORM_GL
+
+	class Platform_GL : public Platform
+	{
+	public:
+		void ClearBuffer(const Pixel& col) const override;
+
+		void OnBeforeDraw() override;
+		void OnAfterDraw() override;
+
+		void DrawQuad(const Pixel& tint) const override;
+		void DrawTexture(const TextureInstance& texInst) const override;
+
+		void BindTexture(int id) const override;
+
+		void Destroy() const override;
+		void SetTitle(const std::string& text) const override;
+
+		bool IsWindowClose() const override;
+		bool IsWindowFocused() const override;
+
+		bool GetKey(int key) const override;
+		bool GetMouse(int button) const override;
+
+		void FlushScreen(bool vsync) const override;
+		void PollEvents() const override;
+
+		bool ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) override;
+
+		void SetIcon(Sprite& icon) const override;
+	};
+
+#endif
+
+#ifdef PLATFORM_GLFW
+
+	class Platform_GLFW : public Platform_GL
+	{
+	public:
+		Platform_GLFW();
+
+	private:
+		GLFWmonitor* m_Monitor;
+		GLFWwindow* m_Window;
+
+	public:
+		static void ErrorCallback(int errorCode, const char* description);
+		static void DropCallback(GLFWwindow* window, int pathCount, const char* paths[]);
+		static void ScrollCallback(GLFWwindow* window, double x, double y);
+		static void MousePosCallback(GLFWwindow* window, double x, double y);
+
+		void Destroy() const override;
+		void SetTitle(const std::string& text) const override;
+
+		bool IsWindowClose() const override;
+		bool IsWindowFocused() const override;
+
+		bool GetKey(int key) const override;
+		bool GetMouse(int button) const override;
+
+		void FlushScreen(bool vsync) const override;
+		void PollEvents() const override;
+
+		bool ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) override;
+		
+		void SetIcon(Sprite& icon) const override;
+	};
+
+#endif
+
 	class GameEngine
 	{
 	public:
 		GameEngine();
 		virtual ~GameEngine();
+		
+		friend class Platform_GLFW;
 
 	private:
 		std::string m_AppName;
@@ -501,9 +614,6 @@ namespace def
 		vi2d m_ScreenSize;
 		vf2d m_InvScreenSize;
 		vi2d m_PixelSize;
-
-		GLFWmonitor* m_Monitor;
-		GLFWwindow* m_Window;
 
 		bool m_IsAppRunning;
 		bool m_IsFullScreen;
@@ -563,6 +673,8 @@ namespace def
 
 		Pixel (*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
 
+		Platform* m_Platform;
+
 	public:
 		static GameEngine* s_Engine;
 		static std::unordered_map<Key, std::pair<char, char>> s_KeyboardUS;
@@ -580,16 +692,10 @@ namespace def
 
 	private:
 		void Destroy();
-		static void AppThread();
+		void ScanHardware(KeyState* data, bool* newState, bool* oldState, size_t count, std::function<bool(Platform*, int)> Get);
+		void AppThread();
 
-		static void DrawQuad(const Pixel& tint);
-		static void DrawTexture(const TextureInstance& texture);
 		static void MakeUnitCircle(std::vector<vf2d>& circle, const size_t verts);
-
-		static void ErrorCallback(int errorCode, const char* description);
-		static void DropCallback(GLFWwindow* window, int pathCount, const char* paths[]);
-		static void ScrollCallback(GLFWwindow* window, double x, double y);
-		static void MousePosCallback(GLFWwindow* window, double x, double y);
 
 	public:
 		bool Draw(const vi2d& pos, const Pixel& col = WHITE);
@@ -639,7 +745,6 @@ namespace def
 
 		virtual void Clear(const Pixel& col);
 		void ClearTexture(const Pixel& col);
-		void ClearBuffer(const Pixel& col);
 
 		void DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		void DrawPartialTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
@@ -691,9 +796,6 @@ namespace def
 
 		void SetDrawTarget(Graphic* target);
 		Graphic* GetDrawTarget();
-
-		WindowState GetWindowState() const;
-		GLFWwindow* GetWindow() const;
 
 		std::vector<std::string>& GetDropped();
 
@@ -1575,6 +1677,7 @@ namespace def
 
 	void Texture::Load(Sprite* sprite)
 	{
+#ifdef PLATFORM_GL
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
 		
@@ -1596,10 +1699,14 @@ namespace def
 		);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
+#else
+#error Consider defining PLATFORM_GL macro
+#endif
 	}
 
 	void Texture::Update(Sprite* sprite)
 	{
+#ifdef PLATFORM_GL
 		glBindTexture(GL_TEXTURE_2D, id);
 
 		glTexImage2D(
@@ -1613,6 +1720,9 @@ namespace def
 		);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
+#else
+#error Consider defining PLATFORM_GL macro
+#endif
 	}
 
 	Graphic::Graphic(std::string_view fileName)
@@ -1665,13 +1775,253 @@ namespace def
 		drawBeforeTransforms = false;
 	}
 
+#ifdef PLATFORM_GLFW
+
+	void Platform_GL::ClearBuffer(const Pixel& col) const
+	{
+		glClearColor((float)col.r / 255.0f, (float)col.g / 255.0f, (float)col.b / 255.0f, (float)col.a / 255.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+
+	void Platform_GL::OnBeforeDraw()
+	{
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glPushMatrix();
+	}
+
+	void Platform_GL::OnAfterDraw()
+	{
+		glPopMatrix();
+	}
+
+	void Platform_GL::DrawQuad(const Pixel& tint) const
+	{
+		glBegin(GL_QUADS);
+		glColor4ub(tint.r, tint.g, tint.b, tint.a);
+		glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, -1.0f);
+		glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, 1.0f);
+		glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f, 1.0f);
+		glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f, -1.0f);
+		glEnd();
+	}
+
+	void Platform_GL::DrawTexture(const TextureInstance& texInst) const
+	{
+		BindTexture(texInst.texture ? texInst.texture->id : 0);
+
+		switch (texInst.structure)
+		{
+		case Texture::Structure::DEFAULT:	glBegin(GL_TRIANGLES);		break;
+		case Texture::Structure::FAN:		glBegin(GL_TRIANGLE_FAN);	break;
+		case Texture::Structure::STRIP:		glBegin(GL_TRIANGLE_STRIP);	break;
+		case Texture::Structure::WIREFRAME:	glBegin(GL_LINE_LOOP);		break;
+		}
+
+		for (int i = 0; i < texInst.points; i++)
+		{
+			glColor4ub(texInst.tint[i].r, texInst.tint[i].g, texInst.tint[i].b, texInst.tint[i].a);
+			glTexCoord2f(texInst.uv[i].x, texInst.uv[i].y);
+			glVertex2f(texInst.vertices[i].x, texInst.vertices[i].y);
+		}
+
+		glEnd();
+	}
+
+	void Platform_GL::BindTexture(int id) const
+	{
+		glBindTexture(GL_TEXTURE_2D, id);
+	}
+
+	void Platform_GL::Destroy() const {}
+	void Platform_GL::SetTitle(const std::string& text) const { UNUSED(text); }
+
+	bool Platform_GL::IsWindowClose() const { return false; }
+	bool Platform_GL::IsWindowFocused() const { return false; }
+	bool Platform_GL::GetKey(int key) const { UNUSED(key); return false; }
+	bool Platform_GL::GetMouse(int button) const { UNUSED(button); return false; }
+	void Platform_GL::FlushScreen(bool vsync) const { UNUSED(vsync); }
+	void Platform_GL::PollEvents() const {}
+
+	bool Platform_GL::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel)
+	{
+		UNUSED(screenSize);
+		UNUSED(pixelSize);
+		UNUSED(windowSize);
+		UNUSED(vsync);
+		UNUSED(fullscreen);
+		UNUSED(dirtypixel);
+		return false;
+	}
+
+	void Platform_GL::SetIcon(Sprite& icon) const { UNUSED(icon); }
+
+	Platform_GLFW::Platform_GLFW()
+	{
+		m_Window = nullptr;
+		m_Monitor = nullptr;
+
+		glfwSetErrorCallback(ErrorCallback);
+		glfwInit();
+	}
+
+	void Platform_GLFW::ErrorCallback(int errorCode, const char* description)
+	{
+		if (errorCode != GLFW_INVALID_ENUM)
+		{
+			std::cout << "[GLFW Error] Code: "
+				<< "0x000" << std::hex << errorCode
+				<< ", text: " << description << std::endl;
+
+			GameEngine::s_Engine->Destroy();
+
+			exit(1);
+		}
+	}
+
+	void Platform_GLFW::DropCallback(GLFWwindow* window, int pathCount, const char* paths[])
+	{
+		auto& cache = GameEngine::s_Engine->GetDropped();
+
+		cache.clear();
+		cache.reserve(pathCount);
+
+		for (int i = 0; i < pathCount; i++)
+			cache[i] = paths[i];
+	}
+
+	void Platform_GLFW::ScrollCallback(GLFWwindow* window, double x, double y)
+	{
+		UNUSED(x);
+		GameEngine::s_Engine->m_ScrollDelta = y;
+	}
+
+	void Platform_GLFW::MousePosCallback(GLFWwindow* window, double x, double y)
+	{
+		GameEngine::s_Engine->m_MousePos.x = (int)x / GameEngine::s_Engine->m_PixelSize.x;
+		GameEngine::s_Engine->m_MousePos.y = (int)y / GameEngine::s_Engine->m_PixelSize.y;
+	}
+
+	void Platform_GLFW::Destroy() const
+	{
+		glfwDestroyWindow(m_Window);
+		glfwTerminate();
+	}
+
+	void Platform_GLFW::SetTitle(const std::string& text) const
+	{
+		glfwSetWindowTitle(m_Window, text.c_str());
+	}
+
+	bool Platform_GLFW::IsWindowClose() const
+	{
+		return glfwWindowShouldClose(m_Window);
+	}
+
+	bool Platform_GLFW::IsWindowFocused() const
+	{
+		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) == GLFW_TRUE;
+	}
+
+	bool Platform_GLFW::GetKey(int key) const
+	{
+		return glfwGetKey(m_Window, key) == GLFW_PRESS;
+	}
+
+	bool Platform_GLFW::GetMouse(int button) const
+	{
+		return glfwGetMouseButton(m_Window, button) == GLFW_PRESS;
+	}
+
+	void Platform_GLFW::FlushScreen(bool vsync) const
+	{
+		if (vsync)
+			glfwSwapBuffers(m_Window);
+		else
+			glFlush();
+	}
+
+	void Platform_GLFW::PollEvents() const
+	{
+		glfwPollEvents();
+	}
+
+	bool Platform_GLFW::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel)
+	{
+		m_Monitor = glfwGetPrimaryMonitor();
+
+		if (!m_Monitor)
+			return false;
+
+		if (!vsync)
+			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
+
+		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
+		if (!videoMode) return false;
+
+		if (fullscreen)
+		{
+			windowSize = { videoMode->width, videoMode->height };
+			screenSize = windowSize / pixelSize;
+
+			m_Window = glfwCreateWindow(windowSize.x, windowSize.y, "", m_Monitor, NULL);
+			if (!m_Window) return false;
+
+			glfwSetWindowMonitor(
+				m_Window,
+				m_Monitor,
+				0, 0,
+				windowSize.x, windowSize.y,
+				videoMode->refreshRate
+			);
+		}
+		else
+		{
+			m_Window = glfwCreateWindow(windowSize.x, windowSize.y, "", NULL, NULL);
+
+			if (!m_Window)
+				return false;
+		}
+
+		glfwMakeContextCurrent(m_Window);
+		glViewport(0, 0, windowSize.x, windowSize.y);
+
+		glEnable(GL_TEXTURE_2D);
+
+		if (!dirtypixel)
+			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+		if (vsync)
+		{
+			glfwSwapInterval(1);
+			glfwWindowHint(GLFW_REFRESH_RATE, videoMode->refreshRate);
+		}
+
+		glfwSetDropCallback(m_Window, DropCallback);
+
+		glfwSetScrollCallback(m_Window, ScrollCallback);
+		glfwSetCursorPosCallback(m_Window, MousePosCallback);
+
+		return true;
+	}
+
+	void Platform_GLFW::SetIcon(Sprite& icon) const
+	{
+		GLFWimage img;
+		img.width = icon.size.x;
+		img.height = icon.size.y;
+		img.pixels = (uint8_t*)icon.pixels.data();
+
+		glfwSetWindowIcon(m_Window, 1, &img);
+	}
+
+#endif
+
 	GameEngine::GameEngine()
 	{
 		m_AppName = "Undefined";
 		m_MousePos = { -1, -1 };
-
-		m_Window = nullptr;
-		m_Monitor = nullptr;
 
 		m_DrawTarget = nullptr;
 
@@ -1697,6 +2047,10 @@ namespace def
 
 		m_OnlyTextures = false;
 		m_DrawBeforeTransforms = false;
+
+#ifdef PLATFORM_GLFW
+		m_Platform = new Platform_GLFW();
+#endif
 	}
 
 	GameEngine::~GameEngine()
@@ -1707,286 +2061,251 @@ namespace def
 	void GameEngine::Destroy()
 	{
 		delete m_Screen;
+		m_Platform->Destroy();
+	}
 
-		glfwDestroyWindow(m_Window);
-		glfwTerminate();
+	void GameEngine::ScanHardware(KeyState* data, bool* newState, bool* oldState, size_t count, std::function<bool(Platform*, int)> Get)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			newState[i] = Get(m_Platform, i);
+
+			data[i].pressed = false;
+			data[i].released = false;
+
+			if (newState[i] != oldState[i])
+			{
+				if (newState[i])
+				{
+					data[i].pressed = !data[i].held;
+					data[i].held = true;
+				}
+				else
+				{
+					data[i].released = true;
+					data[i].held = false;
+				}
+			}
+
+			oldState[i] = newState[i];
+		}
 	}
 
 	void GameEngine::AppThread()
 	{
-		if (!s_Engine->OnUserCreate())
-			s_Engine->m_IsAppRunning = false;
+		if (!OnUserCreate())
+			m_IsAppRunning = false;
 
 		auto startTime = std::chrono::system_clock::now();
 		auto endTime = startTime;
 
 		for (int i = 0; i < 512; i++)
 		{
-			s_Engine->m_Keys[i] = { false, false, false };
-			s_Engine->m_KeyOldState[i] = false;
-			s_Engine->m_KeyNewState[i] = false;
+			m_Keys[i] = { false, false, false };
+			m_KeyOldState[i] = false;
+			m_KeyNewState[i] = false;
 		}
 
 		for (int i = 0; i < 8; i++)
 		{
-			s_Engine->m_Mouse[i] = { false, false, false };
-			s_Engine->m_MouseOldState[i] = false;
-			s_Engine->m_MouseNewState[i] = false;
+			m_Mouse[i] = { false, false, false };
+			m_MouseOldState[i] = false;
+			m_MouseNewState[i] = false;
 		}
 
-		std::string title = "github.com/defini7 - defGameEngine - " + s_Engine->m_AppName + " - FPS: 0";
-		glfwSetWindowTitle(s_Engine->m_Window, title.c_str());
+		m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: 0");
 
 		int frames = 0;
 
-		while (s_Engine->m_IsAppRunning)
+		while (m_IsAppRunning)
 		{
 			endTime = std::chrono::system_clock::now();
 
-			s_Engine->m_DeltaTime = std::chrono::duration<float>(endTime - startTime).count();
+			m_DeltaTime = std::chrono::duration<float>(endTime - startTime).count();
 			startTime = endTime;
 
-			s_Engine->m_TickTimer += s_Engine->m_DeltaTime;
+			m_TickTimer += m_DeltaTime;
 
-			if (glfwWindowShouldClose(s_Engine->m_Window))
-				s_Engine->m_IsAppRunning = false;
+			if (m_Platform->IsWindowClose())
+				m_IsAppRunning = false;
 
-			auto Scan = [&](KeyState* data, bool* newState, bool* oldState, size_t count, int (*Get)(GLFWwindow*, int))
-				{
-					for (int i = 0; i < count; i++)
-					{
-						newState[i] = (Get(s_Engine->m_Window, i) == GLFW_PRESS);
+			ScanHardware(m_Keys, m_KeyNewState, m_KeyOldState, 512, &Platform::GetKey);
+			ScanHardware(m_Mouse, m_MouseNewState, m_MouseOldState, 8, &Platform::GetMouse);
 
-						data[i].pressed = false;
-						data[i].released = false;
+			if (m_Keys[280].pressed) // Caps Lock
+				m_Caps = !m_Caps;
 
-						if (newState[i] != oldState[i])
-						{
-							if (newState[i])
-							{
-								data[i].pressed = !data[i].held;
-								data[i].held = true;
-							}
-							else
-							{
-								data[i].released = true;
-								data[i].held = false;
-							}
-						}
-
-						oldState[i] = newState[i];
-					}
-				};
-
-			Scan(s_Engine->m_Keys, s_Engine->m_KeyNewState, s_Engine->m_KeyOldState, 512, glfwGetKey);
-			Scan(s_Engine->m_Mouse, s_Engine->m_MouseNewState, s_Engine->m_MouseOldState, 8, glfwGetMouseButton);
-
-			if (s_Engine->m_Keys[280].pressed) // Caps Lock
-				s_Engine->m_Caps = !s_Engine->m_Caps;
-
-			if (s_Engine->m_CaptureText)
+			if (m_CaptureText)
 			{
 				// Left, right shifts
-				bool isUp = s_Engine->m_Keys[340].held || s_Engine->m_Keys[344].held;
+				bool isUp = m_Keys[340].held || m_Keys[344].held;
 
 				for (const auto& [key, chars] : s_KeyboardUS)
 				{
-					if (s_Engine->GetKey(key).pressed)
+					if (GetKey(key).pressed)
 					{
-						if (s_Engine->m_Caps || isUp)
-							s_Engine->m_TextInput.insert(s_Engine->m_CursorPos, 1, chars.second);
+						if (m_Caps || isUp)
+							m_TextInput.insert(m_CursorPos, 1, chars.second);
 						else
-							s_Engine->m_TextInput.insert(s_Engine->m_CursorPos, 1, chars.first);
+							m_TextInput.insert(m_CursorPos, 1, chars.first);
 
-						s_Engine->m_CursorPos++;
+						m_CursorPos++;
 					}
 				}
 
-				if (s_Engine->m_Keys[259].pressed) // Backspace
+				if (m_Keys[259].pressed) // Backspace
 				{
-					if (s_Engine->m_CursorPos > 0)
+					if (m_CursorPos > 0)
 					{
-						s_Engine->m_TextInput.erase(s_Engine->m_CursorPos - 1, 1);
-						s_Engine->m_CursorPos--;
+						m_TextInput.erase(m_CursorPos - 1, 1);
+						m_CursorPos--;
 					}
 				}
 
-				if (s_Engine->m_Keys[261].pressed) // Delete
+				if (m_Keys[261].pressed) // Delete
 				{
-					if (s_Engine->m_CursorPos < s_Engine->m_TextInput.length())
-						s_Engine->m_TextInput.erase(s_Engine->m_CursorPos, 1);
+					if (m_CursorPos < m_TextInput.length())
+						m_TextInput.erase(m_CursorPos, 1);
 				}
 
-				if (s_Engine->m_Keys[263].pressed) // Left arrow
+				if (m_Keys[263].pressed) // Left arrow
 				{
-					if (s_Engine->m_CursorPos > 0)
-						s_Engine->m_CursorPos--;
+					if (m_CursorPos > 0)
+						m_CursorPos--;
 				}
 
-				if (s_Engine->m_Keys[262].pressed) // Right arrow
+				if (m_Keys[262].pressed) // Right arrow
 				{
-					if (s_Engine->m_CursorPos < s_Engine->m_TextInput.length())
-						s_Engine->m_CursorPos++;
+					if (m_CursorPos < m_TextInput.length())
+						m_CursorPos++;
 				}
 
-				if (s_Engine->m_Keys[257].pressed) // Enter
+				if (m_Keys[257].pressed) // Enter
 				{
-					s_Engine->OnTextCapturingComplete(s_Engine->m_TextInput);
+					OnTextCapturingComplete(m_TextInput);
 
-					if (s_Engine->m_ShowConsole)
+					if (m_ShowConsole)
 					{
 						std::stringstream output;
 						Pixel colour = WHITE;
 
-						if (s_Engine->OnConsoleCommand(s_Engine->m_TextInput, output, colour))
+						if (OnConsoleCommand(m_TextInput, output, colour))
 						{
-							s_Engine->m_ConsoleHistory.push_back({ s_Engine->m_TextInput, output.str(), colour });
-							s_Engine->m_PickedConsoleHistoryCommand = s_Engine->m_ConsoleHistory.size();
+							m_ConsoleHistory.push_back({ m_TextInput, output.str(), colour });
+							m_PickedConsoleHistoryCommand = m_ConsoleHistory.size();
 						}
 					}
 
-					s_Engine->m_TextInput.clear();
-					s_Engine->m_CursorPos = 0;
+					m_TextInput.clear();
+					m_CursorPos = 0;
 				}
 
 				// TODO: Pick a command from a history
-				if (s_Engine->m_ShowConsole)
+				if (m_ShowConsole)
 				{
-					if (!s_Engine->m_ConsoleHistory.empty())
+					if (!m_ConsoleHistory.empty())
 					{
 						bool moved = false;
 
-						if (s_Engine->m_Keys[265].pressed) // Up arrow
+						if (m_Keys[265].pressed) // Up arrow
 						{
-							if (s_Engine->m_PickedConsoleHistoryCommand > 0)
+							if (m_PickedConsoleHistoryCommand > 0)
 							{
-								s_Engine->m_PickedConsoleHistoryCommand--;
+								m_PickedConsoleHistoryCommand--;
 								moved = true;
 							}
 						}
 
-						if (s_Engine->m_Keys[264].pressed) // Down arrow
+						if (m_Keys[264].pressed) // Down arrow
 						{
-							if (s_Engine->m_PickedConsoleHistoryCommand < s_Engine->m_ConsoleHistory.size() - 1)
+							if (m_PickedConsoleHistoryCommand < m_ConsoleHistory.size() - 1)
 							{
-								s_Engine->m_PickedConsoleHistoryCommand++;
+								m_PickedConsoleHistoryCommand++;
 								moved = true;
 							}
 						}
 
 						if (moved)
 						{
-							s_Engine->m_TextInput = s_Engine->m_ConsoleHistory[s_Engine->m_PickedConsoleHistoryCommand].command;
-							s_Engine->m_CursorPos = s_Engine->m_TextInput.length();
+							m_TextInput = m_ConsoleHistory[m_PickedConsoleHistoryCommand].command;
+							m_CursorPos = m_TextInput.length();
 						}
 					}
 				}
 			}
 
-			if (!s_Engine->OnUserUpdate(s_Engine->m_DeltaTime))
-				s_Engine->m_IsAppRunning = false;
+			if (!OnUserUpdate(m_DeltaTime))
+				m_IsAppRunning = false;
 
-			s_Engine->m_ScrollDelta = 0;
+			m_ScrollDelta = 0;
 
-			if (s_Engine->m_ShowConsole)
+			if (m_ShowConsole)
 			{
-				s_Engine->m_DrawBeforeTransforms = true;
+				m_DrawBeforeTransforms = true;
 
-				s_Engine->FillTextureRectangle({ 0, 0 }, s_Engine->m_ScreenSize, s_Engine->m_ConsoleBackgroundColour);
+				FillTextureRectangle({ 0, 0 }, m_ScreenSize, m_ConsoleBackgroundColour);
 
-				int printCount = std::min(s_Engine->ScreenHeight() / 22, (int)s_Engine->m_ConsoleHistory.size());
-				int start = s_Engine->m_ConsoleHistory.size() - printCount;
+				int printCount = std::min(ScreenHeight() / 22, (int)m_ConsoleHistory.size());
+				int start = m_ConsoleHistory.size() - printCount;
 
-				for (int i = start; i < s_Engine->m_ConsoleHistory.size(); i++)
+				for (int i = start; i < m_ConsoleHistory.size(); i++)
 				{
-					auto& entry = s_Engine->m_ConsoleHistory[i];
+					auto& entry = m_ConsoleHistory[i];
 
-					s_Engine->DrawTextureString({ 10, 10 + (i - start) * 20 }, "> " + entry.command);
-					s_Engine->DrawTextureString({ 10, 20 + (i - start) * 20 }, entry.output, entry.outputColour);
+					DrawTextureString({ 10, 10 + (i - start) * 20 }, "> " + entry.command);
+					DrawTextureString({ 10, 20 + (i - start) * 20 }, entry.output, entry.outputColour);
 				}
 
-				int x = s_Engine->GetCursorPos() * 8 + 36;
-				int y = s_Engine->ScreenHeight() - 18;
+				int x = GetCursorPos() * 8 + 36;
+				int y = ScreenHeight() - 18;
 
-				s_Engine->DrawTextureString({ 20, y }, "> " + s_Engine->GetCapturedText(), YELLOW);
-				s_Engine->DrawTextureLine({ x, y }, { x, y + 8 }, RED);
+				DrawTextureString({ 20, y }, "> " + GetCapturedText(), YELLOW);
+				DrawTextureLine({ x, y }, { x, y + 8 }, RED);
 
-				s_Engine->m_DrawBeforeTransforms = false;
+				m_DrawBeforeTransforms = false;
 			}
 
-			s_Engine->ClearBuffer(s_Engine->m_ClearBufferColour);
+			m_Platform->ClearBuffer(m_ClearBufferColour);
+			m_Platform->OnBeforeDraw();
 
-			//glEnable(GL_BLEND);
-			//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-			glPushMatrix();
-
-			for (const auto& texture : s_Engine->m_Textures)
+			for (const auto& texture : m_Textures)
 			{
 				if (texture.drawBeforeTransforms)
-					DrawTexture(texture);
+					m_Platform->DrawTexture(texture);
 			}
 
-			if (!s_Engine->m_OnlyTextures)
+			if (!m_OnlyTextures)
 			{
-				s_Engine->m_DrawTarget->UpdateTexture();
-				glBindTexture(GL_TEXTURE_2D, s_Engine->m_DrawTarget->texture->id);
+				m_DrawTarget->UpdateTexture();
 
-				DrawQuad(s_Engine->m_ClearBufferColour);
+				m_Platform->BindTexture(m_DrawTarget->texture->id);
+				m_Platform->DrawQuad(m_ClearBufferColour);
 			}
 
-			for (const auto& texture : s_Engine->m_Textures)
+			for (const auto& texture : m_Textures)
 			{
 				if (!texture.drawBeforeTransforms)
-					DrawTexture(texture);
+					m_Platform->DrawTexture(texture);
 			}
 
-			s_Engine->m_Textures.clear();
+			m_Textures.clear();
 
-			if (!s_Engine->OnAfterDraw())
-				s_Engine->m_IsAppRunning = false;
+			if (!OnAfterDraw())
+				m_IsAppRunning = false;
 
-			glPopMatrix();
-
-			if (s_Engine->m_IsVSync)
-				glfwSwapBuffers(s_Engine->m_Window);
-			else
-				glFlush();
-
-			glfwPollEvents();
+			m_Platform->OnAfterDraw();
+			m_Platform->FlushScreen(m_IsVSync);
+			m_Platform->PollEvents();
 
 			frames++;
-			if (s_Engine->m_TickTimer >= 1.0f)
+			if (m_TickTimer >= 1.0f)
 			{
-				title = "github.com/defini7 - defGameEngine - " + s_Engine->m_AppName + " - FPS: " + std::to_string(frames);
-				glfwSetWindowTitle(s_Engine->m_Window, title.c_str());
+				m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: " + std::to_string(frames));
 
-				s_Engine->m_TickTimer = 0.0f;
+				m_TickTimer = 0.0f;
 				frames = 0;
 			}
 		}
-	}
-
-	void GameEngine::DrawTexture(const TextureInstance& texInst)
-	{
-		glBindTexture(GL_TEXTURE_2D, texInst.texture ? texInst.texture->id : 0);
-
-		switch (texInst.structure)
-		{
-		case Texture::Structure::DEFAULT:	glBegin(GL_TRIANGLES);		break;
-		case Texture::Structure::FAN:		glBegin(GL_TRIANGLE_FAN);	break;
-		case Texture::Structure::STRIP:		glBegin(GL_TRIANGLE_STRIP);	break;
-		case Texture::Structure::WIREFRAME:	glBegin(GL_LINE_LOOP);		break;
-		}
-
-		for (int i = 0; i < texInst.points; i++)
-		{
-			glColor4ub(texInst.tint[i].r, texInst.tint[i].g, texInst.tint[i].b, texInst.tint[i].a);
-			glTexCoord2f(texInst.uv[i].x, texInst.uv[i].y);
-			glVertex2f(texInst.vertices[i].x, texInst.vertices[i].y);
-		}
-
-		glEnd();
 	}
 
 	void GameEngine::MakeUnitCircle(std::vector<vf2d>& circle, const size_t verts)
@@ -2003,59 +2322,11 @@ namespace def
 		}
 	}
 
-	void GameEngine::DrawQuad(const Pixel& tint)
-	{
-		glBegin(GL_QUADS);
-		glColor4ub(tint.r, tint.g, tint.b, tint.a);
-		glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, -1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, 1.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f, 1.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f, -1.0f);
-		glEnd();
-	}
-
 	void GameEngine::Run()
 	{
 		m_IsAppRunning = true;
 
 		AppThread();
-	}
-
-	void GameEngine::ErrorCallback(int errorCode, const char* description)
-	{
-		if (errorCode != GLFW_INVALID_ENUM)
-		{
-			std::cout << "[GLFW Error] Code: "
-				<< "0x000" << std::hex << errorCode
-				<< ", text: " << description << std::endl;
-
-			s_Engine->Destroy();
-
-			exit(1);
-		}
-	}
-
-	void GameEngine::DropCallback(GLFWwindow* window, int pathCount, const char* paths[])
-	{
-		auto& cache = s_Engine->GetDropped();
-
-		cache.clear();
-		cache.reserve(pathCount);
-
-		for (int i = 0; i < pathCount; i++)
-			cache[i] = paths[i];
-	}
-
-	void GameEngine::ScrollCallback(GLFWwindow* window, double x, double y)
-	{
-		UNUSED(x);
-		s_Engine->m_ScrollDelta = y;
-	}
-
-	void GameEngine::MousePosCallback(GLFWwindow* window, double x, double y)
-	{
-		s_Engine->m_MousePos.x = (int)x / s_Engine->m_PixelSize.x;
-		s_Engine->m_MousePos.y = (int)y / s_Engine->m_PixelSize.y;
 	}
 
 	bool GameEngine::OnAfterDraw()
@@ -2075,10 +2346,6 @@ namespace def
 
 	bool GameEngine::Construct(int screenWidth, int screenHeight, int pixelWidth, int pixelHeight, bool fullScreen, bool vsync, bool dirtyPixel)
 	{
-		glfwSetErrorCallback(ErrorCallback);
-
-		glfwInit();
-
 		m_ScreenSize = { screenWidth, screenHeight };
 		m_PixelSize = { pixelWidth, pixelHeight };
 		m_WindowSize = m_ScreenSize * m_PixelSize;
@@ -2090,56 +2357,8 @@ namespace def
 
 		m_IsDirtyPixel = dirtyPixel;
 
-		m_Monitor = glfwGetPrimaryMonitor();
-
-		if (!m_Monitor)
+		if (!m_Platform->ConstructWindow(m_ScreenSize, m_PixelSize, m_WindowSize, vsync, fullScreen, dirtyPixel))
 			return false;
-
-		if (!m_IsVSync)
-			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
-
-		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
-
-		if (!videoMode)
-			return false;
-		
-		if (m_IsFullScreen)
-		{
-			m_WindowSize = { videoMode->width, videoMode->height };
-			m_ScreenSize = m_WindowSize / m_PixelSize;
-
-			m_Window = glfwCreateWindow(m_WindowSize.x, m_WindowSize.y, "", m_Monitor, NULL);
-			if (!m_Window) return false;
-
-			glfwSetWindowMonitor(
-				m_Window,
-				m_Monitor,
-				0, 0,
-				m_WindowSize.x, m_WindowSize.y,
-				videoMode->refreshRate
-			);
-		}
-		else
-		{
-			m_Window = glfwCreateWindow(m_WindowSize.x, m_WindowSize.y, "", NULL, NULL);
-
-			if (!m_Window)
-				return false;
-		}
-
-		glfwMakeContextCurrent(m_Window);
-		glViewport(0, 0, m_WindowSize.x, m_WindowSize.y);
-
-		glEnable(GL_TEXTURE_2D);
-
-		if (!m_IsDirtyPixel)
-			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-		if (m_IsVSync)
-		{
-			glfwSwapInterval(1);
-			glfwWindowHint(GLFW_REFRESH_RATE, videoMode->refreshRate);
-		}
 
 		if (!m_OnlyTextures)
 		{
@@ -2193,11 +2412,6 @@ namespace def
 		}
 
 		m_Font.UpdateTexture();
-
-		glfwSetDropCallback(m_Window, DropCallback);
-
-		glfwSetScrollCallback(m_Window, ScrollCallback);
-		glfwSetCursorPosCallback(m_Window, MousePosCallback);
 
 		return true;
 	}
@@ -2996,19 +3210,13 @@ namespace def
 
 	bool GameEngine::IsFocused() const
 	{
-		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) == GLFW_TRUE;
+		return m_Platform->IsWindowFocused();
 	}
 
 	void GameEngine::SetIcon(std::string_view fileName)
 	{
 		Sprite icon(fileName);
-
-		GLFWimage img;
-		img.width = icon.size.x;
-		img.height = icon.size.y;
-		img.pixels = (uint8_t*)icon.pixels.data();
-
-		glfwSetWindowIcon(m_Window, 1, &img);
+		m_Platform->SetIcon(icon);
 	}
 
 	void GameEngine::SetDrawTarget(Graphic* target)
@@ -3025,24 +3233,6 @@ namespace def
 	void GameEngine::SetTitle(std::string_view title)
 	{
 		m_AppName = title;
-	}
-
-	WindowState GameEngine::GetWindowState() const
-	{
-		int f = 0;
-
-		if (glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED))
-			f |= static_cast<int>(WindowState::MAXIMIZED);
-
-		if (glfwGetWindowAttrib(m_Window, GLFW_FOCUSED))
-			f |= static_cast<int>(WindowState::FOCUSED);
-
-		return static_cast<WindowState>(f);
-	}
-
-	GLFWwindow* GameEngine::GetWindow() const
-	{
-		return m_Window;
 	}
 
 	std::vector<std::string>& GameEngine::GetDropped()
@@ -3400,12 +3590,6 @@ namespace def
 	int GameEngine::GetMouseWheelDelta() const
 	{
 		return m_ScrollDelta;
-	}
-
-	void GameEngine::ClearBuffer(const Pixel& col)
-	{
-		glClearColor((float)col.r / 255.0f, (float)col.g / 255.0f, (float)col.b / 255.0f, (float)col.a / 255.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
 	void GameEngine::ClearTexture(const Pixel& col)
