@@ -24,7 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define DGE_APPLICATION
-#include "../defGameEngine.h"
+#include "defGameEngine.hpp"
 
 #include <list>
 
@@ -55,8 +55,8 @@ protected:
 protected:
 	bool OnUserCreate() override
 	{
-		worldSize = ScreenSize() / bodyPartSize;
-		
+		worldSize = GetScreenSize() / bodyPartSize;
+
 		NewGame();
 
 		return true;
@@ -98,7 +98,7 @@ protected:
 			if (GetKey(def::Key::SPACE).pressed)
 				NewGame();
 
-			DrawString(ScreenSize() / def::vi2d(3, 2), "GAME OVER! PRESS SPACE.");
+			DrawString(GetScreenSize() / def::vi2d(3, 2), "GAME OVER! PRESS SPACE.");
 			return true;
 		}
 
@@ -164,4 +164,3 @@ int main()
 
 	return 0;
 }
-
