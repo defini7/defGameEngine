@@ -84,13 +84,13 @@
 
 #define PLATFORM_GL
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(DGE_USE_GLFW3)
 	#define PLATFORM_GL_WINDOWS
 #else
-	#define PLATFORM_GLFW
+	#define PLATFORM_GLFW3
 #endif
 
-#ifdef PLATFORM_GLFW
+#ifdef PLATFORM_GLFW3
 	#include "GLFW/glfw3.h"
 #endif
 
@@ -128,7 +128,7 @@
 		#pragma comment(lib, "Dwmapi.lib")
 	#endif
 
-	#ifdef PLATFORM_GLFW
+	#ifdef PLATFORM_GLFW3
 		#pragma comment(lib, "glfw3.lib")
 	#endif
 #endif
@@ -149,7 +149,7 @@ namespace def
 	template <class... T>
 	void Assert(bool expr, T&&... args);
 
-#ifdef PLATFORM_GLFW
+#ifdef PLATFORM_GLFW3
 
 	enum class Key
 	{
@@ -703,12 +703,12 @@ namespace def
 
 #endif
 
-#ifdef PLATFORM_GLFW
+#ifdef PLATFORM_GLFW3
 
-	class Platform_GLFW : public Platform_GL
+	class Platform_GLFW3 : public Platform_GL
 	{
 	public:
-		Platform_GLFW();
+		Platform_GLFW3();
 
 	private:
 		GLFWmonitor* m_Monitor;
@@ -745,8 +745,13 @@ namespace def
 		GameEngine();
 		virtual ~GameEngine();
 		
+#ifdef PLATFORM_GL_WINDOWS
 		friend class Platform_GL_Windows;
-		friend class Platform_GLFW;
+#endif
+
+#ifdef PLATFORM_GLFW3
+		friend class Platform_GLFW3;
+#endif
 
 	private:
 		std::string m_AppName;
@@ -2088,7 +2093,9 @@ namespace def
 
 			topLeftX = 0;
 			topLeftY = 0;
+
 			windowSize = { monitorInfo.rcMonitor.right, monitorInfo.rcMonitor.bottom };
+			screenSize = windowSize / pixelSize;
 		}
 
 		RECT windowRect = { 0, 0, windowSize.x, windowSize.y };
@@ -2209,9 +2216,9 @@ namespace def
 
 #endif
 
-#ifdef PLATFORM_GLFW
+#ifdef PLATFORM_GLFW3
 
-	Platform_GLFW::Platform_GLFW()
+	Platform_GLFW3::Platform_GLFW3()
 	{
 		m_Window = nullptr;
 		m_Monitor = nullptr;
@@ -2220,7 +2227,7 @@ namespace def
 		glfwInit();
 	}
 
-	void Platform_GLFW::ErrorCallback(int errorCode, const char* description)
+	void Platform_GLFW3::ErrorCallback(int errorCode, const char* description)
 	{
 		if (errorCode != GLFW_INVALID_ENUM)
 		{
@@ -2234,7 +2241,7 @@ namespace def
 		}
 	}
 
-	void Platform_GLFW::DropCallback(GLFWwindow* window, int pathCount, const char* paths[])
+	void Platform_GLFW3::DropCallback(GLFWwindow* window, int pathCount, const char* paths[])
 	{
 		auto& cache = GameEngine::s_Engine->GetDropped();
 
@@ -2245,50 +2252,50 @@ namespace def
 			cache[i] = paths[i];
 	}
 
-	void Platform_GLFW::ScrollCallback(GLFWwindow* window, double x, double y)
+	void Platform_GLFW3::ScrollCallback(GLFWwindow* window, double x, double y)
 	{
 		UNUSED(x);
 		GameEngine::s_Engine->m_ScrollDelta = y;
 	}
 
-	void Platform_GLFW::MousePosCallback(GLFWwindow* window, double x, double y)
+	void Platform_GLFW3::MousePosCallback(GLFWwindow* window, double x, double y)
 	{
 		GameEngine::s_Engine->m_MousePos.x = (int)x / GameEngine::s_Engine->m_PixelSize.x;
 		GameEngine::s_Engine->m_MousePos.y = (int)y / GameEngine::s_Engine->m_PixelSize.y;
 	}
 
-	void Platform_GLFW::Destroy() const
+	void Platform_GLFW3::Destroy() const
 	{
 		glfwDestroyWindow(m_Window);
 		glfwTerminate();
 	}
 
-	void Platform_GLFW::SetTitle(const std::string& text) const
+	void Platform_GLFW3::SetTitle(const std::string& text) const
 	{
 		glfwSetWindowTitle(m_Window, text.c_str());
 	}
 
-	bool Platform_GLFW::IsWindowClose() const
+	bool Platform_GLFW3::IsWindowClose() const
 	{
 		return glfwWindowShouldClose(m_Window);
 	}
 
-	bool Platform_GLFW::IsWindowFocused() const
+	bool Platform_GLFW3::IsWindowFocused() const
 	{
 		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) == GLFW_TRUE;
 	}
 
-	bool Platform_GLFW::GetKey(int key) const
+	bool Platform_GLFW3::GetKey(int key) const
 	{
 		return glfwGetKey(m_Window, key) == GLFW_PRESS;
 	}
 
-	bool Platform_GLFW::GetMouse(int button) const
+	bool Platform_GLFW3::GetMouse(int button) const
 	{
 		return glfwGetMouseButton(m_Window, button) == GLFW_PRESS;
 	}
 
-	void Platform_GLFW::FlushScreen(bool vsync) const
+	void Platform_GLFW3::FlushScreen(bool vsync) const
 	{
 		if (vsync)
 			glfwSwapBuffers(m_Window);
@@ -2296,12 +2303,12 @@ namespace def
 			glFlush();
 	}
 
-	void Platform_GLFW::PollEvents() const
+	void Platform_GLFW3::PollEvents() const
 	{
 		glfwPollEvents();
 	}
 
-	bool Platform_GLFW::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel)
+	bool Platform_GLFW3::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel)
 	{
 		m_Monitor = glfwGetPrimaryMonitor();
 
@@ -2360,7 +2367,7 @@ namespace def
 		return true;
 	}
 
-	void Platform_GLFW::SetIcon(Sprite& icon) const
+	void Platform_GLFW3::SetIcon(Sprite& icon) const
 	{
 		GLFWimage img;
 		img.width = icon.size.x;
@@ -2404,8 +2411,8 @@ namespace def
 
 #if defined(PLATFORM_GL_WINDOWS)
 		m_Platform = new Platform_GL_Windows();
-#elif defined(PLATFORM_GLFW)
-		m_Platform = new Platform_GLFW();
+#elif defined(PLATFORM_GLFW3)
+		m_Platform = new Platform_GLFW3();
 #else
 		#error No platform was selected
 #endif
