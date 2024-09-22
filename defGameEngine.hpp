@@ -83,10 +83,28 @@
 #include <list>
 
 #define PLATFORM_GL
-#define PLATFORM_GLFW
+
+#ifdef _WIN32
+	#define PLATFORM_GL_WINDOWS
+#else
+	#define PLATFORM_GLFW
+#endif
 
 #ifdef PLATFORM_GLFW
-#include "GLFW/glfw3.h"
+	#include "GLFW/glfw3.h"
+#endif
+
+#ifdef PLATFORM_GL_WINDOWS
+	#include <Windows.h>
+	#include <gl/GL.h>
+	#include <dwmapi.h>
+	#include <thread>
+
+	typedef BOOL (WINAPI wglSwapInterval_t)(int interval);
+	static wglSwapInterval_t* wglSwapInterval = nullptr;
+
+	#undef min
+	#undef max
 #endif
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -104,12 +122,15 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#ifdef PLATFORM_GL
-#pragma comment(lib, "opengl32.lib")
-#endif
+#ifndef __MINGW32__
+	#ifdef PLATFORM_GL
+		#pragma comment(lib, "opengl32.lib")
+		#pragma comment(lib, "Dwmapi.lib")
+	#endif
 
-#ifdef PLATFORM_GLFW
-#pragma comment(lib, "glfw3.lib")
+	#ifdef PLATFORM_GLFW
+		#pragma comment(lib, "glfw3.lib")
+	#endif
 #endif
 
 #else
@@ -128,6 +149,8 @@ namespace def
 	template <class... T>
 	void Assert(bool expr, T&&... args);
 
+#ifdef PLATFORM_GLFW
+
 	enum class Key
 	{
 		SPACE = 32, APOSTROPHE = 39, COMMA = 44, MINUS, PERIOD, SLASH,
@@ -140,14 +163,13 @@ namespace def
 		T, U, V, W, X, Y, Z,
 
 		LEFT_BRACKET, BACKSLASH, RIGHT_BRACKET,
-		GRAVE_ACCENT = 96, WORLD_1 = 161, WORLD_2 = 162,
 
 		ESCAPE = 256, ENTER, TAB, BACKSPACE, INSERT, DEL, RIGHT, LEFT,
 		DOWN, UP, PAGE_UP, PAGE_DOWN, HOME, END,
 		CAPS_LOCK = 280, SCROLL_LOCK, NUM_LOCK, PRINT_SCREEN, PAUSE,
 
 		F1 = 290, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13,
-		F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25,
+		F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24,
 
 		NP_0 = 320, NP_1, NP_2, NP_3, NP_4, NP_5, NP_6, NP_7, NP_8,
 		NP_9, NP_DECIMAL, NP_DIVIDE, NP_MULTIPLY, NP_SUBTRACT, NP_ADD,
@@ -158,6 +180,48 @@ namespace def
 
 		NONE = -1
 	};
+
+#endif
+
+#ifdef PLATFORM_GL_WINDOWS
+	
+	enum class Key
+	{
+		SPACE = VK_SPACE, APOSTROPHE = VK_OEM_7, COMMA = VK_OEM_COMMA,
+		MINUS = VK_OEM_MINUS, PERIOD = VK_OEM_PERIOD, SLASH = VK_OEM_2,
+
+		K0 = 0x30, K1, K2, K3, K4, K5, K6, K7, K8, K9,
+
+		SEMICOLON = VK_OEM_1, EQUAL = VK_OEM_PLUS,
+
+		A = 0x41, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S,
+		T, U, V, W, X, Y, Z,
+
+		LEFT_BRACKET = VK_OEM_4, BACKSLASH = VK_OEM_5, RIGHT_BRACKET = VK_OEM_6,
+
+		ESCAPE = VK_ESCAPE, ENTER = VK_RETURN, TAB = VK_TAB, BACKSPACE = VK_BACK,
+		INSERT = VK_INSERT, DEL = VK_DELETE, RIGHT = VK_RIGHT, LEFT = VK_LEFT,
+		DOWN = VK_DOWN, UP = VK_UP, PAGE_UP = VK_PRIOR, PAGE_DOWN = VK_NEXT,
+		HOME = VK_HOME, END = VK_END,
+		CAPS_LOCK = VK_CAPITAL, SCROLL_LOCK = VK_SCROLL, NUM_LOCK = VK_NUMLOCK,
+		PRINT_SCREEN = VK_SNAPSHOT, PAUSE = VK_PAUSE,
+
+		F1 = VK_F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13,
+		F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24,
+
+		NP_0 = VK_NUMPAD0, NP_1, NP_2, NP_3, NP_4, NP_5, NP_6, NP_7, NP_8,
+		NP_9, NP_DECIMAL = VK_DECIMAL, NP_DIVIDE = VK_DIVIDE, NP_MULTIPLY = VK_MULTIPLY,
+		NP_SUBTRACT = VK_SUBTRACT, NP_ADD = VK_ADD,
+		NP_ENTER = VK_RETURN, NP_EQUAL = VK_ADD,
+
+		LEFT_SHIFT = VK_LSHIFT, LEFT_CONTROL = VK_LCONTROL, LEFT_ALT = VK_LMENU,
+		LEFT_SUPER = VK_LWIN, RIGHT_SHIFT = VK_RSHIFT,
+		RIGHT_CONTROL = VK_RCONTROL, RIGHT_ALT = VK_RMENU, RIGHT_SUPER = VK_RWIN, MENU = VK_MENU,
+
+		NONE = -1
+	};
+
+#endif
 
 	enum class Button
 	{
@@ -499,6 +563,8 @@ namespace def
 		bool drawBeforeTransforms;
 	};
 
+	class GameEngine;
+
 	class Platform
 	{
 	public:
@@ -563,6 +629,80 @@ namespace def
 
 #endif
 
+#ifdef PLATFORM_GL_WINDOWS
+
+	class Platform_GL_Windows : public Platform_GL
+	{
+	public:
+		void Destroy() const override;
+		void SetTitle(const std::string& text) const override;
+
+		bool IsWindowClose() const override;
+		bool IsWindowFocused() const override;
+
+		bool GetKey(int key) const override;
+		bool GetMouse(int button) const override;
+
+		void FlushScreen(bool vsync) const override;
+		void PollEvents() const override;
+
+		bool ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) override;
+
+		void SetIcon(Sprite& icon) const override;
+
+	private:
+		static LRESULT CALLBACK WindowEvent(HWND window, UINT message, WPARAM param1, LPARAM param2);
+
+		static std::wstring ConvertAsciiToWideChar(const std::string& s)
+		{
+#ifdef __MINGW32__
+			wchar_t* buffer = new wchar_t[s.length() + 1];
+			mbstowcs(buffer, s.c_str(), s.length());
+			buffer[s.length()] = L'\0';
+#else
+			int count = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, NULL, 0);
+			wchar_t* buffer = new wchar_t[count];
+			MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, buffer, count);
+#endif
+
+			std::wstring w(buffer);
+			delete[] buffer;
+
+			return w;
+		}
+
+		static std::string ConvertWideCharToAscii(const std::wstring& ws)
+		{
+#ifdef __MINGW32__
+			char* buffer = new char[ws.length() + 1];
+			wcstombs(buffer, ws.c_str(), ws.length());
+			buffer[ws.length()] = '\0';
+#else
+			int count = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, NULL, 0, NULL, NULL);
+			char* buffer = new char[count];
+			WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, buffer, count, NULL, NULL);
+#endif
+
+			std::string s(buffer);
+			delete[] buffer;
+
+			return s;
+		}
+
+	private:
+		HWND m_Window;
+		HDC m_DeviceContext;
+		HGLRC m_RenderContext;
+
+	public:
+		static bool s_IsWindowFocused;
+
+	};
+
+	bool Platform_GL_Windows::s_IsWindowFocused = false;
+
+#endif
+
 #ifdef PLATFORM_GLFW
 
 	class Platform_GLFW : public Platform_GL
@@ -605,6 +745,7 @@ namespace def
 		GameEngine();
 		virtual ~GameEngine();
 		
+		friend class Platform_GL_Windows;
 		friend class Platform_GLFW;
 
 	private:
@@ -693,7 +834,7 @@ namespace def
 	private:
 		void Destroy();
 		void ScanHardware(KeyState* data, bool* newState, bool* oldState, size_t count, std::function<bool(Platform*, int)> Get);
-		void AppThread();
+		void MainLoop();
 
 		static void MakeUnitCircle(std::vector<vf2d>& circle, const size_t verts);
 
@@ -854,7 +995,7 @@ namespace def
 		{ Key::W, { 'w', 'W' } }, { Key::X, { 'x', 'X' } },
 		{ Key::Y, { 'y', 'Y' } }, { Key::Z, { 'z', 'Z' } },
 		{ Key::LEFT_BRACKET, { '[', '{' } }, { Key::BACKSLASH, { '\\', '|' } },
-		{ Key::RIGHT_BRACKET, { ']', '}' } }, { Key::GRAVE_ACCENT, { '`', '~' } },
+		{ Key::RIGHT_BRACKET, { ']', '}' } },
 		{ Key::NP_0, { '0', '0' } }, { Key::NP_1, { '1', '1' } },
 		{ Key::NP_2, { '2', '2' } }, { Key::NP_3, { '3', '3' } },
 		{ Key::NP_4, { '4', '4' } }, { Key::NP_5, { '5', '5' } },
@@ -876,7 +1017,7 @@ namespace def
 			(values.emplace_back(std::move(args)), ...);
 
 			for (const auto& val : values)
-				std::cerr << val << std::endl;
+				std::cout << val << std::endl;
 
 			std::cerr << std::endl;
 
@@ -1775,7 +1916,7 @@ namespace def
 		drawBeforeTransforms = false;
 	}
 
-#ifdef PLATFORM_GLFW
+#ifdef PLATFORM_GL
 
 	void Platform_GL::ClearBuffer(const Pixel& col) const
 	{
@@ -1856,6 +1997,219 @@ namespace def
 	}
 
 	void Platform_GL::SetIcon(Sprite& icon) const { UNUSED(icon); }
+
+#endif
+
+#ifdef PLATFORM_GL_WINDOWS
+
+	void Platform_GL_Windows::Destroy() const
+	{
+		wglDeleteContext(m_RenderContext);
+		PostMessage(m_Window, WM_DESTROY, 0, 0);
+	}
+
+	void Platform_GL_Windows::SetTitle(const std::string& text) const
+	{
+#ifdef _UNICODE
+		SetWindowText(m_Window, ConvertAsciiToWideChar(text).c_str());
+#else
+		SetWindowText(m_Window, text.c_str());
+#endif
+	}
+
+	bool Platform_GL_Windows::IsWindowClose() const
+	{
+		return !GameEngine::s_Engine->m_IsAppRunning;
+	}
+
+	bool Platform_GL_Windows::IsWindowFocused() const
+	{
+		return s_IsWindowFocused;
+	}
+
+	bool Platform_GL_Windows::GetKey(int key) const
+	{
+		return GameEngine::s_Engine->m_KeyNewState[key];
+	}
+
+	bool Platform_GL_Windows::GetMouse(int button) const
+	{
+		return GameEngine::s_Engine->m_MouseNewState[button];
+	}
+
+	void Platform_GL_Windows::FlushScreen(bool vsync) const
+	{
+		SwapBuffers(m_DeviceContext);
+		if (vsync) DwmFlush();
+	}
+
+	void Platform_GL_Windows::PollEvents() const
+	{
+		MSG msg;
+
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
+	bool Platform_GL_Windows::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel)
+	{
+		WNDCLASS wc;
+		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		wc.hInstance = GetModuleHandle(nullptr);
+		wc.lpfnWndProc = WindowEvent;
+		wc.cbClsExtra = 0;
+		wc.cbWndExtra = 0;
+		wc.lpszMenuName = nullptr;
+		wc.hbrBackground = nullptr;
+		wc.lpszClassName = L"DEF_GAME_ENGINE";
+		RegisterClass(&wc);
+
+		DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+		DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_THICKFRAME;
+
+		int topLeftX = CW_USEDEFAULT;
+		int topLeftY = CW_USEDEFAULT;
+
+		if (fullscreen)
+		{
+			dwExStyle = 0;
+			dwStyle = WS_VISIBLE | WS_POPUP;
+
+			HMONITOR monitor = MonitorFromWindow(m_Window, MONITOR_DEFAULTTONEAREST);
+			MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+
+			if (!GetMonitorInfo(monitor, &monitorInfo))
+				return false;
+
+			topLeftX = 0;
+			topLeftY = 0;
+			windowSize = { monitorInfo.rcMonitor.right, monitorInfo.rcMonitor.bottom };
+		}
+
+		RECT windowRect = { 0, 0, windowSize.x, windowSize.y };
+		AdjustWindowRectEx(&windowRect, dwStyle, FALSE, dwExStyle);
+
+		int width = windowRect.right - windowRect.left;
+		int height = windowRect.bottom - windowRect.top;
+
+		m_Window = CreateWindowEx(dwExStyle, L"DEF_GAME_ENGINE", L"", dwStyle,
+			topLeftX, topLeftY, width, height, NULL, NULL, GetModuleHandle(NULL), this);
+
+		DragAcceptFiles(m_Window, TRUE);
+
+		m_DeviceContext = GetDC(m_Window);
+
+		PIXELFORMATDESCRIPTOR pfd =
+		{
+			sizeof(PIXELFORMATDESCRIPTOR), 1,
+			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+			PFD_TYPE_RGBA, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			PFD_MAIN_PLANE, 0, 0, 0, 0
+		};
+
+		int pf = ChoosePixelFormat(m_DeviceContext, &pfd);
+		if (pf == 0) return false;
+
+		SetPixelFormat(m_DeviceContext, pf, &pfd);
+
+		m_RenderContext = wglCreateContext(m_DeviceContext);
+		if (m_RenderContext == NULL) return false;
+
+		wglMakeCurrent(m_DeviceContext, m_RenderContext);
+
+		wglSwapInterval = (wglSwapInterval_t*)wglGetProcAddress("wglSwapIntervalEXT");
+		if (wglSwapInterval && !vsync) wglSwapInterval(0);
+
+		glEnable(GL_TEXTURE_2D);
+
+		if (!dirtypixel)
+			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+		return true;
+	}
+
+	void Platform_GL_Windows::SetIcon(Sprite& icon) const
+	{
+		// TODO: Not implemented yet
+	}
+
+	LRESULT CALLBACK Platform_GL_Windows::WindowEvent(HWND window, UINT message, WPARAM param1, LPARAM param2)
+	{
+		GameEngine* e = GameEngine::s_Engine;
+
+		switch (message)
+		{
+		case WM_MOUSEMOVE:
+		{
+			e->m_MousePos.x = (param2 & 0xFFFF) / e->m_PixelSize.x;
+			e->m_MousePos.y = ((param2 >> 16) & 0xFFFF) / e->m_PixelSize.y;
+
+			return 0;
+		}
+
+		case WM_MOUSEWHEEL:
+		{
+			e->m_ScrollDelta = GET_WHEEL_DELTA_WPARAM(param1);
+			return 0;
+		}
+
+		case WM_SETFOCUS: Platform_GL_Windows::s_IsWindowFocused = true; return 0;
+		case WM_KILLFOCUS: Platform_GL_Windows::s_IsWindowFocused = false; return 0;
+
+		case WM_KEYDOWN: e->m_KeyNewState[param1] = true; return 0;
+		case WM_KEYUP: e->m_KeyNewState[param1] = false; return 0;
+		case WM_SYSKEYDOWN: e->m_KeyNewState[param1] = true; return 0;
+		case WM_SYSKEYUP: e->m_KeyNewState[param1] = false; return 0;
+
+		case WM_LBUTTONDOWN: e->m_MouseNewState[0] = true; return 0;
+		case WM_LBUTTONUP: e->m_MouseNewState[0] = false; return 0;
+		case WM_RBUTTONDOWN: e->m_MouseNewState[1] = true; return 0;
+		case WM_RBUTTONUP: e->m_MouseNewState[1] = false; return 0;
+		case WM_MBUTTONDOWN: e->m_MouseNewState[2] = true; return 0;
+		case WM_MBUTTONUP: e->m_MouseNewState[2] = false; return 0;
+
+		case WM_DROPFILES:
+		{
+			HDROP drop = (HDROP)param1;
+			uint32_t filesCount = DragQueryFile(drop, 0xFFFFFFFF, nullptr, 0);
+
+			for (uint32_t i = 0; i < filesCount; i++)
+			{
+				TCHAR buffer[256];
+				uint32_t length = DragQueryFile(drop, i, nullptr, 0);
+				DragQueryFile(drop, i, buffer, sizeof(buffer));
+#ifdef UNICODE
+				e->m_DropCache.push_back(ConvertWideCharToAscii(buffer));
+#else
+				e->m_DropCache.push_back(std::string(buffer));
+#endif
+			}
+
+			DragFinish(drop);
+			return 0;
+		}
+
+		case WM_CLOSE: e->m_IsAppRunning = false; return 0;
+		case WM_DESTROY:
+		{
+			PostQuitMessage(0);
+			DestroyWindow(window);
+			return 0;
+		}
+
+		}
+
+		return DefWindowProc(window, message, param1, param2);
+	}
+
+#endif
+
+#ifdef PLATFORM_GLFW
 
 	Platform_GLFW::Platform_GLFW()
 	{
@@ -2048,8 +2402,12 @@ namespace def
 		m_OnlyTextures = false;
 		m_DrawBeforeTransforms = false;
 
-#ifdef PLATFORM_GLFW
+#if defined(PLATFORM_GL_WINDOWS)
+		m_Platform = new Platform_GL_Windows();
+#elif defined(PLATFORM_GLFW)
 		m_Platform = new Platform_GLFW();
+#else
+		#error No platform was selected
 #endif
 	}
 
@@ -2091,7 +2449,7 @@ namespace def
 		}
 	}
 
-	void GameEngine::AppThread()
+	void GameEngine::MainLoop()
 	{
 		if (!OnUserCreate())
 			m_IsAppRunning = false;
@@ -2325,8 +2683,7 @@ namespace def
 	void GameEngine::Run()
 	{
 		m_IsAppRunning = true;
-
-		AppThread();
+		MainLoop();
 	}
 
 	bool GameEngine::OnAfterDraw()
