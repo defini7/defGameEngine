@@ -2062,6 +2062,7 @@ namespace def
 	bool Platform_GL_Windows::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel)
 	{
 		WNDCLASS wc;
+
 		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 		wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -2072,10 +2073,11 @@ namespace def
 		wc.lpszMenuName = nullptr;
 		wc.hbrBackground = nullptr;
 		wc.lpszClassName = L"DEF_GAME_ENGINE";
+
 		RegisterClass(&wc);
 
 		DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-		DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_THICKFRAME;
+		DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_THICKFRAME;
 
 		int topLeftX = CW_USEDEFAULT;
 		int topLeftY = CW_USEDEFAULT;
@@ -2120,17 +2122,23 @@ namespace def
 		};
 
 		int pf = ChoosePixelFormat(m_DeviceContext, &pfd);
-		if (pf == 0) return false;
+
+		if (pf == 0)
+			return false;
 
 		SetPixelFormat(m_DeviceContext, pf, &pfd);
 
 		m_RenderContext = wglCreateContext(m_DeviceContext);
-		if (m_RenderContext == NULL) return false;
+
+		if (m_RenderContext == NULL)
+			return false;
 
 		wglMakeCurrent(m_DeviceContext, m_RenderContext);
 
 		wglSwapInterval = (wglSwapInterval_t*)wglGetProcAddress("wglSwapIntervalEXT");
-		if (wglSwapInterval && !vsync) wglSwapInterval(0);
+
+		if (wglSwapInterval && !vsync)
+			wglSwapInterval(0);
 
 		glEnable(GL_TEXTURE_2D);
 
