@@ -21,13 +21,13 @@ For all platforms:
 C++20 and higher is required
 
 1. Windows MSVC:
-   1.1 GLFW
+   - 1.1 GLFW
       - Menu bar: `Project` -> `<project name> Properties`.
       - In opened window `C++` -> `General`.
       - Add path for include folders in `Additional include directories`.
       - Then `Linker` -> `General`.
       - Add path for lib folder in `Additional Library Directories`.
-   1.2 OpenGL 1.0 (by default)
+   - 1.2 OpenGL 1.0 (by default)
       - Sit back, relax and enjoy coding
 
 2. Linux G++:
