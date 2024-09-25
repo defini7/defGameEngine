@@ -13,7 +13,12 @@ if "%1" == "build" goto :build
 if "%1" == "run" goto :run
 
 :build
-    call em++ %CC_FLAGS% %EMSCRIPTEN_FLAGS% -I"%CC_STB_INCLUDE%" -I"%CC_DGE_INCLUDE%" %2.cpp -o Build\index.html
+    if exist ".\Assets" (
+        call em++ %CC_FLAGS% %EMSCRIPTEN_FLAGS% -I"%CC_STB_INCLUDE%" -I"%CC_DGE_INCLUDE%" %2.cpp -o Build\index.html --preload-file .\Assets
+    ) else (
+        call em++ %CC_FLAGS% %EMSCRIPTEN_FLAGS% -I"%CC_STB_INCLUDE%" -I"%CC_DGE_INCLUDE%" %2.cpp -o Build\index.html
+    )
+
     goto :leave
 
 :run
