@@ -1,34 +1,24 @@
 <p align="center"><img src="dge_large_logo.png"></p>
 
 # defGameEngine
-defGameEngine is a game engine, that's available on Windows, Linux and probably on MacOS
+A cross-platform game engine available on Windows, Linux, and MacOS. This repository includes a comprehensive set of custom functions to create games, along with examples to demonstrate and test each feature.
 
-# Installation
+## Getting Started
 
-Windows:
-- Download [GLFW](https://www.glfw.org/download.html) (optional).
+To use this game engine in your project, follow the [install instructions](/README.md#installation), clone this repository, and start exploring the code and examples. Check out the `Examples` directory for a comprehensive set of already made games using the game engine.
 
-Linux:
-- `sudo apt-get install xorg libx11-dev libglu1-mesa-dev freeglut3-dev libglu1-mesa libgl1-mesa-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev libglew-dev libglfw3-dev`
+## Installation
 
-For all platforms:
-- Download [defGameEngine.hpp](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.hpp).
-- Download [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h).
-- Download [stb_image_write.h](https://github.com/nothings/stb/blob/master/stb_image_write.h).
+### Platforms
 
-# Setup
+- [Windows](md/Install_Instructions_Windows.md)
 
-C++20 and higher is required
+- [Linux](md/Install_Instructions_Linux.md)
 
-1. Windows MSVC:
-   - 1.1 GLFW
-      - Menu bar: `Project` -> `<project name> Properties`.
-      - In opened window `C++` -> `General`.
-      - Add path for include folders in `Additional include directories`.
-      - Then `Linker` -> `General`.
-      - Add path for lib folder in `Additional Library Directories`.
-   - 1.2 OpenGL 1.0 (by default)
-      - Sit back, relax and enjoy coding
+- [Mac](md/Install_Instructions_Mac.md)
 
-2. Linux G++:
-- `g++ <file>.cpp -o <file> -std=c++20 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -fsanitize=undefined -fno-sanitize-recover`.
+****Note**:* C++20 or higher is required
+
+## Documentation
+
+[GameEngine](md/GameEngine_Doc.md)
