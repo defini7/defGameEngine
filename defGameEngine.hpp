@@ -2257,7 +2257,10 @@ namespace def
 
 	void Platform_Emscripten::FlushScreen(bool vsync) const
 	{
-		eglSwapBuffers(m_Display, m_Surface);
+		if (vsync)
+			eglSwapBuffers(m_Display, m_Surface);
+		else
+			glFlush();
 	}
 
 	void Platform_Emscripten::PollEvents() const
@@ -2487,8 +2490,8 @@ namespace def
 
 		if (eventType == EMSCRIPTEN_EVENT_MOUSEMOVE)
 		{
-			e->m_MousePos.x = event->targetX;
-			e->m_MousePos.y = event->targetY;
+			e->m_MousePos.x = event->targetX / e->m_PixelSize.x;
+			e->m_MousePos.y = event->targetY / e->m_PixelSize.y;
 		}
 
 		auto check = [&](int button, int index)
