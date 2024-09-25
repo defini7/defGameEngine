@@ -1,69 +1,25 @@
 <p align="center"><img src="dge_large_logo.png"></p>
 
 # defGameEngine
-defGameEngine is a game engine, that's available on Windows, Linux, Web and probably on MacOS
 
-# Installation
+A cross-platform game engine available on Windows, Linux, and MacOS. This repository includes a comprehensive set of custom functions to create games, along with examples to demonstrate and test each feature.
 
-Windows:
-- Download [GLFW](https://www.glfw.org/download.html) (for desktop only).
+## Getting Started
 
-Linux:
-- `sudo apt-get install xorg libx11-dev libglu1-mesa-dev freeglut3-dev libglu1-mesa libgl1-mesa-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev libglew-dev libglfw3-dev`
+To use this game engine in your project, follow the [install instructions](/README.md#installation), clone this repository, and start exploring the code and examples. Check out the `Examples` directory for a comprehensive set of already made games using the game engine.
 
-For all platforms:
-- Download [defGameEngine.hpp](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.hpp).
-- Download [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h).
-- Download [stb_image_write.h](https://github.com/nothings/stb/blob/master/stb_image_write.h).
-- Download [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) (for web only).
+## Installation
 
-# Setup
+### Platforms
 
-C++20 and higher is required
+- [Windows](md/Install_Instructions_Windows.md)
 
-1. Windows MSVC:
-   - Menu bar: `Project` -> `<project name> Properties`.
-   - In opened window `C++` -> `General`.
-   - Add path for include folders in `Additional include directories`.
-   - Then `Linker` -> `General`.
-   - Add path for lib folder in `Additional Library Directories`.
+- [Linux](md/Install_Instructions_Linux.md)
 
-2. Linux G++:
-- `g++ <file>.cpp -o <file> -std=c++20 -Wall -lGL -lGLU -lglut -lGLEW -lglfw -lX11 -lXxf86vm -lXrandr -lpthread -lXi -ldl -lXinerama -lXcursor -fsanitize=undefined -fno-sanitize-recover`.
+- [Mac](md/Install_Instructions_Mac.md)
 
-3. Web
-- `cpp_to_wasm build <file>`.
-- `cpp_to_wasm run`.
-Keep in mind that compiled sources are stored in the `Build` folder.
+****Note**:* C++20 or higher is required
 
-# License
+## Documentation
 
-BSD 3-Clause License
-
-Copyright (c) 2022, 2023, 2024 Alex
-All rights reserved. 
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+[GameEngine](md/GameEngine_Doc.md)
