@@ -82,11 +82,10 @@
 #include <functional>
 #include <list>
 
-#define PLATFORM_GL
-
-#if defined(_WIN32) && !defined(DGE_USE_GLFW3)
-	#define PLATFORM_GL_WINDOWS
+#ifdef __EMSCRIPTEN__
+	#define PLATFORM_EMSCRIPTEN
 #else
+	#define PLATFORM_GL
 	#define PLATFORM_GLFW3
 #endif
 
@@ -94,17 +93,16 @@
 	#include "GLFW/glfw3.h"
 #endif
 
-#ifdef PLATFORM_GL_WINDOWS
-	#include <Windows.h>
-	#include <gl/GL.h>
-	#include <dwmapi.h>
-	#include <thread>
+#ifdef PLATFORM_EMSCRIPTEN
+	#include <EGL/egl.h>
+	#include <GLES2/gl2.h>
 
-	typedef BOOL (WINAPI wglSwapInterval_t)(int interval);
-	static wglSwapInterval_t* wglSwapInterval = nullptr;
+	#define GL_GLEXT_PROTOTYPES
+	#include <GLES2/gl2ext.h>
 
-	#undef min
-	#undef max
+	#include <emscripten/emscripten.h>
+	#include <emscripten/key_codes.h>
+	#include <emscripten/html5.h>
 #endif
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -125,7 +123,6 @@
 #ifndef __MINGW32__
 	#ifdef PLATFORM_GL
 		#pragma comment(lib, "opengl32.lib")
-		#pragma comment(lib, "Dwmapi.lib")
 	#endif
 
 	#ifdef PLATFORM_GLFW3
@@ -142,86 +139,40 @@
 
 #pragma endregion
 
-#define UNUSED(x) (void)(x)
-
 namespace def
 {
 	template <class... T>
 	void Assert(bool expr, T&&... args);
 
-#ifdef PLATFORM_GLFW3
-
 	enum class Key
 	{
-		SPACE = 32, APOSTROPHE = 39, COMMA = 44, MINUS, PERIOD, SLASH,
+		NONE = -1,
 
+		SPACE, APOSTROPHE, COMMA, MINUS, PERIOD, SLASH,
 		K0, K1, K2, K3, K4, K5, K6, K7, K8, K9,
+		SEMICOLON, EQUAL,
 
-		SEMICOLON = 59, EQUAL = 61,
-
-		A = 65, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S,
+		A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S,
 		T, U, V, W, X, Y, Z,
 
 		LEFT_BRACKET, BACKSLASH, RIGHT_BRACKET,
 
-		ESCAPE = 256, ENTER, TAB, BACKSPACE, INSERT, DEL, RIGHT, LEFT,
+		ESCAPE, ENTER, TAB, BACKSPACE, INSERT, DEL, RIGHT, LEFT,
 		DOWN, UP, PAGE_UP, PAGE_DOWN, HOME, END,
-		CAPS_LOCK = 280, SCROLL_LOCK, NUM_LOCK, PRINT_SCREEN, PAUSE,
+		CAPS_LOCK, SCROLL_LOCK, NUM_LOCK, PRINT_SCREEN, PAUSE,
 
-		F1 = 290, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13,
+		F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13,
 		F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24,
 
-		NP_0 = 320, NP_1, NP_2, NP_3, NP_4, NP_5, NP_6, NP_7, NP_8,
+		NP_0, NP_1, NP_2, NP_3, NP_4, NP_5, NP_6, NP_7, NP_8,
 		NP_9, NP_DECIMAL, NP_DIVIDE, NP_MULTIPLY, NP_SUBTRACT, NP_ADD,
 		NP_ENTER, NP_EQUAL,
 
-		LEFT_SHIFT = 340, LEFT_CONTROL, LEFT_ALT, LEFT_SUPER, RIGHT_SHIFT,
+		LEFT_SHIFT, LEFT_CONTROL, LEFT_ALT, LEFT_SUPER, RIGHT_SHIFT,
 		RIGHT_CONTROL, RIGHT_ALT, RIGHT_SUPER, MENU,
 
-		NONE = -1
+		KEYS_COUNT
 	};
-
-#endif
-
-#ifdef PLATFORM_GL_WINDOWS
-	
-	enum class Key
-	{
-		SPACE = VK_SPACE, APOSTROPHE = VK_OEM_7, COMMA = VK_OEM_COMMA,
-		MINUS = VK_OEM_MINUS, PERIOD = VK_OEM_PERIOD, SLASH = VK_OEM_2,
-
-		K0 = 0x30, K1, K2, K3, K4, K5, K6, K7, K8, K9,
-
-		SEMICOLON = VK_OEM_1, EQUAL = VK_OEM_PLUS,
-
-		A = 0x41, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S,
-		T, U, V, W, X, Y, Z,
-
-		LEFT_BRACKET = VK_OEM_4, BACKSLASH = VK_OEM_5, RIGHT_BRACKET = VK_OEM_6,
-
-		ESCAPE = VK_ESCAPE, ENTER = VK_RETURN, TAB = VK_TAB, BACKSPACE = VK_BACK,
-		INSERT = VK_INSERT, DEL = VK_DELETE, RIGHT = VK_RIGHT, LEFT = VK_LEFT,
-		DOWN = VK_DOWN, UP = VK_UP, PAGE_UP = VK_PRIOR, PAGE_DOWN = VK_NEXT,
-		HOME = VK_HOME, END = VK_END,
-		CAPS_LOCK = VK_CAPITAL, SCROLL_LOCK = VK_SCROLL, NUM_LOCK = VK_NUMLOCK,
-		PRINT_SCREEN = VK_SNAPSHOT, PAUSE = VK_PAUSE,
-
-		F1 = VK_F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13,
-		F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24,
-
-		NP_0 = VK_NUMPAD0, NP_1, NP_2, NP_3, NP_4, NP_5, NP_6, NP_7, NP_8,
-		NP_9, NP_DECIMAL = VK_DECIMAL, NP_DIVIDE = VK_DIVIDE, NP_MULTIPLY = VK_MULTIPLY,
-		NP_SUBTRACT = VK_SUBTRACT, NP_ADD = VK_ADD,
-		NP_ENTER = VK_RETURN, NP_EQUAL = VK_ADD,
-
-		LEFT_SHIFT = VK_LSHIFT, LEFT_CONTROL = VK_LCONTROL, LEFT_ALT = VK_LMENU,
-		LEFT_SUPER = VK_LWIN, RIGHT_SHIFT = VK_RSHIFT,
-		RIGHT_CONTROL = VK_RCONTROL, RIGHT_ALT = VK_RMENU, RIGHT_SUPER = VK_RWIN, MENU = VK_MENU,
-
-		NONE = -1
-	};
-
-#endif
 
 	enum class Button
 	{
@@ -559,8 +510,6 @@ namespace def
 		std::vector<Pixel> tint;
 		std::vector<vf2d> vertices;
 		std::vector<vf2d> uv;
-
-		bool drawBeforeTransforms;
 	};
 
 	class GameEngine;
@@ -573,9 +522,6 @@ namespace def
 
 		virtual bool IsWindowClose() const = 0;
 		virtual bool IsWindowFocused() const = 0;
-
-		virtual bool GetKey(int key) const = 0;
-		virtual bool GetMouse(int button) const = 0;
 
 		virtual void ClearBuffer(const Pixel& col) const = 0;
 
@@ -616,9 +562,6 @@ namespace def
 		bool IsWindowClose() const override;
 		bool IsWindowFocused() const override;
 
-		bool GetKey(int key) const override;
-		bool GetMouse(int button) const override;
-
 		void FlushScreen(bool vsync) const override;
 		void PollEvents() const override;
 
@@ -626,80 +569,6 @@ namespace def
 
 		void SetIcon(Sprite& icon) const override;
 	};
-
-#endif
-
-#ifdef PLATFORM_GL_WINDOWS
-
-	class Platform_GL_Windows : public Platform_GL
-	{
-	public:
-		void Destroy() const override;
-		void SetTitle(const std::string& text) const override;
-
-		bool IsWindowClose() const override;
-		bool IsWindowFocused() const override;
-
-		bool GetKey(int key) const override;
-		bool GetMouse(int button) const override;
-
-		void FlushScreen(bool vsync) const override;
-		void PollEvents() const override;
-
-		bool ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) override;
-
-		void SetIcon(Sprite& icon) const override;
-
-	private:
-		static LRESULT CALLBACK WindowEvent(HWND window, UINT message, WPARAM param1, LPARAM param2);
-
-		static std::wstring ConvertAsciiToWideChar(const std::string& s)
-		{
-#ifdef __MINGW32__
-			wchar_t* buffer = new wchar_t[s.length() + 1];
-			mbstowcs(buffer, s.c_str(), s.length());
-			buffer[s.length()] = L'\0';
-#else
-			int count = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, NULL, 0);
-			wchar_t* buffer = new wchar_t[count];
-			MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, buffer, count);
-#endif
-
-			std::wstring w(buffer);
-			delete[] buffer;
-
-			return w;
-		}
-
-		static std::string ConvertWideCharToAscii(const std::wstring& ws)
-		{
-#ifdef __MINGW32__
-			char* buffer = new char[ws.length() + 1];
-			wcstombs(buffer, ws.c_str(), ws.length());
-			buffer[ws.length()] = '\0';
-#else
-			int count = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, NULL, 0, NULL, NULL);
-			char* buffer = new char[count];
-			WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1, buffer, count, NULL, NULL);
-#endif
-
-			std::string s(buffer);
-			delete[] buffer;
-
-			return s;
-		}
-
-	private:
-		HWND m_Window;
-		HDC m_DeviceContext;
-		HGLRC m_RenderContext;
-
-	public:
-		static bool s_IsWindowFocused;
-
-	};
-
-	bool Platform_GL_Windows::s_IsWindowFocused = false;
 
 #endif
 
@@ -719,15 +588,14 @@ namespace def
 		static void DropCallback(GLFWwindow* window, int pathCount, const char* paths[]);
 		static void ScrollCallback(GLFWwindow* window, double x, double y);
 		static void MousePosCallback(GLFWwindow* window, double x, double y);
+		static void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+		static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 
 		void Destroy() const override;
 		void SetTitle(const std::string& text) const override;
 
 		bool IsWindowClose() const override;
 		bool IsWindowFocused() const override;
-
-		bool GetKey(int key) const override;
-		bool GetMouse(int button) const override;
 
 		void FlushScreen(bool vsync) const override;
 		void PollEvents() const override;
@@ -739,18 +607,86 @@ namespace def
 
 #endif
 
+#ifdef __EMSCRIPTEN__
+	
+	class Platform_Emscripten : public Platform
+	{
+	public:
+		virtual void Destroy() const override;
+		virtual void SetTitle(const std::string& text) const override;
+
+		virtual bool IsWindowClose() const override;
+		virtual bool IsWindowFocused() const override;
+
+		virtual void ClearBuffer(const Pixel& col) const override;
+
+		virtual void OnBeforeDraw() override;
+		virtual void OnAfterDraw() override;
+
+		virtual void FlushScreen(bool vsync) const override;
+		virtual void PollEvents() const override;
+
+		virtual void DrawQuad(const Pixel& tint) const override;
+		virtual void DrawTexture(const TextureInstance& texInst) const override;
+
+		virtual void BindTexture(int id) const override;
+
+		virtual bool ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) override;
+		
+		virtual void SetIcon(Sprite& icon) const override;
+
+		static void MainLoop();
+
+	private:
+		static EM_BOOL FocusCallback(int eventType, const EmscriptenFocusEvent* event, void* userData);
+		static EM_BOOL KeyboardCallback(int eventType, const EmscriptenKeyboardEvent* event, void* userData);
+		static EM_BOOL WheelCallback(int eventType, const EmscriptenWheelEvent* event, void* userData);
+		static EM_BOOL TouchCallback(int eventType, const EmscriptenTouchEvent* event, void* userData);
+		static EM_BOOL MouseCallback(int eventType, const EmscriptenMouseEvent* event, void* userData);
+
+	public:
+		static bool s_IsWindowFocused;
+
+	private:
+		EGLDisplay m_Display;
+		EGLConfig m_Config;
+		EGLContext m_Context;
+		EGLSurface m_Surface;
+
+		uint32_t m_FragmentShader = 0;
+		uint32_t m_VertexShader = 0;
+		uint32_t m_QuadShader = 0;
+		uint32_t m_VbQuad = 0;
+		uint32_t m_VaQuad = 0;
+
+		struct Vertex
+		{
+			float pos[3];
+			vf2d uv;
+			Pixel col;
+		};
+
+		mutable Vertex m_VertexMemory[128];
+
+		Graphic m_BlankQuad;
+	};
+
+	bool Platform_Emscripten::s_IsWindowFocused = false;
+
+#endif
+
 	class GameEngine
 	{
 	public:
 		GameEngine();
 		virtual ~GameEngine();
-		
-#ifdef PLATFORM_GL_WINDOWS
-		friend class Platform_GL_Windows;
-#endif
 
 #ifdef PLATFORM_GLFW3
 		friend class Platform_GLFW3;
+#endif
+
+#ifdef PLATFORM_EMSCRIPTEN
+		friend class Platform_Emscripten;
 #endif
 
 	private:
@@ -766,13 +702,12 @@ namespace def
 		bool m_IsDirtyPixel;
 		bool m_IsVSync;
 		bool m_OnlyTextures;
-		bool m_DrawBeforeTransforms;
 
-		KeyState m_Keys[512];
+		KeyState m_Keys[(size_t)Key::KEYS_COUNT];
 		KeyState m_Mouse[8];
 
-		bool m_KeyOldState[512];
-		bool m_KeyNewState[512];
+		bool m_KeyOldState[(size_t)Key::KEYS_COUNT];
+		bool m_KeyNewState[(size_t)Key::KEYS_COUNT];
 
 		bool m_MouseOldState[8];
 		bool m_MouseNewState[8];
@@ -821,9 +756,15 @@ namespace def
 
 		Platform* m_Platform;
 
+		std::chrono::system_clock::time_point m_TimeStart;
+		std::chrono::system_clock::time_point m_TimeEnd;
+
+		uint32_t m_FramesCount;
+
 	public:
 		static GameEngine* s_Engine;
 		static std::unordered_map<Key, std::pair<char, char>> s_KeyboardUS;
+		static std::unordered_map<int, def::Key> s_KeysTable;
 		inline static std::vector<vf2d> s_UnitCircle;
 
 		virtual bool OnUserCreate() = 0;
@@ -838,7 +779,7 @@ namespace def
 
 	private:
 		void Destroy();
-		void ScanHardware(KeyState* data, bool* newState, bool* oldState, size_t count, std::function<bool(Platform*, int)> Get);
+		void ScanHardware(KeyState* data, bool* newState, bool* oldState, size_t count);
 		void MainLoop();
 
 		static void MakeUnitCircle(std::vector<vf2d>& circle, const size_t verts);
@@ -1010,6 +951,109 @@ namespace def
 		{ Key::NP_SUBTRACT, { '-', '-' } }, { Key::NP_ADD, { '+', '+' } },
 		{ Key::NP_EQUAL, { '=', '+' } }
 	};
+
+#ifdef PLATFORM_GLFW3
+
+	std::unordered_map<int, def::Key> GameEngine::s_KeysTable =
+	{
+		{ GLFW_KEY_SPACE, Key::SPACE }, { GLFW_KEY_APOSTROPHE, Key::APOSTROPHE }, { GLFW_KEY_COMMA, Key::COMMA },
+		{ GLFW_KEY_MINUS, Key::MINUS }, { GLFW_KEY_PERIOD, Key::PERIOD }, { GLFW_KEY_SLASH, Key::SLASH },
+
+		{ GLFW_KEY_0, Key::K0 }, { GLFW_KEY_1, Key::K1 }, { GLFW_KEY_2, Key::K2 }, { GLFW_KEY_3, Key::K3 }, { GLFW_KEY_4, Key::K4 },
+		{ GLFW_KEY_5, Key::K5 }, { GLFW_KEY_6, Key::K6 }, { GLFW_KEY_7, Key::K7 }, { GLFW_KEY_8, Key::K8 }, { GLFW_KEY_9, Key::K9 },
+
+		{ GLFW_KEY_SEMICOLON, Key::SEMICOLON }, { GLFW_KEY_EQUAL, Key::EQUAL },
+
+		{ GLFW_KEY_A, Key::A }, { GLFW_KEY_B, Key::B }, { GLFW_KEY_C, Key::C }, { GLFW_KEY_D, Key::D },
+		{ GLFW_KEY_E, Key::E }, { GLFW_KEY_F, Key::F }, { GLFW_KEY_G, Key::G }, { GLFW_KEY_H, Key::H },
+		{ GLFW_KEY_I, Key::I }, { GLFW_KEY_J, Key::J }, { GLFW_KEY_K, Key::K }, { GLFW_KEY_L, Key::L },
+		{ GLFW_KEY_M, Key::M }, { GLFW_KEY_N, Key::N }, { GLFW_KEY_O, Key::O }, { GLFW_KEY_P, Key::P },
+		{ GLFW_KEY_Q, Key::Q }, { GLFW_KEY_R, Key::R }, { GLFW_KEY_S, Key::S }, { GLFW_KEY_T, Key::T },
+		{ GLFW_KEY_U, Key::U }, { GLFW_KEY_V, Key::V }, { GLFW_KEY_W, Key::W }, { GLFW_KEY_X, Key::X },
+		{ GLFW_KEY_Y, Key::Y }, { GLFW_KEY_Z, Key::Z },
+		{ GLFW_KEY_LEFT_BRACKET, Key::LEFT_BRACKET }, { GLFW_KEY_BACKSLASH, Key::BACKSLASH }, { GLFW_KEY_RIGHT_BRACKET, Key::RIGHT_BRACKET },
+
+		{ GLFW_KEY_ESCAPE, Key::ESCAPE }, { GLFW_KEY_ENTER, Key::ENTER }, { GLFW_KEY_TAB, Key::TAB }, { GLFW_KEY_BACKSPACE, Key::BACKSPACE },
+		{ GLFW_KEY_INSERT, Key::INSERT }, { GLFW_KEY_DELETE, Key::DEL }, { GLFW_KEY_RIGHT, Key::RIGHT }, { GLFW_KEY_LEFT, Key::LEFT },
+		{ GLFW_KEY_DOWN, Key::DOWN }, { GLFW_KEY_UP, Key::UP }, { GLFW_KEY_PAGE_UP, Key::PAGE_UP }, { GLFW_KEY_PAGE_DOWN, Key::PAGE_DOWN },
+		{ GLFW_KEY_HOME, Key::HOME }, { GLFW_KEY_END, Key::END },
+		{ GLFW_KEY_CAPS_LOCK, Key::CAPS_LOCK }, { GLFW_KEY_SCROLL_LOCK, Key::SCROLL_LOCK }, { GLFW_KEY_NUM_LOCK, Key::NUM_LOCK },
+		{ GLFW_KEY_PRINT_SCREEN, Key::PRINT_SCREEN }, { GLFW_KEY_PAUSE, Key::PAUSE },
+
+		{ GLFW_KEY_F1, Key::F1 }, { GLFW_KEY_F2, Key::F2 }, { GLFW_KEY_F3, Key::F3 }, { GLFW_KEY_F4, Key::F4 }, { GLFW_KEY_F5, Key::F5 }, { GLFW_KEY_F6, Key::F6 },
+		{ GLFW_KEY_F7, Key::F7 }, { GLFW_KEY_F8, Key::F8 }, { GLFW_KEY_F9, Key::F9 }, { GLFW_KEY_F10, Key::F10 }, { GLFW_KEY_F11, Key::F11 }, { GLFW_KEY_F12, Key::F12 },
+		{ GLFW_KEY_F13, Key::F13 }, { GLFW_KEY_F14, Key::F14 }, { GLFW_KEY_F15, Key::F15 }, { GLFW_KEY_F16, Key::F16 }, { GLFW_KEY_F17, Key::F17 }, { GLFW_KEY_F18, Key::F18 },
+		{ GLFW_KEY_F19, Key::F19 }, { GLFW_KEY_F20, Key::F20 }, { GLFW_KEY_F21, Key::F21 }, { GLFW_KEY_F22, Key::F22 }, { GLFW_KEY_F23, Key::F23 }, { GLFW_KEY_F24, Key::F24 },
+
+		{ GLFW_KEY_KP_0, Key::NP_0 }, { GLFW_KEY_KP_1, Key::NP_1 }, { GLFW_KEY_KP_2, Key::NP_2 },
+		{ GLFW_KEY_KP_3, Key::NP_3 }, { GLFW_KEY_KP_4, Key::NP_4 }, { GLFW_KEY_KP_5, Key::NP_5 },
+		{ GLFW_KEY_KP_6, Key::NP_6 }, { GLFW_KEY_KP_7, Key::NP_7 }, { GLFW_KEY_KP_8, Key::NP_8 },
+		{ GLFW_KEY_KP_9, Key::NP_9 }, { GLFW_KEY_KP_DECIMAL, Key::NP_DECIMAL },
+		{ GLFW_KEY_KP_DIVIDE, Key::NP_DIVIDE }, { GLFW_KEY_KP_MULTIPLY, Key::NP_MULTIPLY },
+		{ GLFW_KEY_KP_SUBTRACT, Key::NP_SUBTRACT }, { GLFW_KEY_KP_ADD, Key::NP_ADD },
+		{ GLFW_KEY_KP_ENTER, Key::NP_ENTER }, { GLFW_KEY_KP_EQUAL, Key::NP_EQUAL },
+		
+		{ GLFW_KEY_LEFT_SHIFT, Key::LEFT_SHIFT }, { GLFW_KEY_LEFT_CONTROL, Key::LEFT_CONTROL },
+		{ GLFW_KEY_LEFT_ALT, Key::LEFT_ALT }, { GLFW_KEY_LEFT_SUPER, Key::LEFT_SUPER },
+		{ GLFW_KEY_RIGHT_SHIFT, Key::RIGHT_SHIFT }, { GLFW_KEY_RIGHT_CONTROL, Key::RIGHT_CONTROL },
+		{ GLFW_KEY_RIGHT_ALT, Key::RIGHT_ALT }, { GLFW_KEY_RIGHT_SUPER, Key::RIGHT_SUPER }, { GLFW_KEY_MENU, Key::MENU },
+
+		{ GLFW_KEY_UNKNOWN, Key::NONE }
+	};
+
+#endif
+
+#ifdef PLATFORM_EMSCRIPTEN
+
+	std::unordered_map<int, Key> GameEngine::s_KeysTable =
+	{
+		{ DOM_PK_SPACE, Key::SPACE }, { DOM_PK_QUOTE, Key::APOSTROPHE }, { DOM_PK_COMMA, Key::COMMA },
+		{ DOM_PK_MINUS, Key::MINUS }, { DOM_PK_PERIOD, Key::PERIOD }, { DOM_PK_SLASH, Key::SLASH },
+
+		{ DOM_PK_0, Key::K0 }, { DOM_PK_1, Key::K1 }, { DOM_PK_2, Key::K2 }, { DOM_PK_3, Key::K3 }, { DOM_PK_4, Key::K4 },
+		{ DOM_PK_5, Key::K5 }, { DOM_PK_6, Key::K6 }, { DOM_PK_7, Key::K7 }, { DOM_PK_8, Key::K8 }, { DOM_PK_9, Key::K9 },
+
+		{ DOM_PK_SEMICOLON, Key::SEMICOLON }, { DOM_PK_EQUAL, Key::EQUAL },
+
+		{ DOM_PK_A, Key::A }, { DOM_PK_B, Key::B }, { DOM_PK_C, Key::C }, { DOM_PK_D, Key::D },
+		{ DOM_PK_E, Key::E }, { DOM_PK_F, Key::F }, { DOM_PK_G, Key::G }, { DOM_PK_H, Key::H },
+		{ DOM_PK_I, Key::I }, { DOM_PK_J, Key::J }, { DOM_PK_K, Key::K }, { DOM_PK_L, Key::L },
+		{ DOM_PK_M, Key::M }, { DOM_PK_N, Key::N }, { DOM_PK_O, Key::O }, { DOM_PK_P, Key::P },
+		{ DOM_PK_Q, Key::Q }, { DOM_PK_R, Key::R }, { DOM_PK_S, Key::S }, { DOM_PK_T, Key::T },
+		{ DOM_PK_U, Key::U }, { DOM_PK_V, Key::V }, { DOM_PK_W, Key::W }, { DOM_PK_X, Key::X },
+		{ DOM_PK_Y, Key::Y }, { DOM_PK_Z, Key::Z },
+
+		{ DOM_PK_BRACKET_LEFT, Key::LEFT_BRACKET }, { DOM_PK_BACKSLASH, Key::BACKSLASH }, { DOM_PK_BRACKET_RIGHT, Key::RIGHT_BRACKET },
+
+		{ DOM_PK_ESCAPE, Key::ESCAPE }, { DOM_PK_ENTER, Key::ENTER }, { DOM_PK_TAB, Key::TAB }, { DOM_PK_BACKSPACE, Key::BACKSPACE },
+		{ DOM_PK_INSERT, Key::INSERT }, { DOM_PK_DELETE, Key::DEL }, { DOM_PK_ARROW_RIGHT, Key::RIGHT }, { DOM_PK_ARROW_LEFT, Key::LEFT },
+		{ DOM_PK_ARROW_DOWN, Key::DOWN }, { DOM_PK_ARROW_UP, Key::UP }, { DOM_PK_PAGE_UP, Key::PAGE_UP }, { DOM_PK_PAGE_DOWN, Key::PAGE_DOWN },
+		{ DOM_PK_HOME, Key::HOME }, { DOM_PK_END, Key::END },
+		{ DOM_PK_CAPS_LOCK, Key::CAPS_LOCK }, { DOM_PK_SCROLL_LOCK, Key::SCROLL_LOCK }, { DOM_PK_NUM_LOCK, Key::NUM_LOCK },
+		{ DOM_PK_PRINT_SCREEN, Key::PRINT_SCREEN }, { DOM_PK_PAUSE, Key::PAUSE },
+
+		{ DOM_PK_F1, Key::F1 }, { DOM_PK_F2, Key::F2 }, { DOM_PK_F3, Key::F3 }, { DOM_PK_F4, Key::F4 }, { DOM_PK_F5, Key::F5 }, { DOM_PK_F6, Key::F6 },
+		{ DOM_PK_F7, Key::F7 }, { DOM_PK_F8, Key::F8 }, { DOM_PK_F9, Key::F9 }, { DOM_PK_F10, Key::F10 }, { DOM_PK_F11, Key::F11 }, { DOM_PK_F12, Key::F12 },
+		{ DOM_PK_F13, Key::F13 }, { DOM_PK_F14, Key::F14 }, { DOM_PK_F15, Key::F15 }, { DOM_PK_F16, Key::F16 }, { DOM_PK_F17, Key::F17 }, { DOM_PK_F18, Key::F18 },
+		{ DOM_PK_F19, Key::F19 }, { DOM_PK_F20, Key::F20 }, { DOM_PK_F21, Key::F21 }, { DOM_PK_F22, Key::F22 }, { DOM_PK_F23, Key::F23 }, { DOM_PK_F24, Key::F24 },
+
+		{ DOM_PK_NUMPAD_0, Key::NP_0 }, { DOM_PK_NUMPAD_1, Key::NP_1 }, { DOM_PK_NUMPAD_2, Key::NP_2 },
+		{ DOM_PK_NUMPAD_3, Key::NP_3 }, { DOM_PK_NUMPAD_4, Key::NP_4 }, { DOM_PK_NUMPAD_5, Key::NP_5 },
+		{ DOM_PK_NUMPAD_6, Key::NP_6 }, { DOM_PK_NUMPAD_7, Key::NP_7 }, { DOM_PK_NUMPAD_8, Key::NP_8 },
+		{ DOM_PK_NUMPAD_9, Key::NP_9 }, { DOM_PK_NUMPAD_DECIMAL, Key::NP_DECIMAL },
+		{ DOM_PK_NUMPAD_DIVIDE, Key::NP_DIVIDE }, { DOM_PK_NUMPAD_MULTIPLY, Key::NP_MULTIPLY },
+		{ DOM_PK_NUMPAD_SUBTRACT, Key::NP_SUBTRACT }, { DOM_PK_NUMPAD_ADD, Key::NP_ADD },
+		{ DOM_PK_NUMPAD_ENTER, Key::NP_ENTER }, { DOM_PK_NUMPAD_EQUAL, Key::NP_EQUAL },
+
+		{ DOM_PK_SHIFT_LEFT, Key::LEFT_SHIFT }, { DOM_PK_CONTROL_LEFT, Key::LEFT_CONTROL },
+		{ DOM_PK_ALT_LEFT, Key::LEFT_ALT }, { DOM_PK_OS_LEFT, Key::LEFT_SUPER },
+		{ DOM_PK_SHIFT_RIGHT, Key::RIGHT_SHIFT }, { DOM_PK_CONTROL_RIGHT, Key::RIGHT_CONTROL },
+		{ DOM_PK_ALT_RIGHT, Key::RIGHT_ALT }, { DOM_PK_OS_RIGHT, Key::RIGHT_SUPER }, { DOM_PK_CONTEXT_MENU, Key::MENU },
+
+		{ DOM_PK_UNKNOWN, Key::NONE }
+	};
+
+#endif
 
 	GameEngine* GameEngine::s_Engine = nullptr;
 
@@ -1823,7 +1867,7 @@ namespace def
 
 	void Texture::Load(Sprite* sprite)
 	{
-#ifdef PLATFORM_GL
+#if defined(PLATFORM_GL) || defined(PLATFORM_EMSCRIPTEN)
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
 		
@@ -1852,7 +1896,7 @@ namespace def
 
 	void Texture::Update(Sprite* sprite)
 	{
-#ifdef PLATFORM_GL
+#if defined(PLATFORM_GL) || defined(PLATFORM_EMSCRIPTEN)
 		glBindTexture(GL_TEXTURE_2D, id);
 
 		glTexImage2D(
@@ -1917,8 +1961,6 @@ namespace def
 		points = 0;
 
 		uv = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } };
-
-		drawBeforeTransforms = false;
 	}
 
 #ifdef PLATFORM_GL
@@ -1981,246 +2023,15 @@ namespace def
 	}
 
 	void Platform_GL::Destroy() const {}
-	void Platform_GL::SetTitle(const std::string& text) const { UNUSED(text); }
+	void Platform_GL::SetTitle(const std::string& text) const {}
 
 	bool Platform_GL::IsWindowClose() const { return false; }
 	bool Platform_GL::IsWindowFocused() const { return false; }
-	bool Platform_GL::GetKey(int key) const { UNUSED(key); return false; }
-	bool Platform_GL::GetMouse(int button) const { UNUSED(button); return false; }
-	void Platform_GL::FlushScreen(bool vsync) const { UNUSED(vsync); }
+	void Platform_GL::FlushScreen(bool vsync) const {}
 	void Platform_GL::PollEvents() const {}
 
-	bool Platform_GL::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel)
-	{
-		UNUSED(screenSize);
-		UNUSED(pixelSize);
-		UNUSED(windowSize);
-		UNUSED(vsync);
-		UNUSED(fullscreen);
-		UNUSED(dirtypixel);
-		return false;
-	}
-
-	void Platform_GL::SetIcon(Sprite& icon) const { UNUSED(icon); }
-
-#endif
-
-#ifdef PLATFORM_GL_WINDOWS
-
-	void Platform_GL_Windows::Destroy() const
-	{
-		wglDeleteContext(m_RenderContext);
-		PostMessage(m_Window, WM_DESTROY, 0, 0);
-	}
-
-	void Platform_GL_Windows::SetTitle(const std::string& text) const
-	{
-#ifdef _UNICODE
-		SetWindowText(m_Window, ConvertAsciiToWideChar(text).c_str());
-#else
-		SetWindowText(m_Window, text.c_str());
-#endif
-	}
-
-	bool Platform_GL_Windows::IsWindowClose() const
-	{
-		return !GameEngine::s_Engine->m_IsAppRunning;
-	}
-
-	bool Platform_GL_Windows::IsWindowFocused() const
-	{
-		return s_IsWindowFocused;
-	}
-
-	bool Platform_GL_Windows::GetKey(int key) const
-	{
-		return GameEngine::s_Engine->m_KeyNewState[key];
-	}
-
-	bool Platform_GL_Windows::GetMouse(int button) const
-	{
-		return GameEngine::s_Engine->m_MouseNewState[button];
-	}
-
-	void Platform_GL_Windows::FlushScreen(bool vsync) const
-	{
-		SwapBuffers(m_DeviceContext);
-		if (vsync) DwmFlush();
-	}
-
-	void Platform_GL_Windows::PollEvents() const
-	{
-		MSG msg;
-
-		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
-
-	bool Platform_GL_Windows::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel)
-	{
-		WNDCLASS wc;
-
-		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		wc.hInstance = GetModuleHandle(nullptr);
-		wc.lpfnWndProc = WindowEvent;
-		wc.cbClsExtra = 0;
-		wc.cbWndExtra = 0;
-		wc.lpszMenuName = nullptr;
-		wc.hbrBackground = nullptr;
-		wc.lpszClassName = L"DEF_GAME_ENGINE";
-
-		RegisterClass(&wc);
-
-		DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-		DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_THICKFRAME;
-
-		int topLeftX = CW_USEDEFAULT;
-		int topLeftY = CW_USEDEFAULT;
-
-		if (fullscreen)
-		{
-			dwExStyle = 0;
-			dwStyle = WS_VISIBLE | WS_POPUP;
-
-			HMONITOR monitor = MonitorFromWindow(m_Window, MONITOR_DEFAULTTONEAREST);
-			MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
-
-			if (!GetMonitorInfo(monitor, &monitorInfo))
-				return false;
-
-			topLeftX = 0;
-			topLeftY = 0;
-
-			windowSize = { monitorInfo.rcMonitor.right, monitorInfo.rcMonitor.bottom };
-			screenSize = windowSize / pixelSize;
-		}
-
-		RECT windowRect = { 0, 0, windowSize.x, windowSize.y };
-		AdjustWindowRectEx(&windowRect, dwStyle, FALSE, dwExStyle);
-
-		int width = windowRect.right - windowRect.left;
-		int height = windowRect.bottom - windowRect.top;
-
-		m_Window = CreateWindowEx(dwExStyle, L"DEF_GAME_ENGINE", L"", dwStyle,
-			topLeftX, topLeftY, width, height, NULL, NULL, GetModuleHandle(NULL), this);
-
-		DragAcceptFiles(m_Window, TRUE);
-
-		m_DeviceContext = GetDC(m_Window);
-
-		PIXELFORMATDESCRIPTOR pfd =
-		{
-			sizeof(PIXELFORMATDESCRIPTOR), 1,
-			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-			PFD_TYPE_RGBA, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			PFD_MAIN_PLANE, 0, 0, 0, 0
-		};
-
-		int pf = ChoosePixelFormat(m_DeviceContext, &pfd);
-
-		if (pf == 0)
-			return false;
-
-		SetPixelFormat(m_DeviceContext, pf, &pfd);
-
-		m_RenderContext = wglCreateContext(m_DeviceContext);
-
-		if (m_RenderContext == NULL)
-			return false;
-
-		wglMakeCurrent(m_DeviceContext, m_RenderContext);
-
-		wglSwapInterval = (wglSwapInterval_t*)wglGetProcAddress("wglSwapIntervalEXT");
-
-		if (wglSwapInterval && !vsync)
-			wglSwapInterval(0);
-
-		glEnable(GL_TEXTURE_2D);
-
-		if (!dirtypixel)
-			glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-		return true;
-	}
-
-	void Platform_GL_Windows::SetIcon(Sprite& icon) const
-	{
-		// TODO: Not implemented yet
-	}
-
-	LRESULT CALLBACK Platform_GL_Windows::WindowEvent(HWND window, UINT message, WPARAM param1, LPARAM param2)
-	{
-		GameEngine* e = GameEngine::s_Engine;
-
-		switch (message)
-		{
-		case WM_MOUSEMOVE:
-		{
-			e->m_MousePos.x = (param2 & 0xFFFF) / e->m_PixelSize.x;
-			e->m_MousePos.y = ((param2 >> 16) & 0xFFFF) / e->m_PixelSize.y;
-
-			return 0;
-		}
-
-		case WM_MOUSEWHEEL:
-		{
-			e->m_ScrollDelta = GET_WHEEL_DELTA_WPARAM(param1);
-			return 0;
-		}
-
-		case WM_SETFOCUS: Platform_GL_Windows::s_IsWindowFocused = true; return 0;
-		case WM_KILLFOCUS: Platform_GL_Windows::s_IsWindowFocused = false; return 0;
-
-		case WM_KEYDOWN: e->m_KeyNewState[param1] = true; return 0;
-		case WM_KEYUP: e->m_KeyNewState[param1] = false; return 0;
-		case WM_SYSKEYDOWN: e->m_KeyNewState[param1] = true; return 0;
-		case WM_SYSKEYUP: e->m_KeyNewState[param1] = false; return 0;
-
-		case WM_LBUTTONDOWN: e->m_MouseNewState[0] = true; return 0;
-		case WM_LBUTTONUP: e->m_MouseNewState[0] = false; return 0;
-		case WM_RBUTTONDOWN: e->m_MouseNewState[1] = true; return 0;
-		case WM_RBUTTONUP: e->m_MouseNewState[1] = false; return 0;
-		case WM_MBUTTONDOWN: e->m_MouseNewState[2] = true; return 0;
-		case WM_MBUTTONUP: e->m_MouseNewState[2] = false; return 0;
-
-		case WM_DROPFILES:
-		{
-			HDROP drop = (HDROP)param1;
-			uint32_t filesCount = DragQueryFile(drop, 0xFFFFFFFF, nullptr, 0);
-
-			for (uint32_t i = 0; i < filesCount; i++)
-			{
-				TCHAR buffer[256];
-				uint32_t length = DragQueryFile(drop, i, nullptr, 0);
-				DragQueryFile(drop, i, buffer, sizeof(buffer));
-#ifdef UNICODE
-				e->m_DropCache.push_back(ConvertWideCharToAscii(buffer));
-#else
-				e->m_DropCache.push_back(std::string(buffer));
-#endif
-			}
-
-			DragFinish(drop);
-			return 0;
-		}
-
-		case WM_CLOSE: e->m_IsAppRunning = false; return 0;
-		case WM_DESTROY:
-		{
-			PostQuitMessage(0);
-			DestroyWindow(window);
-			return 0;
-		}
-
-		}
-
-		return DefWindowProc(window, message, param1, param2);
-	}
+	bool Platform_GL::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) { return false; }
+	void Platform_GL::SetIcon(Sprite& icon) const {}
 
 #endif
 
@@ -2262,7 +2073,6 @@ namespace def
 
 	void Platform_GLFW3::ScrollCallback(GLFWwindow* window, double x, double y)
 	{
-		UNUSED(x);
 		GameEngine::s_Engine->m_ScrollDelta = y;
 	}
 
@@ -2270,6 +2080,16 @@ namespace def
 	{
 		GameEngine::s_Engine->m_MousePos.x = (int)x / GameEngine::s_Engine->m_PixelSize.x;
 		GameEngine::s_Engine->m_MousePos.y = (int)y / GameEngine::s_Engine->m_PixelSize.y;
+	}
+
+	void Platform_GLFW3::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+	{
+		GameEngine::s_Engine->m_KeyNewState[size_t(GameEngine::s_KeysTable[key])] = (action == GLFW_PRESS);
+	}
+
+	void Platform_GLFW3::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+	{
+		GameEngine::s_Engine->m_MouseNewState[button] = (action == GLFW_PRESS);
 	}
 
 	void Platform_GLFW3::Destroy() const
@@ -2291,16 +2111,6 @@ namespace def
 	bool Platform_GLFW3::IsWindowFocused() const
 	{
 		return glfwGetWindowAttrib(m_Window, GLFW_FOCUSED) == GLFW_TRUE;
-	}
-
-	bool Platform_GLFW3::GetKey(int key) const
-	{
-		return glfwGetKey(m_Window, key) == GLFW_PRESS;
-	}
-
-	bool Platform_GLFW3::GetMouse(int button) const
-	{
-		return glfwGetMouseButton(m_Window, button) == GLFW_PRESS;
 	}
 
 	void Platform_GLFW3::FlushScreen(bool vsync) const
@@ -2371,6 +2181,8 @@ namespace def
 
 		glfwSetScrollCallback(m_Window, ScrollCallback);
 		glfwSetCursorPosCallback(m_Window, MousePosCallback);
+		glfwSetMouseButtonCallback(m_Window, MouseButtonCallback);
+		glfwSetKeyCallback(m_Window, KeyboardCallback);
 
 		return true;
 	}
@@ -2383,6 +2195,324 @@ namespace def
 		img.pixels = (uint8_t*)icon.pixels.data();
 
 		glfwSetWindowIcon(m_Window, 1, &img);
+	}
+
+#endif
+
+#ifdef PLATFORM_EMSCRIPTEN
+
+	void Platform_Emscripten::Destroy() const
+	{
+		emscripten_cancel_main_loop();
+
+		eglMakeCurrent(m_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+		eglDestroyContext(m_Display, m_Context);
+		eglDestroySurface(m_Display, m_Surface);
+		eglTerminate(m_Display);
+	}
+
+	void Platform_Emscripten::SetTitle(const std::string& text) const
+	{
+		emscripten_set_window_title(text.c_str());
+	}
+
+	bool Platform_Emscripten::IsWindowClose() const
+	{
+		return !GameEngine::s_Engine->m_IsAppRunning;
+	}
+
+	bool Platform_Emscripten::IsWindowFocused() const
+	{
+		return Platform_Emscripten::s_IsWindowFocused;
+	}
+
+	void Platform_Emscripten::ClearBuffer(const Pixel& col) const
+	{
+		glClearColor((float)col.r / 255.0f, (float)col.g / 255.0f, (float)col.b / 255.0f, (float)col.a / 255.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+
+	void Platform_Emscripten::OnBeforeDraw()
+	{
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glUseProgram(m_QuadShader);
+		glBindVertexArrayOES(m_VaQuad);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)(5 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+	}
+
+	void Platform_Emscripten::OnAfterDraw()
+	{
+
+	}
+
+	void Platform_Emscripten::FlushScreen(bool vsync) const
+	{
+		eglSwapBuffers(m_Display, m_Surface);
+	}
+
+	void Platform_Emscripten::PollEvents() const
+	{
+		
+	}
+
+	void Platform_Emscripten::DrawQuad(const Pixel& tint) const
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, m_VbQuad);
+		Vertex verts[4] = {
+			{ { -1.0f, -1.0f, 1.0 }, { 0.0f, 1.0f }, tint },
+			{ { +1.0f, -1.0f, 1.0 }, { 1.0f, 1.0f }, tint },
+			{ { -1.0f, +1.0f, 1.0 }, { 0.0f, 0.0f }, tint },
+			{ { +1.0f, +1.0f, 1.0 }, { 1.0f, 0.0f }, tint },
+		};
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * 4, verts, GL_STREAM_DRAW);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	}
+
+	void Platform_Emscripten::DrawTexture(const TextureInstance& texInst) const
+	{
+		BindTexture(texInst.texture ? texInst.texture->id : 0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_VbQuad);
+
+		for (uint32_t i = 0; i < texInst.points; i++)
+		{
+			m_VertexMemory[i].pos[0] = texInst.vertices[i].x;
+			m_VertexMemory[i].pos[1] = texInst.vertices[i].y;
+			m_VertexMemory[i].pos[2] = 1.0f;
+
+			m_VertexMemory[i].uv.x = texInst.uv[i].x;
+			m_VertexMemory[i].uv.y = texInst.uv[i].y;
+			m_VertexMemory[i].col = texInst.tint[i];
+		}
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * texInst.points, m_VertexMemory, GL_STREAM_DRAW);
+
+		switch (texInst.structure)
+		{
+			case Texture::Structure::WIREFRAME: glDrawArrays(GL_LINE_LOOP, 0, texInst.points); break;
+			case Texture::Structure::FAN: glDrawArrays(GL_TRIANGLE_FAN, 0, texInst.points); break;
+			case Texture::Structure::STRIP: glDrawArrays(GL_TRIANGLE_STRIP, 0, texInst.points); break;
+			case Texture::Structure::DEFAULT: glDrawArrays(GL_TRIANGLES, 0, texInst.points); break;
+		}
+	}
+
+	void Platform_Emscripten::BindTexture(int id) const
+	{
+		if (id > 0)
+			glBindTexture(GL_TEXTURE_2D, id);
+		else
+			glBindTexture(GL_TEXTURE_2D, m_BlankQuad.texture->id);
+	}
+
+	bool Platform_Emscripten::ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel)
+	{
+		emscripten_set_canvas_element_size("#canvas", windowSize.x, windowSize.y);
+
+		EGLint const attributes[] = { EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_BLUE_SIZE, 8, EGL_ALPHA_SIZE, 8, EGL_NONE };
+		EGLint const configAttributes[] = { EGL_CONTEXT_CLIENT_VERSION , 2, EGL_NONE };
+		EGLint configsCount;
+
+		m_Display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+
+		eglInitialize(m_Display, NULL, NULL);
+		eglChooseConfig(m_Display, attributes, &m_Config, 1, &configsCount);
+
+		m_Context = eglCreateContext(m_Display, m_Config, EGL_NO_CONTEXT, configAttributes);
+		m_Surface = eglCreateWindowSurface(m_Display, m_Config, NULL, NULL);
+
+		eglMakeCurrent(m_Display, m_Surface, m_Surface, m_Context);
+		eglSwapInterval(m_Display, vsync ? 1 : 0);
+
+		m_FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+		const GLchar* fragmentShader =
+				"#version 300 es\n"
+				"precision mediump float;"
+				"out vec4 pixel;\n""in vec2 oTex;\n"
+				"in vec4 oCol;\n""uniform sampler2D sprTex;\n""void main(){pixel = texture(sprTex, oTex) * oCol;}";
+
+		glShaderSource(m_FragmentShader, 1, &fragmentShader, NULL);
+		glCompileShader(m_FragmentShader);
+
+		m_VertexShader = glCreateShader(GL_VERTEX_SHADER);
+
+		const GLchar* vertexShader =
+				"#version 300 es\n"
+				"precision mediump float;"
+				"layout(location = 0) in vec3 aPos;\n""layout(location = 1) in vec2 aTex;\n"
+				"layout(location = 2) in vec4 aCol;\n""out vec2 oTex;\n""out vec4 oCol;\n"
+				"void main(){ float p = 1.0 / aPos.z; gl_Position = p * vec4(aPos.x, aPos.y, 0.0, 1.0); oTex = p * aTex; oCol = aCol;}";
+
+		glShaderSource(m_VertexShader, 1, &vertexShader, NULL);
+		glCompileShader(m_VertexShader);
+
+		m_QuadShader = glCreateProgram();
+
+		glAttachShader(m_QuadShader, m_FragmentShader);
+		glAttachShader(m_QuadShader, m_VertexShader);
+
+		glLinkProgram(m_QuadShader);
+
+		glGenBuffers(1, &m_VbQuad);
+		glGenVertexArraysOES(1, &m_VaQuad);
+
+		glBindVertexArrayOES(m_VaQuad);
+		glBindBuffer(GL_ARRAY_BUFFER, m_VbQuad);
+
+		Vertex vertices[128];
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * 128, vertices, GL_STREAM_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)(5 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArrayOES(0);
+
+		m_BlankQuad.Load({ 1, 1 });
+		m_BlankQuad.sprite->pixels[0] = WHITE;
+		m_BlankQuad.UpdateTexture();
+
+		emscripten_set_keydown_callback("#canvas", 0, 1, KeyboardCallback);
+		emscripten_set_keyup_callback("#canvas", 0, 1, KeyboardCallback);
+
+		emscripten_set_wheel_callback("#canvas", 0, 1, WheelCallback);
+		emscripten_set_mousedown_callback("#canvas", 0, 1, MouseCallback);
+
+		emscripten_set_mouseup_callback("#canvas", 0, 1, MouseCallback);
+		emscripten_set_mousemove_callback("#canvas", 0, 1, MouseCallback);
+
+		emscripten_set_touchstart_callback("#canvas", 0, 1, TouchCallback);
+		emscripten_set_touchmove_callback("#canvas", 0, 1, TouchCallback);
+		emscripten_set_touchend_callback("#canvas", 0, 1, TouchCallback);
+
+		emscripten_set_blur_callback("#canvas", 0, 1, FocusCallback);
+		emscripten_set_focus_callback("#canvas", 0, 1, FocusCallback);
+
+		return true;
+	}
+
+	void Platform_Emscripten::SetIcon(Sprite& icon) const
+	{
+
+	}
+
+	void Platform_Emscripten::MainLoop()
+	{
+		GameEngine::s_Engine->MainLoop();
+	}
+
+	EM_BOOL Platform_Emscripten::FocusCallback(int eventType, const EmscriptenFocusEvent* event, void* userData)
+	{
+		switch (eventType)
+		{
+		case EMSCRIPTEN_EVENT_FOCUS: s_IsWindowFocused = true; break;
+		case EMSCRIPTEN_EVENT_BLUR: s_IsWindowFocused = false; break;
+		}
+
+		return EM_FALSE;
+	}
+
+	EM_BOOL Platform_Emscripten::KeyboardCallback(int eventType, const EmscriptenKeyboardEvent* event, void* userData)
+	{
+		GameEngine* e = GameEngine::s_Engine;
+
+		switch (eventType)
+		{
+		case EMSCRIPTEN_EVENT_KEYDOWN: e->m_KeyNewState[size_t(GameEngine::s_KeysTable[emscripten_compute_dom_pk_code(event->code)])] = true; break;
+		case EMSCRIPTEN_EVENT_KEYUP: e->m_KeyNewState[size_t(GameEngine::s_KeysTable[emscripten_compute_dom_pk_code(event->code)])] = false; break;
+		}
+
+		return EM_TRUE;
+	}
+
+	EM_BOOL Platform_Emscripten::WheelCallback(int eventType, const EmscriptenWheelEvent* event, void* userData)
+	{
+		if (eventType == EMSCRIPTEN_EVENT_WHEEL)
+			GameEngine::s_Engine->m_ScrollDelta = -1 * event->deltaY;
+
+		return EM_TRUE;
+	}
+
+	EM_BOOL Platform_Emscripten::TouchCallback(int eventType, const EmscriptenTouchEvent* event, void* userData)
+	{
+		GameEngine* e = GameEngine::s_Engine;
+
+		switch (eventType)
+		{
+		case EMSCRIPTEN_EVENT_TOUCHMOVE:
+		{
+			e->m_MousePos.x = event->touches->targetX;
+			e->m_MousePos.y = event->touches->targetY;
+		}
+		break;
+
+		case EMSCRIPTEN_EVENT_TOUCHSTART:
+		{
+			e->m_MousePos.x = event->touches->targetX;
+			e->m_MousePos.y = event->touches->targetY;
+
+			e->m_MouseNewState[0] = true;
+		}
+		break;
+
+		case EMSCRIPTEN_EVENT_TOUCHEND:
+			e->m_MouseNewState[0] = false;
+		break;
+
+		}
+
+		return EM_TRUE;
+	}
+
+	EM_BOOL Platform_Emscripten::MouseCallback(int eventType, const EmscriptenMouseEvent* event, void* userData)
+	{
+		GameEngine* e = GameEngine::s_Engine;
+
+		if (eventType == EMSCRIPTEN_EVENT_MOUSEMOVE)
+		{
+			e->m_MousePos.x = event->targetX;
+			e->m_MousePos.y = event->targetY;
+		}
+
+		auto check = [&](int button, int index)
+		{
+			if (event->button == button)
+			{
+				switch (eventType)
+				{
+				case EMSCRIPTEN_EVENT_MOUSEDOWN: e->m_MouseNewState[index] = true; break;
+				case EMSCRIPTEN_EVENT_MOUSEUP: e->m_MouseNewState[index] = false; break;
+				}
+
+				return true;
+			}
+
+			return false;
+		};
+
+		check(0, 0);
+		check(2, 1);
+		check(3, 3);
+		check(4, 4);
+
+		return check(1, 2) ? EM_TRUE : EM_FALSE;
 	}
 
 #endif
@@ -2411,16 +2541,16 @@ namespace def
 		s_Engine = this;
 
 		m_PickedConsoleHistoryCommand = 0;
+		m_CursorPos = 0;
 
 		MakeUnitCircle(s_UnitCircle, 64); // TODO: Make 64 (vertices count) as constant
 
 		m_OnlyTextures = false;
-		m_DrawBeforeTransforms = false;
 
-#if defined(PLATFORM_GL_WINDOWS)
-		m_Platform = new Platform_GL_Windows();
-#elif defined(PLATFORM_GLFW3)
+#if defined(PLATFORM_GLFW3)
 		m_Platform = new Platform_GLFW3();
+#elif defined(PLATFORM_EMSCRIPTEN)
+		m_Platform = new Platform_Emscripten();
 #else
 		#error No platform was selected
 #endif
@@ -2437,12 +2567,10 @@ namespace def
 		m_Platform->Destroy();
 	}
 
-	void GameEngine::ScanHardware(KeyState* data, bool* newState, bool* oldState, size_t count, std::function<bool(Platform*, int)> Get)
+	void GameEngine::ScanHardware(KeyState* data, bool* newState, bool* oldState, size_t count)
 	{
 		for (int i = 0; i < count; i++)
 		{
-			newState[i] = Get(m_Platform, i);
-
 			data[i].pressed = false;
 			data[i].released = false;
 
@@ -2466,52 +2594,27 @@ namespace def
 
 	void GameEngine::MainLoop()
 	{
-		if (!OnUserCreate())
-			m_IsAppRunning = false;
-
-		auto startTime = std::chrono::system_clock::now();
-		auto endTime = startTime;
-
-		for (int i = 0; i < 512; i++)
+		if (m_IsAppRunning)
 		{
-			m_Keys[i] = { false, false, false };
-			m_KeyOldState[i] = false;
-			m_KeyNewState[i] = false;
-		}
+			m_TimeEnd = std::chrono::system_clock::now();
 
-		for (int i = 0; i < 8; i++)
-		{
-			m_Mouse[i] = { false, false, false };
-			m_MouseOldState[i] = false;
-			m_MouseNewState[i] = false;
-		}
-
-		m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: 0");
-
-		int frames = 0;
-
-		while (m_IsAppRunning)
-		{
-			endTime = std::chrono::system_clock::now();
-
-			m_DeltaTime = std::chrono::duration<float>(endTime - startTime).count();
-			startTime = endTime;
+			m_DeltaTime = std::chrono::duration<float>(m_TimeEnd - m_TimeStart).count();
+			m_TimeStart = m_TimeEnd;
 
 			m_TickTimer += m_DeltaTime;
 
 			if (m_Platform->IsWindowClose())
 				m_IsAppRunning = false;
 
-			ScanHardware(m_Keys, m_KeyNewState, m_KeyOldState, 512, &Platform::GetKey);
-			ScanHardware(m_Mouse, m_MouseNewState, m_MouseOldState, 8, &Platform::GetMouse);
+			ScanHardware(m_Keys, m_KeyNewState, m_KeyOldState, (size_t)Key::KEYS_COUNT);
+			ScanHardware(m_Mouse, m_MouseNewState, m_MouseOldState, 8);
 
-			if (m_Keys[280].pressed) // Caps Lock
+			if (m_Keys[(size_t)Key::CAPS_LOCK].pressed)
 				m_Caps = !m_Caps;
 
 			if (m_CaptureText)
 			{
-				// Left, right shifts
-				bool isUp = m_Keys[340].held || m_Keys[344].held;
+				bool isUp = m_Keys[(size_t)Key::LEFT_SHIFT].held || m_Keys[(size_t)Key::RIGHT_SHIFT].held;
 
 				for (const auto& [key, chars] : s_KeyboardUS)
 				{
@@ -2526,7 +2629,7 @@ namespace def
 					}
 				}
 
-				if (m_Keys[259].pressed) // Backspace
+				if (m_Keys[(size_t)Key::BACKSPACE].pressed)
 				{
 					if (m_CursorPos > 0)
 					{
@@ -2535,25 +2638,25 @@ namespace def
 					}
 				}
 
-				if (m_Keys[261].pressed) // Delete
+				if (m_Keys[(size_t)Key::DEL].pressed)
 				{
 					if (m_CursorPos < m_TextInput.length())
 						m_TextInput.erase(m_CursorPos, 1);
 				}
 
-				if (m_Keys[263].pressed) // Left arrow
+				if (m_Keys[(size_t)Key::LEFT].pressed)
 				{
 					if (m_CursorPos > 0)
 						m_CursorPos--;
 				}
 
-				if (m_Keys[262].pressed) // Right arrow
+				if (m_Keys[(size_t)Key::RIGHT].pressed)
 				{
 					if (m_CursorPos < m_TextInput.length())
 						m_CursorPos++;
 				}
 
-				if (m_Keys[257].pressed) // Enter
+				if (m_Keys[(size_t)Key::ENTER].pressed)
 				{
 					OnTextCapturingComplete(m_TextInput);
 
@@ -2573,14 +2676,13 @@ namespace def
 					m_CursorPos = 0;
 				}
 
-				// TODO: Pick a command from a history
 				if (m_ShowConsole)
 				{
 					if (!m_ConsoleHistory.empty())
 					{
 						bool moved = false;
 
-						if (m_Keys[265].pressed) // Up arrow
+						if (m_Keys[(size_t)Key::UP].pressed)
 						{
 							if (m_PickedConsoleHistoryCommand > 0)
 							{
@@ -2589,7 +2691,7 @@ namespace def
 							}
 						}
 
-						if (m_Keys[264].pressed) // Down arrow
+						if (m_Keys[(size_t)Key::DOWN].pressed)
 						{
 							if (m_PickedConsoleHistoryCommand < m_ConsoleHistory.size() - 1)
 							{
@@ -2614,8 +2716,6 @@ namespace def
 
 			if (m_ShowConsole)
 			{
-				m_DrawBeforeTransforms = true;
-
 				FillTextureRectangle({ 0, 0 }, m_ScreenSize, m_ConsoleBackgroundColour);
 
 				int printCount = std::min(ScreenHeight() / 22, (int)m_ConsoleHistory.size());
@@ -2634,18 +2734,10 @@ namespace def
 
 				DrawTextureString({ 20, y }, "> " + GetCapturedText(), YELLOW);
 				DrawTextureLine({ x, y }, { x, y + 8 }, RED);
-
-				m_DrawBeforeTransforms = false;
 			}
 
 			m_Platform->ClearBuffer(m_ClearBufferColour);
 			m_Platform->OnBeforeDraw();
-
-			for (const auto& texture : m_Textures)
-			{
-				if (texture.drawBeforeTransforms)
-					m_Platform->DrawTexture(texture);
-			}
 
 			if (!m_OnlyTextures)
 			{
@@ -2656,10 +2748,7 @@ namespace def
 			}
 
 			for (const auto& texture : m_Textures)
-			{
-				if (!texture.drawBeforeTransforms)
-					m_Platform->DrawTexture(texture);
-			}
+				m_Platform->DrawTexture(texture);
 
 			m_Textures.clear();
 
@@ -2670,13 +2759,13 @@ namespace def
 			m_Platform->FlushScreen(m_IsVSync);
 			m_Platform->PollEvents();
 
-			frames++;
+			m_FramesCount++;
 			if (m_TickTimer >= 1.0f)
 			{
-				m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: " + std::to_string(frames));
+				m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: " + std::to_string(m_FramesCount));
 
 				m_TickTimer = 0.0f;
-				frames = 0;
+				m_FramesCount = 0;
 			}
 		}
 	}
@@ -2697,8 +2786,35 @@ namespace def
 
 	void GameEngine::Run()
 	{
-		m_IsAppRunning = true;
-		MainLoop();
+		m_IsAppRunning = OnUserCreate();
+
+		m_TimeStart = std::chrono::system_clock::now();
+		m_TimeEnd = m_TimeStart;
+
+		for (int i = 0; i < (size_t)Key::KEYS_COUNT; i++)
+		{
+			m_Keys[i] = { false, false, false };
+			m_KeyOldState[i] = false;
+			m_KeyNewState[i] = false;
+		}
+
+		for (int i = 0; i < 8; i++)
+		{
+			m_Mouse[i] = { false, false, false };
+			m_MouseOldState[i] = false;
+			m_MouseNewState[i] = false;
+		}
+
+		m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: 0");
+
+		m_FramesCount = 0;
+
+#ifdef PLATFORM_EMSCRIPTEN
+		emscripten_set_main_loop(&Platform_Emscripten::MainLoop, 0, 1);
+#else
+		while (m_IsAppRunning)
+			MainLoop();
+#endif
 	}
 
 	bool GameEngine::OnAfterDraw()
@@ -3416,7 +3532,6 @@ namespace def
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices.resize(texInst.points);
 		texInst.uv = { { 0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f} };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
 
 		float rd = ((points[2].x - points[0].x) * (points[3].y - points[1].y) - (points[3].x - points[1].x) * (points[2].y - points[0].y));
 
@@ -3676,8 +3791,6 @@ namespace def
 			texInst.vertices[i].y = 1.0f - verts[i].y * m_InvScreenSize.y * 2.0f;
 		}
 
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
-
 		m_Textures.push_back(texInst);
 	}
 
@@ -3823,7 +3936,7 @@ namespace def
 		texInst.structure = m_TextureStructure;
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices = { pos1, { pos1.x, pos2.y }, pos2, { pos2.x, pos1.y } };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+		
 
 		m_Textures.push_back(texInst);
 	}
@@ -3847,7 +3960,7 @@ namespace def
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices = { quantPos1, { quantPos1.x, quantPos2.y }, quantPos2, { quantPos2.x, quantPos1.y } };
 		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+		
 
 		m_Textures.push_back(texInst);
 	}
@@ -3860,7 +3973,7 @@ namespace def
 		texInst.points = 4;
 		texInst.structure = m_TextureStructure;
 		texInst.tint = { tint, tint, tint, tint };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+		
 
 		vf2d denormCenter = center * tex->size;
 
@@ -3896,7 +4009,7 @@ namespace def
 		texInst.points = 4;
 		texInst.structure = m_TextureStructure;
 		texInst.tint = { tint, tint, tint, tint };
-		texInst.drawBeforeTransforms = m_DrawBeforeTransforms;
+		
 
 		vf2d denormCenter = center * fileSize;
 

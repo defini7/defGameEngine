@@ -1,6 +1,7 @@
 <p align="center"><img src="dge_large_logo.png"></p>
 
 # defGameEngine
+
 A cross-platform game engine available on Windows, Linux, and MacOS. This repository includes a comprehensive set of custom functions to create games, along with examples to demonstrate and test each feature.
 
 ## Getting Started
