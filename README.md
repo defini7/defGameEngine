@@ -1,4 +1,4 @@
-<p align="center"><img src="dge_large_logo.png"></p>
+<p align="center"><img src="Logos/dge_logo_large.png"></p>
 
 # defGameEngine
 
