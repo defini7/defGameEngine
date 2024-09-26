@@ -607,7 +607,7 @@ namespace def
 
 #endif
 
-#ifdef __EMSCRIPTEN__
+#ifdef PLATFORM_EMSCRIPTEN
 	
 	class Platform_Emscripten : public Platform
 	{
@@ -759,7 +759,9 @@ namespace def
 		std::chrono::system_clock::time_point m_TimeStart;
 		std::chrono::system_clock::time_point m_TimeEnd;
 
+#ifndef PLATFORM_EMSCRIPTEN
 		uint32_t m_FramesCount;
+#endif
 
 	public:
 		static GameEngine* s_Engine;
@@ -1975,13 +1977,10 @@ namespace def
 	{
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glPushMatrix();
 	}
 
 	void Platform_GL::OnAfterDraw()
 	{
-		glPopMatrix();
 	}
 
 	void Platform_GL::DrawQuad(const Pixel& tint) const
@@ -2762,7 +2761,9 @@ namespace def
 			m_Platform->FlushScreen(m_IsVSync);
 			m_Platform->PollEvents();
 
+#ifndef PLATFORM_EMSCRIPTEN
 			m_FramesCount++;
+
 			if (m_TickTimer >= 1.0f)
 			{
 				m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: " + std::to_string(m_FramesCount));
@@ -2770,6 +2771,7 @@ namespace def
 				m_TickTimer = 0.0f;
 				m_FramesCount = 0;
 			}
+#endif
 		}
 	}
 
@@ -2808,13 +2810,14 @@ namespace def
 			m_MouseNewState[i] = false;
 		}
 
-		m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: 0");
-
-		m_FramesCount = 0;
-
 #ifdef PLATFORM_EMSCRIPTEN
+		m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName);
+
 		emscripten_set_main_loop(&Platform_Emscripten::MainLoop, 0, 1);
 #else
+		m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: 0");
+		m_FramesCount = 0;
+
 		while (m_IsAppRunning)
 			MainLoop();
 #endif
