@@ -579,6 +579,8 @@ namespace def
 	public:
 		Platform_GLFW3();
 
+		friend class GameEngine;
+
 	private:
 		GLFWmonitor* m_Monitor;
 		GLFWwindow* m_Window;
@@ -612,6 +614,8 @@ namespace def
 	class Platform_Emscripten : public Platform
 	{
 	public:
+		friend class GameEngine;
+
 		virtual void Destroy() const override;
 		virtual void SetTitle(const std::string& text) const override;
 
@@ -913,6 +917,15 @@ namespace def
 		void UseOnlyTextures(bool enable);
 
 		float GetDeltaTime() const;
+
+		auto GetWindow()
+		{
+#if defined(PLATFORM_GLFW3)
+			return ((Platform_GLFW3*)m_Platform)->m_Window;
+#elif defined(PLATFORM_EMSCRIPTEN)
+			return ((Platform_Emscripten*)m_Platform)->m_Display;
+#endif
+		}
 	};
 
 #ifdef DGE_APPLICATION
@@ -2460,8 +2473,8 @@ namespace def
 		{
 		case EMSCRIPTEN_EVENT_TOUCHMOVE:
 		{
-			e->m_MousePos.x = event->touches->targetX;
-			e->m_MousePos.y = event->touches->targetY;
+			e->m_MousePos.x = event->touches->targetX / e->m_PixelSize.x;
+			e->m_MousePos.y = event->touches->targetY / e->m_PixelSize.y;
 		}
 		break;
 
