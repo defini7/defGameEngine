@@ -12,14 +12,16 @@ To use this game engine in your project, follow the [install instructions](/READ
 
 ### Platforms
 
-- [Windows](md/Install_Instructions_Windows.md)
+- [Windows](Docs/Install_Instructions_Windows.md)
 
-- [Linux](md/Install_Instructions_Linux.md)
+- [Linux](Docs/Install_Instructions_Linux.md)
 
-- [Mac](md/Install_Instructions_Mac.md)
+- [Mac](Docs/Install_Instructions_Mac.md)
+
+- [Emscripten](Docs/Install_Instructions_Emscripten.md)
 
 ****Note**:* C++20 or higher is required
 
 ## Documentation
 
-[GameEngine](md/GameEngine_Doc.md)
+[defGameEngine](Docs/defGameEngine_Doc.md)
