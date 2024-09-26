@@ -3,6 +3,7 @@
 ## Introduction
 
 You can copy one of the sample games under the `Examples` folder of the repository into `.cpp` file of your project for a quick look and demo.
+Emscripten demo: https://defini7.itch.io/defgameengine-raycaster.
 
 ## Table of Contents
 
