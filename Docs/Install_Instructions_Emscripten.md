@@ -21,3 +21,6 @@ cpp_to_web build <file_without_extension>
 ```console
 cpp_to_web run
 ```
+
+### Example
+https://defini7.itch.io/defgameengine-consoledemo
