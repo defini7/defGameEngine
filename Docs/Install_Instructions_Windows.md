@@ -10,12 +10,25 @@
 
 ### Setup
 
-Windows Microsoft Visual C++ (MSVC):
+1. Windows Microsoft Visual C++ (MSVC):
 
-- GLFW:
-    - Menu bar: `Project` -> `<project name> Properties`.
-    - In opened window `C++` -> `General`.
-    - Add path for include folders in `Additional include directories`.
-    - Then `Linker` -> `General`.
-    - Add path for lib folder in `Additional Library Directories`.
+    - GLFW:
+        - Menu bar: `Project` -> `<project name> Properties`.
+        - In opened window `C++` -> `General`.
+        - Add path for include folders in `Additional include directories`.
+        - Then `Linker` -> `General`.
+        - Add path for lib folder in `Additional Library Directories`.
     
+2. MinGW
+
+    - Edit [Makefile](https://github.com/defini7/defGameEngine/blob/master/Build/Windows/Makefile) by specifying correct paths for the libraries
+
+    - Compile with:
+    ```console
+    mingw32-make
+    ```
+
+    - Run with:
+    ```console
+    ./<file>
+    ```

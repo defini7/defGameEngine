@@ -33,8 +33,6 @@
         -  defGameEngine header folder
     - Search for `Library Search Paths` then add paths of:     
         - `lib` library folder inside GLFW. Use the appropriate library folder coresponding with your system's architecture.
-    - Search for `Documentation Comments` and set as `No`
-    
-4. Now you can sit back, relax, and enjoy coding. You can copy one of the sample games under the `Examples` folder of the repository into `main.cpp` of your project for a quick look and demo. 
+    - Search for `Documentation Comments` and set as `No` 
 
 **Note:* Warnings are due to the deprecated features of dependencies. They can be safely ignored unless build fails.

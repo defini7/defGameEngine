@@ -1,5 +1,9 @@
 # GameEngine Documentation
 
+## Introduction
+
+You can copy one of the sample games under the `Examples` folder of the repository into `.cpp` file of your project for a quick look and demo.
+
 ## Table of Contents
 
 1. [Construct Method](#construct-method)
