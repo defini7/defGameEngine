@@ -1,6 +1,8 @@
 #ifndef DEF_GAME_ENGINE_HPP
 #define DEF_GAME_ENGINE_HPP
 
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+
 #pragma region License
 /***
 *	BSD 3-Clause License
@@ -833,8 +835,8 @@ namespace def
 		void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
 		virtual void FillWireFrameModel(const std::vector<vf2d>& modelCoordinates, float x, float y, float rotation = 0.0f, float scale = 1.0f, const Pixel& col = WHITE);
 
-		void DrawString(const vi2d& pos, std::string_view text, const Pixel& col = WHITE, const vi2d& scale = { 1, 1 });
-		virtual void DrawString(int x, int y, std::string_view text, const Pixel& col = WHITE, int scaleX = 1, int scaleY = 1);
+		void DrawString(const vi2d& pos, std::string_view text, const Pixel& col = WHITE, const vec2d<uint32_t>& scale = { 1, 1 });
+		virtual void DrawString(int x, int y, std::string_view text, const Pixel& col = WHITE, uint32_t scaleX = 1, uint32_t scaleY = 1);
 
 		virtual void Clear(const Pixel& col);
 		void ClearTexture(const Pixel& col);
@@ -2019,7 +2021,7 @@ namespace def
 		case Texture::Structure::WIREFRAME:	glBegin(GL_LINE_LOOP);		break;
 		}
 
-		for (int i = 0; i < texInst.points; i++)
+		for (uint32_t i = 0; i < texInst.points; i++)
 		{
 			glColor4ub(texInst.tint[i].r, texInst.tint[i].g, texInst.tint[i].b, texInst.tint[i].a);
 			glTexCoord2f(texInst.uv[i].x, texInst.uv[i].y);
@@ -2584,7 +2586,7 @@ namespace def
 
 	void GameEngine::ScanHardware(KeyState* data, bool* newState, bool* oldState, size_t count)
 	{
-		for (int i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			data[i].pressed = false;
 			data[i].released = false;
@@ -2736,12 +2738,12 @@ namespace def
 				int printCount = std::min(ScreenHeight() / 22, (int)m_ConsoleHistory.size());
 				int start = m_ConsoleHistory.size() - printCount;
 
-				for (int i = start; i < m_ConsoleHistory.size(); i++)
+				for (size_t i = start; i < m_ConsoleHistory.size(); i++)
 				{
 					auto& entry = m_ConsoleHistory[i];
 
-					DrawTextureString({ 10, 10 + (i - start) * 20 }, "> " + entry.command);
-					DrawTextureString({ 10, 20 + (i - start) * 20 }, entry.output, entry.outputColour);
+					DrawTextureString({ 10, 10 + int(i - start) * 20 }, "> " + entry.command);
+					DrawTextureString({ 10, 20 + int(i - start) * 20 }, entry.output, entry.outputColour);
 				}
 
 				int x = GetCursorPos() * 8 + 36;
@@ -2809,7 +2811,7 @@ namespace def
 		m_TimeStart = std::chrono::system_clock::now();
 		m_TimeEnd = m_TimeStart;
 
-		for (int i = 0; i < (size_t)Key::KEYS_COUNT; i++)
+		for (size_t i = 0; i < (size_t)Key::KEYS_COUNT; i++)
 		{
 			m_Keys[i] = { false, false, false };
 			m_KeyOldState[i] = false;
@@ -3623,7 +3625,7 @@ namespace def
 			{
 				float angle = 0.0f;
 
-				for (int i = 0; i < verts; i++)
+				for (size_t i = 0; i < verts; i++)
 					angle += GetAngle(coordinates[i] - p, coordinates[(i + 1) % verts] - p);
 
 				return std::abs(angle) >= 3.14159f;
@@ -3650,7 +3652,7 @@ namespace def
 			}
 	}
 
-	void GameEngine::DrawString(int x, int y, std::string_view s, const Pixel& col, int scaleX, int scaleY)
+	void GameEngine::DrawString(int x, int y, std::string_view s, const Pixel& col, uint32_t scaleX, uint32_t scaleY)
 	{
 		int sx = 0;
 		int sy = 0;
@@ -4004,7 +4006,7 @@ namespace def
 		};
 
 		float c = cos(rotation), s = sin(rotation);
-		for (int i = 0; i < texInst.points; i++)
+		for (size_t i = 0; i < texInst.points; i++)
 		{
 			vf2d offset =
 			{
@@ -4040,7 +4042,7 @@ namespace def
 		};
 
 		float c = cos(rotation), s = sin(rotation);
-		for (int i = 0; i < texInst.points; i++)
+		for (size_t i = 0; i < texInst.points; i++)
 		{
 			vf2d offset =
 			{
@@ -4071,7 +4073,7 @@ namespace def
 		FillWireFrameModel(modelCoordinates, pos.x, pos.y, rotation, scale, col);
 	}
 
-	void GameEngine::DrawString(const vi2d& pos, std::string_view text, const Pixel& col, const vi2d& scale)
+	void GameEngine::DrawString(const vi2d& pos, std::string_view text, const Pixel& col, const vec2d<uint32_t>& scale)
 	{
 		DrawString(pos.x, pos.y, text, col, scale.x, scale.y);
 	}
