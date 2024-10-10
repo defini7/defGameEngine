@@ -24,4 +24,4 @@ To use this game engine in your project, follow the [install instructions](/READ
 
 ## Documentation
 
-[defGameEngine](Docs/defGameEngine_Doc.md)
+[defGameEngine](Docs/GameEngine_Doc.md)
