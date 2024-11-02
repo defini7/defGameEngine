@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.hpp"
+#include "../defGameEngine.hpp"
 
 class Snow : public def::GameEngine
 {
@@ -74,7 +74,7 @@ protected:
 			f.pos.x += deltaTime * speedDiff / 10.0f;
 
 			float c = abs(1.0f - 1.0f / f.speed * 200.0f);
-			FillCircle(f.pos + def::vf2d(f.pos.x + cos(f.time * f.speed * 0.1f), 0.0f), (float)flakeRadius * c, def::PixelF(c, c, c));
+			FillCircle(f.pos + def::vf2d(f.pos.x + cos(f.time * f.speed * 0.1f), 0.0f), (float)flakeRadius * c, def::Pixel::Float(c, c, c));
 		}
 
 		return true;

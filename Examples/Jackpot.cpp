@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.hpp"
+#include "../defGameEngine.hpp"
 
 #include <array>
 
@@ -54,7 +54,7 @@ protected:
 			for (int i = 0; i < l.content.size(); i++) l.content[i] = i;
 		}
 
-		field = new def::Graphic(3 * machineCellSize.x + 1, 3 * machineCellSize.y + 1);
+		field = new def::Graphic({ 3 * machineCellSize.x + 1, 3 * machineCellSize.y + 1 });
 
 		return true;
 	}
@@ -157,7 +157,7 @@ protected:
 		return true;
 	}
 
-	virtual bool Draw(int32_t x, int32_t y, def::Pixel p) override
+	virtual bool Draw(int32_t x, int32_t y, const def::Pixel& p) override
 	{
 		return def::GameEngine::Draw(x, y % yBorder, p);
 	}

@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include <defGameEngine.hpp>
+#include "../defGameEngine.hpp"
 
 #include <random>
 

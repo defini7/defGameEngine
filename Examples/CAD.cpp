@@ -1,8 +1,8 @@
 #define DGE_APPLICATION
-#include "defGameEngine.hpp"
+#include "../defGameEngine.hpp"
 
 #define DGE_AFFINE_TRANSFORMS
-#include "DGE_AffineTransforms.hpp"
+#include "../Extensions/DGE_AffineTransforms.hpp"
 
 struct Shape;
 

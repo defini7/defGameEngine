@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.hpp"
+#include "../defGameEngine.hpp"
 
 class Timer final : public def::GameEngine
 {

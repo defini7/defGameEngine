@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.hpp"
+#include "../defGameEngine.hpp"
 
 struct Ball
 {
@@ -31,7 +31,7 @@ private:
 
 	void AddBall(const def::vf2d& pos, const def::vf2d& vel)
 	{
-		balls.push_back({ pos, vel, def::Pixel::Random() });
+		balls.push_back({ pos, vel, def::Pixel(rand() % 256, rand() % 256, rand() % 256) });
 	}
 
 protected:

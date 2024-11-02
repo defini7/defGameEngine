@@ -1,0 +1,6 @@
+[submodule "defGeometry2D"]
+	path = defGeometry2D
+	url = https://github.com/defini7/defGeometry2D
+[submodule "escapi"]
+	path = escapi
+	url = https://github.com/jarikomppa/escapi.git

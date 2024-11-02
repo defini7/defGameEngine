@@ -1,11 +1,11 @@
 #define DGE_APPLICATION
-#include <defGameEngine.hpp>
+#include "../defGameEngine.hpp"
 
 #define DGE_AFFINE_TRANSFORMS
-#include "DGE_AffineTransforms.hpp"
+#include "../Extensions/DGE_AffineTransforms.hpp"
 
 #define DGE_CAMERA2D
-#include "DGE_Camera2D.hpp"
+#include "../Extensions/DGE_Camera2D.hpp"
 
 class AffineTransforms : public def::GameEngine
 {

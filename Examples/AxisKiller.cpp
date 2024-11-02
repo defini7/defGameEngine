@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.hpp"
+#include "../defGameEngine.hpp"
 
 #include <list>
 
@@ -70,13 +70,13 @@ protected:
 	bool OnUserUpdate(float dt) override
 	{
 		// Change position of players
-		if (GetMouse(0).held)
+		if (GetMouse(def::Button::LEFT).held)
 		{
-			if (PointVsCircle(GetMouse(), pos1, objRadius))
-				pos1.x = std::max(border1_start, std::min(border1_end, MouseX()));
+			if (PointVsCircle(GetMousePos(), pos1, objRadius))
+				pos1.x = std::max(border1_start, std::min(border1_end, GetMouseX()));
 
-			if (PointVsCircle(GetMouse(), pos2, objRadius))
-				pos2.y = std::max(border2_start, std::min(border2_end, MouseY()));
+			if (PointVsCircle(GetMousePos(), pos2, objRadius))
+				pos2.y = std::max(border2_start, std::min(border2_end, GetMouseY()));
 		}
 
 		// Shoot

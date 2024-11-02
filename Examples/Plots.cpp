@@ -1,5 +1,5 @@
 #define DGE_APPLICATION
-#include "defGameEngine.hpp"
+#include "../defGameEngine.hpp"
 
 #include <algorithm>
 
@@ -153,8 +153,8 @@ protected:
 
 	bool OnUserUpdate(float deltaTime) override
 	{
-		if (GetMouse(0).pressed) panStart = offset + def::vf2d(GetMouse());
-		if (GetMouse(0).held) offset = panStart - GetMouse();
+		if (GetMouse(def::Button::LEFT).pressed) panStart = offset + def::vf2d(GetMousePos());
+		if (GetMouse(def::Button::LEFT).held) offset = panStart - GetMousePos();
 
 		if (GetKey(def::Key::UP).held) scale *= 1.01f;
 		if (GetKey(def::Key::DOWN).held) scale *= 0.99f;

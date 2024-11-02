@@ -1,30 +1,5 @@
-/*
-* BSD 3-Clause License
-Copyright (c) 2023, Alex
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #define DGE_APPLICATION
-#include "defGameEngine.hpp"
+#include "../defGameEngine.hpp"
 
 #include <unordered_map>
 #include <functional>
@@ -309,7 +284,7 @@ protected:
 	{
 		DrawSprite(0, 0, sprBackground);
 
-		def::vi2d vVisibleTiles = ScreenSize() / vTileSize;
+		def::vi2d vVisibleTiles = GetScreenSize() / vTileSize;
 		def::vf2d vOffset = vPlayerPos - (def::vf2d)vVisibleTiles * 0.5f;
 
 		vOffset = vOffset.max({ 0.0f, 0.0f });
@@ -317,7 +292,7 @@ protected:
 
 		def::vf2d vTileOffset = (vOffset - vOffset.floor()) * (def::vf2d)vTileSize;
 
-		SetPixelMode(def::Pixel::ALPHA);
+		SetPixelMode(def::Pixel::Mode::ALPHA);
 
 		def::vi2d vTile;
 		for (vTile.y = -1; vTile.y < vVisibleTiles.y + 1; vTile.y++)
@@ -335,7 +310,7 @@ protected:
 
 		DrawPartialSprite((vPlayerPos - vOffset) * (def::vf2d)vTileSize, vTileSize * vGraphicsID, vTileSize, sprMario);
 	
-		SetPixelMode(def::Pixel::DEFAULT);
+		SetPixelMode(def::Pixel::Mode::DEFAULT);
 	}
 
 	void DrawInterface()
