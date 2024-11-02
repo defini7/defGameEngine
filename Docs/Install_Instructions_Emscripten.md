@@ -10,7 +10,7 @@
 
 ### Setup
 
-1. Edit [build file](https://github.com/defini7/defGameEngine/blob/master/Build/Emscripten/cpp_to_web.bat) by specifying correct paths for the libraries
+1. Edit [build file](https://github.com/defini7/defGameEngine/blob/master/Build/Scripts/Emscripten/cpp_to_web.bat) by specifying correct paths for the libraries
 
 2. Build with
 ```console
@@ -22,5 +22,6 @@ cpp_to_web build <file_without_extension>
 cpp_to_web run
 ```
 
-### Example
-https://defini7.itch.io/defgameengine-consoledemo
+### Examples
+1. [ConsoleDemo](https://defini7.itch.io/defgameengine-consoledemo)
+2. [Raycaster3D](https://defini7.itch.io/defgameengine-raycaster)

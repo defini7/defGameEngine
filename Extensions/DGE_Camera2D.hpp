@@ -1,15 +1,7 @@
 #ifndef DGE_CAMERA2D_HPP
 #define DGE_CAMERA2D_HPP
 
-#pragma region License
-
-#pragma endregion
-
-#pragma region Includes
-
 #include "../defGameEngine.hpp"
-
-#pragma endregion
 
 namespace def
 {

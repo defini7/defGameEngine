@@ -1,9 +1,6 @@
 #pragma once
 
-#pragma region license
-#pragma endregion
-
-#pragma region includes
+#pragma region Includes
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>

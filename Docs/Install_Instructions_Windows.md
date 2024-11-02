@@ -21,7 +21,7 @@
     
 2. MinGW
 
-    - Edit [Makefile](https://github.com/defini7/defGameEngine/blob/master/Build/Windows/Makefile) by specifying correct paths for the libraries
+    - Edit [Makefile](https://github.com/defini7/defGameEngine/blob/master/Build/Scripts/Windows/Makefile) by specifying correct paths for the libraries
 
     - Compile with:
     ```console

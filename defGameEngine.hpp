@@ -3,11 +3,6 @@
 
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 
-#pragma region License
-/***
-***/
-#pragma endregion
-
 #pragma region Sample
 /**
 * Example:

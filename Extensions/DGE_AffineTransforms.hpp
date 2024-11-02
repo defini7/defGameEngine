@@ -1,15 +1,7 @@
 #ifndef DGE_AFFINE_TRANSFORMS_HPP
 #define DGE_AFFINE_TRANSFORMS_HPP
 
-#pragma region License
-
-#pragma endregion
-
-#pragma region Includes
-
 #include "../defGameEngine.hpp"
-
-#pragma endregion
 
 namespace def
 {

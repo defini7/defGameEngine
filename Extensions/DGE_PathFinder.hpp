@@ -1,9 +1,6 @@
 #ifndef DGE_PATHFINDER_HPP
 #define DGE_PATHFINDER_HPP
 
-#pragma region License
-#pragma endregion
-
 #pragma region Includes
 
 #include <list>
