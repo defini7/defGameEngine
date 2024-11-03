@@ -3,13 +3,11 @@
 
 1. Run the following code in terminal:
 ```console
-sudo apt-get install xorg libx11-dev libglu1-mesa-dev freeglut3-dev libglu1-mesa libgl1-mesa-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev libglew-dev libglfw3-dev
+sudo apt-get install xorg libx11-dev libglu1-mesa-dev freeglut3-dev libglu1-mesa libgl1-mesa-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxxf86vm-dev libglew-dev libglfw3-dev libstb-dev
 ```
 
 2. Download the following header files and put them into a folder.
     - [defGameEngine.hpp](https://raw.githubusercontent.com/defini7/defGameEngine/master/defGameEngine.hpp)
-    - [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h)
-    - [stb_image_write.h](https://github.com/nothings/stb/blob/master/stb_image_write.h)
 
 ### Setup
 

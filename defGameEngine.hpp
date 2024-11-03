@@ -81,7 +81,7 @@
 #endif
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "stb/stb_image.h"
 
 #pragma warning(disable : 4996)
 
@@ -89,7 +89,7 @@
 #define SAFE_STBI_FAILURE_REASON() (stbi_failure_reason() ? stbi_failure_reason() : "")
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include "stb/stb_image_write.h"
 
 #ifdef _WIN32
 
@@ -2071,12 +2071,12 @@ namespace def
 
 	void Platform_GLFW3::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
-		GameEngine::s_Engine->m_KeyNewState[size_t(GameEngine::s_KeysTable[key])] = (action == GLFW_PRESS);
+		GameEngine::s_Engine->m_KeyNewState[size_t(GameEngine::s_KeysTable[key])] = (action == GLFW_PRESS || action == GLFW_REPEAT);
 	}
 
 	void Platform_GLFW3::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 	{
-		GameEngine::s_Engine->m_MouseNewState[button] = (action == GLFW_PRESS);
+		GameEngine::s_Engine->m_MouseNewState[button] = (action == GLFW_PRESS || action == GLFW_REPEAT);
 	}
 
 	void Platform_GLFW3::Destroy() const
