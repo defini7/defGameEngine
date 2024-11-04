@@ -80,16 +80,20 @@
 	#include <emscripten/html5.h>
 #endif
 
-#define STB_IMAGE_IMPLEMENTATION
+#ifdef STB_IMAGE_IMPLEMENTATION
+#undef STB_IMAGE_IMPLEMENTATION
+#endif
 #include "stb/stb_image.h"
+
+#ifdef STB_IMAGE_WRITE_IMPLEMENTATION
+#undef STB_IMAGE_WRITE_IMPLEMENTATION
+#endif
+#include "stb/stb_image_write.h"
 
 #pragma warning(disable : 4996)
 
 // Oh, dear stb_image...
 #define SAFE_STBI_FAILURE_REASON() (stbi_failure_reason() ? stbi_failure_reason() : "")
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb/stb_image_write.h"
 
 #ifdef _WIN32
 
