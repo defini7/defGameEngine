@@ -80,14 +80,10 @@
 	#include <emscripten/html5.h>
 #endif
 
-#ifdef STB_IMAGE_IMPLEMENTATION
-#undef STB_IMAGE_IMPLEMENTATION
-#endif
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
-#ifdef STB_IMAGE_WRITE_IMPLEMENTATION
-#undef STB_IMAGE_WRITE_IMPLEMENTATION
-#endif
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 
 #pragma warning(disable : 4996)
@@ -1636,7 +1632,11 @@ namespace def
 
 	void Sprite::Load(std::string_view fileName)
 	{
-		uint8_t* data = stbi_load(fileName.data(), &size.x, &size.y, NULL, 4);
+		uint8_t* data;
+
+		Assert(!stbi_is_hdr(fileName.data()), "[stb_image Error] can't load an HDR file");
+
+		data = stbi_load(fileName.data(), &size.x, &size.y, NULL, 4);
 		Assert(data, "[stb_image Error] ", SAFE_STBI_FAILURE_REASON());
 
 		pixels.clear();
@@ -1651,6 +1651,8 @@ namespace def
 			pixels[j].b = data[i + 2];
 			pixels[j].a = data[i + 3];
 		}
+
+		stbi_image_free(data);
 	}
 
 	void Sprite::Save(std::string_view fileName, const FileType type) const
