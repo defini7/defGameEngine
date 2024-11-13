@@ -64,18 +64,46 @@ void Matrix_RotateZ(Matrix4x4& matrix, float angle)
 	matrix.m[2][2] = 1.0f;
 }
 
-class RayCasting : public def::GameEngine
+void Vector_CrossProduct(const Vector3& v1, const Vector3& v2, Vector3& out)
+{
+	out.x = v1.y * v2.z - v2.y * v1.z;
+	out.y = v1.z * v2.x - v2.z * v1.x;
+	out.z = v1.x * v2.y - v2.x * v1.y;
+}
+
+float Vector_Length(const Vector3& v)
+{
+	return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+void Vector_Normalise(Vector3& v)
+{
+	float length = Vector_Length(v);
+
+	v.x /= length;
+	v.y /= length;
+	v.z /= length;
+}
+
+float Vector_DotProduct(const Vector3& v1, const Vector3& v2)
+{
+	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+class Engine3D : public def::GameEngine
 {
 public:
-	RayCasting()
+	Engine3D()
 	{
-		SetTitle("Ray Casting");
+		SetTitle("Engine 3D");
 	}
 
 	Matrix4x4 projMatrix;
 	Mesh cube;
 
 	float angle = 0.0f;
+
+	Vector3 camera;
 
 protected:
 	bool OnUserCreate() override
@@ -142,24 +170,57 @@ protected:
 			translated.p[1].z += 5.0f;
 			translated.p[2].z += 5.0f;
 
-			projected.p[0] = Matrix_MultiplyVector(projMatrix, translated.p[0]);
-			projected.p[1] = Matrix_MultiplyVector(projMatrix, translated.p[1]);
-			projected.p[2] = Matrix_MultiplyVector(projMatrix, translated.p[2]);
+			Vector3 vector1, vector2, normal, cameraRay;
+			
+			// Get the first vector that's on the triangle
+			vector1.x = translated.p[1].x - translated.p[0].x;
+			vector1.y = translated.p[1].y - translated.p[0].y;
+			vector1.z = translated.p[1].z - translated.p[0].z;
 
-			projected.p[0].x += 0.5f; projected.p[0].y += 0.5f;
-			projected.p[1].x += 0.5f; projected.p[1].y += 0.5f;
-			projected.p[2].x += 0.5f; projected.p[2].y += 0.5f;
+			// Get the second vector that's on the triangle
+			vector2.x = translated.p[2].x - translated.p[0].x;
+			vector2.y = translated.p[2].y - translated.p[0].y;
+			vector2.z = translated.p[2].z - translated.p[0].z;
 
-			projected.p[0].x *= (float)ScreenWidth(); projected.p[0].y *= (float)ScreenHeight();
-			projected.p[1].x *= (float)ScreenWidth(); projected.p[1].y *= (float)ScreenHeight();
-			projected.p[2].x *= (float)ScreenWidth(); projected.p[2].y *= (float)ScreenHeight();
+			// Get the vector from the camera position to the triangle vertex
+			cameraRay.x = translated.p[0].x - camera.x;
+			cameraRay.y = translated.p[0].y - camera.y;
+			cameraRay.z = translated.p[0].z - camera.z;
 
-			DrawTriangle(
-				projected.p[0].x, projected.p[0].y,
-				projected.p[1].x, projected.p[1].y,
-				projected.p[2].x, projected.p[2].y,
-				def::WHITE
-			);
+			// Get a vector that's perpendicular to the vector1 and vector2
+			Vector_CrossProduct(vector1, vector2, normal);
+			
+			// Normalise the normal, yep!
+			Vector_Normalise(normal);
+
+			// If the angle between normal and camera ray is less than 90 degrees
+			// then we can draw it
+			if (Vector_DotProduct(normal, cameraRay) < 0.0f)
+			{
+				projected.p[0] = Matrix_MultiplyVector(projMatrix, translated.p[0]);
+				projected.p[1] = Matrix_MultiplyVector(projMatrix, translated.p[1]);
+				projected.p[2] = Matrix_MultiplyVector(projMatrix, translated.p[2]);
+
+				projected.p[0].x += 0.5f; projected.p[0].y += 0.5f;
+				projected.p[1].x += 0.5f; projected.p[1].y += 0.5f;
+				projected.p[2].x += 0.5f; projected.p[2].y += 0.5f;
+
+				projected.p[0].x *= (float)ScreenWidth(); projected.p[0].y *= (float)ScreenHeight();
+				projected.p[1].x *= (float)ScreenWidth(); projected.p[1].y *= (float)ScreenHeight();
+				projected.p[2].x *= (float)ScreenWidth(); projected.p[2].y *= (float)ScreenHeight();
+
+				Vector3 lightDir = { 0.0f, 0.0f, -1.0f };
+
+				Vector_Normalise(lightDir);
+				float factor = Vector_DotProduct(lightDir, normal);
+
+				FillTriangle(
+					projected.p[0].x, projected.p[0].y,
+					projected.p[1].x, projected.p[1].y,
+					projected.p[2].x, projected.p[2].y,
+					def::Pixel::Float(factor, factor, factor)
+				);
+			}
 		}
 
 		angle += deltaTime;
@@ -171,7 +232,7 @@ protected:
 
 int main()
 {
-	RayCasting demo;
+	Engine3D demo;
 
 	demo.Construct(256, 240, 4, 4);
 	demo.Run();
