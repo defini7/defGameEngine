@@ -2143,6 +2143,8 @@ namespace def
 		if (!vsync)
 			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
 		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
 		if (!videoMode) return false;
 
