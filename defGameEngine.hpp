@@ -9,7 +9,7 @@
 	#define DGE_APPLICATION
 	#include "defGameEngine.hpp"
 
-	class Sample : public def::GameEngine
+	class Sample : public GameEngine
 	{
 	public:
 		Sample()
@@ -27,7 +27,7 @@
 		{
 			for (int i = 0; i < ScreenWidth(); i++)
 				for (int j = 0; j < ScreenHeight(); j++)
-					Draw(i, j, def::Pixel(rand() % 256, rand() % 256, rand() % 256));
+					Draw(i, j, Pixel(rand() % 256, rand() % 256, rand() % 256));
 
 			return true;
 		}
@@ -58,26 +58,26 @@
 #include <list>
 
 #ifdef __EMSCRIPTEN__
-	#define PLATFORM_EMSCRIPTEN
+#define PLATFORM_EMSCRIPTEN
 #else
-	#define PLATFORM_GL
-	#define PLATFORM_GLFW3
+#define PLATFORM_GL
+#define PLATFORM_GLFW3
 #endif
 
 #ifdef PLATFORM_GLFW3
-	#include "GLFW/glfw3.h"
+#include "GLFW/glfw3.h"
 #endif
 
 #ifdef PLATFORM_EMSCRIPTEN
-	#include <EGL/egl.h>
-	#include <GLES2/gl2.h>
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
 
-	#define GL_GLEXT_PROTOTYPES
-	#include <GLES2/gl2ext.h>
+#define GL_GLEXT_PROTOTYPES
+#include <GLES2/gl2ext.h>
 
-	#include <emscripten/emscripten.h>
-	#include <emscripten/key_codes.h>
-	#include <emscripten/html5.h>
+#include <emscripten/emscripten.h>
+#include <emscripten/key_codes.h>
+#include <emscripten/html5.h>
 #endif
 
 #pragma warning(disable : 4996)
@@ -96,13 +96,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #ifndef __MINGW32__
-	#ifdef PLATFORM_GL
-		#pragma comment(lib, "opengl32.lib")
-	#endif
+#ifdef PLATFORM_GL
+#pragma comment(lib, "opengl32.lib")
+#endif
 
-	#ifdef PLATFORM_GLFW3
-		#pragma comment(lib, "glfw3.lib")
-	#endif
+#ifdef PLATFORM_GLFW3
+#pragma comment(lib, "glfw3.lib")
+#endif
 #endif
 
 #else
@@ -512,7 +512,7 @@ namespace def
 		virtual void BindTexture(int id) const = 0;
 
 		virtual bool ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) = 0;
-		
+
 		virtual void SetIcon(Sprite& icon) const = 0;
 	};
 
@@ -578,14 +578,14 @@ namespace def
 		void PollEvents() const override;
 
 		bool ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) override;
-		
+
 		void SetIcon(Sprite& icon) const override;
 	};
 
 #endif
 
 #ifdef PLATFORM_EMSCRIPTEN
-	
+
 	class Platform_Emscripten : public Platform
 	{
 	public:
@@ -611,7 +611,7 @@ namespace def
 		virtual void BindTexture(int id) const override;
 
 		virtual bool ConstructWindow(vi2d& screenSize, const vi2d pixelSize, vi2d& windowSize, bool vsync, bool fullscreen, bool dirtypixel) override;
-		
+
 		virtual void SetIcon(Sprite& icon) const override;
 
 		static void MainLoop();
@@ -654,6 +654,21 @@ namespace def
 
 #endif
 
+	struct Layer
+	{
+		std::vector<TextureInstance> textures;
+		Graphic* pixels;
+		Graphic* target = pixels;
+
+		vi2d offset;
+		vi2d size;
+
+		bool visible = true;
+		bool update = true;
+
+		Pixel tint = WHITE;
+	};
+
 	class GameEngine
 	{
 	public:
@@ -694,15 +709,13 @@ namespace def
 		vi2d m_MousePos;
 
 		Graphic m_Font;
-		int m_TabSize = 4;
+		int m_TabSize;
 
-		Graphic* m_DrawTarget;
-		Graphic* m_Screen;
-
-		std::vector<TextureInstance> m_Textures;
+		std::vector<Layer> m_Layers;
+		size_t m_PickedLayer;
 
 		Pixel m_ConsoleBackgroundColour;
-		Pixel m_ClearBufferColour;
+		Pixel m_BackgroundColour;
 
 		Texture::Structure m_TextureStructure;
 		Pixel::Mode m_PixelMode;
@@ -731,7 +744,7 @@ namespace def
 		float m_DeltaTime;
 		float m_TickTimer;
 
-		Pixel (*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
+		Pixel(*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
 
 		Platform* m_Platform;
 
@@ -745,7 +758,7 @@ namespace def
 	public:
 		static GameEngine* s_Engine;
 		static std::unordered_map<Key, std::pair<char, char>> s_KeyboardUS;
-		static std::unordered_map<int, def::Key> s_KeysTable;
+		static std::unordered_map<int, Key> s_KeysTable;
 		inline static std::vector<vf2d> s_UnitCircle;
 
 		virtual bool OnUserCreate() = 0;
@@ -821,7 +834,7 @@ namespace def
 
 		void DrawRotatedTexture(const vf2d& pos, const Texture* tex, float rotation, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
 		void DrawPartialRotatedTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, float rotation, const vf2d& center = { 0.0f, 0.0f }, const vf2d& scale = { 1.0f, 1.0f }, const Pixel& tint = WHITE);
-		
+
 		void DrawTexturePolygon(const std::vector<vf2d>& verts, const std::vector<Pixel>& cols, Texture::Structure structure);
 
 		void DrawTextureLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col = WHITE);
@@ -837,7 +850,7 @@ namespace def
 		void GradientTextureTriangle(const vi2d& pos1, const vi2d& pos2, const vi2d& pos3, const Pixel& col1 = WHITE, const Pixel& col2 = WHITE, const Pixel& col3 = WHITE);
 		void GradientTextureRectangle(const vi2d& pos, const vi2d& size, const Pixel& colTL = WHITE, const Pixel& colTR = WHITE, const Pixel& colBR = WHITE, const Pixel& colBL = WHITE);
 
-		void DrawTextureString(const vi2d& pos, std::string_view text, const Pixel& col = def::WHITE, const vf2d& scale = { 1.0f, 1.0f });
+		void DrawTextureString(const vi2d& pos, std::string_view text, const Pixel& col = WHITE, const vf2d& scale = { 1.0f, 1.0f });
 
 		KeyState GetKey(Key key) const;
 		KeyState GetMouse(Button button) const;
@@ -873,7 +886,7 @@ namespace def
 		void SetTextureStructure(Texture::Structure textureStructure);
 		Texture::Structure GetTextureStructure() const;
 
-		void SetShader(Pixel (*func)(const vi2d&, const Pixel&, const Pixel&));
+		void SetShader(Pixel(*func)(const vi2d&, const Pixel&, const Pixel&));
 
 		void CaptureText(bool enable);
 		bool IsCapturingText() const;
@@ -886,11 +899,9 @@ namespace def
 		bool IsConsoleEnabled() const;
 		void ClearCapturedText();
 		void ClearConsole();
-
 		bool IsCaps() const;
 
 		void UseOnlyTextures(bool enable);
-
 		float GetDeltaTime() const;
 
 		auto GetWindow()
@@ -901,6 +912,9 @@ namespace def
 			return ((Platform_Emscripten*)m_Platform)->m_Display;
 #endif
 		}
+
+		size_t CreateLayer(const vi2d& offset, const vi2d& size, bool update = true, bool visible = true, const Pixel& tint = WHITE);
+		void PickLayer(size_t layer);
 	};
 
 #ifdef DGE_APPLICATION
@@ -944,7 +958,7 @@ namespace def
 
 #ifdef PLATFORM_GLFW3
 
-	std::unordered_map<int, def::Key> GameEngine::s_KeysTable =
+	std::unordered_map<int, Key> GameEngine::s_KeysTable =
 	{
 		{ GLFW_KEY_SPACE, Key::SPACE }, { GLFW_KEY_APOSTROPHE, Key::APOSTROPHE }, { GLFW_KEY_COMMA, Key::COMMA },
 		{ GLFW_KEY_MINUS, Key::MINUS }, { GLFW_KEY_PERIOD, Key::PERIOD }, { GLFW_KEY_SLASH, Key::SLASH },
@@ -982,7 +996,7 @@ namespace def
 		{ GLFW_KEY_KP_DIVIDE, Key::NP_DIVIDE }, { GLFW_KEY_KP_MULTIPLY, Key::NP_MULTIPLY },
 		{ GLFW_KEY_KP_SUBTRACT, Key::NP_SUBTRACT }, { GLFW_KEY_KP_ADD, Key::NP_ADD },
 		{ GLFW_KEY_KP_ENTER, Key::NP_ENTER }, { GLFW_KEY_KP_EQUAL, Key::NP_EQUAL },
-		
+
 		{ GLFW_KEY_LEFT_SHIFT, Key::LEFT_SHIFT }, { GLFW_KEY_LEFT_CONTROL, Key::LEFT_CONTROL },
 		{ GLFW_KEY_LEFT_ALT, Key::LEFT_ALT }, { GLFW_KEY_LEFT_SUPER, Key::LEFT_SUPER },
 		{ GLFW_KEY_RIGHT_SHIFT, Key::RIGHT_SHIFT }, { GLFW_KEY_RIGHT_CONTROL, Key::RIGHT_CONTROL },
@@ -1866,7 +1880,7 @@ namespace def
 #if defined(PLATFORM_GL) || defined(PLATFORM_EMSCRIPTEN)
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
-		
+
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -2258,7 +2272,7 @@ namespace def
 
 	void Platform_Emscripten::PollEvents() const
 	{
-		
+
 	}
 
 	void Platform_Emscripten::DrawQuad(const Pixel& tint) const
@@ -2296,10 +2310,10 @@ namespace def
 
 		switch (texInst.structure)
 		{
-			case Texture::Structure::WIREFRAME: glDrawArrays(GL_LINE_LOOP, 0, texInst.points); break;
-			case Texture::Structure::FAN: glDrawArrays(GL_TRIANGLE_FAN, 0, texInst.points); break;
-			case Texture::Structure::STRIP: glDrawArrays(GL_TRIANGLE_STRIP, 0, texInst.points); break;
-			case Texture::Structure::DEFAULT: glDrawArrays(GL_TRIANGLES, 0, texInst.points); break;
+		case Texture::Structure::WIREFRAME: glDrawArrays(GL_LINE_LOOP, 0, texInst.points); break;
+		case Texture::Structure::FAN: glDrawArrays(GL_TRIANGLE_FAN, 0, texInst.points); break;
+		case Texture::Structure::STRIP: glDrawArrays(GL_TRIANGLE_STRIP, 0, texInst.points); break;
+		case Texture::Structure::DEFAULT: glDrawArrays(GL_TRIANGLES, 0, texInst.points); break;
 		}
 	}
 
@@ -2333,10 +2347,10 @@ namespace def
 		m_FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 		const GLchar* fragmentShader =
-				"#version 300 es\n"
-				"precision mediump float;"
-				"out vec4 pixel;\n""in vec2 oTex;\n"
-				"in vec4 oCol;\n""uniform sampler2D sprTex;\n""void main(){pixel = texture(sprTex, oTex) * oCol;}";
+			"#version 300 es\n"
+			"precision mediump float;"
+			"out vec4 pixel;\n""in vec2 oTex;\n"
+			"in vec4 oCol;\n""uniform sampler2D sprTex;\n""void main(){pixel = texture(sprTex, oTex) * oCol;}";
 
 		glShaderSource(m_FragmentShader, 1, &fragmentShader, NULL);
 		glCompileShader(m_FragmentShader);
@@ -2344,11 +2358,11 @@ namespace def
 		m_VertexShader = glCreateShader(GL_VERTEX_SHADER);
 
 		const GLchar* vertexShader =
-				"#version 300 es\n"
-				"precision mediump float;"
-				"layout(location = 0) in vec3 aPos;\n""layout(location = 1) in vec2 aTex;\n"
-				"layout(location = 2) in vec4 aCol;\n""out vec2 oTex;\n""out vec4 oCol;\n"
-				"void main(){ float p = 1.0 / aPos.z; gl_Position = p * vec4(aPos.x, aPos.y, 0.0, 1.0); oTex = p * aTex; oCol = aCol;}";
+			"#version 300 es\n"
+			"precision mediump float;"
+			"layout(location = 0) in vec3 aPos;\n""layout(location = 1) in vec2 aTex;\n"
+			"layout(location = 2) in vec4 aCol;\n""out vec2 oTex;\n""out vec4 oCol;\n"
+			"void main(){ float p = 1.0 / aPos.z; gl_Position = p * vec4(aPos.x, aPos.y, 0.0, 1.0); oTex = p * aTex; oCol = aCol;}";
 
 		glShaderSource(m_VertexShader, 1, &vertexShader, NULL);
 		glCompileShader(m_VertexShader);
@@ -2470,7 +2484,7 @@ namespace def
 
 		case EMSCRIPTEN_EVENT_TOUCHEND:
 			e->m_MouseNewState[0] = false;
-		break;
+			break;
 
 		}
 
@@ -2488,20 +2502,20 @@ namespace def
 		}
 
 		auto check = [&](int button, int index)
-		{
-			if (event->button == button)
 			{
-				switch (eventType)
+				if (event->button == button)
 				{
-				case EMSCRIPTEN_EVENT_MOUSEDOWN: e->m_MouseNewState[index] = true; break;
-				case EMSCRIPTEN_EVENT_MOUSEUP: e->m_MouseNewState[index] = false; break;
+					switch (eventType)
+					{
+					case EMSCRIPTEN_EVENT_MOUSEDOWN: e->m_MouseNewState[index] = true; break;
+					case EMSCRIPTEN_EVENT_MOUSEUP: e->m_MouseNewState[index] = false; break;
+					}
+
+					return true;
 				}
 
-				return true;
-			}
-
-			return false;
-		};
+				return false;
+			};
 
 		check(0, 0);
 		check(2, 1);
@@ -2518,9 +2532,7 @@ namespace def
 		m_AppName = "Undefined";
 		m_MousePos = { -1, -1 };
 
-		m_DrawTarget = nullptr;
-
-		m_ClearBufferColour = { 255, 255, 255, 255 };
+		m_BackgroundColour = { 255, 255, 255, 255 };
 		m_ConsoleBackgroundColour = { 0, 0, 255, 100 };
 
 		m_PixelMode = Pixel::Mode::DEFAULT;
@@ -2529,6 +2541,7 @@ namespace def
 		m_CaptureText = false;
 		m_Caps = false;
 		m_ShowConsole = false;
+		m_TabSize = 0;
 
 		m_DeltaTime = 0.0f;
 		m_TickTimer = 0.0f;
@@ -2537,6 +2550,7 @@ namespace def
 		s_Engine = this;
 
 		m_PickedConsoleHistoryCommand = 0;
+		m_PickedLayer = 0;
 		m_CursorPos = 0;
 
 		MakeUnitCircle(s_UnitCircle, 64); // TODO: Make 64 (vertices count) as constant
@@ -2548,7 +2562,7 @@ namespace def
 #elif defined(PLATFORM_EMSCRIPTEN)
 		m_Platform = new Platform_Emscripten();
 #else
-		#error No platform was selected
+#error No platform was selected
 #endif
 	}
 
@@ -2559,7 +2573,12 @@ namespace def
 
 	void GameEngine::Destroy()
 	{
-		delete m_Screen;
+		for (auto& layer : m_Layers)
+		{
+			if (layer.pixels)
+				delete layer.pixels;
+		}
+
 		m_Platform->Destroy();
 	}
 
@@ -2732,21 +2751,23 @@ namespace def
 				DrawTextureLine({ x, y }, { x, y + 8 }, RED);
 			}
 
-			m_Platform->ClearBuffer(m_ClearBufferColour);
+			m_Platform->ClearBuffer(m_BackgroundColour);
 			m_Platform->OnBeforeDraw();
-
-			if (!m_OnlyTextures)
+			
+			for (auto iter = m_Layers.rbegin(); iter != m_Layers.rend(); iter++)
 			{
-				m_DrawTarget->UpdateTexture();
+				if (!m_OnlyTextures)
+				{
+					iter->pixels->UpdateTexture();
+					m_Platform->BindTexture(iter->pixels->texture->id);
+					m_Platform->DrawQuad(iter->tint);
+				}
 
-				m_Platform->BindTexture(m_DrawTarget->texture->id);
-				m_Platform->DrawQuad(m_ClearBufferColour);
+				for (auto& texture : iter->textures)
+					m_Platform->DrawTexture(texture);
+
+				iter->textures.clear();
 			}
-
-			for (const auto& texture : m_Textures)
-				m_Platform->DrawTexture(texture);
-
-			m_Textures.clear();
 
 			if (!OnAfterDraw())
 				m_IsAppRunning = false;
@@ -2760,7 +2781,7 @@ namespace def
 
 			if (m_TickTimer >= 1.0f)
 			{
-				m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: " + std::to_string(m_FramesCount));
+				m_Platform->SetTitle("defini7.github.io - defGameEngine - " + m_AppName + " - FPS: " + std::to_string(m_FramesCount));
 
 				m_TickTimer = 0.0f;
 				m_FramesCount = 0;
@@ -2805,11 +2826,11 @@ namespace def
 		}
 
 #ifdef PLATFORM_EMSCRIPTEN
-		m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName);
+		m_Platform->SetTitle("defini7.github.io - defGameEngine - " + m_AppName);
 
 		emscripten_set_main_loop(&Platform_Emscripten::MainLoop, 0, 1);
 #else
-		m_Platform->SetTitle("github.com/defini7 - defGameEngine - " + m_AppName + " - FPS: 0");
+		m_Platform->SetTitle("defini7.github.io - defGameEngine - " + m_AppName + " - FPS: 0");
 		m_FramesCount = 0;
 
 		while (m_IsAppRunning)
@@ -2848,11 +2869,7 @@ namespace def
 		if (!m_Platform->ConstructWindow(m_ScreenSize, m_PixelSize, m_WindowSize, vsync, fullScreen, dirtyPixel))
 			return false;
 
-		if (!m_OnlyTextures)
-		{
-			m_Screen = new Graphic(m_ScreenSize);
-			m_DrawTarget = m_Screen;
-		}
+		m_PickedLayer = CreateLayer({ 0, 0 }, m_ScreenSize);
 
 		std::string data =
 			"?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000"
@@ -2906,10 +2923,10 @@ namespace def
 
 	bool GameEngine::Draw(int x, int y, const Pixel& col)
 	{
-		if (!m_DrawTarget)
+		if (!m_Layers[m_PickedLayer].target)
 			return false;
 
-		Sprite* target = m_DrawTarget->sprite;
+		Sprite* target = m_Layers[m_PickedLayer].target->sprite;
 
 		switch (m_PixelMode)
 		{
@@ -3558,7 +3575,7 @@ namespace def
 				texInst.vertices[i] = { (points[i].x * m_InvScreenSize.x) * 2.0f - 1.0f, ((points[i].y * m_InvScreenSize.y) * 2.0f - 1.0f) * -1.0f };
 			}
 
-			m_Textures.push_back(texInst);
+			m_Layers[m_PickedLayer].textures.push_back(texInst);
 		}
 	}
 
@@ -3680,7 +3697,7 @@ namespace def
 
 	void GameEngine::Clear(const Pixel& col)
 	{
-		m_DrawTarget->sprite->SetPixelData(col);
+		m_Layers[m_PickedLayer].target->sprite->SetPixelData(col);
 	}
 
 	KeyState GameEngine::GetKey(Key k) const { return m_Keys[static_cast<size_t>(k)]; }
@@ -3708,13 +3725,13 @@ namespace def
 
 	void GameEngine::SetDrawTarget(Graphic* target)
 	{
-		m_DrawTarget = target ? target : m_Screen;
-		m_DrawTarget->UpdateTexture();
+		m_Layers[m_PickedLayer].target = target ? target : m_Layers[m_PickedLayer].pixels;
+		m_Layers[m_PickedLayer].target->UpdateTexture();
 	}
 
 	Graphic* GameEngine::GetDrawTarget()
 	{
-		return m_DrawTarget;
+		return m_Layers[m_PickedLayer].target;
 	}
 
 	void GameEngine::SetTitle(std::string_view title)
@@ -3791,7 +3808,7 @@ namespace def
 			texInst.vertices[i].y = 1.0f - verts[i].y * m_InvScreenSize.y * 2.0f;
 		}
 
-		m_Textures.push_back(texInst);
+		m_Layers[m_PickedLayer].textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawTextureLine(const vi2d& pos1, const vi2d& pos2, const Pixel& col)
@@ -3936,9 +3953,9 @@ namespace def
 		texInst.structure = m_TextureStructure;
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices = { pos1, { pos1.x, pos2.y }, pos2, { pos2.x, pos1.y } };
-		
 
-		m_Textures.push_back(texInst);
+
+		m_Layers[m_PickedLayer].textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawPartialTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, const vf2d& scale, const Pixel& tint)
@@ -3960,9 +3977,8 @@ namespace def
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices = { quantPos1, { quantPos1.x, quantPos2.y }, quantPos2, { quantPos2.x, quantPos1.y } };
 		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
-		
 
-		m_Textures.push_back(texInst);
+		m_Layers[m_PickedLayer].textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawRotatedTexture(const vf2d& pos, const Texture* tex, float rotation, const vf2d& center, const vf2d& scale, const Pixel& tint)
@@ -3973,7 +3989,7 @@ namespace def
 		texInst.points = 4;
 		texInst.structure = m_TextureStructure;
 		texInst.tint = { tint, tint, tint, tint };
-		
+
 
 		vf2d denormCenter = center * tex->size;
 
@@ -3992,13 +4008,13 @@ namespace def
 				texInst.vertices[i].x * c - texInst.vertices[i].y * s,
 				texInst.vertices[i].x * s + texInst.vertices[i].y * c
 			};
-			
+
 			texInst.vertices[i] = pos + offset;
 			texInst.vertices[i] = texInst.vertices[i] * m_InvScreenSize * 2.0f - 1.0f;
 			texInst.vertices[i].y *= -1.0f;
 		}
 
-		m_Textures.push_back(texInst);
+		m_Layers[m_PickedLayer].textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawPartialRotatedTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, float rotation, const vf2d& center, const vf2d& scale, const Pixel& tint)
@@ -4009,7 +4025,6 @@ namespace def
 		texInst.points = 4;
 		texInst.structure = m_TextureStructure;
 		texInst.tint = { tint, tint, tint, tint };
-		
 
 		vf2d denormCenter = center * fileSize;
 
@@ -4039,7 +4054,7 @@ namespace def
 
 		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
 
-		m_Textures.push_back(texInst);
+		m_Layers[m_PickedLayer].textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation, float scale, const Pixel& col)
@@ -4079,10 +4094,10 @@ namespace def
 
 	void GameEngine::ClearTexture(const Pixel& col)
 	{
-		m_ClearBufferColour = col;
+		m_BackgroundColour = col;
 	}
 
-	void GameEngine::SetShader(Pixel (*func)(const vi2d&, const Pixel&, const Pixel&))
+	void GameEngine::SetShader(Pixel(*func)(const vi2d&, const Pixel&, const Pixel&))
 	{
 		m_Shader = func;
 		m_PixelMode = m_Shader ? Pixel::Mode::CUSTOM : Pixel::Mode::DEFAULT;
@@ -4149,6 +4164,30 @@ namespace def
 	float GameEngine::GetDeltaTime() const
 	{
 		return m_DeltaTime;
+	}
+
+	size_t GameEngine::CreateLayer(const vi2d& offset, const vi2d& size, bool update, bool visible, const Pixel& tint)
+	{
+		Layer layer;
+		layer.offset = offset;
+		layer.size = size;
+
+		if (!m_OnlyTextures)
+			layer.pixels = new Graphic(size);
+
+		layer.update = update;
+		layer.visible = visible;
+		layer.tint = tint;
+		layer.target = layer.pixels;
+
+		m_Layers.push_back(std::move(layer));
+		return m_Layers.size() - 1;
+	}
+
+	void GameEngine::PickLayer(size_t layer)
+	{
+		if (layer < m_Layers.size())
+			m_PickedLayer = layer;
 	}
 
 #endif
