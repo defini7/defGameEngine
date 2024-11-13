@@ -657,16 +657,21 @@ namespace def
 	struct Layer
 	{
 		std::vector<TextureInstance> textures;
-		Graphic* pixels;
+		Graphic* pixels = nullptr;
 		Graphic* target = pixels;
 
 		vi2d offset;
 		vi2d size;
 
+		Texture::Structure textureStructure = Texture::Structure::FAN;
+		Pixel::Mode pixelMode = Pixel::Mode::DEFAULT;
+
 		bool visible = true;
 		bool update = true;
 
 		Pixel tint = WHITE;
+
+		Pixel (*shader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
 	};
 
 	class GameEngine
@@ -713,12 +718,10 @@ namespace def
 
 		std::vector<Layer> m_Layers;
 		size_t m_PickedLayer;
+		size_t m_ConsoleLayer;
 
 		Pixel m_ConsoleBackgroundColour;
 		Pixel m_BackgroundColour;
-
-		Texture::Structure m_TextureStructure;
-		Pixel::Mode m_PixelMode;
 
 		std::vector<std::string> m_DropCache;
 		int m_ScrollDelta;
@@ -727,7 +730,6 @@ namespace def
 		size_t m_CursorPos;
 
 		bool m_CaptureText;
-		bool m_ShowConsole;
 		bool m_Caps;
 
 		struct ConsoleEntry
@@ -743,8 +745,6 @@ namespace def
 
 		float m_DeltaTime;
 		float m_TickTimer;
-
-		Pixel(*m_Shader)(const vi2d&, const Pixel&, const Pixel&);
 
 		Platform* m_Platform;
 
@@ -915,6 +915,9 @@ namespace def
 
 		size_t CreateLayer(const vi2d& offset, const vi2d& size, bool update = true, bool visible = true, const Pixel& tint = WHITE);
 		void PickLayer(size_t layer);
+		size_t GetPickedLayer() const;
+		Layer* GetLayerByIndex(size_t index);
+
 	};
 
 #ifdef DGE_APPLICATION
@@ -2143,8 +2146,6 @@ namespace def
 		if (!vsync)
 			glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
 		const GLFWvidmode* videoMode = glfwGetVideoMode(m_Monitor);
 		if (!videoMode) return false;
 
@@ -2537,18 +2538,13 @@ namespace def
 		m_BackgroundColour = { 255, 255, 255, 255 };
 		m_ConsoleBackgroundColour = { 0, 0, 255, 100 };
 
-		m_PixelMode = Pixel::Mode::DEFAULT;
-		m_TextureStructure = Texture::Structure::FAN;
-
 		m_CaptureText = false;
 		m_Caps = false;
-		m_ShowConsole = false;
 		m_TabSize = 0;
 
 		m_DeltaTime = 0.0f;
 		m_TickTimer = 0.0f;
 
-		m_Shader = nullptr;
 		s_Engine = this;
 
 		m_PickedConsoleHistoryCommand = 0;
@@ -2677,7 +2673,7 @@ namespace def
 				{
 					OnTextCapturingComplete(m_TextInput);
 
-					if (m_ShowConsole)
+					if (IsConsoleEnabled())
 					{
 						std::stringstream output;
 						Pixel colour = WHITE;
@@ -2693,7 +2689,7 @@ namespace def
 					m_CursorPos = 0;
 				}
 
-				if (m_ShowConsole)
+				if (IsConsoleEnabled())
 				{
 					if (!m_ConsoleHistory.empty())
 					{
@@ -2731,8 +2727,11 @@ namespace def
 
 			m_ScrollDelta = 0;
 
-			if (m_ShowConsole)
+			if (IsConsoleEnabled())
 			{
+				int currentLayer = m_PickedLayer;
+				PickLayer(m_ConsoleLayer);
+
 				FillTextureRectangle({ 0, 0 }, m_ScreenSize, m_ConsoleBackgroundColour);
 
 				int printCount = std::min(ScreenHeight() / 22, (int)m_ConsoleHistory.size());
@@ -2751,6 +2750,8 @@ namespace def
 
 				DrawTextureString({ 20, y }, "> " + GetCapturedText(), YELLOW);
 				DrawTextureLine({ x, y }, { x, y + 8 }, RED);
+
+				PickLayer(currentLayer);
 			}
 
 			m_Platform->ClearBuffer(m_BackgroundColour);
@@ -2871,6 +2872,7 @@ namespace def
 		if (!m_Platform->ConstructWindow(m_ScreenSize, m_PixelSize, m_WindowSize, vsync, fullScreen, dirtyPixel))
 			return false;
 
+		m_ConsoleLayer = CreateLayer({ 0, 0 }, m_ScreenSize, false, false);
 		m_PickedLayer = CreateLayer({ 0, 0 }, m_ScreenSize);
 
 		std::string data =
@@ -2925,15 +2927,17 @@ namespace def
 
 	bool GameEngine::Draw(int x, int y, const Pixel& col)
 	{
-		if (!m_Layers[m_PickedLayer].target)
+		Layer& layer = m_Layers[m_PickedLayer];
+
+		if (!layer.target)
 			return false;
 
-		Sprite* target = m_Layers[m_PickedLayer].target->sprite;
+		Sprite* target = layer.target->sprite;
 
-		switch (m_PixelMode)
+		switch (layer.pixelMode)
 		{
 		case Pixel::Mode::CUSTOM:
-			return target->SetPixel(x, y, m_Shader({ x, y }, target->GetPixel(x, y), col));
+			return target->SetPixel(x, y, layer.shader({ x, y }, target->GetPixel(x, y), col));
 
 		case Pixel::Mode::DEFAULT:
 			return target->SetPixel(x, y, col);
@@ -3543,10 +3547,12 @@ namespace def
 
 	void GameEngine::DrawWarpedTexture(const std::vector<vf2d>& points, const Texture* tex, const Pixel& tint)
 	{
+		auto& layer = m_Layers[m_PickedLayer];
+
 		TextureInstance texInst;
 
 		texInst.texture = tex;
-		texInst.structure = m_TextureStructure;
+		texInst.structure = layer.textureStructure;
 		texInst.points = 4;
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices.resize(texInst.points);
@@ -3577,7 +3583,7 @@ namespace def
 				texInst.vertices[i] = { (points[i].x * m_InvScreenSize.x) * 2.0f - 1.0f, ((points[i].y * m_InvScreenSize.y) * 2.0f - 1.0f) * -1.0f };
 			}
 
-			m_Layers[m_PickedLayer].textures.push_back(texInst);
+			layer.textures.push_back(texInst);
 		}
 	}
 
@@ -3748,22 +3754,22 @@ namespace def
 
 	void GameEngine::SetPixelMode(Pixel::Mode pixelMode)
 	{
-		m_PixelMode = pixelMode;
+		m_Layers[m_PickedLayer].pixelMode = pixelMode;
 	}
 
 	Pixel::Mode GameEngine::GetPixelMode() const
 	{
-		return m_PixelMode;
+		return m_Layers[m_PickedLayer].pixelMode;
 	}
 
 	void GameEngine::SetTextureStructure(Texture::Structure textureStructure)
 	{
-		m_TextureStructure = textureStructure;
+		m_Layers[m_PickedLayer].textureStructure = textureStructure;
 	}
 
 	Texture::Structure GameEngine::GetTextureStructure() const
 	{
-		return m_TextureStructure;
+		return m_Layers[m_PickedLayer].textureStructure;
 	}
 
 	bool GameEngine::Draw(const vi2d& pos, const Pixel& p)
@@ -3945,6 +3951,8 @@ namespace def
 
 	void GameEngine::DrawTexture(const vf2d& pos, const Texture* tex, const vf2d& scale, const Pixel& tint)
 	{
+		auto& layer = m_Layers[m_PickedLayer];
+
 		vf2d pos1 = (pos * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
 		vf2d pos2 = pos1 + 2.0f * tex->size * m_InvScreenSize * scale * vf2d(1.0f, -1.0f);
 
@@ -3952,16 +3960,17 @@ namespace def
 
 		texInst.texture = tex;
 		texInst.points = 4;
-		texInst.structure = m_TextureStructure;
+		texInst.structure = layer.textureStructure;
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices = { pos1, { pos1.x, pos2.y }, pos2, { pos2.x, pos1.y } };
 
-
-		m_Layers[m_PickedLayer].textures.push_back(texInst);
+		layer.textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawPartialTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, const vf2d& scale, const Pixel& tint)
 	{
+		auto& layer = m_Layers[m_PickedLayer];
+
 		vf2d screenPos1 = (pos * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
 		vf2d screenPos2 = ((pos + fileSize * scale) * m_InvScreenSize * 2.0f - 1.0f) * vf2d(1.0f, -1.0f);
 
@@ -3975,23 +3984,24 @@ namespace def
 
 		texInst.texture = tex;
 		texInst.points = 4;
-		texInst.structure = m_TextureStructure;
+		texInst.structure = layer.textureStructure;
 		texInst.tint = { tint, tint, tint, tint };
 		texInst.vertices = { quantPos1, { quantPos1.x, quantPos2.y }, quantPos2, { quantPos2.x, quantPos1.y } };
 		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
 
-		m_Layers[m_PickedLayer].textures.push_back(texInst);
+		layer.textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawRotatedTexture(const vf2d& pos, const Texture* tex, float rotation, const vf2d& center, const vf2d& scale, const Pixel& tint)
 	{
+		auto& layer = m_Layers[m_PickedLayer];
+
 		TextureInstance texInst;
 
 		texInst.texture = tex;
 		texInst.points = 4;
-		texInst.structure = m_TextureStructure;
+		texInst.structure = layer.textureStructure;
 		texInst.tint = { tint, tint, tint, tint };
-
 
 		vf2d denormCenter = center * tex->size;
 
@@ -4016,16 +4026,18 @@ namespace def
 			texInst.vertices[i].y *= -1.0f;
 		}
 
-		m_Layers[m_PickedLayer].textures.push_back(texInst);
+		layer.textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawPartialRotatedTexture(const vf2d& pos, const Texture* tex, const vf2d& filePos, const vf2d& fileSize, float rotation, const vf2d& center, const vf2d& scale, const Pixel& tint)
 	{
+		auto& layer = m_Layers[m_PickedLayer];
+
 		TextureInstance texInst;
 
 		texInst.texture = tex;
 		texInst.points = 4;
-		texInst.structure = m_TextureStructure;
+		texInst.structure = layer.textureStructure;
 		texInst.tint = { tint, tint, tint, tint };
 
 		vf2d denormCenter = center * fileSize;
@@ -4056,7 +4068,7 @@ namespace def
 
 		texInst.uv = { tl, { tl.x, br.y }, br, { br.x, tl.y } };
 
-		m_Layers[m_PickedLayer].textures.push_back(texInst);
+		layer.textures.push_back(texInst);
 	}
 
 	void GameEngine::DrawWireFrameModel(const std::vector<vf2d>& modelCoordinates, const vf2d& pos, float rotation, float scale, const Pixel& col)
@@ -4101,8 +4113,10 @@ namespace def
 
 	void GameEngine::SetShader(Pixel(*func)(const vi2d&, const Pixel&, const Pixel&))
 	{
-		m_Shader = func;
-		m_PixelMode = m_Shader ? Pixel::Mode::CUSTOM : Pixel::Mode::DEFAULT;
+		auto& layer = m_Layers[m_PickedLayer];
+
+		layer.shader = func;
+		layer.pixelMode = func ? Pixel::Mode::CUSTOM : Pixel::Mode::DEFAULT;
 	}
 
 	void GameEngine::CaptureText(bool enable)
@@ -4128,7 +4142,9 @@ namespace def
 
 	void GameEngine::ShowConsole(bool enable)
 	{
-		m_ShowConsole = enable;
+		auto& layer = m_Layers[m_ConsoleLayer];
+		layer.visible = enable;
+		layer.update = enable;
 		m_CaptureText = enable;
 	}
 
@@ -4150,7 +4166,7 @@ namespace def
 
 	bool GameEngine::IsConsoleEnabled() const
 	{
-		return m_ShowConsole;
+		return m_Layers[m_ConsoleLayer].visible;
 	}
 
 	bool GameEngine::IsCaps() const
@@ -4190,6 +4206,16 @@ namespace def
 	{
 		if (layer < m_Layers.size())
 			m_PickedLayer = layer;
+	}
+
+	size_t GameEngine::GetPickedLayer() const
+	{
+		return m_PickedLayer;
+	}
+
+	Layer* GameEngine::GetLayerByIndex(size_t index)
+	{
+		return &m_Layers[index];
 	}
 
 #endif
