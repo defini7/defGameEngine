@@ -1,167 +1,164 @@
 #define DGE_APPLICATION
 #include "defGameEngine.hpp"
 
-enum SideType
+enum ТипСтороны
 {
-	SIDE_NONE,
-	SIDE_LEFT,
-	SIDE_RIGHT,
-	SIDE_UP,
-	SIDE_DOWN
+	СТОРОНА_НЕОПРЕДЕЛЕНО,
+	СТОРОНА_ЛЕВО,
+	СТОРОНА_ПРАВО,
+	СТОРОНА_ВЕРХ,
+	СТОРОНА_НИЗ
 };
 
-constexpr int TILE_SIZE = 32;
+constexpr int РАЗМЕР_ПЛИТКИ = 32;
 
-struct Block
+struct Блок
 {
-	virtual void Draw(def::GameEngine* engine, const def::vi2d& pos) const
+	virtual void Нарисовать(def::GameEngine* движок, const def::vi2d& позиция) const
 	{
-		if (engine)
-			engine->DrawPartialSprite(pos * TILE_SIZE, filePos, { TILE_SIZE, TILE_SIZE }, s_Gfx);
+		if (движок)
+			движок->DrawPartialSprite(позиция * РАЗМЕР_ПЛИТКИ, файловаяПозиция, { РАЗМЕР_ПЛИТКИ, РАЗМЕР_ПЛИТКИ }, с_Графика);
 	}
 
-	virtual bool Push(SideType touchSide)
+	virtual bool Двинуть(ТипСтороны сторонаКасания)
 	{
 		return false;
 	}
 
-	def::vi2d filePos;
+	def::vi2d файловаяПозиция;
 
-	static def::Sprite* s_Gfx;
+	static def::Sprite* с_Графика;
 };
 
-def::Sprite* Block::s_Gfx = nullptr;
+def::Sprite* Блок::с_Графика = nullptr;
 
-struct Block_Stop : Block
+struct Блок_Стоп : Блок
 {
-	Block_Stop()
+	Блок_Стоп()
 	{
-		filePos = { 0, 0 };
-	}
-};
-
-struct Block_Anydir : Block
-{
-	Block_Anydir()
-	{
-		filePos = { TILE_SIZE, 0 };
-	}
-
-	bool Push(SideType touchSide) override
-	{
-		return touchSide != SIDE_NONE;
+		файловаяПозиция = { 0, 0 };
 	}
 };
 
-struct Block_Horizontal : Block
+struct Блок_ЛюбоеНаправление : Блок
 {
-	Block_Horizontal()
+	Блок_ЛюбоеНаправление()
 	{
-		filePos = { 2 * TILE_SIZE, 0 };
+		файловаяПозиция = { РАЗМЕР_ПЛИТКИ, 0 };
 	}
 
-	bool Push(SideType touchSide) override
+	bool Двинуть(ТипСтороны сторонаКасания) override
 	{
-		return touchSide == SIDE_LEFT || touchSide == SIDE_RIGHT;
+		return сторонаКасания != СТОРОНА_НЕОПРЕДЕЛЕНО;
 	}
 };
 
-struct Block_Vertical : Block
+struct Блок_Горизонтальный : Блок
 {
-	Block_Vertical()
+	Блок_Горизонтальный()
 	{
-		filePos = { 3 * TILE_SIZE, 0 };
+		файловаяПозиция = { 2 * РАЗМЕР_ПЛИТКИ, 0 };
 	}
 
-	bool Push(SideType touchSide) override
+	bool Двинуть(ТипСтороны сторонаКасания) override
 	{
-		return touchSide == SIDE_UP || touchSide == SIDE_DOWN;
+		return сторонаКасания == СТОРОНА_ЛЕВО || сторонаКасания == СТОРОНА_ПРАВО;
 	}
 };
 
-struct Block_Count : Block
+struct Блок_Вертикальный : Блок
 {
-	Block_Count(int allowedMoves = 0)
+	Блок_Вертикальный()
 	{
-		remainingMoves = allowedMoves;
-		filePos = { 4 * TILE_SIZE, 0 };
+		файловаяПозиция = { 3 * РАЗМЕР_ПЛИТКИ, 0 };
 	}
 
-	bool Push(SideType touchSide) override
+	bool Двинуть(ТипСтороны сторонаКасания) override
 	{
-		if (touchSide != SIDE_NONE && remainingMoves > 0)
+		return сторонаКасания == СТОРОНА_ВЕРХ || сторонаКасания == СТОРОНА_НИЗ;
+	}
+};
+
+struct Блок_Счётчик : Блок
+{
+	Блок_Счётчик(int допустимыеХоды = 0)
+	{
+		оставшиесяХоды = допустимыеХоды;
+		файловаяПозиция = { 4 * РАЗМЕР_ПЛИТКИ, 0 };
+	}
+
+	bool Двинуть(ТипСтороны сторонаКасания) override
+	{
+		if (сторонаКасания != СТОРОНА_НЕОПРЕДЕЛЕНО && оставшиесяХоды > 0)
 		{
-			remainingMoves--;
+			оставшиесяХоды--;
 			return true;
 		}
 
 		return false;
 	}
 
-	void Draw(def::GameEngine* engine, const def::vi2d& pos) const override
+	void Нарисовать(def::GameEngine* движок, const def::vi2d& позиция) const override
 	{
-		Block::Draw(engine, pos);
-		engine->DrawString(pos * TILE_SIZE + TILE_SIZE / 8, std::to_string(remainingMoves), def::WHITE);
+		Блок::Нарисовать(движок, позиция);
+		движок->DrawString(позиция * РАЗМЕР_ПЛИТКИ + РАЗМЕР_ПЛИТКИ / 8, std::to_string(оставшиесяХоды), def::WHITE);
 	}
 
-	int remainingMoves;
+	int оставшиесяХоды;
 };
 
-struct Block_Obstacle : Block
+struct Блок_Препятствие : Блок
 {
-	Block_Obstacle()
+	Блок_Препятствие()
 	{
-		filePos = { 5 * TILE_SIZE, 0 };
+		файловаяПозиция = { 5 * РАЗМЕР_ПЛИТКИ, 0 };
 	}
 };
 
-class SlidingBlocks : public def::GameEngine
+class СкользящиеБлоки : public def::GameEngine
 {
 public:
-	SlidingBlocks()
+	СкользящиеБлоки()
 	{
 		SetTitle("Sliding Blocks");
 	}
 
-	virtual ~SlidingBlocks()
+	virtual ~СкользящиеБлоки()
 	{
-		delete Block::s_Gfx;
+		delete Блок::с_Графика;
 
-		for (auto block : map)
-		{
-			if (block)
-				delete block;
-		}
+		for (auto блок : карта)
+			delete блок;
 	}
 
-	std::vector<Block*> map;
-	def::vi2d mapSize;
+	std::vector<Блок*> карта;
+	def::vi2d размерКарты;
 
-	def::vi2d playerPos = { 1, 1 };
+	def::vi2d позицияИгрока = { 1, 1 };
 
 protected:
-	void PushBlocks(SideType touchSide)
+	void ДвинутьБлоки(ТипСтороны сторонаКасания)
 	{
-		std::function<bool(int, int, SideType)> push = [&](int x, int y, SideType touchSide) -> bool
+		std::function<bool(int, int, ТипСтороны)> двинуть = [&](int икс, int игрек, ТипСтороны сторонаКасания) -> bool
 			{
-				size_t i = y * mapSize.x + x;
+				size_t и = игрек * размерКарты.x + икс;
 
-				if (map[i])
+				if (карта[и])
 				{
-					if (map[i]->Push(touchSide))
+					if (карта[и]->Двинуть(сторонаКасания))
 					{
-						switch (touchSide)
+						switch (сторонаКасания)
 						{
-						case SIDE_RIGHT: x--; break;
-						case SIDE_LEFT:	 x++; break;
-						case SIDE_DOWN:  y--; break;
-						case SIDE_UP:    y++; break;
+						case СТОРОНА_ПРАВО: икс--; break;
+						case СТОРОНА_ЛЕВО:	икс++; break;
+						case СТОРОНА_НИЗ:	игрек--; break;
+						case СТОРОНА_ВЕРХ:  игрек++; break;
 						}
 
-						if (push(x, y, touchSide))
+						if (двинуть(икс, игрек, сторонаКасания))
 						{
-							map[y * mapSize.x + x] = map[i];
-							map[i] = nullptr;
+							карта[игрек * размерКарты.x + икс] = карта[и];
+							карта[и] = nullptr;
 
 							return true;
 						}
@@ -173,104 +170,104 @@ protected:
 				return true;
 			};
 
-		if (touchSide != SIDE_NONE)
+		if (сторонаКасания != СТОРОНА_НЕОПРЕДЕЛЕНО)
 		{
-			def::vi2d possiblePos = playerPos;
+			def::vi2d возможнаяПозиция = позицияИгрока;
 
-			switch (touchSide)
+			switch (сторонаКасания)
 			{
-			case SIDE_RIGHT: possiblePos.x--; break;
-			case SIDE_LEFT:	 possiblePos.x++; break;
-			case SIDE_DOWN:  possiblePos.y--; break;
-			case SIDE_UP:    possiblePos.y++; break;
+			case СТОРОНА_ПРАВО: возможнаяПозиция.x--; break;
+			case СТОРОНА_ЛЕВО:	возможнаяПозиция.x++; break;
+			case СТОРОНА_НИЗ:   возможнаяПозиция.y--; break;
+			case СТОРОНА_ВЕРХ:  возможнаяПозиция.y++; break;
 			}
 
-			if (push(possiblePos.x, possiblePos.y, touchSide))
-				playerPos = possiblePos;
+			if (двинуть(возможнаяПозиция.x, возможнаяПозиция.y, сторонаКасания))
+				позицияИгрока = возможнаяПозиция;
 		}
 	}
 
 	bool OnUserCreate() override
 	{
-		Block::s_Gfx = new def::Sprite("Assets/blocks.png");
+		Блок::с_Графика = new def::Sprite("Assets/blocks.png");
 
-		std::string s;
-		s += "################";
-		s += "#........5.....#";
-		s += "#.+........4...#";
-		s += "#....@@@@@.....#";
-		s += "#...@..........#";
-		s += "#...@.......+..#";
-		s += "#...@..9.......#";
-		s += "#...@..........#";
-		s += "#........-..|..#";
-		s += "#...+..........#";
-		s += "#........@.....#";
-		s += "#.|.........7..#";
-		s += "#....@...-.....#";
-		s += "#..............#";
-		s += "#........-.....#";
-		s += "################";
+		std::string строка;
+		строка += "################";
+		строка += "#........5.....#";
+		строка += "#.+........4...#";
+		строка += "#....@@@@@.....#";
+		строка += "#...@..........#";
+		строка += "#...@.......+..#";
+		строка += "#...@..9.......#";
+		строка += "#...@..........#";
+		строка += "#........-..|..#";
+		строка += "#...+..........#";
+		строка += "#........@.....#";
+		строка += "#.|.........7..#";
+		строка += "#....@...-.....#";
+		строка += "#..............#";
+		строка += "#........-.....#";
+		строка += "################";
 
-		mapSize = GetScreenSize() / TILE_SIZE;
-		map.resize(mapSize.x * mapSize.y);
+		размерКарты = GetScreenSize() / РАЗМЕР_ПЛИТКИ;
+		карта.resize(размерКарты.x * размерКарты.y);
 
-		def::vi2d pos;
-		for (; pos.y < mapSize.y; pos.y++)
+		def::vi2d позиция;
+		for (; позиция.y < размерКарты.y; позиция.y++)
 		{
-			for (; pos.x < mapSize.x; pos.x++)
+			for (; позиция.x < размерКарты.x; позиция.x++)
 			{
-				size_t i = pos.y * mapSize.x + pos.x;
+				size_t и = позиция.y * размерКарты.x + позиция.x;
 
-				switch (s[i])
+				switch (строка[и])
 				{
-				case '@': map[i] = new Block_Stop();	   break;
-				case '+': map[i] = new Block_Anydir();	   break;
-				case '-': map[i] = new Block_Vertical();   break;
-				case '|': map[i] = new Block_Horizontal(); break;
-				case '#': map[i] = new Block_Obstacle();   break;
+				case '@': карта[и] = new Блок_Стоп();	          break;
+				case '+': карта[и] = new Блок_ЛюбоеНаправление(); break;
+				case '-': карта[и] = new Блок_Вертикальный();     break;
+				case '|': карта[и] = new Блок_Горизонтальный();   break;
+				case '#': карта[и] = new Блок_Препятствие();      break;
 				default:
 				{
-					if (isdigit(s[i]))
-						map[i] = new Block_Count(s[i] - '0');
+					if (isdigit(строка[и]))
+						карта[и] = new Блок_Счётчик(строка[и] - '0');
 				}
 
 				}
 			}
 
-			pos.x = 0;
+			позиция.x = 0;
 		}
 
 		return true;
 	}
 
-	bool OnUserUpdate(float deltaTime) override
+	bool OnUserUpdate(float дельтаВремя) override
 	{
-		SideType touchSide = SIDE_NONE;
+		ТипСтороны сторонаКасания = СТОРОНА_НЕОПРЕДЕЛЕНО;
 
-		if (GetKey(def::Key::LEFT).pressed)	 touchSide = SIDE_RIGHT;
-		if (GetKey(def::Key::RIGHT).pressed) touchSide = SIDE_LEFT;
-		if (GetKey(def::Key::UP).pressed)	 touchSide = SIDE_DOWN;
-		if (GetKey(def::Key::DOWN).pressed)  touchSide = SIDE_UP;
+		if (GetKey(def::Key::LEFT).pressed)	 сторонаКасания = СТОРОНА_ПРАВО;
+		if (GetKey(def::Key::RIGHT).pressed) сторонаКасания = СТОРОНА_ЛЕВО;
+		if (GetKey(def::Key::UP).pressed)	 сторонаКасания = СТОРОНА_НИЗ;
+		if (GetKey(def::Key::DOWN).pressed)  сторонаКасания = СТОРОНА_ВЕРХ;
 
-		PushBlocks(touchSide);
+		ДвинутьБлоки(сторонаКасания);
 
 		Clear(def::BLACK);
 
 		SetPixelMode(def::Pixel::Mode::MASK);
 
-		for (int y = 0; y < mapSize.y; y++)
-			for (int x = 0; x < mapSize.x; x++)
+		for (int игрек = 0; игрек < размерКарты.y; игрек++)
+			for (int икс = 0; икс < размерКарты.x; икс++)
 			{
-				Block* block = map[y * mapSize.x + x];
+				Блок* блок = карта[игрек * размерКарты.x + икс];
 
-				if (block)
-					block->Draw(this, { x, y });
+				if (блок)
+					блок->Нарисовать(this, { икс, игрек });
 			}
 
 		SetPixelMode(def::Pixel::Mode::DEFAULT);
 
-		FillRectangle(playerPos * TILE_SIZE, { TILE_SIZE, TILE_SIZE }, def::WHITE);
+		FillRectangle(позицияИгрока * РАЗМЕР_ПЛИТКИ, { РАЗМЕР_ПЛИТКИ, РАЗМЕР_ПЛИТКИ }, def::WHITE);
 
 		return true;
 	}
@@ -278,10 +275,10 @@ protected:
 
 int main()
 {
-	SlidingBlocks demo;
+	СкользящиеБлоки игра;
 
-	if (demo.Construct(512, 512, 2, 2))
-		demo.Run();
+	if (игра.Construct(512, 512, 2, 2))
+		игра.Run();
 
 	return 0;
 }
