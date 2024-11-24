@@ -2761,13 +2761,21 @@ namespace def
 			{
 				if (!m_OnlyTextures)
 				{
-					iter->pixels->UpdateTexture();
-					m_Platform->BindTexture(iter->pixels->texture->id);
-					m_Platform->DrawQuad(iter->tint);
+					if (iter->update)
+						iter->pixels->UpdateTexture();
+
+					if (iter->visible)
+					{
+						m_Platform->BindTexture(iter->pixels->texture->id);
+						m_Platform->DrawQuad(iter->tint);
+					}
 				}
 
-				for (auto& texture : iter->textures)
-					m_Platform->DrawTexture(texture);
+				if (iter->visible)
+				{
+					for (auto& texture : iter->textures)
+						m_Platform->DrawTexture(texture);
+				}
 
 				iter->textures.clear();
 			}
