@@ -1,10 +1,12 @@
 #define DGE_APPLICATION
-#include "../defGameEngine.hpp"
+#include "defGameEngine.hpp"
 
 #include <array>
 
 using namespace def;
 
+// If you want to change it then edit
+// the RotatePiece function by rewriting indecies there
 const def::vi2d TETROMINO_SIZE = { 4, 4 };
 
 // https://tetris.fandom.com/wiki/Tetromino
@@ -254,7 +256,8 @@ protected:
 			}
 
 		// Draw falling piece
-		DrawPiece(piecePos, piece, rotation, false, false);
+		if (piece != -1)
+			DrawPiece(piecePos, piece, rotation, false, false);
 
 		// Draw next piece and it's borders
 		DrawPiece(fieldPos + def::vi2d(2, fieldSize.y * 0.4f), nextPiece, 0, true, true, def::DARK_GREY);
