@@ -234,7 +234,7 @@ int main()
 {
 	Engine3D demo;
 
-	demo.Construct(256, 240, 4, 4);
+	demo.Construct(256, 196, 4, 4);
 	demo.Run();
 
 	return 0;

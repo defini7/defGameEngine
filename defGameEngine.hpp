@@ -671,7 +671,7 @@ namespace def
 
 		Pixel tint = WHITE;
 
-		Pixel (*shader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
+		Pixel(*shader)(const vi2d&, const Pixel&, const Pixel&) = nullptr;
 	};
 
 	class GameEngine
@@ -2578,6 +2578,7 @@ namespace def
 		}
 
 		m_Platform->Destroy();
+		delete m_Platform;
 	}
 
 	void GameEngine::ScanHardware(KeyState* data, bool* newState, bool* oldState, size_t count)
@@ -2756,7 +2757,7 @@ namespace def
 
 			m_Platform->ClearBuffer(m_BackgroundColour);
 			m_Platform->OnBeforeDraw();
-			
+
 			for (auto iter = m_Layers.rbegin(); iter != m_Layers.rend(); iter++)
 			{
 				if (!m_OnlyTextures)
